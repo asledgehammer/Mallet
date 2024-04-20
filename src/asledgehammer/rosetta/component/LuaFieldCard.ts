@@ -43,7 +43,14 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
         return html`
             <div>
                 ${this.renderNotes(entity.notes, idNotes)}
+
+                <hr>
+
                 ${this.renderType(entity.name, entity.type, idType)}
+
+                <hr>
+                
+                ${this.renderPreview(false)}
             </div>
         `;
     }

@@ -42,6 +42,7 @@ export class LuaClassCard extends LuaCard<LuaClassCardOptions> {
         return html`
             <div>
                 ${this.renderNotes(notes, this.idNotes)}
+                <hr>
                 ${this.renderPreview(false)}
             </div>
         `;
