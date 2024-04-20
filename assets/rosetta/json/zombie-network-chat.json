@@ -1,0 +1,637 @@
+{
+  "namespaces": {
+    "zombie.network.chat": {
+      "ChatServer": {
+        "methods": [
+          {
+            "name": "createFactionChat",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "name",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "FactionChat"
+              }
+            }
+          },
+          {
+            "name": "createRadiostationMessage",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "text",
+                "type": {
+                  "basic": "String"
+                }
+              },
+              {
+                "name": "radioChannel",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "ChatMessage"
+              }
+            }
+          },
+          {
+            "name": "createSafehouseChat",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "safehouseID",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "SafehouseChat"
+              }
+            }
+          },
+          {
+            "name": "disconnectPlayer",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "playerID",
+                "type": {
+                  "basic": "short"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "getInstance",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "returns": {
+              "type": {
+                "basic": "ChatServer"
+              }
+            }
+          },
+          {
+            "name": "init",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "initPlayer",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "playerID",
+                "type": {
+                  "basic": "short"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "isInited",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          },
+          {
+            "name": "joinAdminChat",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "playerID",
+                "type": {
+                  "basic": "short"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "leaveAdminChat",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "playerID",
+                "type": {
+                  "basic": "short"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "processMessageFromPlayerPacket",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "bb",
+                "type": {
+                  "basic": "ByteBuffer"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "processPlayerStartWhisperChatPacket",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "bb",
+                "type": {
+                  "basic": "ByteBuffer"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "removeFactionChat",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "factionName",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "removeSafehouseChat",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "safehouseName",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "sendMessageFromDiscordToGeneralChat",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "author",
+                "type": {
+                  "basic": "String"
+                }
+              },
+              {
+                "name": "msg",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "sendMessageToAdminChat",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "msg",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "sendMessageToServerChat",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "connection",
+                "type": {
+                  "basic": "UdpConnection"
+                }
+              },
+              {
+                "name": "msg",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "sendMessageToServerChat",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "msg",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "sendServerAlertMessageToServerChat",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "author",
+                "type": {
+                  "basic": "String"
+                }
+              },
+              {
+                "name": "msg",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "sendServerAlertMessageToServerChat",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "msg",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "syncFactionChatMembers",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "factionName",
+                "type": {
+                  "basic": "String"
+                }
+              },
+              {
+                "name": "factionOwner",
+                "type": {
+                  "basic": "String"
+                }
+              },
+              {
+                "name": "players",
+                "type": {
+                  "basic": "ArrayList",
+                  "full": "ArrayList<String>"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "syncSafehouseChatMembers",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "safehouseID",
+                "type": {
+                  "basic": "String"
+                }
+              },
+              {
+                "name": "safehouseOwner",
+                "type": {
+                  "basic": "String"
+                }
+              },
+              {
+                "name": "players",
+                "type": {
+                  "basic": "ArrayList",
+                  "full": "ArrayList<String>"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "unpackChatMessage",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "bb",
+                "type": {
+                  "basic": "ByteBuffer"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "ChatMessage"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      },
+      "ChatType": {
+        "fields": {
+          "admin": {
+            "name": "admin",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ChatType"
+            }
+          },
+          "faction": {
+            "name": "faction",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ChatType"
+            }
+          },
+          "general": {
+            "name": "general",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ChatType"
+            }
+          },
+          "notDefined": {
+            "name": "notDefined",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ChatType"
+            }
+          },
+          "radio": {
+            "name": "radio",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ChatType"
+            }
+          },
+          "safehouse": {
+            "name": "safehouse",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ChatType"
+            }
+          },
+          "say": {
+            "name": "say",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ChatType"
+            }
+          },
+          "server": {
+            "name": "server",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ChatType"
+            }
+          },
+          "shout": {
+            "name": "shout",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ChatType"
+            }
+          },
+          "whisper": {
+            "name": "whisper",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ChatType"
+            }
+          }
+        },
+        "methods": [
+          {
+            "name": "getTitleID",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "getValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "int"
+              }
+            }
+          },
+          {
+            "name": "values",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "returns": {
+              "type": {
+                "basic": "ChatType"
+              },
+              "notes": "an array containing the constants of this enum class, in the order they are declared"
+            },
+            "notes": "Returns an array containing the constants of this enum class, in\nthe order they are declared."
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "enum",
+        "extends": "Enum"
+      }
+    }
+  }
+}

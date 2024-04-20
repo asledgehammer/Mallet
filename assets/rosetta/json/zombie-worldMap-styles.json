@@ -1,0 +1,2610 @@
+{
+  "namespaces": {
+    "zombie.worldMap.styles": {
+      "WorldMapLineStyleLayer": {
+        "fields": {
+          "m_fill": {
+            "name": "m_fill",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          },
+          "m_lineWidth": {
+            "name": "m_lineWidth",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "id",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "getTypeString",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "render",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "feature",
+                "type": {
+                  "basic": "WorldMapFeature"
+                }
+              },
+              {
+                "name": "args",
+                "type": {
+                  "basic": "WorldMapStyleLayer.RenderArgs"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "WorldMapStyleLayer"
+      },
+      "WorldMapPolygonStyleLayer": {
+        "fields": {
+          "m_fill": {
+            "name": "m_fill",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          },
+          "m_scale": {
+            "name": "m_scale",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          },
+          "m_texture": {
+            "name": "m_texture",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "id",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "getTypeString",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "render",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "feature",
+                "type": {
+                  "basic": "WorldMapFeature"
+                }
+              },
+              {
+                "name": "args",
+                "type": {
+                  "basic": "WorldMapStyleLayer.RenderArgs"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "WorldMapStyleLayer"
+      },
+      "WorldMapStyle": {
+        "fields": {
+          "m_layers": {
+            "name": "m_layers",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "copyFrom",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "other",
+                "type": {
+                  "basic": "WorldMapStyle"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      },
+      "WorldMapStyleLayer": {
+        "fields": {
+          "m_filter": {
+            "name": "m_filter",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "WorldMapStyleLayer.IWorldMapStyleFilter"
+            }
+          },
+          "m_filterKey": {
+            "name": "m_filterKey",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_filterValue": {
+            "name": "m_filterValue",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_id": {
+            "name": "m_id",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_minZoom": {
+            "name": "m_minZoom",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "float"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "id",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "filter",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "feature",
+                "type": {
+                  "basic": "WorldMapFeature"
+                }
+              },
+              {
+                "name": "args",
+                "type": {
+                  "basic": "WorldMapStyleLayer.FilterArgs"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          },
+          {
+            "name": "getTypeString",
+            "modifiers": [
+              "public",
+              "abstract"
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "render",
+            "modifiers": [
+              "public",
+              "abstract"
+            ],
+            "parameters": [
+              {
+                "name": "feature",
+                "type": {
+                  "basic": "WorldMapFeature"
+                }
+              },
+              {
+                "name": "args",
+                "type": {
+                  "basic": "WorldMapStyleLayer.RenderArgs"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "renderCell",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "args",
+                "type": {
+                  "basic": "WorldMapStyleLayer.RenderArgs"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "abstract"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      },
+      "WorldMapStyleLayer.ColorStop": {
+        "fields": {
+          "a": {
+            "name": "a",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "int"
+            }
+          },
+          "b": {
+            "name": "b",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "int"
+            }
+          },
+          "g": {
+            "name": "g",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "int"
+            }
+          },
+          "r": {
+            "name": "r",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "int"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "zoom",
+                "type": {
+                  "basic": "float"
+                }
+              },
+              {
+                "name": "r",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "g",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "b",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "a",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ]
+          }
+        ],
+        "modifiers": [
+          "public",
+          "static"
+        ],
+        "javaType": "class",
+        "extends": "WorldMapStyleLayer.Stop"
+      },
+      "WorldMapStyleLayer.FilterArgs": {
+        "fields": {
+          "renderer": {
+            "name": "renderer",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "WorldMapRenderer"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "modifiers": [
+          "public",
+          "static",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      },
+      "WorldMapStyleLayer.FloatStop": {
+        "fields": {
+          "f": {
+            "name": "f",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "float"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "zoom",
+                "type": {
+                  "basic": "float"
+                }
+              },
+              {
+                "name": "f",
+                "type": {
+                  "basic": "float"
+                }
+              }
+            ]
+          }
+        ],
+        "modifiers": [
+          "public",
+          "static"
+        ],
+        "javaType": "class",
+        "extends": "WorldMapStyleLayer.Stop"
+      },
+      "WorldMapStyleLayer.IWorldMapStyleFilter": {
+        "methods": [
+          {
+            "name": "filter",
+            "parameters": [
+              {
+                "name": "feature",
+                "type": {
+                  "basic": "WorldMapFeature"
+                }
+              },
+              {
+                "name": "args",
+                "type": {
+                  "basic": "WorldMapStyleLayer.FilterArgs"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "static"
+        ],
+        "javaType": "interface"
+      },
+      "WorldMapStyleLayer.RenderArgs": {
+        "fields": {
+          "cellX": {
+            "name": "cellX",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "int"
+            }
+          },
+          "cellY": {
+            "name": "cellY",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "int"
+            }
+          },
+          "drawer": {
+            "name": "drawer",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "WorldMapRenderer.Drawer"
+            }
+          },
+          "renderer": {
+            "name": "renderer",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "WorldMapRenderer"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "modifiers": [
+          "public",
+          "static",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      },
+      "WorldMapStyleLayer.RGBAf": {
+        "fields": {
+          "a": {
+            "name": "a",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "float"
+            }
+          },
+          "b": {
+            "name": "b",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "float"
+            }
+          },
+          "g": {
+            "name": "g",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "float"
+            }
+          },
+          "r": {
+            "name": "r",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "float"
+            }
+          },
+          "s_pool": {
+            "name": "s_pool",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ObjectPool"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "init",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "r",
+                "type": {
+                  "basic": "float"
+                }
+              },
+              {
+                "name": "g",
+                "type": {
+                  "basic": "float"
+                }
+              },
+              {
+                "name": "b",
+                "type": {
+                  "basic": "float"
+                }
+              },
+              {
+                "name": "a",
+                "type": {
+                  "basic": "float"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "WorldMapStyleLayer.RGBAf"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "static",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      },
+      "WorldMapStyleLayer.Stop": {
+        "fields": {
+          "m_zoom": {
+            "name": "m_zoom",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "float"
+            }
+          }
+        },
+        "modifiers": [
+          "public",
+          "static"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      },
+      "WorldMapStyleLayer.TextureStop": {
+        "fields": {
+          "texture": {
+            "name": "texture",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "Texture"
+            }
+          },
+          "texturePath": {
+            "name": "texturePath",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "zoom",
+                "type": {
+                  "basic": "float"
+                }
+              },
+              {
+                "name": "texturePath",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ]
+          }
+        ],
+        "modifiers": [
+          "public",
+          "static"
+        ],
+        "javaType": "class",
+        "extends": "WorldMapStyleLayer.Stop"
+      },
+      "WorldMapStyleV1": {
+        "fields": {
+          "m_api": {
+            "name": "m_api",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "UIWorldMapV1"
+            }
+          },
+          "m_layers": {
+            "name": "m_layers",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          },
+          "m_style": {
+            "name": "m_style",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "WorldMapStyle"
+            }
+          },
+          "m_ui": {
+            "name": "m_ui",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "UIWorldMap"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "ui",
+                "type": {
+                  "basic": "UIWorldMap"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "clear",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "getLayerByIndex",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "WorldMapStyleV1.WorldMapStyleLayerV1"
+              }
+            }
+          },
+          {
+            "name": "getLayerByName",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "id",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "WorldMapStyleV1.WorldMapStyleLayerV1"
+              }
+            }
+          },
+          {
+            "name": "getLayerCount",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "int"
+              }
+            }
+          },
+          {
+            "name": "indexOfLayer",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "id",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "int"
+              }
+            }
+          },
+          {
+            "name": "moveLayer",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "indexFrom",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "indexTo",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "newLineLayer",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "id",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "WorldMapStyleV1.WorldMapStyleLayerV1"
+              }
+            }
+          },
+          {
+            "name": "newPolygonLayer",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "id",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "WorldMapStyleV1.WorldMapStyleLayerV1"
+              }
+            }
+          },
+          {
+            "name": "newTextureLayer",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "id",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "WorldMapStyleV1.WorldMapStyleLayerV1"
+              }
+            }
+          },
+          {
+            "name": "removeLayerById",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "id",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "removeLayerByIndex",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "setExposed",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "parameters": [
+              {
+                "name": "exposer",
+                "type": {
+                  "basic": "LuaManager.Exposer"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      },
+      "WorldMapStyleV1.WorldMapLineStyleLayerV1": {
+        "methods": [
+          {
+            "name": "addFill",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "zoom",
+                "type": {
+                  "basic": "float"
+                }
+              },
+              {
+                "name": "r",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "g",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "b",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "a",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "addLineWidth",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "zoom",
+                "type": {
+                  "basic": "float"
+                }
+              },
+              {
+                "name": "width",
+                "type": {
+                  "basic": "float"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "setFilter",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "key",
+                "type": {
+                  "basic": "String"
+                }
+              },
+              {
+                "name": "value",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "static"
+        ],
+        "javaType": "class",
+        "extends": "WorldMapStyleV1.WorldMapStyleLayerV1"
+      },
+      "WorldMapStyleV1.WorldMapPolygonStyleLayerV1": {
+        "methods": [
+          {
+            "name": "addFill",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "zoom",
+                "type": {
+                  "basic": "float"
+                }
+              },
+              {
+                "name": "r",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "g",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "b",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "a",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "addScale",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "zoom",
+                "type": {
+                  "basic": "float"
+                }
+              },
+              {
+                "name": "scale",
+                "type": {
+                  "basic": "float"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "addTexture",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "zoom",
+                "type": {
+                  "basic": "float"
+                }
+              },
+              {
+                "name": "texturePath",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "getFillAlpha",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "int"
+              }
+            }
+          },
+          {
+            "name": "getFillBlue",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "int"
+              }
+            }
+          },
+          {
+            "name": "getFillGreen",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "int"
+              }
+            }
+          },
+          {
+            "name": "getFillRed",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "int"
+              }
+            }
+          },
+          {
+            "name": "getFillStops",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "int"
+              }
+            }
+          },
+          {
+            "name": "getFillZoom",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          },
+          {
+            "name": "getFilterKey",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "getFilterValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "getTexture",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "Texture"
+              }
+            }
+          },
+          {
+            "name": "getTexturePath",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "getTextureStops",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "int"
+              }
+            }
+          },
+          {
+            "name": "getTextureZoom",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          },
+          {
+            "name": "moveFill",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "indexFrom",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "indexTo",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "moveTexture",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "indexFrom",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "indexTo",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "removeFill",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "removeTexture",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "setFillRGBA",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "r",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "g",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "b",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "a",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "setFillZoom",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "zoom",
+                "type": {
+                  "basic": "float"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "setFilter",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "key",
+                "type": {
+                  "basic": "String"
+                }
+              },
+              {
+                "name": "value",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "setTexturePath",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "texturePath",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "setTextureZoom",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "zoom",
+                "type": {
+                  "basic": "float"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "static"
+        ],
+        "javaType": "class",
+        "extends": "WorldMapStyleV1.WorldMapStyleLayerV1"
+      },
+      "WorldMapStyleV1.WorldMapStyleLayerV1": {
+        "methods": [
+          {
+            "name": "getId",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "getMinZoom",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          },
+          {
+            "name": "getTypeString",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "setId",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "id",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "setMinZoom",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "minZoom",
+                "type": {
+                  "basic": "float"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "static"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      },
+      "WorldMapStyleV1.WorldMapTextureStyleLayerV1": {
+        "methods": [
+          {
+            "name": "addFill",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "zoom",
+                "type": {
+                  "basic": "float"
+                }
+              },
+              {
+                "name": "r",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "g",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "b",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "a",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "addTexture",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "zoom",
+                "type": {
+                  "basic": "float"
+                }
+              },
+              {
+                "name": "texturePath",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "getFillAlpha",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "int"
+              }
+            }
+          },
+          {
+            "name": "getFillBlue",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "int"
+              }
+            }
+          },
+          {
+            "name": "getFillGreen",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "int"
+              }
+            }
+          },
+          {
+            "name": "getFillRed",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "int"
+              }
+            }
+          },
+          {
+            "name": "getFillStops",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "int"
+              }
+            }
+          },
+          {
+            "name": "getFillZoom",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          },
+          {
+            "name": "getHeightInSquares",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "int"
+              }
+            }
+          },
+          {
+            "name": "getMaxXInSquares",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "int"
+              }
+            }
+          },
+          {
+            "name": "getMaxYInSquares",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "int"
+              }
+            }
+          },
+          {
+            "name": "getMinXInSquares",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "int"
+              }
+            }
+          },
+          {
+            "name": "getMinYInSquares",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "int"
+              }
+            }
+          },
+          {
+            "name": "getTexture",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "Texture"
+              }
+            }
+          },
+          {
+            "name": "getTexturePath",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "getTextureStops",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "int"
+              }
+            }
+          },
+          {
+            "name": "getTextureZoom",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          },
+          {
+            "name": "getWidthInSquares",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "int"
+              }
+            }
+          },
+          {
+            "name": "isTile",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          },
+          {
+            "name": "isUseWorldBounds",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          },
+          {
+            "name": "moveFill",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "indexFrom",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "indexTo",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "moveTexture",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "indexFrom",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "indexTo",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "removeAllFill",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "removeAllTexture",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "removeFill",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "removeTexture",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "setBoundsInSquares",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "minX",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "minY",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "maxX",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "maxY",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "setFillRGBA",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "r",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "g",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "b",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "a",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "setFillZoom",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "zoom",
+                "type": {
+                  "basic": "float"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "setTexturePath",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "texturePath",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "setTextureZoom",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "index",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "zoom",
+                "type": {
+                  "basic": "float"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "setTile",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "tile",
+                "type": {
+                  "basic": "boolean"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "setUseWorldBounds",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "useWorldBounds",
+                "type": {
+                  "basic": "boolean"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "static"
+        ],
+        "javaType": "class",
+        "extends": "WorldMapStyleV1.WorldMapStyleLayerV1"
+      },
+      "WorldMapTextureStyleLayer": {
+        "fields": {
+          "m_fill": {
+            "name": "m_fill",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          },
+          "m_texture": {
+            "name": "m_texture",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          },
+          "m_tile": {
+            "name": "m_tile",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "boolean"
+            }
+          },
+          "m_useWorldBounds": {
+            "name": "m_useWorldBounds",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "boolean"
+            }
+          },
+          "m_worldX1": {
+            "name": "m_worldX1",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "int"
+            }
+          },
+          "m_worldX2": {
+            "name": "m_worldX2",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "int"
+            }
+          },
+          "m_worldY1": {
+            "name": "m_worldY1",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "int"
+            }
+          },
+          "m_worldY2": {
+            "name": "m_worldY2",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "int"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "id",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "filter",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "feature",
+                "type": {
+                  "basic": "WorldMapFeature"
+                }
+              },
+              {
+                "name": "args",
+                "type": {
+                  "basic": "WorldMapStyleLayer.FilterArgs"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          },
+          {
+            "name": "getTypeString",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "render",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "feature",
+                "type": {
+                  "basic": "WorldMapFeature"
+                }
+              },
+              {
+                "name": "args",
+                "type": {
+                  "basic": "WorldMapStyleLayer.RenderArgs"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "renderCell",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "args",
+                "type": {
+                  "basic": "WorldMapStyleLayer.RenderArgs"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "WorldMapStyleLayer"
+      }
+    }
+  }
+}

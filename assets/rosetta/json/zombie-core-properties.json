@@ -1,0 +1,423 @@
+{
+  "namespaces": {
+    "zombie.core.properties": {
+      "PropertyContainer": {
+        "fields": {
+          "sorted": {
+            "name": "sorted",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "type": {
+              "basic": "List"
+            }
+          },
+          "test": {
+            "name": "test",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "type": {
+              "basic": "NonBlockingHashMap"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "AddProperties",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "other",
+                "type": {
+                  "basic": "PropertyContainer"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "Clear",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "CreateKeySet",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "getFlagsList",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "ArrayList"
+              }
+            }
+          },
+          {
+            "name": "getItemHeight",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "int"
+              }
+            }
+          },
+          {
+            "name": "getPropertyNames",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "ArrayList"
+              }
+            }
+          },
+          {
+            "name": "getStackReplaceTileOffset",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "int"
+              }
+            }
+          },
+          {
+            "name": "getSurface",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "int"
+              }
+            }
+          },
+          {
+            "name": "Is",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "flag",
+                "type": {
+                  "basic": "IsoFlagType"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          },
+          {
+            "name": "Is",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "flag",
+                "type": {
+                  "basic": "Double"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          },
+          {
+            "name": "Is",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "isoPropertyType",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          },
+          {
+            "name": "isSurfaceOffset",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          },
+          {
+            "name": "isTable",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          },
+          {
+            "name": "isTableTop",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          },
+          {
+            "name": "Set",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "propName",
+                "type": {
+                  "basic": "String"
+                }
+              },
+              {
+                "name": "propName2",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "Set",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "propName",
+                "type": {
+                  "basic": "String"
+                }
+              },
+              {
+                "name": "propName2",
+                "type": {
+                  "basic": "String"
+                }
+              },
+              {
+                "name": "checkIsoFlagType",
+                "type": {
+                  "basic": "boolean"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "Set",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "flag",
+                "type": {
+                  "basic": "IsoFlagType"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "Set",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "flag",
+                "type": {
+                  "basic": "IsoFlagType"
+                }
+              },
+              {
+                "name": "ignored",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "UnSet",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "propName",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "UnSet",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "flag",
+                "type": {
+                  "basic": "IsoFlagType"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "Val",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "property",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      },
+      "PropertyContainer.MostTested": {
+        "fields": {
+          "count": {
+            "name": "count",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "int"
+            }
+          },
+          "flag": {
+            "name": "flag",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "IsoFlagType"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "modifiers": [
+          "public",
+          "static"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      }
+    }
+  }
+}

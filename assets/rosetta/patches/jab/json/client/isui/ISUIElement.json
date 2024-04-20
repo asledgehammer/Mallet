@@ -1,0 +1,199 @@
+{
+    "$schema": "https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-schema.json",
+    "luaClasses": {
+        "ISUIElement": {
+            "notes": "**ISUIElement** is the base UI class in the Project Zomboid Lua codebase.",
+            "fields": {
+                "anchorBottom": {
+                    "type": "boolean",
+                    "notes": "This is a test."
+                },
+                "anchorLeft": {
+                    "type": "boolean"
+                },
+                "anchorRight": {
+                    "type": "boolean"
+                },
+                "anchorTop": {
+                    "type": "boolean"
+                },
+                "children": {
+                    "type": "table<string, ISUIElement>"
+                },
+                "controller": {
+                    "notes": "Unknown Type"
+                },
+                "dock": {
+                    "type": "string"
+                },
+                "enabled": {
+                    "type": "boolean"
+                },
+                "forceCursorVisible": {
+                    "type": "boolean"
+                },
+                "height": {
+                    "type": "double",
+                    "notes": "The height of the UI element. (In pixels)"
+                },
+                "hscroll": {
+                    "type": "ISScrollBar",
+                    "notes": "Horizontal Scrollbar."
+                },
+                "ID": {
+                    "type": "int",
+                    "notes": "The internal ID of the UI element."
+                },
+                "javaObject": {
+                    "type": "UIElement",
+                    "notes": "The Java instance of the UI element. This is used to communicate with the game's UI engine."
+                },
+                "joyfocus": {
+                    "notes": "Some kind of Joypad data."
+                },
+                "minimumHeight": {
+                    "type": "number",
+                    "notes": "The minimum height of the UI element. (In pixels)"
+                },
+                "minimumWidth": {
+                    "type": "number",
+                    "notes": "The minimum width of the UI element. (In pixels)"
+                },
+                "onMouseDoubleClick": {
+                    "type": "fun():void",
+                    "notes": "A callback function for double clicking."
+                },
+                "removed": {
+                    "type": "boolean",
+                    "notes": "True if the UI element is removed from the UI manager."
+                },
+                "scrollwidth": {
+                    "type": "number"
+                },
+                "target": {
+                    "notes": "(Related to 'onMouseDoubleClick')"
+                },
+                "vscroll": {
+                    "type": "ISScrollBar",
+                    "notes": "Vertical Scrollbar."
+                },
+                "wantKeyEvents": {
+                    "type": "boolean"
+                },
+                "width": {
+                    "type": "number",
+                    "notes": "The width of the UI element. (In pixels)"
+                },
+                "x": {
+                    "type": "number",
+                    "notes": "The x coordinate on the screen. (In pixels)"
+                },
+                "y": {
+                    "type": "number",
+                    "notes": "The y coordinate on the screen. (In pixels)"
+                }
+            },
+            "methods": {
+                "addChild": {
+                    "notes": "Adds a child UI element to this UI element.",
+                    "parameters": [
+                        {
+                            "name": "other",
+                            "type": "ISUIElement",
+                            "notes": "The UI element to add as a child to this UI element."
+                        }
+                    ],
+                    "returns": {
+                        "type": "void"
+                    }
+                },
+                "addScrollBars": {
+                    "notes": "Adds a vertical ISScrollBar to the UI element.",
+                    "parameters": [
+                        {
+                            "name": "addHorizontal",
+                            "type": "boolean",
+                            "notes": "If true, the ISUIElement will also have a horizontal scrollbar."
+                        }
+                    ],
+                    "returns": {
+                        "type": "void"
+                    }
+                },
+                "addToUIManager": {
+                    "notes": "Adds this UI element to the UI manager for the game.",
+                    "returns": {
+                        "type": "void"
+                    }
+                },
+                "drawTexture": {
+                    "notes": "Draws a texture on the screen using top-left coordinates and a color multiplier.",
+                    "parameters": [
+                        {
+                            "name": "texture",
+                            "notes": "The texture to draw. If null, the color will be the texture.",
+                            "type": "Texture2D"
+                        },
+                        {
+                            "name": "x",
+                            "notes": "The x coordinate on the screen to draw the left of the texture. (In pixels)",
+                            "type": "number"
+                        },
+                        {
+                            "name": "y",
+                            "notes": "The y coordinate on the screen to draw the top of the texture. (In pixels)",
+                            "type": "number"
+                        },
+                        {
+                            "name": "red",
+                            "notes": "The red color value to draw. (Range: 0.0 -> 1.0)",
+                            "type": "number"
+                        },
+                        {
+                            "name": "green",
+                            "notes": "The green color value to draw. (Range: 0.0 -> 1.0)",
+                            "type": "number"
+                        },
+                        {
+                            "name": "blue",
+                            "notes": "The blue color value to draw. (Range: 0.0 -> 1.0)",
+                            "type": "number"
+                        },
+                        {
+                            "name": "alpha",
+                            "notes": "The alpha value to draw. (Range: 0.0 -> 1.0)",
+                            "type": "number"
+                        }
+                    ],
+                    "returns": {
+                        "type": "void"
+                    }
+                }
+            },
+            "constructor": {
+                "parameters": [
+                    {
+                        "name": "x",
+                        "type": "number",
+                        "notes": "The x coordinate on the screen. (In pixels)"
+                    },
+                    {
+                        "name": "y",
+                        "type": "number",
+                        "notes": "The y coordinate on the screen. (In pixels)"
+                    },
+                    {
+                        "name": "width",
+                        "type": "number",
+                        "notes": "The width of the UI element. (In pixels)"
+                    },
+                    {
+                        "name": "height",
+                        "type": "number",
+                        "notes": "The height of the UI element. (In pixels)"
+                    }
+                ]
+            }
+        }
+    }
+}

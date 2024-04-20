@@ -1,0 +1,3488 @@
+{
+  "namespaces": {
+    "zombie.core.skinnedmodel.population": {
+      "BeardStyle": {
+        "fields": {
+          "growReference": {
+            "name": "growReference",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "boolean"
+            }
+          },
+          "level": {
+            "name": "level",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "int"
+            }
+          },
+          "model": {
+            "name": "model",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "name": {
+            "name": "name",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "texture": {
+            "name": "texture",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "trimChoices": {
+            "name": "trimChoices",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "getLevel",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "int"
+              }
+            }
+          },
+          {
+            "name": "getName",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "getTrimChoices",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "ArrayList"
+              }
+            }
+          },
+          {
+            "name": "isValid",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      },
+      "BeardStyles": {
+        "fields": {
+          "instance": {
+            "name": "instance",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "type": {
+              "basic": "BeardStyles"
+            }
+          },
+          "m_Styles": {
+            "name": "m_Styles",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "FindStyle",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "name",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "BeardStyle"
+              }
+            }
+          },
+          {
+            "name": "getAllStyles",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "ArrayList"
+              }
+            }
+          },
+          {
+            "name": "getInstance",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "BeardStyles"
+              }
+            }
+          },
+          {
+            "name": "getRandomStyle",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "outfitName",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "init",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "parse",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "parameters": [
+              {
+                "name": "filename",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "BeardStyles"
+              }
+            }
+          },
+          {
+            "name": "Parse",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "parameters": [
+              {
+                "name": "filename",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "BeardStyles"
+              }
+            }
+          },
+          {
+            "name": "Reset",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      },
+      "CarriedItem": {
+        "fields": {
+          "m_Model": {
+            "name": "m_Model",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_Texture": {
+            "name": "m_Texture",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_TwoHanded": {
+            "name": "m_TwoHanded",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "boolean"
+            }
+          },
+          "m_WeaponType": {
+            "name": "m_WeaponType",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      },
+      "ClothingDecal": {
+        "fields": {
+          "height": {
+            "name": "height",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "int"
+            }
+          },
+          "name": {
+            "name": "name",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "texture": {
+            "name": "texture",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "width": {
+            "name": "width",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "int"
+            }
+          },
+          "x": {
+            "name": "x",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "int"
+            }
+          },
+          "y": {
+            "name": "y",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "int"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "isValid",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      },
+      "ClothingDecalGroup": {
+        "fields": {
+          "m_Decals": {
+            "name": "m_Decals",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          },
+          "m_Groups": {
+            "name": "m_Groups",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          },
+          "m_Name": {
+            "name": "m_Name",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "getDecals",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "decals",
+                "type": {
+                  "basic": "ArrayList",
+                  "full": "ArrayList<String>"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "getRandomDecal",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      },
+      "ClothingDecals": {
+        "fields": {
+          "instance": {
+            "name": "instance",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "type": {
+              "basic": "ClothingDecals"
+            }
+          },
+          "m_Groups": {
+            "name": "m_Groups",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "FindGroup",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "name",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "ClothingDecalGroup"
+              }
+            }
+          },
+          {
+            "name": "getDecal",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "name",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "ClothingDecal"
+              }
+            }
+          },
+          {
+            "name": "getRandomDecal",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "groupName",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "init",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "parse",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "parameters": [
+              {
+                "name": "filename",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "ClothingDecals"
+              }
+            }
+          },
+          {
+            "name": "Parse",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "parameters": [
+              {
+                "name": "filename",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "ClothingDecals"
+              }
+            }
+          },
+          {
+            "name": "Reset",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      },
+      "ClothingItem": {
+        "fields": {
+          "ASSET_TYPE": {
+            "name": "ASSET_TYPE",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "AssetType"
+            }
+          },
+          "m_AllowRandomHue": {
+            "name": "m_AllowRandomHue",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "boolean"
+            }
+          },
+          "m_AllowRandomTint": {
+            "name": "m_AllowRandomTint",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "boolean"
+            }
+          },
+          "m_AttachBone": {
+            "name": "m_AttachBone",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_BaseTextures": {
+            "name": "m_BaseTextures",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          },
+          "m_DecalGroup": {
+            "name": "m_DecalGroup",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_FemaleModel": {
+            "name": "m_FemaleModel",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_GUID": {
+            "name": "m_GUID",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_HatCategory": {
+            "name": "m_HatCategory",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_MaleModel": {
+            "name": "m_MaleModel",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_Masks": {
+            "name": "m_Masks",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          },
+          "m_MasksFolder": {
+            "name": "m_MasksFolder",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_Name": {
+            "name": "m_Name",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_Shader": {
+            "name": "m_Shader",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_Static": {
+            "name": "m_Static",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "boolean"
+            }
+          },
+          "m_UnderlayMasksFolder": {
+            "name": "m_UnderlayMasksFolder",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "s_masksFolderDefault": {
+            "name": "s_masksFolderDefault",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "textureChoices": {
+            "name": "textureChoices",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "path",
+                "type": {
+                  "basic": "AssetPath"
+                }
+              },
+              {
+                "name": "assetManager",
+                "type": {
+                  "basic": "AssetManager"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "getAllowRandomHue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          },
+          {
+            "name": "getAllowRandomTint",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          },
+          {
+            "name": "GetATexture",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "getBaseTextures",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "ArrayList"
+              }
+            }
+          },
+          {
+            "name": "getCombinedMask",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "in_out_mask",
+                "type": {
+                  "basic": "CharacterMask"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "getDecalGroup",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "getFemaleModel",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "getMaleModel",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "getModel",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "female",
+                "type": {
+                  "basic": "boolean"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "getTextureChoices",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "ArrayList"
+              }
+            }
+          },
+          {
+            "name": "getType",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "AssetType"
+              }
+            }
+          },
+          {
+            "name": "hasModel",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          },
+          {
+            "name": "isHat",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          },
+          {
+            "name": "isMask",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          },
+          {
+            "name": "tryGetCombinedMask",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "parameters": [
+              {
+                "name": "itemRef",
+                "type": {
+                  "basic": "ClothingItemReference"
+                }
+              },
+              {
+                "name": "in_out_mask",
+                "type": {
+                  "basic": "CharacterMask"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "tryGetCombinedMask",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "parameters": [
+              {
+                "name": "item",
+                "type": {
+                  "basic": "ClothingItem"
+                }
+              },
+              {
+                "name": "in_out_mask",
+                "type": {
+                  "basic": "CharacterMask"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "Asset"
+      },
+      "ClothingItemAssetManager": {
+        "fields": {
+          "instance": {
+            "name": "instance",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ClothingItemAssetManager"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "onStateChanged",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "old_state",
+                "type": {
+                  "basic": "Asset.State"
+                }
+              },
+              {
+                "name": "new_state",
+                "type": {
+                  "basic": "Asset.State"
+                }
+              },
+              {
+                "name": "asset",
+                "type": {
+                  "basic": "Asset"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "AssetManager"
+      },
+      "ClothingItemReference": {
+        "fields": {
+          "bRandomized": {
+            "name": "bRandomized",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "boolean"
+            }
+          },
+          "itemGUID": {
+            "name": "itemGUID",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_Immutable": {
+            "name": "m_Immutable",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "boolean"
+            }
+          },
+          "probability": {
+            "name": "probability",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "float"
+            }
+          },
+          "RandomData": {
+            "name": "RandomData",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ClothingItemReference.RandomData"
+            }
+          },
+          "subItems": {
+            "name": "subItems",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "clone",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "ClothingItemReference"
+              }
+            }
+          },
+          {
+            "name": "getClothingItem",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "ClothingItem"
+              }
+            }
+          },
+          {
+            "name": "randomize",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "setModID",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "modID",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      },
+      "ClothingItemReference.RandomData": {
+        "fields": {
+          "m_Active": {
+            "name": "m_Active",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "boolean"
+            }
+          },
+          "m_BaseTexture": {
+            "name": "m_BaseTexture",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_Decal": {
+            "name": "m_Decal",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_Hue": {
+            "name": "m_Hue",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "float"
+            }
+          },
+          "m_PickedItemRef": {
+            "name": "m_PickedItemRef",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "ClothingItemReference"
+            }
+          },
+          "m_TextureChoice": {
+            "name": "m_TextureChoice",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_Tint": {
+            "name": "m_Tint",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "ImmutableColor"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "reset",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "static"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      },
+      "ClothingItemXML": {
+        "fields": {
+          "m_AllowRandomHue": {
+            "name": "m_AllowRandomHue",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "boolean"
+            }
+          },
+          "m_AllowRandomTint": {
+            "name": "m_AllowRandomTint",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "boolean"
+            }
+          },
+          "m_AttachBone": {
+            "name": "m_AttachBone",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_BaseTextures": {
+            "name": "m_BaseTextures",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          },
+          "m_DecalGroup": {
+            "name": "m_DecalGroup",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_FemaleModel": {
+            "name": "m_FemaleModel",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_GUID": {
+            "name": "m_GUID",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_HatCategory": {
+            "name": "m_HatCategory",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_MaleModel": {
+            "name": "m_MaleModel",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_Masks": {
+            "name": "m_Masks",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          },
+          "m_MasksFolder": {
+            "name": "m_MasksFolder",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_Shader": {
+            "name": "m_Shader",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_Static": {
+            "name": "m_Static",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "boolean"
+            }
+          },
+          "m_UnderlayMasksFolder": {
+            "name": "m_UnderlayMasksFolder",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "textureChoices": {
+            "name": "textureChoices",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      },
+      "DefaultClothing": {
+        "fields": {
+          "instance": {
+            "name": "instance",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "DefaultClothing"
+            }
+          },
+          "m_dirty": {
+            "name": "m_dirty",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "boolean"
+            }
+          },
+          "Pants": {
+            "name": "Pants",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "zombie.core.skinnedmodel.population.DefaultClothing.Clothing"
+            }
+          },
+          "TShirt": {
+            "name": "TShirt",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "zombie.core.skinnedmodel.population.DefaultClothing.Clothing"
+            }
+          },
+          "TShirtDecal": {
+            "name": "TShirtDecal",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "zombie.core.skinnedmodel.population.DefaultClothing.Clothing"
+            }
+          },
+          "Vest": {
+            "name": "Vest",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "zombie.core.skinnedmodel.population.DefaultClothing.Clothing"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "pickPantsHue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "pickPantsTexture",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "pickPantsTint",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "pickTShirtDecalTexture",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "pickTShirtDecalTint",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "pickTShirtTexture",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "pickTShirtTint",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "pickVestTexture",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "pickVestTint",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      },
+      "HairStyle": {
+        "fields": {
+          "alternate": {
+            "name": "alternate",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          },
+          "attachedHair": {
+            "name": "attachedHair",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "boolean"
+            }
+          },
+          "growReference": {
+            "name": "growReference",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "boolean"
+            }
+          },
+          "level": {
+            "name": "level",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "int"
+            }
+          },
+          "model": {
+            "name": "model",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "name": {
+            "name": "name",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "noChoose": {
+            "name": "noChoose",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "boolean"
+            }
+          },
+          "texture": {
+            "name": "texture",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "trimChoices": {
+            "name": "trimChoices",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "getAlternate",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "category",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "getLevel",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "int"
+              }
+            }
+          },
+          {
+            "name": "getName",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "getTrimChoices",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "ArrayList"
+              }
+            }
+          },
+          {
+            "name": "isAttachedHair",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          },
+          {
+            "name": "isGrowReference",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          },
+          {
+            "name": "isNoChoose",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          },
+          {
+            "name": "isValid",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      },
+      "HairStyle.Alternate": {
+        "fields": {
+          "category": {
+            "name": "category",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "style": {
+            "name": "style",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "modifiers": [
+          "public",
+          "static",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      },
+      "HairStyles": {
+        "fields": {
+          "instance": {
+            "name": "instance",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "type": {
+              "basic": "HairStyles"
+            }
+          },
+          "m_FemaleStyles": {
+            "name": "m_FemaleStyles",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          },
+          "m_MaleStyles": {
+            "name": "m_MaleStyles",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "FindFemaleStyle",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "name",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "HairStyle"
+              }
+            }
+          },
+          {
+            "name": "FindMaleStyle",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "name",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "HairStyle"
+              }
+            }
+          },
+          {
+            "name": "getAllFemaleStyles",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "ArrayList"
+              }
+            }
+          },
+          {
+            "name": "getAllMaleStyles",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "ArrayList"
+              }
+            }
+          },
+          {
+            "name": "getAlternateForHat",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "style",
+                "type": {
+                  "basic": "HairStyle"
+                }
+              },
+              {
+                "name": "category",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "HairStyle"
+              }
+            }
+          },
+          {
+            "name": "getRandomFemaleStyle",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "outfitName",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "getRandomMaleStyle",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "outfitName",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "String"
+              }
+            }
+          },
+          {
+            "name": "init",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "parse",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "parameters": [
+              {
+                "name": "filename",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "HairStyles"
+              }
+            }
+          },
+          {
+            "name": "Parse",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "parameters": [
+              {
+                "name": "filename",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "HairStyles"
+              }
+            }
+          },
+          {
+            "name": "Reset",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      },
+      "IClothingItemListener": {
+        "methods": [
+          {
+            "name": "clothingItemChanged",
+            "parameters": [
+              {
+                "name": "itemGuid",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "interface"
+      },
+      "ItemManager": {
+        "fields": {
+          "instance": {
+            "name": "instance",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "type": {
+              "basic": "ItemManager"
+            }
+          },
+          "m_Items": {
+            "name": "m_Items",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "GetRandomItem",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "CarriedItem"
+              }
+            }
+          },
+          {
+            "name": "init",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "parse",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "parameters": [
+              {
+                "name": "filename",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "ItemManager"
+              }
+            }
+          },
+          {
+            "name": "Parse",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "parameters": [
+              {
+                "name": "filename",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "ItemManager"
+              }
+            }
+          },
+          {
+            "name": "write",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "parameters": [
+              {
+                "name": "out",
+                "type": {
+                  "basic": "ItemManager"
+                }
+              },
+              {
+                "name": "filename",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "Write",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "parameters": [
+              {
+                "name": "out",
+                "type": {
+                  "basic": "ItemManager"
+                }
+              },
+              {
+                "name": "filename",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      },
+      "Outfit": {
+        "fields": {
+          "m_AllowPantsHue": {
+            "name": "m_AllowPantsHue",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "boolean"
+            }
+          },
+          "m_AllowPantsTint": {
+            "name": "m_AllowPantsTint",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "boolean"
+            }
+          },
+          "m_AllowTopTint": {
+            "name": "m_AllowTopTint",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "boolean"
+            }
+          },
+          "m_AllowTShirtDecal": {
+            "name": "m_AllowTShirtDecal",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "boolean"
+            }
+          },
+          "m_Immutable": {
+            "name": "m_Immutable",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "boolean"
+            }
+          },
+          "m_items": {
+            "name": "m_items",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          },
+          "m_modID": {
+            "name": "m_modID",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_Name": {
+            "name": "m_Name",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_Pants": {
+            "name": "m_Pants",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "boolean"
+            }
+          },
+          "m_PantsTextures": {
+            "name": "m_PantsTextures",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          },
+          "m_Top": {
+            "name": "m_Top",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "boolean"
+            }
+          },
+          "m_TopTextures": {
+            "name": "m_TopTextures",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          },
+          "RandomData": {
+            "name": "RandomData",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "Outfit.RandomData"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "AddItem",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "item",
+                "type": {
+                  "basic": "ClothingItemReference"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "clone",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "Outfit"
+              }
+            }
+          },
+          {
+            "name": "containsItemGuid",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "itemGuid",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          },
+          {
+            "name": "findHat",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "ClothingItemReference"
+              }
+            }
+          },
+          {
+            "name": "findItemByGUID",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "itemGuid",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "ClothingItemReference"
+              }
+            }
+          },
+          {
+            "name": "GetMask",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "CharacterMask"
+              }
+            }
+          },
+          {
+            "name": "isEmpty",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          },
+          {
+            "name": "loadItems",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "Randomize",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "randomizeItem",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "itemGuid",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "setModID",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "modID",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      },
+      "Outfit.RandomData": {
+        "fields": {
+          "m_beardName": {
+            "name": "m_beardName",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_femaleHairName": {
+            "name": "m_femaleHairName",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_hairColor": {
+            "name": "m_hairColor",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "ImmutableColor"
+            }
+          },
+          "m_hasTop": {
+            "name": "m_hasTop",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "boolean"
+            }
+          },
+          "m_hasTShirt": {
+            "name": "m_hasTShirt",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "boolean"
+            }
+          },
+          "m_hasTShirtDecal": {
+            "name": "m_hasTShirtDecal",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "boolean"
+            }
+          },
+          "m_maleHairName": {
+            "name": "m_maleHairName",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_pantsHue": {
+            "name": "m_pantsHue",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "float"
+            }
+          },
+          "m_pantsTexture": {
+            "name": "m_pantsTexture",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_pantsTint": {
+            "name": "m_pantsTint",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "ImmutableColor"
+            }
+          },
+          "m_topTexture": {
+            "name": "m_topTexture",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "String"
+            }
+          },
+          "m_topTint": {
+            "name": "m_topTint",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "ImmutableColor"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "modifiers": [
+          "public",
+          "static"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      },
+      "OutfitManager": {
+        "fields": {
+          "instance": {
+            "name": "instance",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "type": {
+              "basic": "OutfitManager"
+            }
+          },
+          "m_FemaleOutfits": {
+            "name": "m_FemaleOutfits",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          },
+          "m_MaleOutfits": {
+            "name": "m_MaleOutfits",
+            "modifiers": [
+              "public"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "addClothingItemListener",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "listener",
+                "type": {
+                  "basic": "IClothingItemListener"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "debugOutfits",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "FindFemaleOutfit",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "outfitName",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "Outfit"
+              }
+            }
+          },
+          {
+            "name": "FindMaleOutfit",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "outfitName",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "Outfit"
+              }
+            }
+          },
+          {
+            "name": "getClothingItem",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "itemGUID",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "ClothingItem"
+              }
+            }
+          },
+          {
+            "name": "GetRandomNonProfessionalOutfit",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "female",
+                "type": {
+                  "basic": "boolean"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "Outfit"
+              }
+            }
+          },
+          {
+            "name": "GetRandomOutfit",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "female",
+                "type": {
+                  "basic": "boolean"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "Outfit"
+              }
+            }
+          },
+          {
+            "name": "GetSpecificOutfit",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "female",
+                "type": {
+                  "basic": "boolean"
+                }
+              },
+              {
+                "name": "outfitName",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "Outfit"
+              }
+            }
+          },
+          {
+            "name": "init",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            },
+            "notes": "Global initializer."
+          },
+          {
+            "name": "isLoadingClothingItems",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          },
+          {
+            "name": "loadAllClothingItems",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "onClothingItemStateChanged",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "clothingItem",
+                "type": {
+                  "basic": "ClothingItem"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "Reload",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "removeClothingItemListener",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "listener",
+                "type": {
+                  "basic": "IClothingItemListener"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "Reset",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      },
+      "OutfitRNG": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "getSeed",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "returns": {
+              "type": {
+                "basic": "long"
+              }
+            }
+          },
+          {
+            "name": "Next",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "parameters": [
+              {
+                "name": "max",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "int"
+              }
+            }
+          },
+          {
+            "name": "Next",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "parameters": [
+              {
+                "name": "min",
+                "type": {
+                  "basic": "int"
+                }
+              },
+              {
+                "name": "max",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "int"
+              }
+            }
+          },
+          {
+            "name": "Next",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "parameters": [
+              {
+                "name": "min",
+                "type": {
+                  "basic": "float"
+                }
+              },
+              {
+                "name": "max",
+                "type": {
+                  "basic": "float"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          },
+          {
+            "name": "NextBool",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "parameters": [
+              {
+                "name": "invProbability",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          },
+          {
+            "name": "pickRandom",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "parameters": [
+              {
+                "name": "collection",
+                "type": {
+                  "basic": "List",
+                  "full": "List<E>"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "E"
+              }
+            }
+          },
+          {
+            "name": "randomImmutableColor",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "returns": {
+              "type": {
+                "basic": "ImmutableColor"
+              }
+            }
+          },
+          {
+            "name": "setSeed",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "parameters": [
+              {
+                "name": "seed",
+                "type": {
+                  "basic": "long"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "Object"
+      },
+      "PopTemplateManager": {
+        "fields": {
+          "instance": {
+            "name": "instance",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "PopTemplateManager"
+            }
+          },
+          "m_FemaleSkins": {
+            "name": "m_FemaleSkins",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          },
+          "m_FemaleSkins_Zombie1": {
+            "name": "m_FemaleSkins_Zombie1",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          },
+          "m_FemaleSkins_Zombie2": {
+            "name": "m_FemaleSkins_Zombie2",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          },
+          "m_FemaleSkins_Zombie3": {
+            "name": "m_FemaleSkins_Zombie3",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          },
+          "m_MaleSkins": {
+            "name": "m_MaleSkins",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          },
+          "m_MaleSkins_Zombie1": {
+            "name": "m_MaleSkins_Zombie1",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          },
+          "m_MaleSkins_Zombie2": {
+            "name": "m_MaleSkins_Zombie2",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          },
+          "m_MaleSkins_Zombie3": {
+            "name": "m_MaleSkins_Zombie3",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          },
+          "m_SkeletonFemaleSkins_Zombie": {
+            "name": "m_SkeletonFemaleSkins_Zombie",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          },
+          "m_SkeletonMaleSkins_Zombie": {
+            "name": "m_SkeletonMaleSkins_Zombie",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "ArrayList"
+            }
+          },
+          "SKELETON_BURNED_SKIN_INDEX": {
+            "name": "SKELETON_BURNED_SKIN_INDEX",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "int"
+            }
+          },
+          "SKELETON_MUSCLE_SKIN_INDEX": {
+            "name": "SKELETON_MUSCLE_SKIN_INDEX",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "int"
+            }
+          },
+          "SKELETON_NORMAL_SKIN_INDEX": {
+            "name": "SKELETON_NORMAL_SKIN_INDEX",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "int"
+            }
+          }
+        },
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "addClothingItem",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "chr",
+                "type": {
+                  "basic": "IsoGameCharacter"
+                }
+              },
+              {
+                "name": "modelSlot",
+                "type": {
+                  "basic": "ModelManager.ModelSlot"
+                }
+              },
+              {
+                "name": "itemVisual",
+                "type": {
+                  "basic": "ItemVisual"
+                }
+              },
+              {
+                "name": "clothingItem",
+                "type": {
+                  "basic": "ClothingItem"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "ModelInstance"
+              }
+            }
+          },
+          {
+            "name": "init",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "isItemModelHidden",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "bodyLocationGroup",
+                "type": {
+                  "basic": "BodyLocationGroup"
+                }
+              },
+              {
+                "name": "visuals",
+                "type": {
+                  "basic": "ItemVisuals"
+                }
+              },
+              {
+                "name": "visual",
+                "type": {
+                  "basic": "ItemVisual"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          },
+          {
+            "name": "populateCharacterModelSlot",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "chr",
+                "type": {
+                  "basic": "IsoGameCharacter"
+                }
+              },
+              {
+                "name": "modelSlot",
+                "type": {
+                  "basic": "ModelManager.ModelSlot"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "Object",
+        "notes": "Created by LEMMY on 3/5/2016."
+      }
+    }
+  }
+}

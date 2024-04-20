@@ -1,0 +1,9 @@
+{
+    "name": "Jab's Test Patch",
+    "version": "1.0.0",
+    "authors": [
+        "Jab"
+    ],
+    "description": "This is a test patch.",
+    "priority": 1
+}

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Mallet</title>
+
+    <!-- jQuery v3.7.1 -->
+    <script type="text/javascript" src="/vendor/jquery/3.7.1/jquery.min.js"></script>
+
+    <!-- jQueryUI v.1.13.2 -->
+    <link rel="stylesheet" href="/vendor/jquery-ui/1.13.2/jquery-ui.min.css" />
+    <script type="text/javascript" src="/vendor/jquery-ui/1.13.2/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="/vendor/bs5treeview-1.2.0/dist/css/bstreeview.min.css" />
+    <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css" />
+
+    <!-- <link rel="stylesheet" href="/vendor/highlight/styles/base16/synth-midnight-terminal-dark.min.css" /> -->
+    <link rel="stylesheet" href="/vendor/highlight/styles/felipec.min.css" />
+
+    <!-- Compiled SCSS -->
+    <link rel="stylesheet" href="/assets/css/main.css" />
+</head>
+
+<body>
+    <!-- [Screen] - Main Layer -->
+    <div id="screen-layer-main" class="screen" style="position: relative">
+        <!-- [Screen] - Sidebar -->
+        <div id="screen-sidebar-container" class="screen-sidebar-start"></div>
+        <!-- [Screen] - Content -->
+        <div id="screen-content-container" class="screen-content-end p-4" style="overflow-y: auto;"></div>
+        <!-- [Screen] - Preview -->
+        <pre id="screen-content-render" class="screen-content-render p-4 bg-black" style="overflow-y: auto;"></pre>
+    </div>
+
+    <!-- SCRIPTS -->
+
+    <script type="text/javascript" src="/vendor/ten-lines-typescript-amd-loader.js"></script>
+
+    <script type="text/javascript" src="/vendor/highlight/highlight.min.js"></script>
+
+    <script type="text/javascript" src="/vendor/bootstrap/5.3.2/js/bootstrap.bundle.js"></script>
+    <script type="text/javascript" src="/vendor/bs5treeview-1.2.0/dist/js/bstreeview.min.js"></script>
+    <script type="text/javascript" src="/build/app.js"></script>
+
+    <input type=file id="load-file" style="display: none"/>
+</body>
+
+</html>

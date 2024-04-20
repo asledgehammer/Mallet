@@ -1,0 +1,117 @@
+@import '../bootswatch/darkly/variables';
+
+html,
+body {
+    min-height: 100vh;
+}
+
+.screen {
+    height: 100vh;
+    max-height: 100vh;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.screen-sidebar-start {
+    position: absolute;
+    width: 292px;
+    height: 100%;
+}
+
+.screen-content-end {
+    position: absolute;
+    left: 292px;
+    height: 100%;
+    // min-width: 768px;
+    width: calc(100% - (292px + 768px));
+    max-width: calc(100% - 768px);
+    
+    background-size: 20px 20px;
+    background-color: #222;
+    background-image:
+        linear-gradient(to right, #292929 1px, transparent 1px),
+        linear-gradient(to bottom, #292929 1px, transparent 1px);
+}
+
+.screen-content-render {
+    display: block;
+    position: absolute;
+    right: 0;
+    height: 100%;
+    width: 768px;
+}
+
+.responsive-card {
+    border-color: rgba($light, 0.5);
+}
+
+
+
+.responsive-input {
+
+    background-color: #222 !important;
+    color: $light !important;
+
+    border-color: rgba($light, 0.5);
+    border-radius: 1px;
+    border-style: solid;
+    border-radius: 0;
+
+    :focus, :hover {
+        background-color: $black;
+        color: $light;
+        border-color: rgba($dark, 0.5);
+    }
+}
+
+.responsive-subcard {
+    border: 1px solid rgba($light, 0.5);
+    border-radius: 0;
+
+    .card-header {
+        background-color: #222;
+        cursor: pointer;
+    }
+    
+    .card-body {
+        background-color: $secondary;
+    }
+
+    pre.card-body {
+        background-color: $black !important;
+        overflow: scroll;
+    }
+}
+
+.responsive-select {
+    border-radius: 0;
+
+    background-color: #222 !important;
+    color: $light !important;
+
+    border-color: rgba($light, 0.5);
+    border-radius: 1px;
+    border-style: solid;
+    border-radius: 0;
+}
+
+.responsive-badge {
+    background-color: rgba($success, 0.5);
+    color: $white;
+}
+
+// Disable the preview and only let the sidebar and end content panes show.
+@media only screen and (max-width: 1400px) {
+
+    .screen-content-render {
+       display: none;
+    }
+
+    .screen-content-end {
+        position: absolute;
+        height: 100%;
+        width: calc(100% - 292px);
+        min-width: 480px;
+        max-width: calc(100% - 292px);
+    }
+  }

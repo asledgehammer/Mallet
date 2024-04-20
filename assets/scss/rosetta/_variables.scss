@@ -1,0 +1,57 @@
+$vscode-color-1: #007acc;
+$vscode-color-2: #3e3e42;
+$vscode-color-3: #2d2d30;
+$vscode-color-4: #252526;
+$vscode-color-5: #1e1e1e;
+$vscode-color-6: hsl(0, 0%, 6%);
+$vscode-soft-color-1: hsl(204, 75%, 75%);
+
+* {
+    --vscode-color-1: #{$vscode-color-1};
+    --vscode-color-2: #{$vscode-color-2};
+    --vscode-color-3: #{$vscode-color-3};
+    --vscode-color-4: #{$vscode-color-4};
+    --vscode-color-5: #{$vscode-color-5};
+    --vscode-color-6: #{$vscode-color-6};
+    --vscode-soft-color-1: #{$vscode-soft-color-1};
+}
+
+.vs-color-1 {
+    color: $vscode-color-1 !important;
+}
+.vs-color-2 {
+    color: $vscode-color-2 !important;
+}
+.vs-color-3 {
+    color: $vscode-color-3 !important;
+}
+.vs-color-4 {
+    color: $vscode-color-4 !important;
+}
+.vs-color-5 {
+    color: $vscode-color-5 !important;
+}
+.vs-color-6 {
+    color: $vscode-color-6 !important;
+}
+.vs-bg-1 {
+    background-color: $vscode-color-1 !important;
+}
+.vs-bg-2 {
+    background-color: $vscode-color-2 !important;
+}
+.vs-bg-3 {
+    background-color: $vscode-color-3 !important;
+}
+.vs-bg-4 {
+    background-color: $vscode-color-4 !important;
+}
+.vs-bg-5 {
+    background-color: $vscode-color-5 !important;
+}
+.vs-bg-6 {
+    background-color: $vscode-color-6 !important;
+}
+.vs-bg-soft-1 {
+    background-color: $vscode-soft-color-1 !important;
+}

@@ -1,0 +1,4482 @@
+{
+    "$schema": "https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-patch-schema.json",
+    "namespaces": {
+        "zombie.Lua": {
+            "LuaManager.GlobalObject": {
+                "notes": "Hi.",
+                "methods": [
+                    {
+                        "parameters": [
+                            {
+                                "type": "Faction",
+                                "name": "faction"
+                            },
+                            {
+                                "type": "String",
+                                "name": "host"
+                            }
+                        ],
+                        "name": "acceptFactionInvite"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "SafeHouse",
+                                "name": "safehouse"
+                            },
+                            {
+                                "type": "String",
+                                "name": "host"
+                            }
+                        ],
+                        "name": "acceptSafehouseInvite"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoPlayer",
+                                "name": "you"
+                            },
+                            {
+                                "type": "IsoPlayer",
+                                "name": "other"
+                            },
+                            {
+                                "type": "boolean",
+                                "name": "accept"
+                            }
+                        ],
+                        "name": "acceptTrading"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "url"
+                            }
+                        ],
+                        "name": "activateSteamOverlayToWebPage"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "itemID"
+                            }
+                        ],
+                        "name": "activateSteamOverlayToWorkshopItem"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Predicate",
+                                "name": "predicate"
+                            }
+                        ],
+                        "name": "addAllVehicles"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoGridSquare",
+                                "name": "sq"
+                            },
+                            {
+                                "type": "int",
+                                "name": "nbr"
+                            }
+                        ],
+                        "name": "addBloodSplat"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoGridSquare",
+                                "name": "sq"
+                            },
+                            {
+                                "type": "int",
+                                "name": "radius"
+                            }
+                        ],
+                        "name": "AddNoiseToken"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoObject",
+                                "name": "source"
+                            },
+                            {
+                                "type": "int",
+                                "name": "x"
+                            },
+                            {
+                                "type": "int",
+                                "name": "y"
+                            },
+                            {
+                                "type": "int",
+                                "name": "z"
+                            },
+                            {
+                                "type": "int",
+                                "name": "radius"
+                            },
+                            {
+                                "type": "int",
+                                "name": "volume"
+                            }
+                        ],
+                        "name": "addSound"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "author"
+                            },
+                            {
+                                "type": "String",
+                                "name": "message"
+                            },
+                            {
+                                "type": "int",
+                                "name": "ticketID"
+                            }
+                        ],
+                        "name": "addTicket"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "user"
+                            },
+                            {
+                                "type": "String",
+                                "name": "type"
+                            },
+                            {
+                                "type": "String",
+                                "name": "text"
+                            }
+                        ],
+                        "name": "addUserlog"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "script"
+                            }
+                        ],
+                        "name": "addVehicle"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "scriptName"
+                            },
+                            {
+                                "type": "IsoDirections",
+                                "name": "dir"
+                            },
+                            {
+                                "type": "Integer",
+                                "name": "skinIndex"
+                            },
+                            {
+                                "type": "IsoGridSquare",
+                                "name": "sq"
+                            }
+                        ],
+                        "name": "addVehicleDebug"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "x"
+                            },
+                            {
+                                "type": "int",
+                                "name": "y"
+                            }
+                        ],
+                        "name": "addVirtualZombie"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "user"
+                            },
+                            {
+                                "type": "String",
+                                "name": "reason"
+                            },
+                            {
+                                "type": "int",
+                                "name": "amount"
+                            }
+                        ],
+                        "name": "addWarningPoint"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoPlayer",
+                                "name": "player"
+                            },
+                            {
+                                "type": "int",
+                                "name": "radius"
+                            },
+                            {
+                                "type": "int",
+                                "name": "volume"
+                            }
+                        ],
+                        "name": "AddWorldSound"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "x"
+                            },
+                            {
+                                "type": "int",
+                                "name": "y"
+                            },
+                            {
+                                "type": "int",
+                                "name": "z"
+                            },
+                            {
+                                "type": "int",
+                                "name": "totalZombies"
+                            },
+                            {
+                                "type": "boolean",
+                                "name": "skeletonBody"
+                            }
+                        ],
+                        "name": "addZombiesEating"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "BuildingDef",
+                                "name": "def"
+                            },
+                            {
+                                "type": "int",
+                                "name": "totalZombies"
+                            },
+                            {
+                                "type": "String",
+                                "name": "outfit"
+                            },
+                            {
+                                "type": "RoomDef",
+                                "name": "room"
+                            },
+                            {
+                                "type": "Integer",
+                                "name": "femaleChance"
+                            }
+                        ],
+                        "name": "addZombiesInBuilding"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "x"
+                            },
+                            {
+                                "type": "int",
+                                "name": "y"
+                            },
+                            {
+                                "type": "int",
+                                "name": "z"
+                            },
+                            {
+                                "type": "int",
+                                "name": "totalZombies"
+                            },
+                            {
+                                "type": "String",
+                                "name": "outfit"
+                            },
+                            {
+                                "type": "Integer",
+                                "name": "femaleChance"
+                            }
+                        ],
+                        "name": "addZombiesInOutfit"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "x"
+                            },
+                            {
+                                "type": "int",
+                                "name": "y"
+                            },
+                            {
+                                "type": "int",
+                                "name": "z"
+                            },
+                            {
+                                "type": "int",
+                                "name": "totalZombies"
+                            },
+                            {
+                                "type": "String",
+                                "name": "outfit"
+                            },
+                            {
+                                "type": "Integer",
+                                "name": "femaleChance"
+                            },
+                            {
+                                "type": "boolean",
+                                "name": "isCrawler"
+                            },
+                            {
+                                "type": "boolean",
+                                "name": "isFallOnFront"
+                            },
+                            {
+                                "type": "boolean",
+                                "name": "isFakeDead"
+                            },
+                            {
+                                "type": "boolean",
+                                "name": "isKnockedDown"
+                            },
+                            {
+                                "type": "float",
+                                "name": "health"
+                            }
+                        ],
+                        "name": "addZombiesInOutfit"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "x1"
+                            },
+                            {
+                                "type": "int",
+                                "name": "y1"
+                            },
+                            {
+                                "type": "int",
+                                "name": "x2"
+                            },
+                            {
+                                "type": "int",
+                                "name": "y2"
+                            },
+                            {
+                                "type": "int",
+                                "name": "z"
+                            },
+                            {
+                                "type": "int",
+                                "name": "totalZombies"
+                            },
+                            {
+                                "type": "String",
+                                "name": "outfit"
+                            },
+                            {
+                                "type": "Integer",
+                                "name": "femaleChance"
+                            }
+                        ],
+                        "name": "addZombiesInOutfitArea"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "x"
+                            },
+                            {
+                                "type": "int",
+                                "name": "y"
+                            },
+                            {
+                                "type": "int",
+                                "name": "z"
+                            }
+                        ],
+                        "name": "addZombieSitting"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "playerIndex"
+                            }
+                        ],
+                        "name": "attachTrailerToPlayerVehicle"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "chatCommand"
+                            }
+                        ],
+                        "name": "checkPlayerCanUseChat"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "f"
+                            }
+                        ],
+                        "name": "checkSaveFileExists"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "f"
+                            }
+                        ],
+                        "name": "checkSaveFolderExists"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "name"
+                            }
+                        ],
+                        "name": "checkServerName"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "pattern"
+                            }
+                        ],
+                        "name": "checkStringPattern"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "newName"
+                            },
+                            {
+                                "type": "String",
+                                "name": "oldName"
+                            }
+                        ],
+                        "name": "cloneItemType"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "float",
+                                "name": "darkStep"
+                            }
+                        ],
+                        "name": "configureLighting"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "button"
+                            }
+                        ],
+                        "name": "connectToServerStateCallback"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "KahluaTable",
+                                "name": "table"
+                            }
+                        ],
+                        "name": "copyTable"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "KahluaTable",
+                                "name": "to"
+                            },
+                            {
+                                "type": "KahluaTable",
+                                "name": "from"
+                            }
+                        ],
+                        "name": "copyTable"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "float",
+                                "name": "spawnX"
+                            },
+                            {
+                                "type": "float",
+                                "name": "spawnY"
+                            },
+                            {
+                                "type": "float",
+                                "name": "targetX"
+                            },
+                            {
+                                "type": "float",
+                                "name": "targetY"
+                            },
+                            {
+                                "type": "int",
+                                "name": "count"
+                            }
+                        ],
+                        "name": "createHordeFromTo"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "spawnX"
+                            },
+                            {
+                                "type": "int",
+                                "name": "spawnY"
+                            },
+                            {
+                                "type": "int",
+                                "name": "spawnW"
+                            },
+                            {
+                                "type": "int",
+                                "name": "spawnH"
+                            },
+                            {
+                                "type": "int",
+                                "name": "targetX"
+                            },
+                            {
+                                "type": "int",
+                                "name": "targetY"
+                            },
+                            {
+                                "type": "int",
+                                "name": "count"
+                            }
+                        ],
+                        "name": "createHordeInAreaTo"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "InventoryItem",
+                                "name": "item"
+                            },
+                            {
+                                "type": "ItemContainer",
+                                "name": "src"
+                            },
+                            {
+                                "type": "ItemContainer",
+                                "name": "dst"
+                            }
+                        ],
+                        "name": "createItemTransaction"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "base"
+                            },
+                            {
+                                "type": "String",
+                                "name": "name"
+                            },
+                            {
+                                "type": "String",
+                                "name": "display"
+                            },
+                            {
+                                "type": "String",
+                                "name": "type"
+                            },
+                            {
+                                "type": "String",
+                                "name": "icon"
+                            }
+                        ],
+                        "name": "createNewScriptItem"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoGridSquare",
+                                "name": "square"
+                            },
+                            {
+                                "type": "int",
+                                "name": "blood"
+                            }
+                        ],
+                        "name": "createRandomDeadBody"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "storyName"
+                            }
+                        ],
+                        "name": "createStory"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "tile"
+                            },
+                            {
+                                "type": "IsoGridSquare",
+                                "name": "square"
+                            }
+                        ],
+                        "name": "createTile"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "worldName"
+                            }
+                        ],
+                        "name": "createWorld"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "float",
+                                "name": "x"
+                            },
+                            {
+                                "type": "float",
+                                "name": "y"
+                            },
+                            {
+                                "type": "float",
+                                "name": "z"
+                            },
+                            {
+                                "type": "SurvivorDesc",
+                                "name": "desc"
+                            },
+                            {
+                                "type": "int",
+                                "name": "palette"
+                            },
+                            {
+                                "type": "IsoDirections",
+                                "name": "dir"
+                            }
+                        ],
+                        "name": "createZombie"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "x"
+                            },
+                            {
+                                "type": "int",
+                                "name": "y"
+                            }
+                        ],
+                        "name": "debugFullyStreamedIn"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Object",
+                                "name": "param"
+                            }
+                        ],
+                        "name": "debugLuaTable"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Object",
+                                "name": "param"
+                            },
+                            {
+                                "type": "int",
+                                "name": "depth"
+                            }
+                        ],
+                        "name": "debugLuaTable"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Double",
+                                "name": "roomType"
+                            }
+                        ],
+                        "name": "debugSetRoomType"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "gameMode"
+                            }
+                        ],
+                        "name": "deleteAllGameModeSaves"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "fileName"
+                            }
+                        ],
+                        "name": "deletePlayerSave"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "name"
+                            }
+                        ],
+                        "name": "deleteSandboxPreset"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "file"
+                            }
+                        ],
+                        "name": "deleteSave"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "KahluaTable",
+                                "name": "challenge"
+                            }
+                        ],
+                        "name": "doChallenge"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "boolean",
+                                "name": "doIt"
+                            }
+                        ],
+                        "name": "doKeyPress"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "action"
+                            }
+                        ],
+                        "name": "doLuaDebuggerAction"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "KahluaTable",
+                                "name": "tutorial"
+                            }
+                        ],
+                        "name": "doTutorial"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "UIElement",
+                                "name": "ui"
+                            },
+                            {
+                                "type": "float",
+                                "name": "zoom"
+                            },
+                            {
+                                "type": "float",
+                                "name": "xpos"
+                            },
+                            {
+                                "type": "float",
+                                "name": "ypos"
+                            }
+                        ],
+                        "name": "drawOverheadMap"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "query"
+                            },
+                            {
+                                "type": "KahluaTable",
+                                "name": "params"
+                            }
+                        ],
+                        "name": "executeQuery"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "filename"
+                            }
+                        ],
+                        "name": "fileExists"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Short",
+                                "name": "id"
+                            }
+                        ],
+                        "name": "focusOnTab"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "GameState",
+                                "name": "state"
+                            }
+                        ],
+                        "name": "forceChangeState"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "f"
+                            }
+                        ],
+                        "name": "getAbsoluteSaveFolderName"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "InventoryItem",
+                                "name": "item"
+                            }
+                        ],
+                        "name": "getAllDecalNamesForItem"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "boolean",
+                                "name": "female"
+                            }
+                        ],
+                        "name": "getAllHairStyles"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "bodyLocation"
+                            }
+                        ],
+                        "name": "getAllItemsForBodyLocation"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "boolean",
+                                "name": "female"
+                            }
+                        ],
+                        "name": "getAllOutfits"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            }
+                        ],
+                        "name": "getButtonCount"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Coroutine",
+                                "name": "c"
+                            }
+                        ],
+                        "name": "getCallframeTop"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Object",
+                                "name": "o"
+                            },
+                            {
+                                "type": "int",
+                                "name": "i"
+                            }
+                        ],
+                        "name": "getClassField"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Object",
+                                "name": "o"
+                            },
+                            {
+                                "type": "Field",
+                                "name": "field"
+                            }
+                        ],
+                        "name": "getClassFieldVal"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Object",
+                                "name": "o"
+                            },
+                            {
+                                "type": "int",
+                                "name": "i"
+                            }
+                        ],
+                        "name": "getClassFunction"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "c"
+                            }
+                        ],
+                        "name": "getControllerAxisCount"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "c"
+                            },
+                            {
+                                "type": "int",
+                                "name": "axis"
+                            }
+                        ],
+                        "name": "getControllerAxisValue"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "c"
+                            }
+                        ],
+                        "name": "getControllerButtonCount"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "c"
+                            },
+                            {
+                                "type": "int",
+                                "name": "axis"
+                            }
+                        ],
+                        "name": "getControllerDeadZone"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            }
+                        ],
+                        "name": "getControllerGUID"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            }
+                        ],
+                        "name": "getControllerName"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "c"
+                            }
+                        ],
+                        "name": "getControllerPovX"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "c"
+                            }
+                        ],
+                        "name": "getControllerPovY"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Coroutine",
+                                "name": "c"
+                            },
+                            {
+                                "type": "int",
+                                "name": "n"
+                            }
+                        ],
+                        "name": "getCoroutineCallframeStack"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Coroutine",
+                                "name": "c"
+                            },
+                            {
+                                "type": "int",
+                                "name": "n"
+                            }
+                        ],
+                        "name": "getCoroutineObjStack"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Coroutine",
+                                "name": "c"
+                            },
+                            {
+                                "type": "int",
+                                "name": "n"
+                            }
+                        ],
+                        "name": "getCoroutineObjStackWithBase"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Coroutine",
+                                "name": "c"
+                            }
+                        ],
+                        "name": "getCoroutineTop"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoGameCharacter",
+                                "name": "chara"
+                            },
+                            {
+                                "type": "IsoObject",
+                                "name": "objTarget"
+                            }
+                        ],
+                        "name": "getDirectionTo"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "filename"
+                            }
+                        ],
+                        "name": "getFileInput"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "LuaCallFrame",
+                                "name": "c"
+                            }
+                        ],
+                        "name": "getFilenameOfCallframe"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "LuaClosure",
+                                "name": "c"
+                            }
+                        ],
+                        "name": "getFilenameOfClosure"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "filename"
+                            }
+                        ],
+                        "name": "getFileOutput"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "filename"
+                            },
+                            {
+                                "type": "boolean",
+                                "name": "createIfNull"
+                            }
+                        ],
+                        "name": "getFileReader"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "filename"
+                            },
+                            {
+                                "type": "boolean",
+                                "name": "createIfNull"
+                            },
+                            {
+                                "type": "boolean",
+                                "name": "append"
+                            }
+                        ],
+                        "name": "getFileWriter"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "LuaClosure",
+                                "name": "c"
+                            }
+                        ],
+                        "name": "getFirstLineOfClosure"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "filename"
+                            }
+                        ],
+                        "name": "getGameFilesInput"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "filename"
+                            }
+                        ],
+                        "name": "getGameFilesTextInput"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "fullType"
+                            }
+                        ],
+                        "name": "getItemNameFromFullType"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "txt"
+                            }
+                        ],
+                        "name": "getItemText"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            }
+                        ],
+                        "name": "getJoypadAButton"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            }
+                        ],
+                        "name": "getJoypadAimingAxisX"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            }
+                        ],
+                        "name": "getJoypadAimingAxisY"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            }
+                        ],
+                        "name": "getJoypadBackButton"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            }
+                        ],
+                        "name": "getJoypadBButton"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            }
+                        ],
+                        "name": "getJoypadLBumper"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            }
+                        ],
+                        "name": "getJoypadLeftStickButton"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            }
+                        ],
+                        "name": "getJoypadMovementAxisX"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            }
+                        ],
+                        "name": "getJoypadMovementAxisY"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            }
+                        ],
+                        "name": "getJoypadRBumper"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            }
+                        ],
+                        "name": "getJoypadRightStickButton"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            }
+                        ],
+                        "name": "getJoypadStartButton"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            }
+                        ],
+                        "name": "getJoypadXButton"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            }
+                        ],
+                        "name": "getJoypadYButton"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "keyName"
+                            }
+                        ],
+                        "name": "getKeyCode"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "key"
+                            }
+                        ],
+                        "name": "getKeyName"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "filename"
+                            }
+                        ],
+                        "name": "getLastPlayedDate"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "LuaCallFrame",
+                                "name": "c"
+                            }
+                        ],
+                        "name": "getLineNumber"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "n"
+                            }
+                        ],
+                        "name": "getLoadedLua"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Coroutine",
+                                "name": "c"
+                            }
+                        ],
+                        "name": "getLocalVarCount"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Coroutine",
+                                "name": "c"
+                            },
+                            {
+                                "type": "int",
+                                "name": "n"
+                            }
+                        ],
+                        "name": "getLocalVarName"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Coroutine",
+                                "name": "c"
+                            },
+                            {
+                                "type": "int",
+                                "name": "n"
+                            }
+                        ],
+                        "name": "getLocalVarStack"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "modID"
+                            }
+                        ],
+                        "name": "getMapFoldersForMod"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "mapDir"
+                            }
+                        ],
+                        "name": "getMapInfo"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Method",
+                                "name": "o"
+                            },
+                            {
+                                "type": "int",
+                                "name": "i"
+                            }
+                        ],
+                        "name": "getMethodParameter"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Method",
+                                "name": "o"
+                            }
+                        ],
+                        "name": "getMethodParameterCount"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "modId"
+                            },
+                            {
+                                "type": "String",
+                                "name": "filename"
+                            },
+                            {
+                                "type": "boolean",
+                                "name": "createIfNull"
+                            }
+                        ],
+                        "name": "getModFileReader"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "modId"
+                            },
+                            {
+                                "type": "String",
+                                "name": "filename"
+                            },
+                            {
+                                "type": "boolean",
+                                "name": "createIfNull"
+                            },
+                            {
+                                "type": "boolean",
+                                "name": "append"
+                            }
+                        ],
+                        "name": "getModFileWriter"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "modDir"
+                            }
+                        ],
+                        "name": "getModInfo"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "modID"
+                            }
+                        ],
+                        "name": "getModInfoByID"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Object",
+                                "name": "o"
+                            }
+                        ],
+                        "name": "getNumClassFields"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Object",
+                                "name": "o"
+                            }
+                        ],
+                        "name": "getNumClassFunctions"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "category"
+                            }
+                        ],
+                        "name": "getPacketCounts"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "id"
+                            }
+                        ],
+                        "name": "getPlayerByOnlineID"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "username"
+                            }
+                        ],
+                        "name": "getPlayerFromUsername"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoPlayer",
+                                "name": "player"
+                            }
+                        ],
+                        "name": "getPlayerInfo"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "player"
+                            }
+                        ],
+                        "name": "getPlayerScreenHeight"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "player"
+                            }
+                        ],
+                        "name": "getPlayerScreenLeft"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "player"
+                            }
+                        ],
+                        "name": "getPlayerScreenTop"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "player"
+                            }
+                        ],
+                        "name": "getPlayerScreenWidth"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "txt"
+                            }
+                        ],
+                        "name": "getRadioText"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Language",
+                                "name": "language"
+                            }
+                        ],
+                        "name": "getRadioTranslators"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "name"
+                            }
+                        ],
+                        "name": "getRecipeDisplayName"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "filename"
+                            },
+                            {
+                                "type": "boolean",
+                                "name": "createIfNull"
+                            },
+                            {
+                                "type": "boolean",
+                                "name": "append"
+                            }
+                        ],
+                        "name": "getSandboxFileWriter"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "folder"
+                            }
+                        ],
+                        "name": "getSaveDirectory"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "saveDir"
+                            }
+                        ],
+                        "name": "getSaveInfo"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "File",
+                                "name": "file"
+                            }
+                        ],
+                        "name": "getSaveName"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "saveFolder"
+                            }
+                        ],
+                        "name": "getServerSavedWorldVersion"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "str"
+                            }
+                        ],
+                        "name": "getShortenedFilename"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "player"
+                            }
+                        ],
+                        "name": "getSpecificPlayer"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "sprite"
+                            }
+                        ],
+                        "name": "getSprite"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "sprite"
+                            }
+                        ],
+                        "name": "getSpriteManager"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "double",
+                                "name": "x"
+                            },
+                            {
+                                "type": "double",
+                                "name": "y"
+                            },
+                            {
+                                "type": "double",
+                                "name": "z"
+                            }
+                        ],
+                        "name": "getSquare"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "steamID"
+                            }
+                        ],
+                        "name": "getSteamAvatarFromSteamID"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "username"
+                            }
+                        ],
+                        "name": "getSteamAvatarFromUsername"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "username"
+                            }
+                        ],
+                        "name": "getSteamIDFromUsername"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "steamID"
+                            }
+                        ],
+                        "name": "getSteamProfileNameFromSteamID"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "username"
+                            }
+                        ],
+                        "name": "getSteamProfileNameFromUsername"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "itemIDStr"
+                            }
+                        ],
+                        "name": "getSteamWorkshopItemMods"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "tableName"
+                            },
+                            {
+                                "type": "int",
+                                "name": "numberPerPages"
+                            }
+                        ],
+                        "name": "getTableResult"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "txt"
+                            }
+                        ],
+                        "name": "getText"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "txt"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "arg1"
+                            }
+                        ],
+                        "name": "getText"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "txt"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "arg1"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "arg2"
+                            }
+                        ],
+                        "name": "getText"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "txt"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "arg1"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "arg2"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "arg3"
+                            }
+                        ],
+                        "name": "getText"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "txt"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "arg1"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "arg2"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "arg3"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "arg4"
+                            }
+                        ],
+                        "name": "getText"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "txt"
+                            }
+                        ],
+                        "name": "getTextMediaEN"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "txt"
+                            }
+                        ],
+                        "name": "getTextOrNull"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "txt"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "arg1"
+                            }
+                        ],
+                        "name": "getTextOrNull"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "txt"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "arg1"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "arg2"
+                            }
+                        ],
+                        "name": "getTextOrNull"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "txt"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "arg1"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "arg2"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "arg3"
+                            }
+                        ],
+                        "name": "getTextOrNull"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "txt"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "arg1"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "arg2"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "arg3"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "arg4"
+                            }
+                        ],
+                        "name": "getTextOrNull"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "filename"
+                            }
+                        ],
+                        "name": "getTexture"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "filename"
+                            },
+                            {
+                                "type": "String",
+                                "name": "saveName"
+                            }
+                        ],
+                        "name": "getTextureFromSaveDir"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "author"
+                            }
+                        ],
+                        "name": "getTickets"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Language",
+                                "name": "language"
+                            }
+                        ],
+                        "name": "getTranslatorCredits"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "url"
+                            }
+                        ],
+                        "name": "getUrlInputStream"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "id"
+                            }
+                        ],
+                        "name": "getVehicleById"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "BaseVehicle",
+                                "name": "vehicle"
+                            }
+                        ],
+                        "name": "getVehicleInfo"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "x"
+                            },
+                            {
+                                "type": "int",
+                                "name": "y"
+                            },
+                            {
+                                "type": "int",
+                                "name": "z"
+                            }
+                        ],
+                        "name": "getVehicleZoneAt"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoZombie",
+                                "name": "zombie"
+                            }
+                        ],
+                        "name": "getZombieInfo"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "x"
+                            },
+                            {
+                                "type": "int",
+                                "name": "y"
+                            },
+                            {
+                                "type": "int",
+                                "name": "z"
+                            }
+                        ],
+                        "name": "getZone"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "x"
+                            },
+                            {
+                                "type": "int",
+                                "name": "y"
+                            },
+                            {
+                                "type": "int",
+                                "name": "z"
+                            }
+                        ],
+                        "name": "getZones"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "file"
+                            },
+                            {
+                                "type": "int",
+                                "name": "line"
+                            }
+                        ],
+                        "name": "hasBreakpoint"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "KahluaTable",
+                                "name": "table"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "key"
+                            }
+                        ],
+                        "name": "hasDataBreakpoint"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "KahluaTable",
+                                "name": "table"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "key"
+                            }
+                        ],
+                        "name": "hasDataReadBreakpoint"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Item",
+                                "name": "item"
+                            }
+                        ],
+                        "name": "instanceItem"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "item"
+                            }
+                        ],
+                        "name": "instanceItem"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Object",
+                                "name": "obj"
+                            },
+                            {
+                                "type": "String",
+                                "name": "name"
+                            }
+                        ],
+                        "name": "instof"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "steamID"
+                            }
+                        ],
+                        "name": "inviteFriend"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "long",
+                                "name": "itemId"
+                            },
+                            {
+                                "type": "String",
+                                "name": "itemType"
+                            },
+                            {
+                                "type": "IsoPlayer",
+                                "name": "player"
+                            }
+                        ],
+                        "name": "InvMngGetItem"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "long",
+                                "name": "itemId"
+                            },
+                            {
+                                "type": "IsoPlayer",
+                                "name": "player"
+                            }
+                        ],
+                        "name": "InvMngRemoveItem"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "accessLevel"
+                            }
+                        ],
+                        "name": "isAccessLevel"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "index"
+                            }
+                        ],
+                        "name": "isControllerConnected"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "file"
+                            },
+                            {
+                                "type": "int",
+                                "name": "line"
+                            }
+                        ],
+                        "name": "isCurrentExecutionPoint"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "InventoryItem",
+                                "name": "item"
+                            },
+                            {
+                                "type": "ItemContainer",
+                                "name": "src"
+                            },
+                            {
+                                "type": "ItemContainer",
+                                "name": "dst"
+                            }
+                        ],
+                        "name": "isItemTransactionConsistent"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "index"
+                            }
+                        ],
+                        "name": "isJoypadConnected"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            }
+                        ],
+                        "name": "isJoypadDown"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            }
+                        ],
+                        "name": "isJoypadLBPressed"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            }
+                        ],
+                        "name": "isJoypadLeft"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            }
+                        ],
+                        "name": "isJoypadLeftStickButtonPressed"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            }
+                        ],
+                        "name": "isJoypadLTPressed"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            },
+                            {
+                                "type": "int",
+                                "name": "button"
+                            }
+                        ],
+                        "name": "isJoypadPressed"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            }
+                        ],
+                        "name": "isJoypadRBPressed"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            }
+                        ],
+                        "name": "isJoypadRight"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            }
+                        ],
+                        "name": "isJoypadRightStickButtonPressed"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            }
+                        ],
+                        "name": "isJoypadRTPressed"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            }
+                        ],
+                        "name": "isJoypadUp"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "key"
+                            }
+                        ],
+                        "name": "isKeyDown"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "key"
+                            }
+                        ],
+                        "name": "isKeyPressed"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Mod",
+                                "name": "mod"
+                            }
+                        ],
+                        "name": "isModActive"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "number"
+                            }
+                        ],
+                        "name": "isMouseButtonDown"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "player"
+                            },
+                            {
+                                "type": "float",
+                                "name": "x"
+                            },
+                            {
+                                "type": "float",
+                                "name": "y"
+                            },
+                            {
+                                "type": "float",
+                                "name": "z"
+                            }
+                        ],
+                        "name": "isoToScreenX"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "player"
+                            },
+                            {
+                                "type": "float",
+                                "name": "x"
+                            },
+                            {
+                                "type": "float",
+                                "name": "y"
+                            },
+                            {
+                                "type": "float",
+                                "name": "z"
+                            }
+                        ],
+                        "name": "isoToScreenY"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Object",
+                                "name": "sound"
+                            }
+                        ],
+                        "name": "isSoundPlaying"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Object",
+                                "name": "obj"
+                            },
+                            {
+                                "type": "String",
+                                "name": "name"
+                            }
+                        ],
+                        "name": "isType"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "s"
+                            }
+                        ],
+                        "name": "isValidSteamID"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "user"
+                            }
+                        ],
+                        "name": "isValidUserName"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "name"
+                            },
+                            {
+                                "type": "String",
+                                "name": "loc"
+                            },
+                            {
+                                "type": "String",
+                                "name": "tex"
+                            }
+                        ],
+                        "name": "loadSkinnedZomboidModel"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "name"
+                            },
+                            {
+                                "type": "String",
+                                "name": "loc"
+                            },
+                            {
+                                "type": "String",
+                                "name": "tex"
+                            }
+                        ],
+                        "name": "loadStaticZomboidModel"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "name"
+                            },
+                            {
+                                "type": "String",
+                                "name": "loc"
+                            },
+                            {
+                                "type": "String",
+                                "name": "tex"
+                            }
+                        ],
+                        "name": "loadVehicleModel"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "name"
+                            },
+                            {
+                                "type": "String",
+                                "name": "mesh"
+                            },
+                            {
+                                "type": "String",
+                                "name": "tex"
+                            },
+                            {
+                                "type": "String",
+                                "name": "shader"
+                            },
+                            {
+                                "type": "boolean",
+                                "name": "bStatic"
+                            }
+                        ],
+                        "name": "loadZomboidModel"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Coroutine",
+                                "name": "c"
+                            },
+                            {
+                                "type": "int",
+                                "name": "n"
+                            }
+                        ],
+                        "name": "localVarName"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "folder"
+                            },
+                            {
+                                "type": "String",
+                                "name": "action"
+                            }
+                        ],
+                        "name": "manipulateSavefile"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "module"
+                            },
+                            {
+                                "type": "String",
+                                "name": "type"
+                            }
+                        ],
+                        "name": "moduleDotType"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "url"
+                            }
+                        ],
+                        "name": "openURl"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "username"
+                            },
+                            {
+                                "type": "String",
+                                "name": "pwd"
+                            },
+                            {
+                                "type": "String",
+                                "name": "ip"
+                            },
+                            {
+                                "type": "String",
+                                "name": "port"
+                            }
+                        ],
+                        "name": "ping"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "sound"
+                            },
+                            {
+                                "type": "IsoGridSquare",
+                                "name": "sq"
+                            }
+                        ],
+                        "name": "playServerSound"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "message"
+                            }
+                        ],
+                        "name": "ProceedFactionMessage"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "command"
+                            }
+                        ],
+                        "name": "proceedPM"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "message"
+                            }
+                        ],
+                        "name": "ProcessAdminChatMessage"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "message"
+                            }
+                        ],
+                        "name": "processGeneralMessage"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "message"
+                            }
+                        ],
+                        "name": "ProcessSafehouseMessage"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "message"
+                            }
+                        ],
+                        "name": "processSayMessage"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "message"
+                            }
+                        ],
+                        "name": "processShoutMessage"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "ArrayList",
+                                "name": "itemIDs"
+                            },
+                            {
+                                "type": "LuaClosure",
+                                "name": "functionObj"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "arg1"
+                            }
+                        ],
+                        "name": "querySteamWorkshopItemDetails"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "eventChar"
+                            }
+                        ],
+                        "name": "queueCharEvent"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "lwjglKeyCode"
+                            }
+                        ],
+                        "name": "queueKeyEvent"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "cmd"
+                            },
+                            {
+                                "type": "int",
+                                "name": "arg"
+                            }
+                        ],
+                        "name": "rainConfig"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "boolean",
+                                "name": "reload"
+                            }
+                        ],
+                        "name": "refreshAnimSets"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "filename"
+                            }
+                        ],
+                        "name": "reloadLuaFile"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "meshName"
+                            }
+                        ],
+                        "name": "reloadModelsMatching"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "filename"
+                            }
+                        ],
+                        "name": "reloadServerLuaFile"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "scriptName"
+                            }
+                        ],
+                        "name": "reloadVehicleTextures"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "InventoryItem",
+                                "name": "item"
+                            },
+                            {
+                                "type": "ItemContainer",
+                                "name": "src"
+                            },
+                            {
+                                "type": "ItemContainer",
+                                "name": "dst"
+                            }
+                        ],
+                        "name": "removeItemTransaction"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "ticketID"
+                            }
+                        ],
+                        "name": "removeTicket"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "user"
+                            },
+                            {
+                                "type": "String",
+                                "name": "type"
+                            },
+                            {
+                                "type": "String",
+                                "name": "text"
+                            }
+                        ],
+                        "name": "removeUserlog"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "gameMode"
+                            },
+                            {
+                                "type": "String",
+                                "name": "oldName"
+                            },
+                            {
+                                "type": "String",
+                                "name": "newName"
+                            }
+                        ],
+                        "name": "renameSaveFile"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "InventoryItem",
+                                "name": "item"
+                            },
+                            {
+                                "type": "IsoGridSquare",
+                                "name": "sq"
+                            },
+                            {
+                                "type": "float",
+                                "name": "xoffset"
+                            },
+                            {
+                                "type": "float",
+                                "name": "yoffset"
+                            },
+                            {
+                                "type": "float",
+                                "name": "zoffset"
+                            },
+                            {
+                                "type": "float",
+                                "name": "rotation"
+                            }
+                        ],
+                        "name": "Render3DItem"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "float",
+                                "name": "x"
+                            },
+                            {
+                                "type": "float",
+                                "name": "y"
+                            },
+                            {
+                                "type": "float",
+                                "name": "z"
+                            },
+                            {
+                                "type": "float",
+                                "name": "radius"
+                            },
+                            {
+                                "type": "float",
+                                "name": "r"
+                            },
+                            {
+                                "type": "float",
+                                "name": "g"
+                            },
+                            {
+                                "type": "float",
+                                "name": "b"
+                            },
+                            {
+                                "type": "float",
+                                "name": "a"
+                            },
+                            {
+                                "type": "int",
+                                "name": "thickness"
+                            }
+                        ],
+                        "name": "renderIsoCircle"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "toReplace"
+                            },
+                            {
+                                "type": "String",
+                                "name": "regex"
+                            },
+                            {
+                                "type": "String",
+                                "name": "by"
+                            }
+                        ],
+                        "name": "replaceWith"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoPlayer",
+                                "name": "you"
+                            },
+                            {
+                                "type": "IsoPlayer",
+                                "name": "other"
+                            }
+                        ],
+                        "name": "requestTrading"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "user"
+                            }
+                        ],
+                        "name": "requestUserlog"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "f"
+                            }
+                        ],
+                        "name": "require"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "worldName"
+                            }
+                        ],
+                        "name": "sanitizeWorldName"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "boolean",
+                                "name": "doCharacter"
+                            }
+                        ],
+                        "name": "save"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "c"
+                            }
+                        ],
+                        "name": "saveControllerSettings"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "player"
+                            },
+                            {
+                                "type": "float",
+                                "name": "x"
+                            },
+                            {
+                                "type": "float",
+                                "name": "y"
+                            },
+                            {
+                                "type": "float",
+                                "name": "z"
+                            }
+                        ],
+                        "name": "screenToIsoX"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "player"
+                            },
+                            {
+                                "type": "float",
+                                "name": "x"
+                            },
+                            {
+                                "type": "float",
+                                "name": "y"
+                            },
+                            {
+                                "type": "float",
+                                "name": "z"
+                            }
+                        ],
+                        "name": "screenToIsoY"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoPlayer",
+                                "name": "player"
+                            },
+                            {
+                                "type": "Perk",
+                                "name": "perk"
+                            },
+                            {
+                                "type": "int",
+                                "name": "amount"
+                            }
+                        ],
+                        "name": "sendAddXp"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "onlineID"
+                            },
+                            {
+                                "type": "int",
+                                "name": "i"
+                            },
+                            {
+                                "type": "boolean",
+                                "name": "bandaged"
+                            },
+                            {
+                                "type": "float",
+                                "name": "bandageLife"
+                            },
+                            {
+                                "type": "boolean",
+                                "name": "isAlcoholic"
+                            },
+                            {
+                                "type": "String",
+                                "name": "bandageType"
+                            }
+                        ],
+                        "name": "sendBandage"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "onlineID"
+                            },
+                            {
+                                "type": "int",
+                                "name": "i"
+                            },
+                            {
+                                "type": "float",
+                                "name": "plantainFactor"
+                            },
+                            {
+                                "type": "float",
+                                "name": "comfreyFactor"
+                            },
+                            {
+                                "type": "float",
+                                "name": "garlicFactor"
+                            }
+                        ],
+                        "name": "sendCataplasm"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoGameCharacter",
+                                "name": "wielder"
+                            },
+                            {
+                                "type": "IsoGameCharacter",
+                                "name": "target"
+                            },
+                            {
+                                "type": "BodyPart",
+                                "name": "bodyPart"
+                            },
+                            {
+                                "type": "InventoryItem",
+                                "name": "bandage"
+                            }
+                        ],
+                        "name": "sendCleanBurn"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "module"
+                            },
+                            {
+                                "type": "String",
+                                "name": "command"
+                            },
+                            {
+                                "type": "KahluaTable",
+                                "name": "args"
+                            }
+                        ],
+                        "name": "sendClientCommand"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoPlayer",
+                                "name": "player"
+                            },
+                            {
+                                "type": "String",
+                                "name": "module"
+                            },
+                            {
+                                "type": "String",
+                                "name": "command"
+                            },
+                            {
+                                "type": "KahluaTable",
+                                "name": "args"
+                            }
+                        ],
+                        "name": "sendClientCommand"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoPlayer",
+                                "name": "player"
+                            }
+                        ],
+                        "name": "sendClothing"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "command"
+                            }
+                        ],
+                        "name": "SendCommandToServer"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoGameCharacter",
+                                "name": "wielder"
+                            },
+                            {
+                                "type": "IsoGameCharacter",
+                                "name": "target"
+                            },
+                            {
+                                "type": "BodyPart",
+                                "name": "bodyPart"
+                            },
+                            {
+                                "type": "InventoryItem",
+                                "name": "alcohol"
+                            }
+                        ],
+                        "name": "sendDisinfect"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Faction",
+                                "name": "faction"
+                            },
+                            {
+                                "type": "IsoPlayer",
+                                "name": "host"
+                            },
+                            {
+                                "type": "String",
+                                "name": "invited"
+                            }
+                        ],
+                        "name": "sendFactionInvite"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoPlayer",
+                                "name": "sender"
+                            },
+                            {
+                                "type": "ArrayList",
+                                "name": "items"
+                            },
+                            {
+                                "type": "IsoPlayer",
+                                "name": "receiver"
+                            },
+                            {
+                                "type": "String",
+                                "name": "transferID"
+                            },
+                            {
+                                "type": "String",
+                                "name": "custom"
+                            }
+                        ],
+                        "name": "sendItemListNet"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoObject",
+                                "name": "obj"
+                            },
+                            {
+                                "type": "ItemContainer",
+                                "name": "container"
+                            }
+                        ],
+                        "name": "sendItemsInContainer"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoPlayer",
+                                "name": "player"
+                            }
+                        ],
+                        "name": "sendPersonalColor"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoPlayer",
+                                "name": "p"
+                            }
+                        ],
+                        "name": "sendPlayerExtraInfo"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoPlayer",
+                                "name": "player"
+                            }
+                        ],
+                        "name": "sendPlayerStatsChange"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoGameCharacter",
+                                "name": "wielder"
+                            },
+                            {
+                                "type": "IsoGameCharacter",
+                                "name": "target"
+                            },
+                            {
+                                "type": "BodyPart",
+                                "name": "bodyPart"
+                            }
+                        ],
+                        "name": "sendRemoveBullet"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoGameCharacter",
+                                "name": "wielder"
+                            },
+                            {
+                                "type": "IsoGameCharacter",
+                                "name": "target"
+                            },
+                            {
+                                "type": "BodyPart",
+                                "name": "bodyPart"
+                            },
+                            {
+                                "type": "boolean",
+                                "name": "handPain"
+                            }
+                        ],
+                        "name": "sendRemoveGlass"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoPlayer",
+                                "name": "player"
+                            }
+                        ],
+                        "name": "sendRequestInventory"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "SafeHouse",
+                                "name": "safehouse"
+                            },
+                            {
+                                "type": "IsoPlayer",
+                                "name": "host"
+                            },
+                            {
+                                "type": "String",
+                                "name": "invited"
+                            }
+                        ],
+                        "name": "sendSafehouseInvite"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "module"
+                            },
+                            {
+                                "type": "String",
+                                "name": "command"
+                            },
+                            {
+                                "type": "KahluaTable",
+                                "name": "args"
+                            }
+                        ],
+                        "name": "sendServerCommand"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoPlayer",
+                                "name": "player"
+                            },
+                            {
+                                "type": "String",
+                                "name": "module"
+                            },
+                            {
+                                "type": "String",
+                                "name": "command"
+                            },
+                            {
+                                "type": "KahluaTable",
+                                "name": "args"
+                            }
+                        ],
+                        "name": "sendServerCommand"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "onlineID"
+                            },
+                            {
+                                "type": "int",
+                                "name": "i"
+                            },
+                            {
+                                "type": "boolean",
+                                "name": "doIt"
+                            },
+                            {
+                                "type": "float",
+                                "name": "factor"
+                            },
+                            {
+                                "type": "String",
+                                "name": "splintItem"
+                            }
+                        ],
+                        "name": "sendSplint"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoGameCharacter",
+                                "name": "wielder"
+                            },
+                            {
+                                "type": "IsoGameCharacter",
+                                "name": "target"
+                            },
+                            {
+                                "type": "BodyPart",
+                                "name": "bodyPart"
+                            },
+                            {
+                                "type": "InventoryItem",
+                                "name": "item"
+                            },
+                            {
+                                "type": "boolean",
+                                "name": "doIt"
+                            }
+                        ],
+                        "name": "sendStitch"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "BaseVehicle",
+                                "name": "vehicle"
+                            },
+                            {
+                                "type": "IsoGameCharacter",
+                                "name": "chr"
+                            },
+                            {
+                                "type": "int",
+                                "name": "seatFrom"
+                            },
+                            {
+                                "type": "int",
+                                "name": "seatTo"
+                            }
+                        ],
+                        "name": "sendSwitchSeat"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoPlayer",
+                                "name": "player"
+                            }
+                        ],
+                        "name": "sendVisual"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "user"
+                            },
+                            {
+                                "type": "String",
+                                "name": "pass"
+                            },
+                            {
+                                "type": "String",
+                                "name": "server"
+                            },
+                            {
+                                "type": "String",
+                                "name": "localIP"
+                            },
+                            {
+                                "type": "String",
+                                "name": "port"
+                            },
+                            {
+                                "type": "String",
+                                "name": "serverPassword"
+                            },
+                            {
+                                "type": "String",
+                                "name": "serverName"
+                            }
+                        ],
+                        "name": "serverConnect"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "serverSteamID"
+                            }
+                        ],
+                        "name": "serverConnectCoop"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "filename"
+                            }
+                        ],
+                        "name": "serverFileExists"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "id"
+                            }
+                        ],
+                        "name": "setActivePlayer"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "id"
+                            },
+                            {
+                                "type": "int",
+                                "name": "x"
+                            },
+                            {
+                                "type": "int",
+                                "name": "y"
+                            }
+                        ],
+                        "name": "setAggroTarget"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "boolean",
+                                "name": "b"
+                            }
+                        ],
+                        "name": "setBehaviorStep"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "c"
+                            },
+                            {
+                                "type": "int",
+                                "name": "axis"
+                            },
+                            {
+                                "type": "float",
+                                "name": "value"
+                            }
+                        ],
+                        "name": "setControllerDeadZone"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "index"
+                            }
+                        ],
+                        "name": "setDebugToggleControllerPluggedIn"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "NewSpeed"
+                            }
+                        ],
+                        "name": "setGameSpeed"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "name"
+                            },
+                            {
+                                "type": "String",
+                                "name": "mesh"
+                            },
+                            {
+                                "type": "String",
+                                "name": "tex"
+                            },
+                            {
+                                "type": "String",
+                                "name": "shader"
+                            },
+                            {
+                                "type": "boolean",
+                                "name": "bStatic"
+                            }
+                        ],
+                        "name": "setModelMetaData"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "x"
+                            },
+                            {
+                                "type": "int",
+                                "name": "y"
+                            }
+                        ],
+                        "name": "setMouseXY"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "player"
+                            },
+                            {
+                                "type": "int",
+                                "name": "joypad"
+                            },
+                            {
+                                "type": "IsoPlayer",
+                                "name": "playerObj"
+                            },
+                            {
+                                "type": "String",
+                                "name": "username"
+                            }
+                        ],
+                        "name": "setPlayerJoypad"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoPlayer",
+                                "name": "playerObj"
+                            }
+                        ],
+                        "name": "setPlayerMouse"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "id"
+                            },
+                            {
+                                "type": "boolean",
+                                "name": "bActive"
+                            }
+                        ],
+                        "name": "setPlayerMovementActive"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoPlayer",
+                                "name": "player"
+                            },
+                            {
+                                "type": "int",
+                                "name": "value"
+                            }
+                        ],
+                        "name": "setProgressBarValue"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "float",
+                                "name": "initialPuddles"
+                            }
+                        ],
+                        "name": "setPuddles"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "gameMode"
+                            },
+                            {
+                                "type": "String",
+                                "name": "saveDir"
+                            },
+                            {
+                                "type": "int",
+                                "name": "sqlID"
+                            }
+                        ],
+                        "name": "setSavefilePlayer1"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "boolean",
+                                "name": "enable"
+                            }
+                        ],
+                        "name": "setServerStatisticEnable"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "boolean",
+                                "name": "enabled"
+                            }
+                        ],
+                        "name": "setShowConnectionInfo"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "boolean",
+                                "name": "b"
+                            }
+                        ],
+                        "name": "setShowPausedMessage"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "boolean",
+                                "name": "enabled"
+                            }
+                        ],
+                        "name": "setShowPingInfo"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "boolean",
+                                "name": "enabled"
+                            }
+                        ],
+                        "name": "setShowServerInfo"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "folder"
+                            }
+                        ],
+                        "name": "showFolderInDesktop"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "boolean",
+                                "name": "multiLine"
+                            },
+                            {
+                                "type": "int",
+                                "name": "x"
+                            },
+                            {
+                                "type": "int",
+                                "name": "y"
+                            },
+                            {
+                                "type": "int",
+                                "name": "width"
+                            },
+                            {
+                                "type": "int",
+                                "name": "height"
+                            }
+                        ],
+                        "name": "showSteamFloatingGamepadTextInput"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "boolean",
+                                "name": "password"
+                            },
+                            {
+                                "type": "boolean",
+                                "name": "multiLine"
+                            },
+                            {
+                                "type": "String",
+                                "name": "description"
+                            },
+                            {
+                                "type": "int",
+                                "name": "maxChars"
+                            },
+                            {
+                                "type": "String",
+                                "name": "existingText"
+                            }
+                        ],
+                        "name": "showSteamGamepadTextInput"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "scriptName"
+                            }
+                        ],
+                        "name": "showVehicleEditor"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "value"
+                            }
+                        ],
+                        "name": "showWorldMapEditor"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "actualTabID"
+                            },
+                            {
+                                "type": "int",
+                                "name": "rightTabID"
+                            },
+                            {
+                                "type": "String",
+                                "name": "chatCommand"
+                            }
+                        ],
+                        "name": "showWrongChatTabMessage"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoObject",
+                                "name": "object"
+                            }
+                        ],
+                        "name": "sledgeDestroy"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "float",
+                                "name": "x"
+                            },
+                            {
+                                "type": "float",
+                                "name": "y"
+                            },
+                            {
+                                "type": "float",
+                                "name": "x2"
+                            },
+                            {
+                                "type": "float",
+                                "name": "y2"
+                            },
+                            {
+                                "type": "float",
+                                "name": "z"
+                            },
+                            {
+                                "type": "int",
+                                "name": "count"
+                            }
+                        ],
+                        "name": "spawnHorde"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "modID"
+                            },
+                            {
+                                "type": "String",
+                                "name": "mapFolder"
+                            }
+                        ],
+                        "name": "spawnpointsExistsForMod"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "index"
+                            }
+                        ],
+                        "name": "steamGetInternetServerDetails"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "host"
+                            },
+                            {
+                                "type": "int",
+                                "name": "port"
+                            }
+                        ],
+                        "name": "steamRequestServerDetails"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "host"
+                            },
+                            {
+                                "type": "int",
+                                "name": "port"
+                            }
+                        ],
+                        "name": "steamRequestServerRules"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "long",
+                                "name": "sound"
+                            }
+                        ],
+                        "name": "stopSound"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoPlayer",
+                                "name": "player"
+                            }
+                        ],
+                        "name": "SyncXp"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "a"
+                            },
+                            {
+                                "type": "int",
+                                "name": "tabX"
+                            }
+                        ],
+                        "name": "tabToX"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "fileName"
+                            }
+                        ],
+                        "name": "takeScreenshot"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "KahluaTable",
+                                "name": "table"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "functionObject"
+                            }
+                        ],
+                        "name": "timSort"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "KahluaTable",
+                                "name": "table"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "key"
+                            }
+                        ],
+                        "name": "toggleBreakOnChange"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "KahluaTable",
+                                "name": "table"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "key"
+                            }
+                        ],
+                        "name": "toggleBreakOnRead"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "file"
+                            },
+                            {
+                                "type": "int",
+                                "name": "line"
+                            }
+                        ],
+                        "name": "toggleBreakpoint"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "Mod",
+                                "name": "mod"
+                            },
+                            {
+                                "type": "boolean",
+                                "name": "active"
+                            }
+                        ],
+                        "name": "toggleModActive"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoPlayer",
+                                "name": "player"
+                            }
+                        ],
+                        "name": "toggleSafetyServer"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "double",
+                                "name": "val"
+                            }
+                        ],
+                        "name": "toInt"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoPlayer",
+                                "name": "you"
+                            },
+                            {
+                                "type": "IsoPlayer",
+                                "name": "other"
+                            },
+                            {
+                                "type": "InventoryItem",
+                                "name": "i"
+                            }
+                        ],
+                        "name": "tradingUISendAddItem"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoPlayer",
+                                "name": "you"
+                            },
+                            {
+                                "type": "IsoPlayer",
+                                "name": "other"
+                            },
+                            {
+                                "type": "int",
+                                "name": "index"
+                            }
+                        ],
+                        "name": "tradingUISendRemoveItem"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "IsoPlayer",
+                                "name": "you"
+                            },
+                            {
+                                "type": "IsoPlayer",
+                                "name": "other"
+                            },
+                            {
+                                "type": "int",
+                                "name": "state"
+                            }
+                        ],
+                        "name": "tradingUISendUpdateState"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "HashMap",
+                                "name": "map"
+                            }
+                        ],
+                        "name": "transformIntoKahluaTable"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "float",
+                                "name": "x"
+                            },
+                            {
+                                "type": "UIElement",
+                                "name": "ui"
+                            },
+                            {
+                                "type": "float",
+                                "name": "zoom"
+                            },
+                            {
+                                "type": "float",
+                                "name": "xpos"
+                            }
+                        ],
+                        "name": "translatePointXInOverheadMapToWindow"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "float",
+                                "name": "x"
+                            },
+                            {
+                                "type": "UIElement",
+                                "name": "ui"
+                            },
+                            {
+                                "type": "float",
+                                "name": "zoom"
+                            },
+                            {
+                                "type": "float",
+                                "name": "xpos"
+                            }
+                        ],
+                        "name": "translatePointXInOverheadMapToWorld"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "float",
+                                "name": "y"
+                            },
+                            {
+                                "type": "UIElement",
+                                "name": "ui"
+                            },
+                            {
+                                "type": "float",
+                                "name": "zoom"
+                            },
+                            {
+                                "type": "float",
+                                "name": "ypos"
+                            }
+                        ],
+                        "name": "translatePointYInOverheadMapToWindow"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "float",
+                                "name": "y"
+                            },
+                            {
+                                "type": "UIElement",
+                                "name": "ui"
+                            },
+                            {
+                                "type": "float",
+                                "name": "zoom"
+                            },
+                            {
+                                "type": "float",
+                                "name": "ypos"
+                            }
+                        ],
+                        "name": "translatePointYInOverheadMapToWorld"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "event"
+                            }
+                        ],
+                        "name": "triggerEvent"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "event"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "param"
+                            }
+                        ],
+                        "name": "triggerEvent"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "event"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "param"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "param2"
+                            }
+                        ],
+                        "name": "triggerEvent"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "event"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "param"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "param2"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "param3"
+                            }
+                        ],
+                        "name": "triggerEvent"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "event"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "param"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "param2"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "param3"
+                            },
+                            {
+                                "type": "Object",
+                                "name": "param4"
+                            }
+                        ],
+                        "name": "triggerEvent"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "fontSize"
+                            },
+                            {
+                                "type": "boolean",
+                                "name": "showTimestamp"
+                            },
+                            {
+                                "type": "boolean",
+                                "name": "showTitle"
+                            }
+                        ],
+                        "name": "updateChatSettings"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "boolean",
+                                "name": "use"
+                            }
+                        ],
+                        "name": "useStaticErosionRand"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "boolean",
+                                "name": "bUse"
+                            }
+                        ],
+                        "name": "useTextureFiltering"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "key"
+                            }
+                        ],
+                        "name": "wasKeyDown"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "String",
+                                "name": "loggerName"
+                            },
+                            {
+                                "type": "String",
+                                "name": "logs"
+                            }
+                        ],
+                        "name": "writeLog"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "double",
+                                "name": "max"
+                            }
+                        ],
+                        "name": "ZombRand"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "double",
+                                "name": "min"
+                            },
+                            {
+                                "type": "double",
+                                "name": "max"
+                            }
+                        ],
+                        "name": "ZombRand"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "double",
+                                "name": "min"
+                            },
+                            {
+                                "type": "double",
+                                "name": "max"
+                            }
+                        ],
+                        "name": "ZombRandBetween"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "float",
+                                "name": "min"
+                            },
+                            {
+                                "type": "float",
+                                "name": "max"
+                            }
+                        ],
+                        "name": "ZombRandFloat"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "cellX"
+                            },
+                            {
+                                "type": "int",
+                                "name": "cellY"
+                            }
+                        ],
+                        "name": "zpopClearZombies"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "cellX"
+                            },
+                            {
+                                "type": "int",
+                                "name": "cellY"
+                            }
+                        ],
+                        "name": "zpopSpawnNow"
+                    },
+                    {
+                        "parameters": [
+                            {
+                                "type": "int",
+                                "name": "cellX"
+                            },
+                            {
+                                "type": "int",
+                                "name": "cellY"
+                            }
+                        ],
+                        "name": "zpopSpawnTimeToZero"
+                    }
+                ]
+            }
+        }
+    }
+}

@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-patch-schema.json
+luaClasses:
+  ISUIElement:
+    notes: This is a class.
+    constructor:
+      parameters:
+        - name: x
+          type: number
+          notes: The x coordinate. (In pixels)
+        - name: y
+          type: number
+          notes: The y coordinate. (In pixels)
+        - name: width
+          type: number
+          notes: The width. (In pixels)
+        - name: height
+          type: number
+          notes: The height. (In pixels)

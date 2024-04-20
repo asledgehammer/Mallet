@@ -1,0 +1,2910 @@
+{
+  "namespaces": {
+    "zombie.audio.parameters": {
+      "ParameterCameraZoom": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODGlobalParameter"
+      },
+      "ParameterCharacterInside": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "character",
+                "type": {
+                  "basic": "IsoGameCharacter"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODLocalParameter"
+      },
+      "ParameterCharacterMovementSpeed": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "character",
+                "type": {
+                  "basic": "IsoGameCharacter"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          },
+          {
+            "name": "setMovementType",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "movementType",
+                "type": {
+                  "basic": "ParameterCharacterMovementSpeed.MovementType"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODLocalParameter"
+      },
+      "ParameterCharacterMovementSpeed.MovementType": {
+        "fields": {
+          "label": {
+            "name": "label",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "int"
+            }
+          },
+          "Run": {
+            "name": "Run",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterCharacterMovementSpeed.MovementType"
+            }
+          },
+          "SneakRun": {
+            "name": "SneakRun",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterCharacterMovementSpeed.MovementType"
+            }
+          },
+          "SneakWalk": {
+            "name": "SneakWalk",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterCharacterMovementSpeed.MovementType"
+            }
+          },
+          "Sprint": {
+            "name": "Sprint",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterCharacterMovementSpeed.MovementType"
+            }
+          },
+          "Strafe": {
+            "name": "Strafe",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterCharacterMovementSpeed.MovementType"
+            }
+          },
+          "Walk": {
+            "name": "Walk",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterCharacterMovementSpeed.MovementType"
+            }
+          }
+        },
+        "methods": [
+          {
+            "name": "values",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "returns": {
+              "type": {
+                "basic": "ParameterCharacterMovementSpeed.MovementType"
+              },
+              "notes": "an array containing the constants of this enum class, in the order they are declared"
+            },
+            "notes": "Returns an array containing the constants of this enum class, in\nthe order they are declared."
+          }
+        ],
+        "modifiers": [
+          "public",
+          "static"
+        ],
+        "javaType": "enum",
+        "extends": "Enum"
+      },
+      "ParameterClosestWallDistance": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODGlobalParameter"
+      },
+      "ParameterCurrentZone": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "object",
+                "type": {
+                  "basic": "IsoObject"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODLocalParameter"
+      },
+      "ParameterEquippedBaggageContainer": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "character",
+                "type": {
+                  "basic": "IsoGameCharacter"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          },
+          {
+            "name": "setContainerType",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "containerType",
+                "type": {
+                  "basic": "ParameterEquippedBaggageContainer.ContainerType"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "setContainerType",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "containerType",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODLocalParameter"
+      },
+      "ParameterEquippedBaggageContainer.ContainerType": {
+        "fields": {
+          "DuffleBag": {
+            "name": "DuffleBag",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterEquippedBaggageContainer.ContainerType"
+            }
+          },
+          "GarbageBag": {
+            "name": "GarbageBag",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterEquippedBaggageContainer.ContainerType"
+            }
+          },
+          "HikingBag": {
+            "name": "HikingBag",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterEquippedBaggageContainer.ContainerType"
+            }
+          },
+          "label": {
+            "name": "label",
+            "modifiers": [
+              "public",
+              "final"
+            ],
+            "type": {
+              "basic": "int"
+            }
+          },
+          "None": {
+            "name": "None",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterEquippedBaggageContainer.ContainerType"
+            }
+          },
+          "PlasticBag": {
+            "name": "PlasticBag",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterEquippedBaggageContainer.ContainerType"
+            }
+          },
+          "SchoolBag": {
+            "name": "SchoolBag",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterEquippedBaggageContainer.ContainerType"
+            }
+          },
+          "ToteBag": {
+            "name": "ToteBag",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterEquippedBaggageContainer.ContainerType"
+            }
+          }
+        },
+        "methods": [
+          {
+            "name": "values",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "returns": {
+              "type": {
+                "basic": "ParameterEquippedBaggageContainer.ContainerType"
+              },
+              "notes": "an array containing the constants of this enum class, in the order they are declared"
+            },
+            "notes": "Returns an array containing the constants of this enum class, in\nthe order they are declared."
+          }
+        ],
+        "modifiers": [
+          "public",
+          "static"
+        ],
+        "javaType": "enum",
+        "extends": "Enum"
+      },
+      "ParameterFireSize": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          },
+          {
+            "name": "setSize",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "size",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODLocalParameter"
+      },
+      "ParameterFogIntensity": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODGlobalParameter"
+      },
+      "ParameterFootstepMaterial": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "character",
+                "type": {
+                  "basic": "IsoGameCharacter"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODLocalParameter"
+      },
+      "ParameterFootstepMaterial2": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "character",
+                "type": {
+                  "basic": "IsoGameCharacter"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODLocalParameter"
+      },
+      "ParameterHardOfHearing": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODGlobalParameter"
+      },
+      "ParameterInside": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODGlobalParameter"
+      },
+      "ParameterLocalPlayer": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "player",
+                "type": {
+                  "basic": "IsoPlayer"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODLocalParameter"
+      },
+      "ParameterMeleeHitSurface": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "character",
+                "type": {
+                  "basic": "IsoGameCharacter"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          },
+          {
+            "name": "setMaterial",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "material",
+                "type": {
+                  "basic": "ParameterMeleeHitSurface.Material"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODLocalParameter"
+      },
+      "ParameterMeleeHitSurface.Material": {
+        "fields": {
+          "Body": {
+            "name": "Body",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMeleeHitSurface.Material"
+            }
+          },
+          "Default": {
+            "name": "Default",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMeleeHitSurface.Material"
+            }
+          },
+          "Fabric": {
+            "name": "Fabric",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMeleeHitSurface.Material"
+            }
+          },
+          "GarageDoor": {
+            "name": "GarageDoor",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMeleeHitSurface.Material"
+            }
+          },
+          "Glass": {
+            "name": "Glass",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMeleeHitSurface.Material"
+            }
+          },
+          "Head": {
+            "name": "Head",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMeleeHitSurface.Material"
+            }
+          },
+          "Metal": {
+            "name": "Metal",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMeleeHitSurface.Material"
+            }
+          },
+          "MetalDoor": {
+            "name": "MetalDoor",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMeleeHitSurface.Material"
+            }
+          },
+          "MetalGate": {
+            "name": "MetalGate",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMeleeHitSurface.Material"
+            }
+          },
+          "Plastic": {
+            "name": "Plastic",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMeleeHitSurface.Material"
+            }
+          },
+          "PrisonMetalDoor": {
+            "name": "PrisonMetalDoor",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMeleeHitSurface.Material"
+            }
+          },
+          "SlidingGlassDoor": {
+            "name": "SlidingGlassDoor",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMeleeHitSurface.Material"
+            }
+          },
+          "Stone": {
+            "name": "Stone",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMeleeHitSurface.Material"
+            }
+          },
+          "Tree": {
+            "name": "Tree",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMeleeHitSurface.Material"
+            }
+          },
+          "Wood": {
+            "name": "Wood",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMeleeHitSurface.Material"
+            }
+          },
+          "WoodDoor": {
+            "name": "WoodDoor",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMeleeHitSurface.Material"
+            }
+          },
+          "WoodGate": {
+            "name": "WoodGate",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMeleeHitSurface.Material"
+            }
+          }
+        },
+        "methods": [
+          {
+            "name": "values",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "returns": {
+              "type": {
+                "basic": "ParameterMeleeHitSurface.Material"
+              },
+              "notes": "an array containing the constants of this enum class, in the order they are declared"
+            },
+            "notes": "Returns an array containing the constants of this enum class, in\nthe order they are declared."
+          }
+        ],
+        "modifiers": [
+          "public",
+          "static"
+        ],
+        "javaType": "enum",
+        "extends": "Enum"
+      },
+      "ParameterMoodlePanic": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODGlobalParameter"
+      },
+      "ParameterMusicActionStyle": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODGlobalParameter"
+      },
+      "ParameterMusicActionStyle.State": {
+        "fields": {
+          "Legacy": {
+            "name": "Legacy",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMusicActionStyle.State"
+            }
+          },
+          "Official": {
+            "name": "Official",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMusicActionStyle.State"
+            }
+          }
+        },
+        "methods": [
+          {
+            "name": "values",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "returns": {
+              "type": {
+                "basic": "ParameterMusicActionStyle.State"
+              },
+              "notes": "an array containing the constants of this enum class, in the order they are declared"
+            },
+            "notes": "Returns an array containing the constants of this enum class, in\nthe order they are declared."
+          }
+        ],
+        "modifiers": [
+          "public",
+          "static"
+        ],
+        "javaType": "enum",
+        "extends": "Enum"
+      },
+      "ParameterMusicLibrary": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODGlobalParameter"
+      },
+      "ParameterMusicLibrary.Library": {
+        "fields": {
+          "EarlyAccess": {
+            "name": "EarlyAccess",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMusicLibrary.Library"
+            }
+          },
+          "Official": {
+            "name": "Official",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMusicLibrary.Library"
+            }
+          },
+          "Random": {
+            "name": "Random",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMusicLibrary.Library"
+            }
+          }
+        },
+        "methods": [
+          {
+            "name": "values",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "returns": {
+              "type": {
+                "basic": "ParameterMusicLibrary.Library"
+              },
+              "notes": "an array containing the constants of this enum class, in the order they are declared"
+            },
+            "notes": "Returns an array containing the constants of this enum class, in\nthe order they are declared."
+          }
+        ],
+        "modifiers": [
+          "public",
+          "static"
+        ],
+        "javaType": "enum",
+        "extends": "Enum"
+      },
+      "ParameterMusicState": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          },
+          {
+            "name": "setState",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "state",
+                "type": {
+                  "basic": "ParameterMusicState.State"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODGlobalParameter"
+      },
+      "ParameterMusicState.State": {
+        "fields": {
+          "InGame": {
+            "name": "InGame",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMusicState.State"
+            }
+          },
+          "Loading": {
+            "name": "Loading",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMusicState.State"
+            }
+          },
+          "MainMenu": {
+            "name": "MainMenu",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMusicState.State"
+            }
+          },
+          "PauseMenu": {
+            "name": "PauseMenu",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMusicState.State"
+            }
+          },
+          "Tutorial": {
+            "name": "Tutorial",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMusicState.State"
+            }
+          }
+        },
+        "methods": [
+          {
+            "name": "values",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "returns": {
+              "type": {
+                "basic": "ParameterMusicState.State"
+              },
+              "notes": "an array containing the constants of this enum class, in the order they are declared"
+            },
+            "notes": "Returns an array containing the constants of this enum class, in\nthe order they are declared."
+          }
+        ],
+        "modifiers": [
+          "public",
+          "static"
+        ],
+        "javaType": "enum",
+        "extends": "Enum"
+      },
+      "ParameterMusicWakeState": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          },
+          {
+            "name": "setState",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "player",
+                "type": {
+                  "basic": "IsoPlayer"
+                }
+              },
+              {
+                "name": "state",
+                "type": {
+                  "basic": "ParameterMusicWakeState.State"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODGlobalParameter"
+      },
+      "ParameterMusicWakeState.State": {
+        "fields": {
+          "Awake": {
+            "name": "Awake",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMusicWakeState.State"
+            }
+          },
+          "Sleeping": {
+            "name": "Sleeping",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMusicWakeState.State"
+            }
+          },
+          "WakeNightmare": {
+            "name": "WakeNightmare",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMusicWakeState.State"
+            }
+          },
+          "WakeNormal": {
+            "name": "WakeNormal",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMusicWakeState.State"
+            }
+          },
+          "WakeZombies": {
+            "name": "WakeZombies",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterMusicWakeState.State"
+            }
+          }
+        },
+        "methods": [
+          {
+            "name": "values",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "returns": {
+              "type": {
+                "basic": "ParameterMusicWakeState.State"
+              },
+              "notes": "an array containing the constants of this enum class, in the order they are declared"
+            },
+            "notes": "Returns an array containing the constants of this enum class, in\nthe order they are declared."
+          }
+        ],
+        "modifiers": [
+          "public",
+          "static"
+        ],
+        "javaType": "enum",
+        "extends": "Enum"
+      },
+      "ParameterMusicZombiesTargeting": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODGlobalParameter"
+      },
+      "ParameterMusicZombiesVisible": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODGlobalParameter"
+      },
+      "ParameterOcclusion": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "emitter",
+                "type": {
+                  "basic": "fmod.fmod.FMODSoundEmitter"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          },
+          {
+            "name": "resetToDefault",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODLocalParameter"
+      },
+      "ParameterPlayerDistance": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "zombie",
+                "type": {
+                  "basic": "IsoZombie"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODLocalParameter"
+      },
+      "ParameterPlayerHealth": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "player",
+                "type": {
+                  "basic": "IsoPlayer"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODLocalParameter"
+      },
+      "ParameterPowerSupply": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODGlobalParameter"
+      },
+      "ParameterRainIntensity": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODGlobalParameter"
+      },
+      "ParameterRoomSize": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODGlobalParameter"
+      },
+      "ParameterRoomType": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          },
+          {
+            "name": "render",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "parameters": [
+              {
+                "name": "player",
+                "type": {
+                  "basic": "IsoPlayer"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          },
+          {
+            "name": "setRoomType",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "parameters": [
+              {
+                "name": "roomType",
+                "type": {
+                  "basic": "int"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODGlobalParameter"
+      },
+      "ParameterSeason": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODGlobalParameter"
+      },
+      "ParameterShoeType": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "character",
+                "type": {
+                  "basic": "IsoGameCharacter"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          },
+          {
+            "name": "setShoeType",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "shoeType",
+                "type": {
+                  "basic": "zombie.audio.parameters.ParameterShoeType.ShoeType"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODLocalParameter"
+      },
+      "ParameterSnowIntensity": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODGlobalParameter"
+      },
+      "ParameterStorm": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODGlobalParameter"
+      },
+      "ParameterTemperature": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODGlobalParameter"
+      },
+      "ParameterTimeOfDay": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODGlobalParameter"
+      },
+      "ParameterVehicleBrake": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "vehicle",
+                "type": {
+                  "basic": "BaseVehicle"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "FMODLocalParameter"
+      },
+      "ParameterVehicleEngineCondition": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "vehicle",
+                "type": {
+                  "basic": "BaseVehicle"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "FMODLocalParameter"
+      },
+      "ParameterVehicleGear": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "vehicle",
+                "type": {
+                  "basic": "BaseVehicle"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "FMODLocalParameter"
+      },
+      "ParameterVehicleHitLocation": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          },
+          {
+            "name": "calculateLocation",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "parameters": [
+              {
+                "name": "vehicle",
+                "type": {
+                  "basic": "BaseVehicle"
+                }
+              },
+              {
+                "name": "x",
+                "type": {
+                  "basic": "float"
+                }
+              },
+              {
+                "name": "y",
+                "type": {
+                  "basic": "float"
+                }
+              },
+              {
+                "name": "z",
+                "type": {
+                  "basic": "float"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "ParameterVehicleHitLocation.HitLocation"
+              }
+            }
+          },
+          {
+            "name": "setLocation",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "location",
+                "type": {
+                  "basic": "ParameterVehicleHitLocation.HitLocation"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "FMODLocalParameter"
+      },
+      "ParameterVehicleHitLocation.HitLocation": {
+        "fields": {
+          "Front": {
+            "name": "Front",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterVehicleHitLocation.HitLocation"
+            }
+          },
+          "Rear": {
+            "name": "Rear",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterVehicleHitLocation.HitLocation"
+            }
+          },
+          "Side": {
+            "name": "Side",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterVehicleHitLocation.HitLocation"
+            }
+          }
+        },
+        "methods": [
+          {
+            "name": "values",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "returns": {
+              "type": {
+                "basic": "ParameterVehicleHitLocation.HitLocation"
+              },
+              "notes": "an array containing the constants of this enum class, in the order they are declared"
+            },
+            "notes": "Returns an array containing the constants of this enum class, in\nthe order they are declared."
+          }
+        ],
+        "modifiers": [
+          "public",
+          "static"
+        ],
+        "javaType": "enum",
+        "extends": "Enum"
+      },
+      "ParameterVehicleLoad": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "vehicle",
+                "type": {
+                  "basic": "BaseVehicle"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "FMODLocalParameter"
+      },
+      "ParameterVehicleRoadMaterial": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "vehicle",
+                "type": {
+                  "basic": "BaseVehicle"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODLocalParameter"
+      },
+      "ParameterVehicleRPM": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "vehicle",
+                "type": {
+                  "basic": "BaseVehicle"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "FMODLocalParameter"
+      },
+      "ParameterVehicleSkid": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "vehicle",
+                "type": {
+                  "basic": "BaseVehicle"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "FMODLocalParameter"
+      },
+      "ParameterVehicleSpeed": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "vehicle",
+                "type": {
+                  "basic": "BaseVehicle"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "FMODLocalParameter"
+      },
+      "ParameterVehicleSteer": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "vehicle",
+                "type": {
+                  "basic": "BaseVehicle"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "FMODLocalParameter"
+      },
+      "ParameterVehicleTireMissing": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "vehicle",
+                "type": {
+                  "basic": "BaseVehicle"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public"
+        ],
+        "javaType": "class",
+        "extends": "FMODLocalParameter"
+      },
+      "ParameterWaterSupply": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODGlobalParameter"
+      },
+      "ParameterWeatherEvent": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODGlobalParameter"
+      },
+      "ParameterWeatherEvent.Event": {
+        "fields": {
+          "FreshSnow": {
+            "name": "FreshSnow",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterWeatherEvent.Event"
+            }
+          },
+          "None": {
+            "name": "None",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterWeatherEvent.Event"
+            }
+          }
+        },
+        "methods": [
+          {
+            "name": "values",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "returns": {
+              "type": {
+                "basic": "ParameterWeatherEvent.Event"
+              },
+              "notes": "an array containing the constants of this enum class, in the order they are declared"
+            },
+            "notes": "Returns an array containing the constants of this enum class, in\nthe order they are declared."
+          }
+        ],
+        "modifiers": [
+          "public",
+          "static"
+        ],
+        "javaType": "enum",
+        "extends": "Enum"
+      },
+      "ParameterWindIntensity": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODGlobalParameter"
+      },
+      "ParameterZombieState": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "zombie",
+                "type": {
+                  "basic": "IsoZombie"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          },
+          {
+            "name": "isState",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "state",
+                "type": {
+                  "basic": "ParameterZombieState.State"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "boolean"
+              }
+            }
+          },
+          {
+            "name": "setState",
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "state",
+                "type": {
+                  "basic": "ParameterZombieState.State"
+                }
+              }
+            ],
+            "returns": {
+              "type": {
+                "basic": "void"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODLocalParameter"
+      },
+      "ParameterZombieState.State": {
+        "fields": {
+          "Attack": {
+            "name": "Attack",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterZombieState.State"
+            }
+          },
+          "AttackBite": {
+            "name": "AttackBite",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterZombieState.State"
+            }
+          },
+          "AttackLacerate": {
+            "name": "AttackLacerate",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterZombieState.State"
+            }
+          },
+          "AttackScratch": {
+            "name": "AttackScratch",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterZombieState.State"
+            }
+          },
+          "Death": {
+            "name": "Death",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterZombieState.State"
+            }
+          },
+          "Eating": {
+            "name": "Eating",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterZombieState.State"
+            }
+          },
+          "GettingUp": {
+            "name": "GettingUp",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterZombieState.State"
+            }
+          },
+          "Hit": {
+            "name": "Hit",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterZombieState.State"
+            }
+          },
+          "Idle": {
+            "name": "Idle",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterZombieState.State"
+            }
+          },
+          "LockTarget": {
+            "name": "LockTarget",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterZombieState.State"
+            }
+          },
+          "Pushed": {
+            "name": "Pushed",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterZombieState.State"
+            }
+          },
+          "Reanimate": {
+            "name": "Reanimate",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterZombieState.State"
+            }
+          },
+          "RunOver": {
+            "name": "RunOver",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterZombieState.State"
+            }
+          },
+          "SearchTarget": {
+            "name": "SearchTarget",
+            "modifiers": [
+              "public",
+              "static",
+              "final"
+            ],
+            "type": {
+              "basic": "ParameterZombieState.State"
+            }
+          }
+        },
+        "methods": [
+          {
+            "name": "values",
+            "modifiers": [
+              "public",
+              "static"
+            ],
+            "returns": {
+              "type": {
+                "basic": "ParameterZombieState.State"
+              },
+              "notes": "an array containing the constants of this enum class, in the order they are declared"
+            },
+            "notes": "Returns an array containing the constants of this enum class, in\nthe order they are declared."
+          }
+        ],
+        "modifiers": [
+          "public",
+          "static"
+        ],
+        "javaType": "enum",
+        "extends": "Enum"
+      },
+      "ParameterZone": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ],
+            "parameters": [
+              {
+                "name": "name",
+                "type": {
+                  "basic": "String"
+                }
+              },
+              {
+                "name": "zoneName",
+                "type": {
+                  "basic": "String"
+                }
+              }
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODGlobalParameter"
+      },
+      "ParameterZoneWaterSide": {
+        "constructors": [
+          {
+            "modifiers": [
+              "public"
+            ]
+          }
+        ],
+        "methods": [
+          {
+            "name": "calculateCurrentValue",
+            "modifiers": [
+              "public"
+            ],
+            "returns": {
+              "type": {
+                "basic": "float"
+              }
+            }
+          }
+        ],
+        "modifiers": [
+          "public",
+          "final"
+        ],
+        "javaType": "class",
+        "extends": "FMODGlobalParameter"
+      }
+    }
+  }
+}
