@@ -344,6 +344,9 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaField", ["require", "exports", "
             else {
                 this.type = 'any';
             }
+            if (raw.defaultValue) {
+                this.defaultValue = this.readString('defaultValue');
+            }
             this.notes = this.readNotes();
         }
         parse(raw) {
@@ -351,13 +354,17 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaField", ["require", "exports", "
             if (raw.type !== undefined) {
                 this.type = this.readRequiredString('type', raw);
             }
+            if (raw.defaultValue !== undefined) {
+                this.defaultValue = this.readRequiredString('defaultValue', raw);
+            }
         }
         toJSON(patch = false) {
-            const { name, type, notes } = this;
+            const { defaultValue, type, notes } = this;
             const json = {};
             /* (Properties) */
             json.type = type;
             json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            json.defaultValue = defaultValue !== undefined && defaultValue !== '' ? defaultValue : undefined;
             return json;
         }
     }
@@ -695,11 +702,15 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaClass", ["require", "exports", "
 define("src/asledgehammer/rosetta/lua/LuaGenerator", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.generateLuaClass = exports.generateLuaMethod = exports.generateLuaParameterBody = exports.generateLuaField = void 0;
+    exports.generateLuaClass = exports.generateLuaMethod = exports.generateLuaParameterBody = exports.generateLuaValue = exports.generateLuaField = void 0;
     const generateLuaField = (field) => {
         return `--- @field ${field.name} ${field.type} ${field.notes ? field.notes : ''}`;
     };
     exports.generateLuaField = generateLuaField;
+    const generateLuaValue = (containerName, field) => {
+        return `${containerName}.${field.name} = ${field.defaultValue != null ? field.defaultValue : 'nil'};`;
+    };
+    exports.generateLuaValue = generateLuaValue;
     const generateLuaParameterBody = (params) => {
         let s = '';
         if (params.length) {
@@ -711,7 +722,7 @@ define("src/asledgehammer/rosetta/lua/LuaGenerator", ["require", "exports"], fun
         return `(${s})`;
     };
     exports.generateLuaParameterBody = generateLuaParameterBody;
-    const generateLuaMethod = (clazz, func) => {
+    const generateLuaMethod = (className, func) => {
         let s = '';
         // Function Description
         if (func.notes && func.notes.length) {
@@ -743,7 +754,7 @@ define("src/asledgehammer/rosetta/lua/LuaGenerator", ["require", "exports"], fun
         }
         if (s.length)
             s += '\n';
-        s += `function ${clazz.name}:${func.name}${(0, exports.generateLuaParameterBody)(func.parameters)} end`;
+        s += `function ${className}:${func.name}${(0, exports.generateLuaParameterBody)(func.parameters)} end`;
         return s;
     };
     exports.generateLuaMethod = generateLuaMethod;
@@ -774,7 +785,7 @@ define("src/asledgehammer/rosetta/lua/LuaGenerator", ["require", "exports"], fun
             methodNames.sort((a, b) => a.localeCompare(b));
             for (const methodName of methodNames) {
                 const method = clazz.methods[methodName];
-                s += (0, exports.generateLuaMethod)(clazz, method) + '\n\n';
+                s += (0, exports.generateLuaMethod)(clazz.name, method) + '\n\n';
             }
         }
         return s;
@@ -972,9 +983,10 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
             this.idPreview = `${this.id}-preview`;
         }
         listenNotes(entity, idNotes) {
-            const $description = (0, util_3.$get)(idNotes);
-            $description.on('input', () => {
-                entity.notes = $description.val();
+            const $notes = (0, util_3.$get)(idNotes);
+            $notes.on('input', () => {
+                entity.notes = $notes.val();
+                this.update();
                 this.app.renderCode();
             });
         }
@@ -988,6 +1000,24 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
             </div>
         `;
         }
+        listenDefaultValue(entity, idDefaultValue) {
+            const $defaultValue = (0, util_3.$get)(idDefaultValue);
+            $defaultValue.on('input', () => {
+                entity.defaultValue = $defaultValue.val();
+                this.update();
+                this.app.renderCode();
+            });
+        }
+        renderDefaultValue(defaultValue, idDefaultValue) {
+            if (!defaultValue)
+                defaultValue = '';
+            return (0, util_3.html) `
+            <div class="mb-3">
+                <label for="${idDefaultValue}" class="form-label mb-2">Default Value</label>
+                <textarea id="${idDefaultValue}" class="form-control responsive-input mt-1" spellcheck="false">${defaultValue}</textarea>
+            </div>
+        `;
+        }
         listenParameters(entity) {
             const { parameters } = entity;
             for (const param of parameters) {
@@ -996,6 +1026,7 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                 const $description = (0, util_3.$get)(idParamNotes);
                 $description.on('input', () => {
                     param.notes = $description.val();
+                    this.update();
                     this.app.renderCode();
                 });
                 const $select = (0, util_3.$get)(idParamType);
@@ -1009,11 +1040,13 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                         $customInput.hide();
                         $customInput.val(''); // Clear custom field.
                     }
+                    this.update();
                     this.app.renderCode();
                 });
                 // When the custom field is changed, set this as the type.
                 $customInput.on('input', () => {
                     param.type = $customInput.val();
+                    this.update();
                     this.app.renderCode();
                 });
                 $customInput.on('focusout', () => {
@@ -1033,6 +1066,7 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                             $select.val(value);
                             $customInput.hide();
                             $customInput.val(''); // Clear custom field.
+                            this.update();
                             this.app.renderCode();
                             break;
                     }
@@ -1169,6 +1203,7 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
             const $description = (0, util_3.$get)(idReturnNotes);
             $description.on('input', () => {
                 returns.notes = $description.val();
+                this.update();
                 this.app.renderCode();
             });
             const $select = (0, util_3.$get)(idReturnType);
@@ -1182,6 +1217,7 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                     $customInput.hide();
                     $customInput.val(''); // Clear custom field.
                 }
+                this.update();
                 this.app.renderCode();
             });
             $customInput.on('focusout', () => {
@@ -1201,6 +1237,7 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                         $select.val(value);
                         $customInput.hide();
                         $customInput.val(''); // Clear custom field.
+                        this.update();
                         this.app.renderCode();
                         break;
                 }
@@ -1230,6 +1267,62 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                     <div>
                         <label for="${idReturnNotes}" class="form-label">Description</label>
                         <textarea id="${idReturnNotes}" class="form-control responsive-input" spellcheck="false">${notes}</textarea>
+                    </div>
+                </div>
+            </div>
+        `;
+        }
+        listenType(entity, idType, idSelect) {
+            const $select = (0, util_3.$get)(idType);
+            const $customInput = (0, util_3.$get)(`${idSelect}-custom-input`);
+            $select.on('change', (value) => {
+                entity.type = value.target.value;
+                if (entity.type === 'custom') {
+                    $customInput.show();
+                }
+                else {
+                    $customInput.hide();
+                    $customInput.val(''); // Clear custom field.
+                }
+                this.update();
+                this.app.renderCode();
+            });
+            $customInput.on('focusout', () => {
+                const value = $customInput.val().trim();
+                switch (value.toLowerCase()) {
+                    // Here the reference stays valid.
+                    case 'custom':
+                        break;
+                    // Here the reference converts to its select option.
+                    case 'void':
+                    case 'any':
+                    case 'nil':
+                    case 'boolean':
+                    case 'number':
+                    case 'string':
+                        entity.type = value;
+                        $select.val(value);
+                        $customInput.hide();
+                        $customInput.val(''); // Clear custom field.
+                        this.update();
+                        this.app.renderCode();
+                        break;
+                }
+            });
+        }
+        renderType(name, type, idReturnType) {
+            const idTypeCard = `${name}-type-card`;
+            return (0, util_3.html) `
+            <div class="card responsive-subcard">
+                <div class="card-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idTypeCard}" aria-expanded="true" aria-controls="${idTypeCard}">
+                        Type
+                    </button>   
+                </div>
+                <div id="${idTypeCard}" class="card-body collapse show">
+                    <div>
+                        <label for="${idReturnType}" class="form-label">Type</label>
+                        ${LuaCard.renderTypeSelect(idReturnType, 'The return type.', type, false)}
                     </div>
                 </div>
             </div>
@@ -1332,6 +1425,7 @@ define("src/asledgehammer/rosetta/component/LuaClassCard", ["require", "exports"
             return (0, util_4.html) `
             <div>
                 ${this.renderNotes(notes, this.idNotes)}
+                <hr>
                 ${this.renderPreview(false)}
             </div>
         `;
@@ -1352,97 +1446,65 @@ define("src/asledgehammer/rosetta/component/LuaFieldCard", ["require", "exports"
     class LuaFieldCard extends LuaCard_2.LuaCard {
         constructor(app, options) {
             super(app, options);
+            this.idDefaultValue = `${this.id}-default-value`;
             this.idNotes = `${this.id}-notes`;
             this.idType = `${this.id}-type`;
         }
         onRenderPreview() {
-            return (0, LuaGenerator_2.generateLuaField)(this.options.entity);
+            var _a, _b;
+            if (!this.options)
+                return '';
+            const { app } = this;
+            const { entity, isStatic } = this.options;
+            const { defaultValue } = entity;
+            const name = (_b = (_a = app.card) === null || _a === void 0 ? void 0 : _a.options) === null || _b === void 0 ? void 0 : _b.entity.name;
+            if (isStatic) {
+                return `${(0, LuaGenerator_2.generateLuaField)(entity)}\n\n${(0, LuaGenerator_2.generateLuaValue)(name, entity)}`;
+            }
+            let s = (0, LuaGenerator_2.generateLuaField)(entity);
+            if (defaultValue) {
+                s += `\n\n--- (Example of initialization of field) ---\nself.${entity.name} = ${defaultValue};`;
+            }
+            return s;
         }
         onHeaderHTML() {
             const { entity, isStatic } = this.options;
+            let name = entity.name;
+            if (isStatic) {
+                name = (0, util_5.html) `<span class="fst-italic">${entity.name}</span>`;
+            }
             return (0, util_5.html) ` 
             <div class="row">
-                <div class="col-auto ps-2 pe-3">
-                    <div class="badge text-bg-success">Lua ${isStatic ? 'Function' : 'Method'}</div>
+                <div class="col-auto ps-2 pe-2">
+                    <div class="text-bg-info px-2"><strong>Lua ${isStatic ? 'Property' : 'Field'}</strong></div>
                 </div>
                 <div class="col-auto p-0">
-                    <h5 class="card-text">${entity.name}</h5> 
+                    <h5 class="card-text"><strong>${name}</strong></h5> 
                 </div>
             </div>
         `;
         }
         onBodyHTML() {
-            const { idNotes, idType } = this;
+            const { idDefaultValue, idNotes, idType } = this;
             const { entity } = this.options;
             return (0, util_5.html) `
             <div>
                 ${this.renderNotes(entity.notes, idNotes)}
+                ${this.renderDefaultValue(entity.defaultValue, idDefaultValue)}
+                <hr>
                 ${this.renderType(entity.name, entity.type, idType)}
+                <hr>
+                ${this.renderPreview(false)}
             </div>
         `;
         }
         listen() {
             super.listen();
-            const { idNotes, idType } = this;
+            const { idDefaultValue, idNotes, idType } = this;
             const { entity } = this.options;
             this.listenNotes(entity, idNotes);
+            this.listenDefaultValue(entity, idDefaultValue);
             this.listenType(entity, idType, idType);
-        }
-        listenType(entity, idType, idSelect) {
-            const $select = (0, util_5.$get)(idType);
-            const $customInput = (0, util_5.$get)(`${idSelect}-custom-input`);
-            $select.on('change', (value) => {
-                entity.type = value.target.value;
-                if (entity.type === 'custom') {
-                    $customInput.show();
-                }
-                else {
-                    $customInput.hide();
-                    $customInput.val(''); // Clear custom field.
-                }
-                this.app.renderCode();
-            });
-            $customInput.on('focusout', () => {
-                const value = $customInput.val().trim();
-                switch (value.toLowerCase()) {
-                    // Here the reference stays valid.
-                    case 'custom':
-                        break;
-                    // Here the reference converts to its select option.
-                    case 'void':
-                    case 'any':
-                    case 'nil':
-                    case 'boolean':
-                    case 'number':
-                    case 'string':
-                        entity.type = value;
-                        $select.val(value);
-                        $customInput.hide();
-                        $customInput.val(''); // Clear custom field.
-                        this.app.renderCode();
-                        break;
-                }
-            });
-        }
-        renderType(name, type, idReturnType) {
-            const idTypeCard = `${name}-type-card`;
-            return (0, util_5.html) `
-            <div class="card border border-1 border-800 rounded-0 bg-secondary">
-                <div class="card-header bg-dark" style="cursor: pointer; background-color: var(--bs-accordion-btn-bg);">
-                    <!-- <h6 class="mb-0">Returns</h6> -->
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idTypeCard}" aria-expanded="true" aria-controls="${idTypeCard}">
-                        Returns
-                    </button>   
-                </div>
-                <div id="${idTypeCard}" class="card-body collapse show">
-                    <!-- Return Type -->
-                    <div>
-                        <label for="${idReturnType}" class="form-label">Type</label>
-                        ${LuaCard_2.LuaCard.renderTypeSelect(idReturnType, 'The return type.', type, false)}
-                    </div>
-                </div>
-            </div>
-        `;
         }
     }
     exports.LuaFieldCard = LuaFieldCard;
@@ -1459,7 +1521,12 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
             this.idReturnNotes = `${this.id}-return-notes`;
         }
         onRenderPreview() {
-            return (0, LuaGenerator_3.generateLuaMethod)(this.app.card.options.entity, this.options.entity);
+            if (!this.options)
+                return '';
+            const { entity } = this.options;
+            const classEntity = this.app.card.options.entity;
+            const className = classEntity.name;
+            return (0, LuaGenerator_3.generateLuaMethod)(className, entity);
         }
         onHeaderHTML() {
             const { entity, isStatic } = this.options;
@@ -1480,9 +1547,14 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
             return (0, util_6.html) `
             ${this.renderNotes(entity.notes, idNotes)}
             
-                ${this.renderParameters(entity)}
-                ${this.renderReturns(entity, idReturnType, idReturnNotes)}
-                ${this.renderPreview(false)}
+            <hr>
+            
+            ${this.renderParameters(entity)}
+            ${this.renderReturns(entity, idReturnType, idReturnNotes)}
+            
+            <hr>
+            
+            ${this.renderPreview(false)}
             
         `;
         }
@@ -1687,6 +1759,18 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                     // Let the editor know we last selected the field.
                     lastSelected = fieldName;
                 });
+                $('.lua-value-item').on('click', function () {
+                    const valueName = this.id.split('value-')[1].trim();
+                    // Prevent wasteful selection code executions here.
+                    if (lastSelected === valueName)
+                        return;
+                    const value = entity.values[valueName];
+                    if (!value)
+                        return;
+                    _this.app.showValue(value);
+                    // Let the editor know we last selected the value.
+                    lastSelected = valueName;
+                });
                 $('.lua-method-item').on('click', function () {
                     const methodName = this.id.split('method-')[1].trim();
                     // Prevent wasteful selection code executions here.
@@ -1720,6 +1804,19 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                         class: ['lua-field-item']
                     });
                 }
+                const valueNames = Object.keys(entity.values);
+                valueNames.sort((a, b) => a.localeCompare(b));
+                const values = [];
+                for (const valueName of Object.keys(entity.values)) {
+                    const value = entity.values[valueName];
+                    const id = `lua-class-${entity.name}-value-${value.name}`;
+                    values.push({
+                        text: (0, util_8.html) `<span class="fst-italic">${value.name}</span>`,
+                        icon: LuaCard_4.LuaCard.getTypeIcon(value.type),
+                        id,
+                        class: ['lua-value-item']
+                    });
+                }
                 const methodNames = Object.keys(entity.methods);
                 methodNames.sort((a, b) => a.localeCompare(b));
                 const methods = [];
@@ -1750,6 +1847,13 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                         class: ['bg-secondary'],
                         // expanded: true,
                         nodes: fields
+                    },
+                    {
+                        text: "Values",
+                        icon: "fa-solid fa-folder text-light mx-2",
+                        class: ['bg-secondary'],
+                        // expanded: true,
+                        nodes: values
                     },
                     {
                         text: "Methods",
@@ -1810,6 +1914,14 @@ define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/Lu
         showField(entity) {
             this.$screenContent.empty();
             const card = new LuaFieldCard_1.LuaFieldCard(this, { entity, isStatic: false });
+            this.$screenContent.append(card.render());
+            card.listen();
+            card.update();
+            return card;
+        }
+        showValue(entity) {
+            this.$screenContent.empty();
+            const card = new LuaFieldCard_1.LuaFieldCard(this, { entity, isStatic: true });
             this.$screenContent.append(card.render());
             card.listen();
             card.update();
@@ -2301,34 +2413,5 @@ define("src/asledgehammer/rosetta/component/LabelComponent", ["require", "export
         }
     }
     exports.LabelComponent = LabelComponent;
-});
-define("src/asledgehammer/rosetta/component/LuaNotedCard", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/LuaCard"], function (require, exports, util_11, LuaCard_5) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.LuaNotedCard = void 0;
-    class LuaNotedCard extends LuaCard_5.LuaCard {
-        constructor(app, options) {
-            super(app, options);
-            this.idNotes = `${this.id}-notes`;
-        }
-        listenNotes(entity) {
-            const $description = (0, util_11.$get)(this.idNotes);
-            $description.on('input', () => {
-                entity.notes = $description.val();
-                this.app.renderCode();
-            });
-        }
-        renderNotes(notes) {
-            if (!notes)
-                notes = '';
-            return (0, util_11.html) `
-            <div class="mb-4">
-                <label for="${this.idNotes}" class="form-label">Description</label>
-                <textarea id="${this.idNotes}" class="form-control rounded-0" spellcheck="false">${notes}</textarea>
-            </div>
-        `;
-        }
-    }
-    exports.LuaNotedCard = LuaNotedCard;
 });
 //# sourceMappingURL=app.js.map
