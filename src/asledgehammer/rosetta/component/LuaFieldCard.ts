@@ -27,15 +27,16 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
         const { entity, isStatic } = this.options;
         const { defaultValue } = entity;
         const name = app.card?.options?.entity.name!;
-        
+
         if (isStatic) {
             return `${generateLuaField(entity)}\n\n${generateLuaValue(name, entity)}`;
         }
-        
+
         let s = generateLuaField(entity);
-        if(defaultValue) {
+        if (defaultValue) {
             s += `\n\n--- (Example of initialization of field) ---\nself.${entity.name} = ${defaultValue};`;
         }
+
         return s;
     }
 

@@ -1,16 +1,17 @@
 import { App } from '../../../app';
 import { $get, html } from '../util';
 import { Component, ComponentOptions } from './Component';
+import { ItemTree } from './ItemTree';
 import { LuaCard } from './LuaCard';
-import { LuaFunctionCard } from './LuaFunctionCard';
 import { SidebarPanel } from './SidebarPanel';
 import { SidebarPanelButton } from './SidebarPanelButton';
 
 export class Sidebar extends Component<SidebarOptions> {
 
     private readonly panel: SidebarPanel;
-
     private readonly app: App;
+
+    private readonly itemTree: ItemTree;
 
     constructor(app: App) {
         super({
@@ -33,7 +34,6 @@ export class Sidebar extends Component<SidebarOptions> {
             result.innerHTML = reader.result;
 
         });
-
 
         const funcLoad = () => {
 
@@ -91,38 +91,15 @@ export class Sidebar extends Component<SidebarOptions> {
         this.panel = new SidebarPanel({
             buttons
         });
+
+        this.itemTree = new ItemTree(app);
     }
 
     protected onRender(): string {
         return html`
 
             <div class="bg-dark p-1 border-bottom border-bottom-1 border-info shadow">
-
-                <!-- New Class -->
-                <button class="btn btn-sm btn-success rounded-0 me-1" style="width: 32px; height: 32px" title="New Class">
-                    <i class="fa fa-file" style="position: relative; top: -1px"></i>
-                </button>
-                
-                <!-- Open Class -->
-                <button class="btn btn-sm btn-primary rounded-0" style="width: 32px; height: 32px" title="Open Class">
-                    <i class="fa-solid fa-folder-open" style="position: relative; top: -1px"></i>
-                </button>
-
-                <!-- Save Class -->
-                <button class="btn btn-sm btn-primary rounded-0 me-1" style="width: 32px; height: 32px" title="Save Class">
-                    <i class="fa fa-save" style="position: relative; top: -1px"></i>
-                </button>
-                
-                <!-- New Field -->
-                <button class="btn btn-sm btn-info rounded-0" style="width: 32px; height: 32px" title="New Field">
-                    <i class="fa-solid fa-hashtag" style="position: relative; top: -1px"></i>
-                </button>
-
-                <!-- New Method -->
-                <button class="btn btn-sm btn-info rounded-0" style="width: 32px; height: 32px" title="New Method">
-                    <i class="fa-solid fa-terminal" style="position: relative; top: -1px"></i>
-                </button>
-
+                ${this.itemTree.render()}
             </div>
 
             <div class="bg-dark" style="height: 100%; overflow-y: auto;">${this.panel.render()}
@@ -137,217 +114,13 @@ export class Sidebar extends Component<SidebarOptions> {
     }
 
     populateItemTree() {
-
-        const listenTree = () => {
-            const { card: luaClass } = this.app;
-            if (!luaClass) return;
-
-            const entity = luaClass.options!.entity!;
-            if (!entity) return;
-
-            const fieldNames = Object.keys(entity.fields);
-            fieldNames.sort((a, b) => a.localeCompare(b));
-            for (const fieldName of Object.keys(entity.fields)) {
-                const field = entity.fields[fieldName];
-                const id = `lua-class-${entity.name}-field-${field.name}`;
-
-                const $fieldNode = $get(id);
-                $fieldNode.on('click', () => {
-                    console.log(`Clicked ${id}!`);
-                });
-            }
-
-            let lastSelected: string | null = null;
-            const _this = this;
-
-            $('.lua-field-item').on('click', function () {
-
-                const fieldName = this.id.split('field-')[1].trim();
-
-                // Prevent wasteful selection code executions here.
-                if (lastSelected === fieldName) return;
-
-                const field = entity.fields[fieldName];
-                if (!field) return;
-
-                _this.app.showField(field);
-
-                // Let the editor know we last selected the field.
-                lastSelected = fieldName;
-            });
-
-            $('.lua-value-item').on('click', function () {
-
-                const valueName = this.id.split('value-')[1].trim();
-
-                // Prevent wasteful selection code executions here.
-                if (lastSelected === valueName) return;
-
-                const value = entity.values[valueName];
-                if (!value) return;
-
-                _this.app.showValue(value);
-
-                // Let the editor know we last selected the value.
-                lastSelected = valueName;
-            });
-
-            $('.lua-method-item').on('click', function () {
-
-                const methodName = this.id.split('method-')[1].trim();
-
-                // Prevent wasteful selection code executions here.
-                if (lastSelected === methodName) return;
-
-                const method = entity.methods[methodName];
-                if (!method) return;
-
-                _this.app.showMethod(method);
-
-                // Let the editor know we last selected the method.
-                lastSelected = methodName;
-            });
-
-            $('.lua-function-item').on('click', function () {
-
-                const functionName = this.id.split('function-')[1].trim();
-
-                // Prevent wasteful selection code executions here.
-                if (lastSelected === functionName) return;
-
-                const func = entity.functions[functionName];
-                if (!func) return;
-
-                _this.app.showFunction(func);
-
-                // Let the editor know we last selected the function.
-                lastSelected = functionName;
-            });
-        };
-
-        const getTree = () => {
-            const { card: luaClass } = this.app;
-            if (!luaClass) return [];
-
-            const entity = luaClass.options!.entity!;
-            if (!entity) return [];
-
-            const fieldNames = Object.keys(entity.fields);
-            fieldNames.sort((a, b) => a.localeCompare(b));
-            const fields = [];
-            for (const fieldName of Object.keys(entity.fields)) {
-                const field = entity.fields[fieldName];
-                const id = `lua-class-${entity.name}-field-${field.name}`;
-                fields.push({
-                    text: field.name,
-                    icon: LuaCard.getTypeIcon(field.type),
-                    id,
-                    class: ['lua-field-item']
-                });
-            }
-
-            const valueNames = Object.keys(entity.values);
-            valueNames.sort((a, b) => a.localeCompare(b));
-            const values = [];
-            for (const valueName of Object.keys(entity.values)) {
-                const value = entity.values[valueName];
-                const id = `lua-class-${entity.name}-value-${value.name}`;
-                values.push({
-                    text: html`<span class="fst-italic">${value.name}</span>`,
-                    icon: LuaCard.getTypeIcon(value.type),
-                    id,
-                    class: ['lua-value-item']
-                });
-            }
-
-            const methodNames = Object.keys(entity.methods);
-            methodNames.sort((a, b) => a.localeCompare(b));
-            const methods = [];
-            for (const methodName of Object.keys(entity.methods)) {
-                const method = entity.methods[methodName];
-                const id = `lua-class-${entity.name}-method-${method.name}`;
-                methods.push({
-                    text: html`<i class="fa-solid fa-xmark me-2" title="${method.returns.type}"></i>${method.name}`,
-                    icon: 'fa-solid fa-terminal text-success mx-2',
-                    id,
-                    class: ['lua-method-item'],
-                });
-            }
-
-            const functionNames = Object.keys(entity.functions);
-            functionNames.sort((a, b) => a.localeCompare(b));
-            const functions = [];
-            for (const functionName of Object.keys(entity.functions)) {
-                const func = entity.functions[functionName];
-                const id = `lua-class-${entity.name}-function-${func.name}`;
-                functions.push({
-                    text: html`<i class="fa-solid fa-xmark me-2" title="${func.returns.type}"></i>${func.name}`,
-                    icon: 'fa-solid fa-terminal text-success mx-2',
-                    id,
-                    class: ['lua-function-item'],
-                });
-            }
-
-            // Some logic to retrieve, or generate tree structure
-            return [
-                {
-                    text: "Class Properties",
-                    icon: LuaCard.getTypeIcon('class'),
-                },
-                {
-                    text: "Constructor",
-                    icon: LuaCard.getTypeIcon('constructor'),
-                },
-                {
-                    text: "Fields",
-                    icon: "fa-solid fa-folder text-light mx-2",
-                    class: ['bg-secondary'],
-                    // expanded: true,
-                    nodes: fields
-                },
-                {
-                    text: "Values",
-                    icon: "fa-solid fa-folder text-light mx-2",
-                    class: ['bg-secondary'],
-                    // expanded: true,
-                    nodes: values
-                },
-                {
-                    text: "Methods",
-                    icon: "fa-solid fa-folder text-light mx-2",
-                    class: ['bg-secondary'],
-                    // expanded: true,
-                    nodes: methods
-                },
-                {
-                    text: "Functions",
-                    icon: "fa-solid fa-folder text-light mx-2",
-                    class: ['bg-secondary'],
-                    // expanded: true,
-                    nodes: functions
-                },
-            ];
-        }
-
-        let $tree = $get('tree');
-        $tree.remove();
-
-        $get('sidebar-content').append('<div id="tree" class="rounded-0 bg-dark text-white"></div>');
-        $tree = $get('tree');
-
-        const data = getTree();
-        console.log({ data });
-
-        // @ts-ignore
-        $tree.bstreeview({ data });
-
-        listenTree();
-
     }
 
     listen(): void {
         this.panel.listen();
-        this.populateItemTree();
+
+        this.itemTree.listen();
+        this.itemTree.populate();
     }
 
 

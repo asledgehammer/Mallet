@@ -1618,16 +1618,11 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
             const { entity } = this.options;
             return (0, util_6.html) `
             ${this.renderNotes(entity.notes, idNotes)}
-            
             <hr>
-            
             ${this.renderParameters(entity)}
             ${this.renderReturns(entity, idReturnType, idReturnNotes)}
-            
             <hr>
-            
             ${this.renderPreview(false)}
-            
         `;
         }
         listen() {
@@ -1641,7 +1636,237 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
     }
     exports.LuaFunctionCard = LuaFunctionCard;
 });
-define("src/asledgehammer/rosetta/component/SidebarPanelButton", ["require", "exports", "src/asledgehammer/rosetta/component/Component", "src/asledgehammer/rosetta/util"], function (require, exports, Component_2, util_7) {
+define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/LuaCard"], function (require, exports, util_7, LuaCard_4) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.ItemTree = void 0;
+    class ItemTree {
+        constructor(app) {
+            this.app = app;
+        }
+        listen() {
+            (0, util_7.$get)('new-lua-class').on('click', () => {
+            });
+            (0, util_7.$get)('open-lua-class').on('click', () => {
+            });
+            (0, util_7.$get)('save-lua-class').on('click', () => {
+            });
+            (0, util_7.$get)('new-lua-field').on('click', () => {
+            });
+            (0, util_7.$get)('new-lua-value').on('click', () => {
+            });
+            (0, util_7.$get)('new-lua-method').on('click', () => {
+            });
+            (0, util_7.$get)('new-lua-function').on('click', () => {
+            });
+        }
+        render() {
+            return (0, util_7.html) `
+            <!-- New Class -->
+            <button id="new-lua-class" class="btn btn-sm btn-success rounded-0 me-1" style="width: 32px; height: 32px" title="New Class">
+                <i class="fa fa-file" style="position: relative; top: -1px"></i>
+            </button>
+            
+            <!-- Open Class -->
+            <button id="open-lua-class" class="btn btn-sm btn-primary rounded-0" style="width: 32px; height: 32px" title="Open Class">
+                <i class="fa-solid fa-folder-open" style="position: relative; top: -1px"></i>
+            </button>
+
+            <!-- Save Class -->
+            <button id="save-lua-class" class="btn btn-sm btn-primary rounded-0 me-1" style="width: 32px; height: 32px" title="Save Class">
+                <i class="fa fa-save" style="position: relative; top: -1px"></i>
+            </button>
+            
+            <!-- New Field -->
+            <button id="new-lua-field" class="btn btn-sm btn-info rounded-0" style="width: 32px; height: 32px" title="New Lua Field">
+                <i class="fa-solid fa-hashtag" style="position: relative; top: -1px"></i>
+            </button>
+
+            <!-- New Value -->
+            <button id="new-lua-value" class="btn btn-sm btn-info rounded-0" style="width: 32px; height: 32px" title="New Lua Value">
+                <i class="fa-solid fa-hashtag" style="position: relative; top: -1px"></i>
+            </button>
+
+            <!-- New Method -->
+            <button id="new-lua-method" class="btn btn-sm btn-info rounded-0" style="width: 32px; height: 32px" title="New Lua Method">
+                <i class="fa-solid fa-terminal" style="position: relative; top: -1px"></i>
+            </button>
+
+            <!-- New Function -->
+            <button id="new-lua-function" class="btn btn-sm btn-info rounded-0" style="width: 32px; height: 32px" title="New Lua Function">
+                <i class="fa-solid fa-terminal" style="position: relative; top: -1px"></i>
+            </button>
+        `;
+        }
+        populate() {
+            const _this = this;
+            const { card: luaClass } = this.app;
+            if (!luaClass)
+                return;
+            const entity = luaClass.options.entity;
+            if (!entity)
+                return;
+            // Generate nodes first.
+            const fieldNames = Object.keys(entity.fields);
+            fieldNames.sort((a, b) => a.localeCompare(b));
+            const fields = [];
+            for (const fieldName of Object.keys(entity.fields)) {
+                const field = entity.fields[fieldName];
+                const id = `lua-class-${entity.name}-field-${field.name}`;
+                fields.push({
+                    text: field.name,
+                    icon: LuaCard_4.LuaCard.getTypeIcon(field.type),
+                    id,
+                    class: ['lua-field-item']
+                });
+            }
+            const valueNames = Object.keys(entity.values);
+            valueNames.sort((a, b) => a.localeCompare(b));
+            const values = [];
+            for (const valueName of Object.keys(entity.values)) {
+                const value = entity.values[valueName];
+                const id = `lua-class-${entity.name}-value-${value.name}`;
+                values.push({
+                    text: (0, util_7.html) `<span class="fst-italic">${value.name}</span>`,
+                    icon: LuaCard_4.LuaCard.getTypeIcon(value.type),
+                    id,
+                    class: ['lua-value-item']
+                });
+            }
+            const methodNames = Object.keys(entity.methods);
+            methodNames.sort((a, b) => a.localeCompare(b));
+            const methods = [];
+            for (const methodName of Object.keys(entity.methods)) {
+                const method = entity.methods[methodName];
+                const id = `lua-class-${entity.name}-method-${method.name}`;
+                methods.push({
+                    text: (0, util_7.html) `<i class="fa-solid fa-xmark me-2" title="${method.returns.type}"></i>${method.name}`,
+                    icon: 'fa-solid fa-terminal text-success mx-2',
+                    id,
+                    class: ['lua-method-item'],
+                });
+            }
+            const functionNames = Object.keys(entity.functions);
+            functionNames.sort((a, b) => a.localeCompare(b));
+            const functions = [];
+            for (const functionName of Object.keys(entity.functions)) {
+                const func = entity.functions[functionName];
+                const id = `lua-class-${entity.name}-function-${func.name}`;
+                functions.push({
+                    text: (0, util_7.html) `<i class="fa-solid fa-xmark me-2" title="${func.returns.type}"></i>${func.name}`,
+                    icon: 'fa-solid fa-terminal text-success mx-2',
+                    id,
+                    class: ['lua-function-item'],
+                });
+            }
+            let $tree = (0, util_7.$get)('tree');
+            $tree.remove();
+            (0, util_7.$get)('sidebar-content').append('<div id="tree" class="rounded-0 bg-dark text-white"></div>');
+            $tree = (0, util_7.$get)('tree');
+            // @ts-ignore
+            $tree.bstreeview({
+                data: [
+                    {
+                        text: "Class Properties",
+                        icon: LuaCard_4.LuaCard.getTypeIcon('class'),
+                    },
+                    {
+                        text: "Constructor",
+                        icon: LuaCard_4.LuaCard.getTypeIcon('constructor'),
+                    },
+                    {
+                        text: "Fields",
+                        icon: "fa-solid fa-folder text-light mx-2",
+                        class: ['bg-secondary'],
+                        // expanded: true,
+                        nodes: fields
+                    },
+                    {
+                        text: "Values",
+                        icon: "fa-solid fa-folder text-light mx-2",
+                        class: ['bg-secondary'],
+                        // expanded: true,
+                        nodes: values
+                    },
+                    {
+                        text: "Methods",
+                        icon: "fa-solid fa-folder text-light mx-2",
+                        class: ['bg-secondary'],
+                        // expanded: true,
+                        nodes: methods
+                    },
+                    {
+                        text: "Functions",
+                        icon: "fa-solid fa-folder text-light mx-2",
+                        class: ['bg-secondary'],
+                        // expanded: true,
+                        nodes: functions
+                    },
+                ]
+            });
+            // Apply jQuery listeners next.
+            fieldNames.sort((a, b) => a.localeCompare(b));
+            for (const fieldName of Object.keys(entity.fields)) {
+                const field = entity.fields[fieldName];
+                const id = `lua-class-${entity.name}-field-${field.name}`;
+                const $fieldNode = (0, util_7.$get)(id);
+                $fieldNode.on('click', () => {
+                    console.log(`Clicked ${id}!`);
+                });
+            }
+            $('.lua-field-item').on('click', function () {
+                const fieldName = this.id.split('field-')[1].trim();
+                // Prevent wasteful selection code executions here.
+                if (_this.selected === fieldName)
+                    return;
+                const field = entity.fields[fieldName];
+                if (!field)
+                    return;
+                _this.app.showField(field);
+                // Let the editor know we last selected the field.
+                _this.selected = fieldName;
+            });
+            $('.lua-value-item').on('click', function () {
+                const valueName = this.id.split('value-')[1].trim();
+                // Prevent wasteful selection code executions here.
+                if (_this.selected === valueName)
+                    return;
+                const value = entity.values[valueName];
+                if (!value)
+                    return;
+                _this.app.showValue(value);
+                // Let the editor know we last selected the value.
+                _this.selected = valueName;
+            });
+            $('.lua-method-item').on('click', function () {
+                const methodName = this.id.split('method-')[1].trim();
+                // Prevent wasteful selection code executions here.
+                if (_this.selected === methodName)
+                    return;
+                const method = entity.methods[methodName];
+                if (!method)
+                    return;
+                _this.app.showMethod(method);
+                // Let the editor know we last selected the method.
+                _this.selected = methodName;
+            });
+            $('.lua-function-item').on('click', function () {
+                const functionName = this.id.split('function-')[1].trim();
+                // Prevent wasteful selection code executions here.
+                if (_this.selected === functionName)
+                    return;
+                const func = entity.functions[functionName];
+                if (!func)
+                    return;
+                _this.app.showFunction(func);
+                // Let the editor know we last selected the function.
+                _this.selected = functionName;
+            });
+        }
+    }
+    exports.ItemTree = ItemTree;
+});
+define("src/asledgehammer/rosetta/component/SidebarPanelButton", ["require", "exports", "src/asledgehammer/rosetta/component/Component", "src/asledgehammer/rosetta/util"], function (require, exports, Component_2, util_8) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.SidebarPanelButton = void 0;
@@ -1650,7 +1875,7 @@ define("src/asledgehammer/rosetta/component/SidebarPanelButton", ["require", "ex
             super(options);
         }
         listen() {
-            (0, util_7.$get)(this.id).on('click', () => {
+            (0, util_8.$get)(this.id).on('click', () => {
                 if (this.options && this.options.onclick) {
                     this.options.onclick();
                 }
@@ -1658,7 +1883,7 @@ define("src/asledgehammer/rosetta/component/SidebarPanelButton", ["require", "ex
         }
         onRender() {
             const { label } = this.options;
-            return (0, util_7.html) `
+            return (0, util_8.html) `
             <button class="btn btn-primary col-12 rounded-0">${label}</button>
         `;
         }
@@ -1688,7 +1913,7 @@ define("src/asledgehammer/rosetta/component/SidebarPanel", ["require", "exports"
     exports.SidebarPanel = SidebarPanel;
     ;
 });
-define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/Component", "src/asledgehammer/rosetta/component/LuaCard", "src/asledgehammer/rosetta/component/SidebarPanel", "src/asledgehammer/rosetta/component/SidebarPanelButton"], function (require, exports, util_8, Component_4, LuaCard_4, SidebarPanel_1, SidebarPanelButton_1) {
+define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/Component", "src/asledgehammer/rosetta/component/ItemTree", "src/asledgehammer/rosetta/component/SidebarPanel", "src/asledgehammer/rosetta/component/SidebarPanelButton"], function (require, exports, util_9, Component_4, ItemTree_1, SidebarPanel_1, SidebarPanelButton_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Sidebar = void 0;
@@ -1756,37 +1981,13 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
             this.panel = new SidebarPanel_1.SidebarPanel({
                 buttons
             });
+            this.itemTree = new ItemTree_1.ItemTree(app);
         }
         onRender() {
-            return (0, util_8.html) `
+            return (0, util_9.html) `
 
             <div class="bg-dark p-1 border-bottom border-bottom-1 border-info shadow">
-
-                <!-- New Class -->
-                <button class="btn btn-sm btn-success rounded-0 me-1" style="width: 32px; height: 32px" title="New Class">
-                    <i class="fa fa-file" style="position: relative; top: -1px"></i>
-                </button>
-                
-                <!-- Open Class -->
-                <button class="btn btn-sm btn-primary rounded-0" style="width: 32px; height: 32px" title="Open Class">
-                    <i class="fa-solid fa-folder-open" style="position: relative; top: -1px"></i>
-                </button>
-
-                <!-- Save Class -->
-                <button class="btn btn-sm btn-primary rounded-0 me-1" style="width: 32px; height: 32px" title="Save Class">
-                    <i class="fa fa-save" style="position: relative; top: -1px"></i>
-                </button>
-                
-                <!-- New Field -->
-                <button class="btn btn-sm btn-info rounded-0" style="width: 32px; height: 32px" title="New Field">
-                    <i class="fa-solid fa-hashtag" style="position: relative; top: -1px"></i>
-                </button>
-
-                <!-- New Method -->
-                <button class="btn btn-sm btn-info rounded-0" style="width: 32px; height: 32px" title="New Method">
-                    <i class="fa-solid fa-terminal" style="position: relative; top: -1px"></i>
-                </button>
-
+                ${this.itemTree.render()}
             </div>
 
             <div class="bg-dark" style="height: 100%; overflow-y: auto;">${this.panel.render()}
@@ -1800,192 +2001,17 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
         `;
         }
         populateItemTree() {
-            const listenTree = () => {
-                const { card: luaClass } = this.app;
-                if (!luaClass)
-                    return;
-                const entity = luaClass.options.entity;
-                if (!entity)
-                    return;
-                const fieldNames = Object.keys(entity.fields);
-                fieldNames.sort((a, b) => a.localeCompare(b));
-                for (const fieldName of Object.keys(entity.fields)) {
-                    const field = entity.fields[fieldName];
-                    const id = `lua-class-${entity.name}-field-${field.name}`;
-                    const $fieldNode = (0, util_8.$get)(id);
-                    $fieldNode.on('click', () => {
-                        console.log(`Clicked ${id}!`);
-                    });
-                }
-                let lastSelected = null;
-                const _this = this;
-                $('.lua-field-item').on('click', function () {
-                    const fieldName = this.id.split('field-')[1].trim();
-                    // Prevent wasteful selection code executions here.
-                    if (lastSelected === fieldName)
-                        return;
-                    const field = entity.fields[fieldName];
-                    if (!field)
-                        return;
-                    _this.app.showField(field);
-                    // Let the editor know we last selected the field.
-                    lastSelected = fieldName;
-                });
-                $('.lua-value-item').on('click', function () {
-                    const valueName = this.id.split('value-')[1].trim();
-                    // Prevent wasteful selection code executions here.
-                    if (lastSelected === valueName)
-                        return;
-                    const value = entity.values[valueName];
-                    if (!value)
-                        return;
-                    _this.app.showValue(value);
-                    // Let the editor know we last selected the value.
-                    lastSelected = valueName;
-                });
-                $('.lua-method-item').on('click', function () {
-                    const methodName = this.id.split('method-')[1].trim();
-                    // Prevent wasteful selection code executions here.
-                    if (lastSelected === methodName)
-                        return;
-                    const method = entity.methods[methodName];
-                    if (!method)
-                        return;
-                    _this.app.showMethod(method);
-                    // Let the editor know we last selected the method.
-                    lastSelected = methodName;
-                });
-                $('.lua-function-item').on('click', function () {
-                    const functionName = this.id.split('function-')[1].trim();
-                    // Prevent wasteful selection code executions here.
-                    if (lastSelected === functionName)
-                        return;
-                    const func = entity.functions[functionName];
-                    if (!func)
-                        return;
-                    _this.app.showFunction(func);
-                    // Let the editor know we last selected the function.
-                    lastSelected = functionName;
-                });
-            };
-            const getTree = () => {
-                const { card: luaClass } = this.app;
-                if (!luaClass)
-                    return [];
-                const entity = luaClass.options.entity;
-                if (!entity)
-                    return [];
-                const fieldNames = Object.keys(entity.fields);
-                fieldNames.sort((a, b) => a.localeCompare(b));
-                const fields = [];
-                for (const fieldName of Object.keys(entity.fields)) {
-                    const field = entity.fields[fieldName];
-                    const id = `lua-class-${entity.name}-field-${field.name}`;
-                    fields.push({
-                        text: field.name,
-                        icon: LuaCard_4.LuaCard.getTypeIcon(field.type),
-                        id,
-                        class: ['lua-field-item']
-                    });
-                }
-                const valueNames = Object.keys(entity.values);
-                valueNames.sort((a, b) => a.localeCompare(b));
-                const values = [];
-                for (const valueName of Object.keys(entity.values)) {
-                    const value = entity.values[valueName];
-                    const id = `lua-class-${entity.name}-value-${value.name}`;
-                    values.push({
-                        text: (0, util_8.html) `<span class="fst-italic">${value.name}</span>`,
-                        icon: LuaCard_4.LuaCard.getTypeIcon(value.type),
-                        id,
-                        class: ['lua-value-item']
-                    });
-                }
-                const methodNames = Object.keys(entity.methods);
-                methodNames.sort((a, b) => a.localeCompare(b));
-                const methods = [];
-                for (const methodName of Object.keys(entity.methods)) {
-                    const method = entity.methods[methodName];
-                    const id = `lua-class-${entity.name}-method-${method.name}`;
-                    methods.push({
-                        text: (0, util_8.html) `<i class="fa-solid fa-xmark me-2" title="${method.returns.type}"></i>${method.name}`,
-                        icon: 'fa-solid fa-terminal text-success mx-2',
-                        id,
-                        class: ['lua-method-item'],
-                    });
-                }
-                const functionNames = Object.keys(entity.functions);
-                functionNames.sort((a, b) => a.localeCompare(b));
-                const functions = [];
-                for (const functionName of Object.keys(entity.functions)) {
-                    const func = entity.functions[functionName];
-                    const id = `lua-class-${entity.name}-function-${func.name}`;
-                    functions.push({
-                        text: (0, util_8.html) `<i class="fa-solid fa-xmark me-2" title="${func.returns.type}"></i>${func.name}`,
-                        icon: 'fa-solid fa-terminal text-success mx-2',
-                        id,
-                        class: ['lua-function-item'],
-                    });
-                }
-                // Some logic to retrieve, or generate tree structure
-                return [
-                    {
-                        text: "Class Properties",
-                        icon: LuaCard_4.LuaCard.getTypeIcon('class'),
-                    },
-                    {
-                        text: "Constructor",
-                        icon: LuaCard_4.LuaCard.getTypeIcon('constructor'),
-                    },
-                    {
-                        text: "Fields",
-                        icon: "fa-solid fa-folder text-light mx-2",
-                        class: ['bg-secondary'],
-                        // expanded: true,
-                        nodes: fields
-                    },
-                    {
-                        text: "Values",
-                        icon: "fa-solid fa-folder text-light mx-2",
-                        class: ['bg-secondary'],
-                        // expanded: true,
-                        nodes: values
-                    },
-                    {
-                        text: "Methods",
-                        icon: "fa-solid fa-folder text-light mx-2",
-                        class: ['bg-secondary'],
-                        // expanded: true,
-                        nodes: methods
-                    },
-                    {
-                        text: "Functions",
-                        icon: "fa-solid fa-folder text-light mx-2",
-                        class: ['bg-secondary'],
-                        // expanded: true,
-                        nodes: functions
-                    },
-                ];
-            };
-            let $tree = (0, util_8.$get)('tree');
-            $tree.remove();
-            (0, util_8.$get)('sidebar-content').append('<div id="tree" class="rounded-0 bg-dark text-white"></div>');
-            $tree = (0, util_8.$get)('tree');
-            const data = getTree();
-            console.log({ data });
-            // @ts-ignore
-            $tree.bstreeview({ data });
-            listenTree();
         }
         listen() {
             this.panel.listen();
-            this.populateItemTree();
+            this.itemTree.listen();
+            this.itemTree.populate();
         }
     }
     exports.Sidebar = Sidebar;
     ;
 });
-define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/LuaClassCard", "src/asledgehammer/rosetta/component/LuaFieldCard", "src/asledgehammer/rosetta/component/LuaFunctionCard", "src/asledgehammer/rosetta/component/Sidebar", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/util"], function (require, exports, LuaClassCard_1, LuaFieldCard_1, LuaFunctionCard_1, Sidebar_1, LuaGenerator_4, RosettaLuaClass_1, util_9) {
+define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/LuaClassCard", "src/asledgehammer/rosetta/component/LuaFieldCard", "src/asledgehammer/rosetta/component/LuaFunctionCard", "src/asledgehammer/rosetta/component/Sidebar", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/util"], function (require, exports, LuaClassCard_1, LuaFieldCard_1, LuaFunctionCard_1, Sidebar_1, LuaGenerator_4, RosettaLuaClass_1, util_10) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.App = void 0;
@@ -2047,7 +2073,7 @@ define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/Lu
             return card;
         }
         renderCode() {
-            const $renderPane = (0, util_9.$get)('screen-content-render');
+            const $renderPane = (0, util_10.$get)('screen-content-render');
             $renderPane.empty();
             if (!this.card)
                 return;
@@ -2511,7 +2537,7 @@ define("src/asledgehammer/rosetta/SerializableComponent", ["require", "exports"]
     }
     exports.SerializableComponent = SerializableComponent;
 });
-define("src/asledgehammer/rosetta/component/LabelComponent", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/Component"], function (require, exports, util_10, Component_5) {
+define("src/asledgehammer/rosetta/component/LabelComponent", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/Component"], function (require, exports, util_11, Component_5) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LabelComponent = void 0;
@@ -2520,7 +2546,7 @@ define("src/asledgehammer/rosetta/component/LabelComponent", ["require", "export
             super(options);
         }
         onRender() {
-            return (0, util_10.html) `
+            return (0, util_11.html) `
             
         `;
         }

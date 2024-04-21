@@ -59,16 +59,11 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
 
         return html`
             ${this.renderNotes(entity.notes, idNotes)}
-            
             <hr>
-            
             ${this.renderParameters(entity)}
             ${this.renderReturns(entity, idReturnType, idReturnNotes)}
-            
             <hr>
-            
             ${this.renderPreview(false)}
-            
         `;
     }
 
