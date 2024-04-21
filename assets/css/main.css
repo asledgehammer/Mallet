@@ -12080,6 +12080,30 @@ body {
   color: #fff;
 }
 
+.ql-snow.ql-toolbar {
+  background-color: #222;
+  border-color: rgba(173, 181, 189, 0.5);
+}
+.ql-snow.ql-toolbar line, .ql-snow.ql-toolbar path, .ql-snow.ql-toolbar polygon {
+  color: #adb5bd;
+  stroke: #adb5bd;
+}
+
+.ql-snow.ql-container {
+  border-color: rgba(173, 181, 189, 0.5);
+}
+
+.ql-snow .ql-picker ::before {
+  color: #adb5bd;
+}
+.ql-snow .ql-picker-item ::before {
+  color: #000 !important;
+}
+
+.ql-picker-label * {
+  color: #adb5bd;
+}
+
 @media only screen and (max-width: 1400px) {
   .screen-content-render {
     display: none;

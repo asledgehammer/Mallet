@@ -106,7 +106,8 @@ export class App {
 
 async function init() {
 
-
+    // @ts-ignore
+    Quill.register('modules/QuillMarkdown', QuillMarkdown, true)
 
     const app = new App();
     app.init();

@@ -976,6 +976,54 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaCard = void 0;
+    const formatDeltaToMarkdown = (ops) => {
+        let notes = '';
+        for (const op of ops) {
+            // console.log(next);
+            if (op.insert) {
+                let bold = false;
+                let italic = false;
+                let underline = false;
+                let link = undefined;
+                const attributes = op.attributes;
+                if (attributes) {
+                    if (attributes.bold)
+                        bold = attributes.bold;
+                    if (attributes.italic)
+                        italic = attributes.italic;
+                    if (attributes.underline)
+                        underline = attributes.underline;
+                    if (attributes.link)
+                        link = attributes.link;
+                }
+                // ATTRIBUTES
+                if (bold) {
+                    if (italic)
+                        notes += "***";
+                    else
+                        notes += '**';
+                }
+                else if (italic)
+                    notes += "*";
+                // CONTENTS
+                notes += link ? `[${op.insert}](${link})` : op.insert;
+                // ATTRIBUTES
+                if (bold) {
+                    if (italic)
+                        notes += "***";
+                    else
+                        notes += '**';
+                }
+                else if (italic)
+                    notes += "*";
+            }
+        }
+        notes = notes.trim();
+        if (notes.endsWith('\n'))
+            notes = notes.substring(0, notes.length - 1);
+        console.log(`"${notes}"`);
+        return notes;
+    };
     class LuaCard extends CardComponent_1.CardComponent {
         constructor(app, options) {
             super(options);
@@ -983,12 +1031,29 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
             this.idPreview = `${this.id}-preview`;
         }
         listenNotes(entity, idNotes) {
-            const $notes = (0, util_3.$get)(idNotes);
-            $notes.on('input', () => {
-                entity.notes = $notes.val();
+            const toolbarOptions = [['bold', 'italic', 'link']];
+            const options = {
+                theme: 'snow',
+                modules: {
+                    toolbar: toolbarOptions,
+                    QuillMarkdown: {}
+                }
+            };
+            // @ts-ignore
+            const editor = new Quill(`#${idNotes}`, options);
+            // @ts-ignore
+            new QuillMarkdown(editor, {});
+            editor.on('text-change', () => {
+                const { ops } = editor.editor.getContents(0, 99999999);
+                entity.notes = formatDeltaToMarkdown(ops);
                 this.update();
                 this.app.renderCode();
             });
+            // @ts-ignore
+            window.editor = editor;
+            setTimeout(() => {
+                editor.editor.insertText('', '');
+            }, 1);
         }
         renderNotes(notes, idNotes) {
             if (!notes)
@@ -996,7 +1061,8 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
             return (0, util_3.html) `
             <div class="mb-3">
                 <label for="${idNotes}" class="form-label mb-2">Description</label>
-                <textarea id="${idNotes}" class="form-control responsive-input mt-1" spellcheck="false">${notes}</textarea>
+                <div id="${idNotes}" style="background-color: #222;">${notes}</div>
+                <!-- <textarea id="${idNotes}" class="form-control responsive-input mt-1" spellcheck="false">${notes}</textarea> -->
             </div>
         `;
         }
@@ -1530,13 +1596,19 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
         }
         onHeaderHTML() {
             const { entity, isStatic } = this.options;
+            const classEntity = this.app.card.options.entity;
+            const className = classEntity.name;
+            let name = `${className}${isStatic ? '.' : ':'}${entity.name}( )`;
+            if (isStatic) {
+                name = (0, util_6.html) `<span class="fst-italic">${name}</span>`;
+            }
             return (0, util_6.html) ` 
             <div class="row">
                 <div class="col-auto ps-2 pe-2">
-                    <div class="responsive-badge px-2"><strong>Lua Method</strong></div>
+                    <div class="responsive-badge px-2"><strong>Lua ${isStatic ? 'Function' : 'Method'}</strong></div>
                 </div>
                 <div class="col-auto p-0">
-                    <h5 class="card-text"><strong>${entity.name}</strong></h5> 
+                    <h5 class="card-text"><strong>${name}</strong></h5> 
                 </div>
             </div>
         `;
@@ -1783,6 +1855,18 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                     // Let the editor know we last selected the method.
                     lastSelected = methodName;
                 });
+                $('.lua-function-item').on('click', function () {
+                    const functionName = this.id.split('function-')[1].trim();
+                    // Prevent wasteful selection code executions here.
+                    if (lastSelected === functionName)
+                        return;
+                    const func = entity.functions[functionName];
+                    if (!func)
+                        return;
+                    _this.app.showFunction(func);
+                    // Let the editor know we last selected the function.
+                    lastSelected = functionName;
+                });
             };
             const getTree = () => {
                 const { card: luaClass } = this.app;
@@ -1828,7 +1912,19 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                         icon: 'fa-solid fa-terminal text-success mx-2',
                         id,
                         class: ['lua-method-item'],
-                        title: 'ee'
+                    });
+                }
+                const functionNames = Object.keys(entity.functions);
+                functionNames.sort((a, b) => a.localeCompare(b));
+                const functions = [];
+                for (const functionName of Object.keys(entity.functions)) {
+                    const func = entity.functions[functionName];
+                    const id = `lua-class-${entity.name}-function-${func.name}`;
+                    functions.push({
+                        text: (0, util_8.html) `<i class="fa-solid fa-xmark me-2" title="${func.returns.type}"></i>${func.name}`,
+                        icon: 'fa-solid fa-terminal text-success mx-2',
+                        id,
+                        class: ['lua-function-item'],
                     });
                 }
                 // Some logic to retrieve, or generate tree structure
@@ -1861,6 +1957,13 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                         class: ['bg-secondary'],
                         // expanded: true,
                         nodes: methods
+                    },
+                    {
+                        text: "Functions",
+                        icon: "fa-solid fa-folder text-light mx-2",
+                        class: ['bg-secondary'],
+                        // expanded: true,
+                        nodes: functions
                     },
                 ];
             };
@@ -1935,6 +2038,14 @@ define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/Lu
             card.update();
             return card;
         }
+        showFunction(entity) {
+            this.$screenContent.empty();
+            const card = new LuaFunctionCard_1.LuaFunctionCard(this, { entity, isStatic: true });
+            this.$screenContent.append(card.render());
+            card.listen();
+            card.update();
+            return card;
+        }
         renderCode() {
             const $renderPane = (0, util_9.$get)('screen-content-render');
             $renderPane.empty();
@@ -1951,6 +2062,8 @@ define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/Lu
     }
     exports.App = App;
     async function init() {
+        // @ts-ignore
+        Quill.register('modules/QuillMarkdown', QuillMarkdown, true);
         const app = new App();
         app.init();
         // // Load debug Rosetta JSON.

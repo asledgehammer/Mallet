@@ -6,6 +6,49 @@ import { $get, html } from "../util";
 import { CardComponent } from "./CardComponent";
 import { ComponentOptions } from "./Component";
 
+const formatDeltaToMarkdown = (ops: any): string => {
+    let notes = '';
+    for (const op of ops) {
+        // console.log(next);
+        if (op.insert) {
+
+            let bold = false;
+            let italic = false;
+            let underline = false;
+            let link: string | undefined = undefined;
+
+            const attributes: any = op.attributes;
+            if (attributes) {
+                if (attributes.bold) bold = attributes.bold;
+                if (attributes.italic) italic = attributes.italic;
+                if (attributes.underline) underline = attributes.underline;
+                if (attributes.link) link = attributes.link;
+            }
+
+            // ATTRIBUTES
+            if (bold) {
+                if (italic) notes += "***";
+                else notes += '**';
+            } else if (italic) notes += "*";
+            // CONTENTS
+            notes += link ? `[${op.insert}](${link})` : op.insert;
+            // ATTRIBUTES
+            if (bold) {
+                if (italic) notes += "***";
+                else notes += '**';
+            } else if (italic) notes += "*";
+
+        }
+    }
+
+
+    notes = notes.trim();
+    if (notes.endsWith('\n')) notes = notes.substring(0, notes.length - 1);
+    console.log(`"${notes}"`);
+
+    return notes;
+};
+
 export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O> {
 
     readonly app: App;
@@ -19,12 +62,33 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
     }
 
     listenNotes(entity: { notes: string | undefined }, idNotes: string): void {
-        const $notes = $get(idNotes);
-        $notes.on('input', () => {
-            entity.notes = $notes.val();
+        const toolbarOptions = [['bold', 'italic', 'link']];
+        const options = {
+            theme: 'snow',
+            modules: {
+                toolbar: toolbarOptions,
+                QuillMarkdown: {}
+            }
+        };
+
+        // @ts-ignore
+        const editor = new Quill(`#${idNotes}`, options);
+        // @ts-ignore
+        new QuillMarkdown(editor, {});
+
+        editor.on('text-change', () => {
+            const { ops } = editor.editor.getContents(0, 99999999);
+            entity.notes = formatDeltaToMarkdown(ops);
             this.update();
             this.app.renderCode();
         });
+
+        // @ts-ignore
+        window.editor = editor;
+
+        setTimeout(() => {
+            editor.editor.insertText('', '');
+        }, 1);
     }
 
     renderNotes(notes: string | undefined, idNotes: string): string {
@@ -32,7 +96,8 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         return html`
             <div class="mb-3">
                 <label for="${idNotes}" class="form-label mb-2">Description</label>
-                <textarea id="${idNotes}" class="form-control responsive-input mt-1" spellcheck="false">${notes}</textarea>
+                <div id="${idNotes}" style="background-color: #222;">${notes}</div>
+                <!-- <textarea id="${idNotes}" class="form-control responsive-input mt-1" spellcheck="false">${notes}</textarea> -->
             </div>
         `;
     }
@@ -305,13 +370,13 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
     }
 
     renderReturns(entity: { name: string, returns: RosettaLuaReturns }, idReturnType: string, idReturnNotes: string, show: boolean = false): string {
-        
+
         const { returns } = entity;
         let { notes } = returns;
         if (!notes) notes = '';
 
         const idCard = `${entity.name}-returns-card`;
-        
+
         return html`
             <div class="card responsive-subcard mt-3">
                 <div class="card-header">

@@ -1,7 +1,7 @@
 import { App } from '../../../app';
 import { generateLuaMethod } from '../lua/LuaGenerator';
 import { RosettaLuaFunction } from '../lua/RosettaLuaFunction';
-import { html } from '../util';
+import { $get, html } from '../util';
 import { CardOptions } from './CardComponent';
 import { LuaCard } from './LuaCard';
 
@@ -35,7 +35,7 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
         const classEntity = this.app.card!.options!.entity;
         const className = classEntity.name;
 
-        let name = `${className}${isStatic?'.':':'}${entity.name}( )`;
+        let name = `${className}${isStatic ? '.' : ':'}${entity.name}( )`;
         if (isStatic) {
             name = html`<span class="fst-italic">${name}</span>`;
         }
