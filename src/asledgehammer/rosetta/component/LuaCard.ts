@@ -19,9 +19,10 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
     }
 
     listenNotes(entity: { notes: string | undefined }, idNotes: string): void {
-        const $description = $get(idNotes);
-        $description.on('input', () => {
-            entity.notes = $description.val();
+        const $notes = $get(idNotes);
+        $notes.on('input', () => {
+            entity.notes = $notes.val();
+            this.update();
             this.app.renderCode();
         });
     }
@@ -36,6 +37,25 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         `;
     }
 
+    listenDefaultValue(entity: { defaultValue: string | undefined }, idDefaultValue: string) {
+        const $defaultValue = $get(idDefaultValue);
+        $defaultValue.on('input', () => {
+            entity.defaultValue = $defaultValue.val();
+            this.update();
+            this.app.renderCode();
+        });
+    }
+
+    renderDefaultValue(defaultValue: string | undefined, idDefaultValue: string): string {
+        if (!defaultValue) defaultValue = '';
+        return html`
+            <div class="mb-3">
+                <label for="${idDefaultValue}" class="form-label mb-2">Default Value</label>
+                <textarea id="${idDefaultValue}" class="form-control responsive-input mt-1" spellcheck="false">${defaultValue}</textarea>
+            </div>
+        `;
+    }
+
     listenParameters(entity: { name: string, parameters: RosettaLuaParameter[] }): void {
         const { parameters } = entity;
 
@@ -46,6 +66,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
             const $description = $get(idParamNotes);
             $description.on('input', () => {
                 param.notes = $description.val();
+                this.update();
                 this.app.renderCode();
             });
 
@@ -59,12 +80,14 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                     $customInput.hide();
                     $customInput.val(''); // Clear custom field.
                 }
+                this.update();
                 this.app.renderCode();
             });
 
             // When the custom field is changed, set this as the type.
             $customInput.on('input', () => {
                 param.type = $customInput.val();
+                this.update();
                 this.app.renderCode();
             });
 
@@ -85,6 +108,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                         $select.val(value);
                         $customInput.hide();
                         $customInput.val(''); // Clear custom field.
+                        this.update();
                         this.app.renderCode();
                         break;
                 }
@@ -238,6 +262,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         const $description = $get(idReturnNotes);
         $description.on('input', () => {
             returns.notes = $description.val();
+            this.update();
             this.app.renderCode();
         });
 
@@ -251,6 +276,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                 $customInput.hide();
                 $customInput.val(''); // Clear custom field.
             }
+            this.update();
             this.app.renderCode();
         });
 
@@ -271,6 +297,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                     $select.val(value);
                     $customInput.hide();
                     $customInput.val(''); // Clear custom field.
+                    this.update();
                     this.app.renderCode();
                     break;
             }
@@ -321,6 +348,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                 $customInput.hide();
                 $customInput.val(''); // Clear custom field.
             }
+            this.update();
             this.app.renderCode();
         });
 
@@ -341,6 +369,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                     $select.val(value);
                     $customInput.hide();
                     $customInput.val(''); // Clear custom field.
+                    this.update();
                     this.app.renderCode();
                     break;
             }

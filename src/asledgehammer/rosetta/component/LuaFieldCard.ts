@@ -7,12 +7,14 @@ import { LuaCard } from './LuaCard';
 
 export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
 
-    idNotes: string;
-    idType: string;
+    readonly idDefaultValue: string;
+    readonly idNotes: string;
+    readonly idType: string;
 
     constructor(app: App, options: LuaFieldCardOptions) {
         super(app, options);
 
+        this.idDefaultValue = `${this.id}-default-value`;
         this.idNotes = `${this.id}-notes`;
         this.idType = `${this.id}-type`;
     }
@@ -23,13 +25,18 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
 
         const { app } = this;
         const { entity, isStatic } = this.options;
+        const { defaultValue } = entity;
+        const name = app.card?.options?.entity.name!;
         
         if (isStatic) {
-            const name = app.card?.options?.entity.name!;
             return `${generateLuaField(entity)}\n\n${generateLuaValue(name, entity)}`;
         }
-
-        return generateLuaField(entity);
+        
+        let s = generateLuaField(entity);
+        if(defaultValue) {
+            s += `\n\n--- (Example of initialization of field) ---\nself.${entity.name} = ${defaultValue};`;
+        }
+        return s;
     }
 
     onHeaderHTML(): string | undefined {
@@ -54,19 +61,16 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
 
     onBodyHTML(): string | undefined {
 
-        const { idNotes, idType } = this;
+        const { idDefaultValue, idNotes, idType } = this;
         const { entity } = this.options!;
 
         return html`
             <div>
                 ${this.renderNotes(entity.notes, idNotes)}
-
+                ${this.renderDefaultValue(entity.defaultValue, idDefaultValue)}
                 <hr>
-
                 ${this.renderType(entity.name, entity.type, idType)}
-
                 <hr>
-
                 ${this.renderPreview(false)}
             </div>
         `;
@@ -75,10 +79,11 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
     listen(): void {
         super.listen();
 
-        const { idNotes, idType } = this;
+        const { idDefaultValue, idNotes, idType } = this;
         const { entity } = this.options!;
 
         this.listenNotes(entity, idNotes);
+        this.listenDefaultValue(entity, idDefaultValue);
         this.listenType(entity, idType, idType);
     }
 }
