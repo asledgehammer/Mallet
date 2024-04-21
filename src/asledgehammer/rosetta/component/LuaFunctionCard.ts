@@ -32,13 +32,21 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
 
     onHeaderHTML(): string | undefined {
         const { entity, isStatic } = this.options!;
+        const classEntity = this.app.card!.options!.entity;
+        const className = classEntity.name;
+
+        let name = `${className}${isStatic?'.':':'}${entity.name}( )`;
+        if (isStatic) {
+            name = html`<span class="fst-italic">${name}</span>`;
+        }
+
         return html` 
             <div class="row">
                 <div class="col-auto ps-2 pe-2">
-                    <div class="responsive-badge px-2"><strong>Lua Method</strong></div>
+                    <div class="responsive-badge px-2"><strong>Lua ${isStatic ? 'Function' : 'Method'}</strong></div>
                 </div>
                 <div class="col-auto p-0">
-                    <h5 class="card-text"><strong>${entity.name}</strong></h5> 
+                    <h5 class="card-text"><strong>${name}</strong></h5> 
                 </div>
             </div>
         `;

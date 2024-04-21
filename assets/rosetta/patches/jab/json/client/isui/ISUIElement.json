@@ -132,7 +132,9 @@
                     "returns": {
                         "type": "void"
                     }
-                },
+                }
+            },
+            "functions": {
                 "drawTexture": {
                     "notes": "Draws a texture on the screen using top-left coordinates and a color multiplier.",
                     "parameters": [

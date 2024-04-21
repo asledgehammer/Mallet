@@ -207,6 +207,22 @@ export class Sidebar extends Component<SidebarOptions> {
                 // Let the editor know we last selected the method.
                 lastSelected = methodName;
             });
+
+            $('.lua-function-item').on('click', function () {
+
+                const functionName = this.id.split('function-')[1].trim();
+
+                // Prevent wasteful selection code executions here.
+                if (lastSelected === functionName) return;
+
+                const func = entity.functions[functionName];
+                if (!func) return;
+
+                _this.app.showFunction(func);
+
+                // Let the editor know we last selected the function.
+                lastSelected = functionName;
+            });
         };
 
         const getTree = () => {
@@ -255,7 +271,20 @@ export class Sidebar extends Component<SidebarOptions> {
                     icon: 'fa-solid fa-terminal text-success mx-2',
                     id,
                     class: ['lua-method-item'],
-                    title: 'ee'
+                });
+            }
+
+            const functionNames = Object.keys(entity.functions);
+            functionNames.sort((a, b) => a.localeCompare(b));
+            const functions = [];
+            for (const functionName of Object.keys(entity.functions)) {
+                const func = entity.functions[functionName];
+                const id = `lua-class-${entity.name}-function-${func.name}`;
+                functions.push({
+                    text: html`<i class="fa-solid fa-xmark me-2" title="${func.returns.type}"></i>${func.name}`,
+                    icon: 'fa-solid fa-terminal text-success mx-2',
+                    id,
+                    class: ['lua-function-item'],
                 });
             }
 
@@ -289,6 +318,13 @@ export class Sidebar extends Component<SidebarOptions> {
                     class: ['bg-secondary'],
                     // expanded: true,
                     nodes: methods
+                },
+                {
+                    text: "Functions",
+                    icon: "fa-solid fa-folder text-light mx-2",
+                    class: ['bg-secondary'],
+                    // expanded: true,
+                    nodes: functions
                 },
             ];
         }

@@ -72,6 +72,15 @@ export class App {
         return card;
     }
 
+    public showFunction(entity: RosettaLuaFunction): LuaFunctionCard {
+        this.$screenContent.empty();
+        const card = new LuaFunctionCard(this, { entity, isStatic: true });
+        this.$screenContent.append(card.render());
+        card.listen();
+        card.update();
+        return card;
+    }
+
     renderCode() {
 
         const $renderPane = $get('screen-content-render');
