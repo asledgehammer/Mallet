@@ -6,6 +6,7 @@
             "values": {
                 "IDMax": {
                     "type": "number",
+                    "defaultValue": 1,
                     "notes": "The next ID to use for a new ISUIElement instance."
                 }
             },

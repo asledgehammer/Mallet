@@ -54,6 +54,15 @@ export class App {
         return card;
     }
 
+    public showValue(entity: RosettaLuaField): LuaFieldCard {
+        this.$screenContent.empty();
+        const card = new LuaFieldCard(this, { entity, isStatic: true });
+        this.$screenContent.append(card.render());
+        card.listen();
+        card.update();
+        return card;
+    }
+
     public showMethod(entity: RosettaLuaFunction): LuaFunctionCard {
         this.$screenContent.empty();
         const card = new LuaFunctionCard(this, { entity, isStatic: false });

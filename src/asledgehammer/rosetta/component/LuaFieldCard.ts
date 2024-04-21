@@ -1,7 +1,7 @@
 import { App } from '../../../app';
-import { generateLuaField } from '../lua/LuaGenerator';
+import { generateLuaField, generateLuaValue } from '../lua/LuaGenerator';
 import { RosettaLuaField } from '../lua/RosettaLuaField';
-import { $get, html } from '../util';
+import { html } from '../util';
 import { CardOptions } from './CardComponent';
 import { LuaCard } from './LuaCard';
 
@@ -18,18 +18,35 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
     }
 
     onRenderPreview(): string {
-        return generateLuaField(this.options!.entity);
+
+        if (!this.options) return '';
+
+        const { app } = this;
+        const { entity, isStatic } = this.options;
+        
+        if (isStatic) {
+            const name = app.card?.options?.entity.name!;
+            return `${generateLuaField(entity)}\n\n${generateLuaValue(name, entity)}`;
+        }
+
+        return generateLuaField(entity);
     }
 
     onHeaderHTML(): string | undefined {
         const { entity, isStatic } = this.options!;
+
+        let name = entity.name;
+        if (isStatic) {
+            name = html`<span class="fst-italic">${entity.name}</span>`;
+        }
+
         return html` 
             <div class="row">
                 <div class="col-auto ps-2 pe-2">
                     <div class="text-bg-info px-2"><strong>Lua ${isStatic ? 'Property' : 'Field'}</strong></div>
                 </div>
                 <div class="col-auto p-0">
-                    <h5 class="card-text"><strong>${entity.name}</strong></h5> 
+                    <h5 class="card-text"><strong>${name}</strong></h5> 
                 </div>
             </div>
         `;

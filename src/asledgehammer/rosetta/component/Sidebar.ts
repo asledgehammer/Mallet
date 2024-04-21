@@ -176,6 +176,22 @@ export class Sidebar extends Component<SidebarOptions> {
                 lastSelected = fieldName;
             });
 
+            $('.lua-value-item').on('click', function () {
+
+                const valueName = this.id.split('value-')[1].trim();
+
+                // Prevent wasteful selection code executions here.
+                if (lastSelected === valueName) return;
+
+                const value = entity.values[valueName];
+                if (!value) return;
+
+                _this.app.showValue(value);
+
+                // Let the editor know we last selected the value.
+                lastSelected = valueName;
+            });
+
             $('.lua-method-item').on('click', function () {
 
                 const methodName = this.id.split('method-')[1].trim();
@@ -214,6 +230,20 @@ export class Sidebar extends Component<SidebarOptions> {
                 });
             }
 
+            const valueNames = Object.keys(entity.values);
+            valueNames.sort((a, b) => a.localeCompare(b));
+            const values = [];
+            for (const valueName of Object.keys(entity.values)) {
+                const value = entity.values[valueName];
+                const id = `lua-class-${entity.name}-value-${value.name}`;
+                values.push({
+                    text: html`<span class="fst-italic">${value.name}</span>`,
+                    icon: LuaCard.getTypeIcon(value.type),
+                    id,
+                    class: ['lua-value-item']
+                });
+            }
+
             const methodNames = Object.keys(entity.methods);
             methodNames.sort((a, b) => a.localeCompare(b));
             const methods = [];
@@ -245,6 +275,13 @@ export class Sidebar extends Component<SidebarOptions> {
                     class: ['bg-secondary'],
                     // expanded: true,
                     nodes: fields
+                },
+                {
+                    text: "Values",
+                    icon: "fa-solid fa-folder text-light mx-2",
+                    class: ['bg-secondary'],
+                    // expanded: true,
+                    nodes: values
                 },
                 {
                     text: "Methods",

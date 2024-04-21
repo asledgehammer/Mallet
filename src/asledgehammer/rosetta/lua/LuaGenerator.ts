@@ -8,6 +8,10 @@ export const generateLuaField = (field: RosettaLuaField): string => {
     return `--- @field ${field.name} ${field.type} ${field.notes ? field.notes : ''}`;
 };
 
+export const generateLuaValue = (containerName: string, field: RosettaLuaField): string => {
+    return `${containerName}.${field.name} = ${field.defaultValue != null ? field.defaultValue : 'nil'};`;
+};
+
 export const generateLuaParameterBody = (params: RosettaLuaParameter[]): string => {
     let s = '';
     if (params.length) {
@@ -19,7 +23,7 @@ export const generateLuaParameterBody = (params: RosettaLuaParameter[]): string 
     return `(${s})`;
 };
 
-export const generateLuaMethod = (clazz: RosettaLuaClass, func: RosettaLuaFunction): string => {
+export const generateLuaMethod = (className: string, func: RosettaLuaFunction): string => {
 
     let s = '';
 
@@ -59,7 +63,7 @@ export const generateLuaMethod = (clazz: RosettaLuaClass, func: RosettaLuaFuncti
     }
 
     if (s.length) s += '\n';
-    s += `function ${clazz.name}:${func.name}${generateLuaParameterBody(func.parameters)} end`;
+    s += `function ${className}:${func.name}${generateLuaParameterBody(func.parameters)} end`;
     return s;
 };
 
@@ -96,7 +100,7 @@ export const generateLuaClass = (clazz: RosettaLuaClass): string => {
         methodNames.sort((a, b) => a.localeCompare(b));
         for (const methodName of methodNames) {
             const method = clazz.methods[methodName];
-            s += generateLuaMethod(clazz, method) + '\n\n';
+            s += generateLuaMethod(clazz.name, method) + '\n\n';
         }
     }
 

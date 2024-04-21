@@ -20,7 +20,14 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
     }
 
     onRenderPreview(): string {
-        return generateLuaMethod(this.app.card!.options!.entity, this.options!.entity);
+
+        if (!this.options) return '';
+
+        const { entity } = this.options;
+        const classEntity = this.app.card!.options!.entity;
+        const className = classEntity.name;
+
+        return generateLuaMethod(className, entity);
     }
 
     onHeaderHTML(): string | undefined {
