@@ -3,6 +3,12 @@
     "luaClasses": {
         "ISUIElement": {
             "notes": "**ISUIElement** is the base UI class in the Project Zomboid Lua codebase.",
+            "values": {
+                "IDMax": {
+                    "type": "number",
+                    "notes": "The next ID to use for a new ISUIElement instance."
+                }
+            },
             "fields": {
                 "anchorBottom": {
                     "type": "boolean",
