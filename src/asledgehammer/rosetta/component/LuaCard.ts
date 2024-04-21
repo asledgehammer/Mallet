@@ -354,13 +354,11 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         return html`
             <div class="card responsive-subcard">
                 <div class="card-header">
-                    <!-- <h6 class="mb-0">Returns</h6> -->
                     <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idTypeCard}" aria-expanded="true" aria-controls="${idTypeCard}">
-                        Returns
+                        Type
                     </button>   
                 </div>
                 <div id="${idTypeCard}" class="card-body collapse show">
-                    <!-- Return Type -->
                     <div>
                         <label for="${idReturnType}" class="form-label">Type</label>
                         ${LuaCard.renderTypeSelect(idReturnType, 'The return type.', type, false)}
