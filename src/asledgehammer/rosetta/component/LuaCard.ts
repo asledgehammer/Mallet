@@ -352,8 +352,8 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         const idTypeCard = `${name}-type-card`;
 
         return html`
-            <div class="card border border-1 border-800 rounded-0 bg-secondary">
-                <div class="card-header bg-dark" style="cursor: pointer; background-color: var(--bs-accordion-btn-bg);">
+            <div class="card responsive-subcard">
+                <div class="card-header">
                     <!-- <h6 class="mb-0">Returns</h6> -->
                     <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idTypeCard}" aria-expanded="true" aria-controls="${idTypeCard}">
                         Returns
