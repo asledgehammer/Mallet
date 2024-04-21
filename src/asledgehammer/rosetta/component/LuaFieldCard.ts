@@ -25,11 +25,11 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
         const { entity, isStatic } = this.options!;
         return html` 
             <div class="row">
-                <div class="col-auto ps-2 pe-3">
-                    <div class="badge text-bg-success">Lua ${isStatic ? 'Function' : 'Method'}</div>
+                <div class="col-auto ps-2 pe-2">
+                    <div class="text-bg-info px-2"><strong>Lua ${isStatic ? 'Property' : 'Field'}</strong></div>
                 </div>
                 <div class="col-auto p-0">
-                    <h5 class="card-text">${entity.name}</h5> 
+                    <h5 class="card-text"><strong>${entity.name}</strong></h5> 
                 </div>
             </div>
         `;
