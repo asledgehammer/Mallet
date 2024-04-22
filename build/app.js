@@ -1648,6 +1648,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
             const { app } = this;
             const _this = this;
             (0, util_7.$get)('new-lua-class').on('click', () => {
+                const id = 'modal-new-lua-class';
             });
             (0, util_7.$get)('open-lua-class').on('click', () => {
                 const dFileLoad = document.getElementById('load-file');
@@ -1695,7 +1696,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
         render() {
             return (0, util_7.html) `
             <!-- New Class -->
-            <button id="new-lua-class" class="btn btn-sm btn-success rounded-0 me-1" style="width: 32px; height: 32px" title="New Class">
+            <button id="new-lua-class" class="btn btn-sm btn-success rounded-0 me-1" style="width: 32px; height: 32px" title="New Class" data-bs-toggle="modal" data-bs-target="#modal-new-lua-class">
                 <i class="fa fa-file" style="position: relative; top: -1px"></i>
             </button>
             
@@ -2068,6 +2069,18 @@ define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/Lu
             this.$screenContent.append(this.card.render());
             this.card.listen();
             this.card.update();
+            this.renderCode();
+            this.sidebar.itemTree.populate();
+            return this.card;
+        }
+        showClass(entity) {
+            this.$screenContent.empty();
+            this.card = new LuaClassCard_1.LuaClassCard(this, { entity });
+            this.$screenContent.append(this.card.render());
+            this.card.listen();
+            this.card.update();
+            this.renderCode();
+            this.sidebar.itemTree.populate();
             return this.card;
         }
         showField(entity) {
@@ -2122,15 +2135,40 @@ define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/Lu
         Quill.register('modules/QuillMarkdown', QuillMarkdown, true);
         const app = new App();
         app.init();
+        app.sidebar.listen();
         // // Load debug Rosetta JSON.
         // const json = await load('http://localhost:8080/assets/rosetta/patches/jab/json/client/isui/ISUIElement.json');
         // app.loadLuaClass(json);
-        app.sidebar.listen();
-        app.renderCode();
+        // @ts-ignore
+        const myModal = new bootstrap.Modal('#modal-new-lua-class', {});
+        const $inputNewLuaClassName = (0, util_10.$get)('input-new-lua-class-name');
+        const validateLuaVariableName = (nameOriginal) => {
+            nameOriginal = nameOriginal.trim();
+            let name = '';
+            for (const c of nameOriginal) {
+                if (name === '') {
+                    if (c === ' ')
+                        continue; // No leading spaces.
+                    else if (/[0-9]/.test(c))
+                        continue; // No leading numbers.
+                }
+                if (!/'^(%a+_%a+)$'/.test(c))
+                    name += c; // Only valid lua characters.
+            }
+            return name;
+        };
+        $inputNewLuaClassName.on('input', () => {
+            setTimeout(() => $inputNewLuaClassName.val(validateLuaVariableName($inputNewLuaClassName.val())), 1);
+        });
+        (0, util_10.$get)('btn-new-lua-class-create').on('click', () => {
+            const entity = new RosettaLuaClass_1.RosettaLuaClass(validateLuaVariableName($inputNewLuaClassName.val()).trim());
+            app.showClass(entity);
+            myModal.hide();
+        });
         // @ts-ignore
         window.app = app;
     }
-    init();
+    $(() => init());
 });
 define("src/lib", ["require", "exports"], function (require, exports) {
     "use strict";

@@ -10,7 +10,7 @@ export class Sidebar extends Component<SidebarOptions> {
     private readonly panel: SidebarPanel;
     private readonly app: App;
 
-    private readonly itemTree: ItemTree;
+    readonly itemTree: ItemTree;
 
     constructor(app: App) {
         super({

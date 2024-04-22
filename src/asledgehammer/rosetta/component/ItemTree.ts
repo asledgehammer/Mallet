@@ -18,7 +18,7 @@ export class ItemTree {
         const _this = this;
 
         $get('new-lua-class').on('click', () => {
-
+            const id = 'modal-new-lua-class';
         });
 
         $get('open-lua-class').on('click', () => {
@@ -80,7 +80,7 @@ export class ItemTree {
     render(): string {
         return html`
             <!-- New Class -->
-            <button id="new-lua-class" class="btn btn-sm btn-success rounded-0 me-1" style="width: 32px; height: 32px" title="New Class">
+            <button id="new-lua-class" class="btn btn-sm btn-success rounded-0 me-1" style="width: 32px; height: 32px" title="New Class" data-bs-toggle="modal" data-bs-target="#modal-new-lua-class">
                 <i class="fa fa-file" style="position: relative; top: -1px"></i>
             </button>
             
