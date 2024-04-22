@@ -137,29 +137,51 @@ export class ItemTree {
                     app.showClass(clazz);
                     break;
                 }
+                case 'edit_field': {
+                    const field = clazz.fields[nameOld];
+                    field.name = name;
+                    clazz.fields[name] = field;
+                    delete clazz.fields[nameOld];
+                    app.showField(field);
+                    this.populate();
+                    break;
+                }
+                case 'edit_value': {
+                    console.log(this.nameMode);
+                    console.log(nameOld);
+                    const value = clazz.values[nameOld];
+                    value.name = name;
+                    clazz.values[name] = value;
+                    delete clazz.values[nameOld];
+                    app.showValue(value);
+                    this.populate();
+                    break;
+                }
+                case 'edit_function': {
+                    const func = clazz.functions[nameOld];
+                    func.name = name;
+                    clazz.functions[name] = func;
+                    delete clazz.functions[nameOld];
+                    app.showFunction(func);
+                    this.populate();
+                    break;
+                }
                 case 'edit_method': {
                     const method = clazz.methods[nameOld];
                     method.name = name;
                     clazz.methods[name] = method;
                     delete clazz.methods[nameOld];
-
                     app.showMethod(method);
-
                     this.populate();
                     break;
                 }
                 case 'edit_parameter': {
-
                     const split = nameOld.split('-');
-                    console.log(nameOld);
                     const funcName = split[0];
                     const paramName = split[1];
-
                     let type: 'constructor' | 'method' | 'function' | null = null;
-
                     let func = null;
                     let param = null;
-
                     // Could be the constructor.
                     if (funcName === 'new') {
                         func = clazz.conztructor;
@@ -184,26 +206,21 @@ export class ItemTree {
                             }
                         }
                     }
-
                     if (!func) {
                         console.warn(`Unknown function / method / constructor: ${clazz.name}.${funcName}!`);
                         break;
                     }
-
                     for (const next of func.parameters) {
                         if (next.name === paramName) {
                             param = next;
                             break;
                         }
                     }
-
                     if (!param) {
                         console.warn(`Unknown parameter: ${clazz.name}.${funcName}#${paramName}!`);
                         break;
                     }
-
                     param.name = name;
-
                     if (type === 'constructor') {
                         app.showConstructor(func as RosettaLuaConstructor);
                     } else if (type === 'function') {
@@ -211,7 +228,6 @@ export class ItemTree {
                     } else if (type === 'method') {
                         app.showMethod(func as RosettaLuaFunction);
                     }
-
                     this.populate();
                     break;
                 }

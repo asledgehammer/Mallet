@@ -7,7 +7,7 @@ import { RosettaEntity } from '../RosettaEntity';
  * @author Jab
  */
 export class RosettaLuaField extends RosettaEntity {
-  readonly name: string;
+  name: string;
   type: string;
   notes: string | undefined;
   defaultValue: string | undefined;

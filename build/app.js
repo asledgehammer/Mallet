@@ -712,7 +712,7 @@ define("src/asledgehammer/rosetta/lua/LuaGenerator", ["require", "exports"], fun
         }
         if (s.endsWith('\n'))
             s = s.substring(0, s.length - 1);
-        return `--- @field ${field.name} ${field.type} ${field.notes}`;
+        return `--- @field ${field.name} ${field.type} ${s}`;
     };
     exports.generateLuaField = generateLuaField;
     const generateLuaValue = (containerName, field) => {
@@ -1726,6 +1726,7 @@ define("src/asledgehammer/rosetta/component/LuaFieldCard", ["require", "exports"
             this.idDefaultValue = `${this.id}-default-value`;
             this.idNotes = `${this.id}-notes`;
             this.idType = `${this.id}-type`;
+            this.idBtnEdit = `${this.id}-btn-edit`;
         }
         onRenderPreview() {
             var _a, _b;
@@ -1745,10 +1746,13 @@ define("src/asledgehammer/rosetta/component/LuaFieldCard", ["require", "exports"
             return s;
         }
         onHeaderHTML() {
+            var _a;
+            const { idBtnEdit } = this;
             const { entity, isStatic } = this.options;
-            let name = entity.name;
+            const luaClass = (_a = this.app.card) === null || _a === void 0 ? void 0 : _a.options.entity;
+            let name = `${luaClass.name}.${entity.name}`;
             if (isStatic) {
-                name = (0, util_6.html) `<span class="fst-italic">${entity.name}</span>`;
+                name = (0, util_6.html) `<span class="fst-italic">${name}</span>`;
             }
             return (0, util_6.html) ` 
             <div class="row">
@@ -1758,6 +1762,7 @@ define("src/asledgehammer/rosetta/component/LuaFieldCard", ["require", "exports"
                 <div class="col-auto p-0">
                     <h5 class="card-text"><strong>${name}</strong></h5> 
                 </div>
+                ${this.renderEdit(idBtnEdit)}
             </div>
         `;
         }
@@ -1777,11 +1782,12 @@ define("src/asledgehammer/rosetta/component/LuaFieldCard", ["require", "exports"
         }
         listen() {
             super.listen();
-            const { idDefaultValue, idNotes, idType } = this;
-            const { entity } = this.options;
+            const { idBtnEdit, idDefaultValue, idNotes, idType } = this;
+            const { entity, isStatic } = this.options;
             this.listenNotes(entity, idNotes);
             this.listenDefaultValue(entity, idDefaultValue);
             this.listenType(entity, idType, idType);
+            this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_value' : 'edit_field', `Edit ${isStatic ? 'Value' : 'Field'} Name`);
         }
     }
     exports.LuaFieldCard = LuaFieldCard;
@@ -1955,6 +1961,35 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                         app.showClass(clazz);
                         break;
                     }
+                    case 'edit_field': {
+                        const field = clazz.fields[nameOld];
+                        field.name = name;
+                        clazz.fields[name] = field;
+                        delete clazz.fields[nameOld];
+                        app.showField(field);
+                        this.populate();
+                        break;
+                    }
+                    case 'edit_value': {
+                        console.log(this.nameMode);
+                        console.log(nameOld);
+                        const value = clazz.values[nameOld];
+                        value.name = name;
+                        clazz.values[name] = value;
+                        delete clazz.values[nameOld];
+                        app.showValue(value);
+                        this.populate();
+                        break;
+                    }
+                    case 'edit_function': {
+                        const func = clazz.functions[nameOld];
+                        func.name = name;
+                        clazz.functions[name] = func;
+                        delete clazz.functions[nameOld];
+                        app.showFunction(func);
+                        this.populate();
+                        break;
+                    }
                     case 'edit_method': {
                         const method = clazz.methods[nameOld];
                         method.name = name;
@@ -1966,7 +2001,6 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                     }
                     case 'edit_parameter': {
                         const split = nameOld.split('-');
-                        console.log(nameOld);
                         const funcName = split[0];
                         const paramName = split[1];
                         let type = null;

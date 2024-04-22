@@ -10,6 +10,7 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
     readonly idDefaultValue: string;
     readonly idNotes: string;
     readonly idType: string;
+    readonly idBtnEdit: string;
 
     constructor(app: App, options: LuaFieldCardOptions) {
         super(app, options);
@@ -17,6 +18,7 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
         this.idDefaultValue = `${this.id}-default-value`;
         this.idNotes = `${this.id}-notes`;
         this.idType = `${this.id}-type`;
+        this.idBtnEdit = `${this.id}-btn-edit`;
     }
 
     onRenderPreview(): string {
@@ -41,11 +43,13 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
     }
 
     onHeaderHTML(): string | undefined {
+        const { idBtnEdit } = this;
         const { entity, isStatic } = this.options!;
+        const luaClass = this.app.card?.options!.entity!;
 
-        let name = entity.name;
+        let name = `${luaClass.name}.${entity.name}`;
         if (isStatic) {
-            name = html`<span class="fst-italic">${entity.name}</span>`;
+            name = html`<span class="fst-italic">${name}</span>`;
         }
 
         return html` 
@@ -56,6 +60,7 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
                 <div class="col-auto p-0">
                     <h5 class="card-text"><strong>${name}</strong></h5> 
                 </div>
+                ${this.renderEdit(idBtnEdit)}
             </div>
         `;
     }
@@ -80,12 +85,13 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
     listen(): void {
         super.listen();
 
-        const { idDefaultValue, idNotes, idType } = this;
-        const { entity } = this.options!;
+        const { idBtnEdit, idDefaultValue, idNotes, idType } = this;
+        const { entity, isStatic } = this.options!;
 
         this.listenNotes(entity, idNotes);
         this.listenDefaultValue(entity, idDefaultValue);
         this.listenType(entity, idType, idType);
+        this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_value' : 'edit_field', `Edit ${isStatic ? 'Value' : 'Field'} Name`);
     }
 }
 

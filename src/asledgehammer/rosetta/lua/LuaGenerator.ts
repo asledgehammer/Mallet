@@ -17,7 +17,7 @@ export const generateLuaField = (field: RosettaLuaField): string => {
 
     if (s.endsWith('\n')) s = s.substring(0, s.length - 1);
 
-    return `--- @field ${field.name} ${field.type} ${field.notes}`;
+    return `--- @field ${field.name} ${field.type} ${s}`;
 };
 
 export const generateLuaValue = (containerName: string, field: RosettaLuaField): string => {
