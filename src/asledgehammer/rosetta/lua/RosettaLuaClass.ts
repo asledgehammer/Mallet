@@ -13,7 +13,7 @@ import { RosettaLuaConstructor } from './RosettaLuaConstructor';
  */
 export class RosettaLuaClass extends RosettaEntity {
   readonly extendz: string | undefined;
-  readonly name: string;
+  name: string;
 
   readonly functions: { [name: string]: RosettaLuaFunction } = {};
   readonly methods: { [name: string]: RosettaLuaFunction } = {};

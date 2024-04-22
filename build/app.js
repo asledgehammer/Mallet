@@ -1472,6 +1472,7 @@ define("src/asledgehammer/rosetta/component/LuaClassCard", ["require", "exports"
             this.idAuthors = `${this.id}-authors`;
             this.idNotes = `${this.id}-description`;
             this.idPreview = `${this.id}-preview`;
+            this.idBtnEdit = `${this.id}-edit`;
         }
         onHeaderHTML() {
             const { entity } = this.options;
@@ -1482,6 +1483,9 @@ define("src/asledgehammer/rosetta/component/LuaClassCard", ["require", "exports"
                 </div>
                 <div class="col-auto p-0">
                     <h5 class="card-text"><strong>${entity.name}</strong></h5> 
+                </div>
+                <div style="position: absolute; padding: 0; right: 0; top: 0">
+                    <button id="${this.idBtnEdit}" class="btn btn-sm btn-primary float-end" style="position: relative; top: 5px; right: 5px;">Edit</button>
                 </div>
             </div>
         `;
@@ -1498,9 +1502,19 @@ define("src/asledgehammer/rosetta/component/LuaClassCard", ["require", "exports"
         }
         listen() {
             super.listen();
-            const { idNotes } = this;
+            const { idBtnEdit, idNotes } = this;
             const { entity } = this.options;
             this.listenNotes(entity, idNotes);
+            (0, util_4.$get)(idBtnEdit).on('click', () => {
+                const { modalName, $btnName, $titleName, $inputName } = this.app.sidebar.itemTree;
+                $titleName.html('Edit Lua Class');
+                $btnName.html('Edit');
+                $btnName.removeClass('btn-success');
+                $btnName.addClass('btn-primary');
+                $inputName.val('');
+                this.app.sidebar.itemTree.nameMode = 'edit_class';
+                modalName.show();
+            });
         }
     }
     exports.LuaClassCard = LuaClassCard;
@@ -1724,11 +1738,21 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                 setTimeout(() => this.$inputName.val(validateLuaVariableName(this.$inputName.val())), 1);
             });
             this.$btnName.on('click', () => {
+                var _a;
+                const name = validateLuaVariableName(this.$inputName.val()).trim();
                 switch (this.nameMode) {
                     case 'new_class': {
                         const entity = new RosettaLuaClass_1.RosettaLuaClass(validateLuaVariableName(this.$inputName.val()).trim());
                         app.showClass(entity);
                         this.modalName.hide();
+                        break;
+                    }
+                    case 'edit_class': {
+                        const entity = (_a = app.card) === null || _a === void 0 ? void 0 : _a.options.entity;
+                        entity.name = name;
+                        app.showClass(entity);
+                        this.modalName.hide();
+                        break;
                     }
                 }
             });

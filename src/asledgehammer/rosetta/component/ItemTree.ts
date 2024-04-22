@@ -26,7 +26,7 @@ export class ItemTree {
     readonly $btnName: JQuery<HTMLButtonElement>;
     readonly $titleName: JQuery<HTMLHeadingElement>;
 
-    nameMode: 'new_class' | 'new_field' | 'new_value' | 'new_function' | 'new_method' | null;
+    nameMode: 'new_class' | 'new_field' | 'new_value' | 'new_function' | 'new_method' | 'edit_class' | 'edit_field' | 'edit_value' | 'edit_function' | 'edit_method' | null;
 
     private selected: string | undefined;
 
@@ -118,11 +118,20 @@ export class ItemTree {
         });
 
         this.$btnName.on('click', () => {
+            const name = validateLuaVariableName(this.$inputName.val()!).trim();
             switch (this.nameMode) {
                 case 'new_class': {
                     const entity = new RosettaLuaClass(validateLuaVariableName(this.$inputName.val()!).trim());
                     app.showClass(entity);
                     this.modalName.hide();
+                    break;
+                }
+                case 'edit_class': {
+                    const entity = app.card?.options!.entity!;
+                    entity.name = name;
+                    app.showClass(entity);
+                    this.modalName.hide();
+                    break;
                 }
             }
         });
