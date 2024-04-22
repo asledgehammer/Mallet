@@ -1141,7 +1141,7 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
             this.app = app;
             this.idPreview = `${this.id}-preview`;
         }
-        listenEdit(entity, idBtnEdit, mode, title) {
+        listenEdit(entity, idBtnEdit, mode, title, nameSelected = undefined) {
             (0, util_3.$get)(idBtnEdit).on('click', () => {
                 const { modalName, $btnName, $titleName, $inputName } = this.app.sidebar.itemTree;
                 $titleName.html(title);
@@ -1157,7 +1157,9 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                 }
                 $inputName.val(entity.name);
                 this.app.sidebar.itemTree.nameMode = mode;
-                this.app.sidebar.itemTree.nameSelected = entity.name;
+                if (!nameSelected)
+                    nameSelected = entity.name;
+                this.app.sidebar.itemTree.nameSelected = nameSelected;
                 modalName.show();
             });
         }
@@ -1230,6 +1232,7 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
             for (const param of parameters) {
                 const idParamType = `${entity.name}-parameter-${param.name}-type`;
                 const idParamNotes = `${entity.name}-parameter-${param.name}-notes`;
+                const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
                 const $description = (0, util_3.$get)(idParamNotes);
                 $description.on('input', () => {
                     param.notes = $description.val();
@@ -1278,6 +1281,7 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                             break;
                     }
                 });
+                this.listenEdit({ name: param.name }, idBtnEdit, 'edit_parameter', 'Edit Parameter Name', `${entity.name}-${param.name}`);
             }
         }
         renderParameters2(entity) {
@@ -1331,16 +1335,17 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
             const { parameters } = entity;
             const idAccordion = `${entity.name}-parameters-accordion`;
             let htmlParams = '';
+            console.log(entity);
             for (const param of parameters) {
+                console.log(param.name);
                 const idParamType = `${entity.name}-parameter-${param.name}-type`;
                 const idParamNotes = `${entity.name}-parameter-${param.name}-notes`;
                 const idCollapse = `${entity.name}-parameter-${param.name}-collapse`;
+                const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
                 htmlParams += (0, util_3.html) `
                 <div class="accordion-item rounded-0">
                     <div class="accordion-header" id="headingTwo">
-                        
-                        <div class="p-2">
-                            
+                        <div class="p-2" style="position: relative;">
                             <button class="border-0 accordion-button collapsed rounded-0 p-0 text-white" style="background-color: transparent !important" type="button" data-bs-toggle="collapse" data-bs-target="#${idCollapse}" aria-expanded="false" aria-controls="${idCollapse}">
                                 <div class="col-auto responsive-badge px-2 me-2" style="display: inline;"><strong>${param.type}</strong></div>
                                 <h6 class="font-monospace mb-1">${param.name}</h6>
@@ -1349,7 +1354,15 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                     <!-- <button class="accordion-button collapsed rounded-0" type="button" data-bs-toggle="collapse" data-bs-target="#${idCollapse}" aria-expanded="false" aria-controls="${idCollapse}"><h6 class="font-monospace mb-1"><span class="text-warning bg-dark rounded-pill px-2">${param.type}</span> ${param.name}</h6></button> -->
                     </div>
                     <div id="${idCollapse}" class="accordion-collapse collapse rounded-0" aria-labelledby="headingTwo" data-bs-parent="#${idAccordion}">
-                        <div class="accordion-body bg-dark">
+                        <div class="accordion-body bg-dark" style="position: relative;">
+                        
+                            <!-- Edit Button -->
+                            <div style="position: absolute; padding: 0; right: 0; top: 0">
+                                <button id="${idBtnEdit}" class="btn btn-sm responsive-icon-btn float-end" style="position: relative; top: 1rem; right: 1.25rem;">
+                                <i class="fa-solid fa-pen"></i>
+                                </button>
+                            </div>
+
                             <!-- Type -->
                             <div class="mb-3">
                                 <label for="${idParamType}" class="form-label">Type</label>
@@ -1948,6 +1961,66 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                         clazz.methods[name] = method;
                         delete clazz.methods[nameOld];
                         app.showMethod(method);
+                        this.populate();
+                        break;
+                    }
+                    case 'edit_parameter': {
+                        const split = nameOld.split('-');
+                        console.log(nameOld);
+                        const funcName = split[0];
+                        const paramName = split[1];
+                        let type = null;
+                        let func = null;
+                        let param = null;
+                        // Could be the constructor.
+                        if (funcName === 'new') {
+                            func = clazz.conztructor;
+                            type = 'constructor';
+                        }
+                        else {
+                            // First, check methods.
+                            for (const methodName of Object.keys(clazz.methods)) {
+                                if (methodName === funcName) {
+                                    func = clazz.methods[methodName];
+                                    type = 'method';
+                                    break;
+                                }
+                            }
+                            // Second, check functions.
+                            if (!func) {
+                                for (const methodName of Object.keys(clazz.functions)) {
+                                    if (methodName === funcName) {
+                                        func = clazz.functions[methodName];
+                                        type = 'function';
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        if (!func) {
+                            console.warn(`Unknown function / method / constructor: ${clazz.name}.${funcName}!`);
+                            break;
+                        }
+                        for (const next of func.parameters) {
+                            if (next.name === paramName) {
+                                param = next;
+                                break;
+                            }
+                        }
+                        if (!param) {
+                            console.warn(`Unknown parameter: ${clazz.name}.${funcName}#${paramName}!`);
+                            break;
+                        }
+                        param.name = name;
+                        if (type === 'constructor') {
+                            app.showConstructor(func);
+                        }
+                        else if (type === 'function') {
+                            app.showFunction(func);
+                        }
+                        else if (type === 'method') {
+                            app.showMethod(func);
+                        }
                         this.populate();
                         break;
                     }

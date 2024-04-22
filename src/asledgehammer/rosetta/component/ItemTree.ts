@@ -1,5 +1,7 @@
 import { App } from "../../../app";
 import { RosettaLuaClass } from "../lua/RosettaLuaClass";
+import { RosettaLuaConstructor } from "../lua/RosettaLuaConstructor";
+import { RosettaLuaFunction } from "../lua/RosettaLuaFunction";
 import { $get, html } from "../util";
 import { LuaCard } from "./LuaCard";
 import { NameModeType } from "./NameModeType";
@@ -140,8 +142,75 @@ export class ItemTree {
                     method.name = name;
                     clazz.methods[name] = method;
                     delete clazz.methods[nameOld];
-                    
+
                     app.showMethod(method);
+
+                    this.populate();
+                    break;
+                }
+                case 'edit_parameter': {
+
+                    const split = nameOld.split('-');
+                    console.log(nameOld);
+                    const funcName = split[0];
+                    const paramName = split[1];
+
+                    let type: 'constructor' | 'method' | 'function' | null = null;
+
+                    let func = null;
+                    let param = null;
+
+                    // Could be the constructor.
+                    if (funcName === 'new') {
+                        func = clazz.conztructor;
+                        type = 'constructor';
+                    } else {
+                        // First, check methods.
+                        for (const methodName of Object.keys(clazz.methods)) {
+                            if (methodName === funcName) {
+                                func = clazz.methods[methodName];
+                                type = 'method';
+                                break;
+                            }
+                        }
+                        // Second, check functions.
+                        if (!func) {
+                            for (const methodName of Object.keys(clazz.functions)) {
+                                if (methodName === funcName) {
+                                    func = clazz.functions[methodName];
+                                    type = 'function';
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if (!func) {
+                        console.warn(`Unknown function / method / constructor: ${clazz.name}.${funcName}!`);
+                        break;
+                    }
+
+                    for (const next of func.parameters) {
+                        if (next.name === paramName) {
+                            param = next;
+                            break;
+                        }
+                    }
+
+                    if (!param) {
+                        console.warn(`Unknown parameter: ${clazz.name}.${funcName}#${paramName}!`);
+                        break;
+                    }
+
+                    param.name = name;
+
+                    if (type === 'constructor') {
+                        app.showConstructor(func as RosettaLuaConstructor);
+                    } else if (type === 'function') {
+                        app.showFunction(func as RosettaLuaFunction);
+                    } else if (type === 'method') {
+                        app.showMethod(func as RosettaLuaFunction);
+                    }
 
                     this.populate();
                     break;
@@ -311,7 +380,7 @@ export class ItemTree {
 
         // Apply jQuery listeners next.
 
-        $('.lua-class-item').on('click', function() {
+        $('.lua-class-item').on('click', function () {
             // Prevent wasteful selection code executions here.
             if (_this.selected === 'class') return;
             _this.app.showClass(entity);
@@ -319,7 +388,7 @@ export class ItemTree {
             _this.selected = 'class';
         });
 
-        $('.lua-constructor-item').on('click', function() {
+        $('.lua-constructor-item').on('click', function () {
             // Prevent wasteful selection code executions here.
             if (_this.selected === 'constructor') return;
             _this.app.showConstructor(entity.conztructor);
