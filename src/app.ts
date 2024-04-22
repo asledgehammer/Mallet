@@ -130,33 +130,6 @@ async function init() {
     // app.loadLuaClass(json);
 
     // @ts-ignore
-    const myModal = new bootstrap.Modal('#modal-new-lua-class', {});
-    const $inputNewLuaClassName = $get('input-new-lua-class-name');
-
-    const validateLuaVariableName = (nameOriginal: string): string => {
-        nameOriginal = nameOriginal.trim();
-        let name = '';
-        for (const c of nameOriginal) {
-            if (name === '') {
-                if (c === ' ') continue; // No leading spaces.
-                else if (/[0-9]/.test(c)) continue; // No leading numbers.
-            }
-            if (!/'^(%a+_%a+)$'/.test(c)) name += c; // Only valid lua characters.
-        }
-        return name;
-    };
-
-    $inputNewLuaClassName.on('input', () => {
-        setTimeout(() => $inputNewLuaClassName.val(validateLuaVariableName($inputNewLuaClassName.val())), 1);
-    });
-
-    $get('btn-new-lua-class-create').on('click', () => {
-        const entity = new RosettaLuaClass(validateLuaVariableName($inputNewLuaClassName.val()).trim());
-        app.showClass(entity);
-        myModal.hide();
-    });
-
-    // @ts-ignore
     window.app = app;
 }
 

@@ -1636,19 +1636,47 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
     }
     exports.LuaFunctionCard = LuaFunctionCard;
 });
-define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/LuaCard"], function (require, exports, util_7, LuaCard_4) {
+define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/LuaCard"], function (require, exports, RosettaLuaClass_1, util_7, LuaCard_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ItemTree = void 0;
+    const validateLuaVariableName = (nameOriginal) => {
+        nameOriginal = nameOriginal.trim();
+        let name = '';
+        for (const c of nameOriginal) {
+            if (name === '') {
+                if (c === ' ')
+                    continue; // No leading spaces.
+                else if (/[0-9]/.test(c))
+                    continue; // No leading numbers.
+            }
+            if (!/'^(%a+_%a+)$'/.test(c))
+                name += c; // Only valid lua characters.
+        }
+        return name;
+    };
     class ItemTree {
         constructor(app) {
             this.app = app;
+            // This modal is for new items and editing their names.
+            // @ts-ignore
+            this.modalName = new bootstrap.Modal('#modal-name', {});
+            this.$titleName = (0, util_7.$get)('title-name');
+            this.$inputName = (0, util_7.$get)('input-name');
+            this.$btnName = (0, util_7.$get)('btn-name-create');
+            this.nameMode = null;
         }
         listen() {
             const { app } = this;
             const _this = this;
             (0, util_7.$get)('new-lua-class').on('click', () => {
-                const id = 'modal-new-lua-class';
+                this.$titleName.html('New Lua Class');
+                this.$btnName.html('Create');
+                this.$btnName.removeClass('btn-primary');
+                this.$btnName.addClass('btn-success');
+                this.$inputName.val('');
+                this.nameMode = 'new_class';
+                this.modalName.show();
             });
             (0, util_7.$get)('open-lua-class').on('click', () => {
                 const dFileLoad = document.getElementById('load-file');
@@ -1692,11 +1720,23 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
             });
             (0, util_7.$get)('new-lua-function').on('click', () => {
             });
+            this.$inputName.on('input', () => {
+                setTimeout(() => this.$inputName.val(validateLuaVariableName(this.$inputName.val())), 1);
+            });
+            this.$btnName.on('click', () => {
+                switch (this.nameMode) {
+                    case 'new_class': {
+                        const entity = new RosettaLuaClass_1.RosettaLuaClass(validateLuaVariableName(this.$inputName.val()).trim());
+                        app.showClass(entity);
+                        this.modalName.hide();
+                    }
+                }
+            });
         }
         render() {
             return (0, util_7.html) `
             <!-- New Class -->
-            <button id="new-lua-class" class="btn btn-sm btn-success rounded-0 me-1" style="width: 32px; height: 32px" title="New Class" data-bs-toggle="modal" data-bs-target="#modal-new-lua-class">
+            <button id="new-lua-class" class="btn btn-sm btn-success rounded-0 me-1" style="width: 32px; height: 32px" title="New Class">
                 <i class="fa fa-file" style="position: relative; top: -1px"></i>
             </button>
             
@@ -2042,7 +2082,7 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
     exports.Sidebar = Sidebar;
     ;
 });
-define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/LuaClassCard", "src/asledgehammer/rosetta/component/LuaFieldCard", "src/asledgehammer/rosetta/component/LuaFunctionCard", "src/asledgehammer/rosetta/component/Sidebar", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/util"], function (require, exports, LuaClassCard_1, LuaFieldCard_1, LuaFunctionCard_1, Sidebar_1, LuaGenerator_4, RosettaLuaClass_1, util_10) {
+define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/LuaClassCard", "src/asledgehammer/rosetta/component/LuaFieldCard", "src/asledgehammer/rosetta/component/LuaFunctionCard", "src/asledgehammer/rosetta/component/Sidebar", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/util"], function (require, exports, LuaClassCard_1, LuaFieldCard_1, LuaFunctionCard_1, Sidebar_1, LuaGenerator_4, RosettaLuaClass_2, util_10) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.App = void 0;
@@ -2064,7 +2104,7 @@ define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/Lu
             this.$screenContent.empty();
             // Always get first class
             const name = Object.keys(json.luaClasses)[0];
-            const entity = new RosettaLuaClass_1.RosettaLuaClass(name, json.luaClasses[name]);
+            const entity = new RosettaLuaClass_2.RosettaLuaClass(name, json.luaClasses[name]);
             this.card = new LuaClassCard_1.LuaClassCard(this, { entity: entity });
             this.$screenContent.append(this.card.render());
             this.card.listen();
@@ -2139,32 +2179,6 @@ define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/Lu
         // // Load debug Rosetta JSON.
         // const json = await load('http://localhost:8080/assets/rosetta/patches/jab/json/client/isui/ISUIElement.json');
         // app.loadLuaClass(json);
-        // @ts-ignore
-        const myModal = new bootstrap.Modal('#modal-new-lua-class', {});
-        const $inputNewLuaClassName = (0, util_10.$get)('input-new-lua-class-name');
-        const validateLuaVariableName = (nameOriginal) => {
-            nameOriginal = nameOriginal.trim();
-            let name = '';
-            for (const c of nameOriginal) {
-                if (name === '') {
-                    if (c === ' ')
-                        continue; // No leading spaces.
-                    else if (/[0-9]/.test(c))
-                        continue; // No leading numbers.
-                }
-                if (!/'^(%a+_%a+)$'/.test(c))
-                    name += c; // Only valid lua characters.
-            }
-            return name;
-        };
-        $inputNewLuaClassName.on('input', () => {
-            setTimeout(() => $inputNewLuaClassName.val(validateLuaVariableName($inputNewLuaClassName.val())), 1);
-        });
-        (0, util_10.$get)('btn-new-lua-class-create').on('click', () => {
-            const entity = new RosettaLuaClass_1.RosettaLuaClass(validateLuaVariableName($inputNewLuaClassName.val()).trim());
-            app.showClass(entity);
-            myModal.hide();
-        });
         // @ts-ignore
         window.app = app;
     }
@@ -2367,7 +2381,7 @@ define("src/asledgehammer/rosetta/RosettaFileInfo", ["require", "exports"], func
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
 });
-define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asledgehammer/rosetta/Rosetta", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/lua/RosettaLuaTableField", "src/asledgehammer/rosetta/lua/RosettaLuaClass"], function (require, exports, Rosetta_1, RosettaEntity_9, RosettaLuaFunction_3, RosettaLuaTable_1, RosettaLuaTableField_2, RosettaLuaClass_2) {
+define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asledgehammer/rosetta/Rosetta", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/lua/RosettaLuaTableField", "src/asledgehammer/rosetta/lua/RosettaLuaClass"], function (require, exports, Rosetta_1, RosettaEntity_9, RosettaLuaFunction_3, RosettaLuaTable_1, RosettaLuaTableField_2, RosettaLuaClass_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RosettaFile = void 0;
@@ -2418,7 +2432,7 @@ define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asle
                 const rawLuaClasses = raw.luaClasses;
                 for (const name of Object.keys(rawLuaClasses)) {
                     const rawLuaClass = rawLuaClasses[name];
-                    const luaClass = new RosettaLuaClass_2.RosettaLuaClass(name, rawLuaClass);
+                    const luaClass = new RosettaLuaClass_3.RosettaLuaClass(name, rawLuaClass);
                     this.luaClasses[luaClass.name] = this.luaClasses[name] = luaClass;
                 }
             }
@@ -2436,7 +2450,7 @@ define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asle
         createLuaClass(name) {
             /* (Make sure the object can be modified) */
             this.checkReadOnly();
-            const luaClass = new RosettaLuaClass_2.RosettaLuaClass(name);
+            const luaClass = new RosettaLuaClass_3.RosettaLuaClass(name);
             // (Only check for the file instance)
             if (this.luaClasses[luaClass.name]) {
                 throw new Error(`A global Lua Class already exists: ${luaClass.name}`);

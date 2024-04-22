@@ -1,15 +1,46 @@
 import { App } from "../../../app";
+import { RosettaLuaClass } from "../lua/RosettaLuaClass";
 import { $get, html } from "../util";
 import { LuaCard } from "./LuaCard";
+
+const validateLuaVariableName = (nameOriginal: string): string => {
+    nameOriginal = nameOriginal.trim();
+    let name = '';
+    for (const c of nameOriginal) {
+        if (name === '') {
+            if (c === ' ') continue; // No leading spaces.
+            else if (/[0-9]/.test(c)) continue; // No leading numbers.
+        }
+        if (!/'^(%a+_%a+)$'/.test(c)) name += c; // Only valid lua characters.
+    }
+    return name;
+};
 
 export class ItemTree {
 
     readonly app: App;
 
+    // This modal is for new items and editing their names.
+    readonly modalName: any;
+    readonly $inputName: JQuery<HTMLInputElement>;
+    readonly $btnName: JQuery<HTMLButtonElement>;
+    readonly $titleName: JQuery<HTMLHeadingElement>;
+
+    nameMode: 'new_class' | 'new_field' | 'new_value' | 'new_function' | 'new_method' | null;
+
     private selected: string | undefined;
 
     constructor(app: App) {
         this.app = app;
+
+        // This modal is for new items and editing their names.
+        // @ts-ignore
+        this.modalName = new bootstrap.Modal('#modal-name', {});
+        this.$titleName = $get('title-name');
+        this.$inputName = $get('input-name');
+        this.$btnName = $get('btn-name-create');
+
+        this.nameMode = null;
     }
 
     listen() {
@@ -18,7 +49,13 @@ export class ItemTree {
         const _this = this;
 
         $get('new-lua-class').on('click', () => {
-            const id = 'modal-new-lua-class';
+            this.$titleName.html('New Lua Class');
+            this.$btnName.html('Create');
+            this.$btnName.removeClass('btn-primary');
+            this.$btnName.addClass('btn-success');
+            this.$inputName.val('');
+            this.nameMode = 'new_class';
+            this.modalName.show();
         });
 
         $get('open-lua-class').on('click', () => {
@@ -75,12 +112,26 @@ export class ItemTree {
         $get('new-lua-function').on('click', () => {
 
         });
+
+        this.$inputName.on('input', () => {
+            setTimeout(() => this.$inputName.val(validateLuaVariableName(this.$inputName.val()!)), 1);
+        });
+
+        this.$btnName.on('click', () => {
+            switch (this.nameMode) {
+                case 'new_class': {
+                    const entity = new RosettaLuaClass(validateLuaVariableName(this.$inputName.val()!).trim());
+                    app.showClass(entity);
+                    this.modalName.hide();
+                }
+            }
+        });
     }
 
     render(): string {
         return html`
             <!-- New Class -->
-            <button id="new-lua-class" class="btn btn-sm btn-success rounded-0 me-1" style="width: 32px; height: 32px" title="New Class" data-bs-toggle="modal" data-bs-target="#modal-new-lua-class">
+            <button id="new-lua-class" class="btn btn-sm btn-success rounded-0 me-1" style="width: 32px; height: 32px" title="New Class">
                 <i class="fa fa-file" style="position: relative; top: -1px"></i>
             </button>
             
