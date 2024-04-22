@@ -12036,11 +12036,19 @@ body {
 }
 
 .responsive-icon-btn {
+  width: 32px;
+  height: 32px;
   border-color: #adb5bd !important;
   border-width: 1px;
   border-style: solid;
   background-color: #222 Im !important;
   color: #adb5bd !important;
+}
+.responsive-icon-btn i {
+  position: absolute;
+  top: 50;
+  left: 50;
+  transform: translate(-50%, -50%);
 }
 .responsive-icon-btn :hover {
   background-color: #222 !important;

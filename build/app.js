@@ -1227,12 +1227,13 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
             </div>
         `;
         }
-        listenParameters(entity) {
+        listenParameters(entity, type) {
             const { parameters } = entity;
             for (const param of parameters) {
                 const idParamType = `${entity.name}-parameter-${param.name}-type`;
                 const idParamNotes = `${entity.name}-parameter-${param.name}-notes`;
                 const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
+                const idBtnDelete = `${entity.name}-parameter-${param.name}-delete`;
                 const $description = (0, util_3.$get)(idParamNotes);
                 $description.on('input', () => {
                     param.notes = $description.val();
@@ -1281,67 +1282,35 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                             break;
                     }
                 });
+                (0, util_3.$get)(idBtnDelete).on('click', () => {
+                    this.app.sidebar.itemTree.askConfirm(`Delete Parameter ${param.name}?`, () => {
+                        console.log('delete');
+                        entity.parameters.splice(entity.parameters.indexOf(param), 1);
+                        // TODO: Clean up.
+                        if (type === 'constructor') {
+                            this.app.showConstructor(entity);
+                        }
+                        else if (type === 'function') {
+                            this.app.showFunction(entity);
+                        }
+                        else if (type === 'method') {
+                            this.app.showMethod(entity);
+                        }
+                    });
+                });
                 this.listenEdit({ name: param.name }, idBtnEdit, 'edit_parameter', 'Edit Parameter Name', `${entity.name}-${param.name}`);
             }
-        }
-        renderParameters2(entity) {
-            const { parameters } = entity;
-            const idAccordion = `${entity.name}-parameters-accordion`;
-            let htmlParams = '';
-            for (const param of parameters) {
-                const idParamType = `${entity.name}-parameter-${param.name}-type`;
-                const idParamNotes = `${entity.name}-parameter-${param.name}-notes`;
-                const idCollapse = `${entity.name}-parameter-${param.name}-collapse`;
-                htmlParams += (0, util_3.html) `
-                <div class="accordion-item rounded-0">
-                    <div class="accordion-header" id="headingTwo">
-                        
-                        <div class="p-2">
-                            
-                            <button class="border-0 accordion-button collapsed rounded-0 p-0" type="button" data-bs-toggle="collapse" data-bs-target="#${idCollapse}" aria-expanded="false" aria-controls="${idCollapse}">
-                                <div class="col-auto responsive-badge px-2 me-2" style="display: inline;"><strong>${param.type}</strong></div>
-                                <h6 class="font-monospace mb-1">${param.name}</h6>
-                            </button>
-                        </div>
-                    <!-- <button class="accordion-button collapsed rounded-0" type="button" data-bs-toggle="collapse" data-bs-target="#${idCollapse}" aria-expanded="false" aria-controls="${idCollapse}"><h6 class="font-monospace mb-1"><span class="text-warning bg-dark rounded-pill px-2">${param.type}</span> ${param.name}</h6></button> -->
-                    </div>
-                    <div id="${idCollapse}" class="accordion-collapse collapse rounded-0" aria-labelledby="headingTwo" data-bs-parent="#${idAccordion}">
-                        <div class="accordion-body bg-secondary">
-                            <!-- Type -->
-                            <div class="mb-3">
-                                <label for="${idParamType}" class="form-label">Type</label>
-                                ${LuaCard.renderTypeSelect(idParamType, 'The return type.', param.type, true)}
-                            </div>
-
-                            <!-- Notes -->
-                            <div class="mb-3">
-                                <label for="${idParamNotes}" class="form-label">Description</label>
-                                <textarea id="${idParamNotes}" class="form-control responsive-input" spellcheck="false">${param.notes}</textarea>
-                            </div>    
-                        </div>
-                    </div>
-                </div>
-            `;
-            }
-            return (0, util_3.html) `
-        <h6 class="mb-2">Parameters</h6>
-        <div class="accordion rounded-0 mb-4" id="${idAccordion}">
-            ${htmlParams}
-        </div>
-            
-        `;
         }
         renderParameters(entity, show = false) {
             const { parameters } = entity;
             const idAccordion = `${entity.name}-parameters-accordion`;
             let htmlParams = '';
-            console.log(entity);
             for (const param of parameters) {
-                console.log(param.name);
                 const idParamType = `${entity.name}-parameter-${param.name}-type`;
                 const idParamNotes = `${entity.name}-parameter-${param.name}-notes`;
                 const idCollapse = `${entity.name}-parameter-${param.name}-collapse`;
                 const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
+                const idBtnDelete = `${entity.name}-parameter-${param.name}-delete`;
                 htmlParams += (0, util_3.html) `
                 <div class="accordion-item rounded-0">
                     <div class="accordion-header" id="headingTwo">
@@ -1351,29 +1320,29 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                                 <h6 class="font-monospace mb-1">${param.name}</h6>
                             </button>
                         </div>
-                    <!-- <button class="accordion-button collapsed rounded-0" type="button" data-bs-toggle="collapse" data-bs-target="#${idCollapse}" aria-expanded="false" aria-controls="${idCollapse}"><h6 class="font-monospace mb-1"><span class="text-warning bg-dark rounded-pill px-2">${param.type}</span> ${param.name}</h6></button> -->
                     </div>
                     <div id="${idCollapse}" class="accordion-collapse collapse rounded-0" aria-labelledby="headingTwo" data-bs-parent="#${idAccordion}">
                         <div class="accordion-body bg-dark" style="position: relative;">
-                        
-                            <!-- Edit Button -->
-                            <div style="position: absolute; padding: 0; right: 0; top: 0">
-                                <button id="${idBtnEdit}" class="btn btn-sm responsive-icon-btn float-end" style="position: relative; top: 1rem; right: 1.25rem;">
-                                <i class="fa-solid fa-pen"></i>
-                                </button>
-                            </div>
-
                             <!-- Type -->
                             <div class="mb-3">
                                 <label for="${idParamType}" class="form-label">Type</label>
                                 ${LuaCard.renderTypeSelect(idParamType, 'The return type.', param.type, true)}
                             </div>
-
                             <!-- Notes -->
                             <div class="mb-3">
                                 <label for="${idParamNotes}" class="form-label">Description</label>
                                 <textarea id="${idParamNotes}" class="form-control responsive-input" spellcheck="false">${param.notes}</textarea>
-                            </div>    
+                            </div>
+                            <div style="position: relative; width: 100%; height: 32px;">
+                                <!-- Delete Button -->
+                                <button id="${idBtnDelete}" class="btn btn-sm responsive-icon-btn text-danger float-end ms-1">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                                <!-- Edit Button -->
+                                <button id="${idBtnEdit}" class="btn btn-sm responsive-icon-btn float-end">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1711,7 +1680,7 @@ define("src/asledgehammer/rosetta/component/LuaConstructorCard", ["require", "ex
             const { idNotes } = this;
             const { entity } = this.options;
             this.listenNotes(entity, idNotes);
-            this.listenParameters({ name: 'new', parameters: entity.parameters });
+            this.listenParameters(Object.assign(Object.assign({}, entity), { name: 'new' }), 'constructor');
         }
     }
     exports.LuaConstructorCard = LuaConstructorCard;
@@ -1851,7 +1820,7 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
             const { entity, isStatic } = this.options;
             this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_function' : 'edit_method', `Edit Lua ${isStatic ? 'Function' : 'Method'}`);
             this.listenNotes(entity, idNotes);
-            this.listenParameters(entity);
+            this.listenParameters(entity, isStatic ? 'function' : 'method');
             this.listenReturns(entity, idReturnType, idReturnNotes, idReturnType);
         }
     }
@@ -1885,11 +1854,29 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
             this.$titleName = (0, util_8.$get)('title-name');
             this.$inputName = (0, util_8.$get)('input-name');
             this.$btnName = (0, util_8.$get)('btn-name-create');
+            // This modal is for confirming actions.
+            // @ts-ignore
+            this.modalConfirm = new bootstrap.Modal('#modal-confirm', {});
+            this.$titleConfirm = (0, util_8.$get)('title-confirm');
+            this.$btnConfirm = (0, util_8.$get)('btn-confirm');
+            this.confirmSuccess = undefined;
             this.nameMode = null;
+        }
+        askConfirm(title, onSuccess = undefined) {
+            this.$titleName.html(title);
+            this.confirmSuccess = onSuccess;
+            this.modalConfirm.show();
         }
         listen() {
             const { app } = this;
             const _this = this;
+            this.$btnConfirm.on('click', () => {
+                this.modalConfirm.hide();
+                if (this.confirmSuccess) {
+                    this.confirmSuccess();
+                    this.confirmSuccess = undefined;
+                }
+            });
             (0, util_8.$get)('new-lua-class').on('click', () => {
                 this.$titleName.html('New Lua Class');
                 this.$btnName.html('Create');

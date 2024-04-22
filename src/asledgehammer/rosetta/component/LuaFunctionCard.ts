@@ -79,7 +79,7 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
 
         this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_function' : 'edit_method', `Edit Lua ${isStatic ? 'Function' : 'Method'}`);
         this.listenNotes(entity, idNotes);
-        this.listenParameters(entity);
+        this.listenParameters(entity, isStatic ? 'function' : 'method');
         this.listenReturns(entity, idReturnType, idReturnNotes, idReturnType);
     }
 }

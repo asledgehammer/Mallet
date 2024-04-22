@@ -65,7 +65,7 @@ export class LuaConstructorCard extends LuaCard<LuaConstructorCardOptions> {
         const { entity } = this.options!;
 
         this.listenNotes(entity, idNotes);
-        this.listenParameters({ name: 'new', parameters: entity.parameters });
+        this.listenParameters({ ...entity, name: 'new' }, 'constructor');
     }
 }
 

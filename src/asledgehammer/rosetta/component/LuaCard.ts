@@ -1,5 +1,6 @@
 import { App } from "../../../app";
 import { RosettaEntity } from "../RosettaEntity";
+import { RosettaLuaConstructor } from "../lua/RosettaLuaConstructor";
 import { RosettaLuaParameter } from "../lua/RosettaLuaParameter";
 import { RosettaLuaReturns } from "../lua/RosettaLuaReturns";
 import { $get, html } from "../util";
@@ -157,7 +158,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         `;
     }
 
-    listenParameters(entity: { name: string, parameters: RosettaLuaParameter[] }): void {
+    listenParameters(entity: { name: string, parameters: RosettaLuaParameter[] }, type: 'constructor' | 'function' | 'method'): void {
         const { parameters } = entity;
 
         for (const param of parameters) {
@@ -165,6 +166,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
             const idParamType = `${entity.name}-parameter-${param.name}-type`;
             const idParamNotes = `${entity.name}-parameter-${param.name}-notes`;
             const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
+            const idBtnDelete = `${entity.name}-parameter-${param.name}-delete`;
 
             const $description = $get(idParamNotes);
             $description.on('input', () => {
@@ -217,77 +219,36 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                 }
             });
 
+            $get(idBtnDelete).on('click', () => {
+                this.app.sidebar.itemTree.askConfirm(`Delete Parameter ${param.name}?`, () => {
+                    console.log('delete');
+                    entity.parameters.splice(entity.parameters.indexOf(param), 1);
+                    
+                    // TODO: Clean up.
+                    if(type === 'constructor') {
+                        this.app.showConstructor(entity as any);
+                    } else if(type === 'function') {
+                        this.app.showFunction(entity as any);
+                    } else if(type === 'method') {
+                        this.app.showMethod(entity as any);
+                    }
+                });
+            });
+
             this.listenEdit({name: param.name}, idBtnEdit, 'edit_parameter', 'Edit Parameter Name', `${entity.name}-${param.name}`);
         }
-
-    }
-
-    renderParameters2(entity: { name: string, parameters: RosettaLuaParameter[] }): string {
-        const { parameters } = entity;
-        const idAccordion = `${entity.name}-parameters-accordion`;
-        let htmlParams = '';
-
-        for (const param of parameters) {
-
-            const idParamType = `${entity.name}-parameter-${param.name}-type`;
-            const idParamNotes = `${entity.name}-parameter-${param.name}-notes`;
-            const idCollapse = `${entity.name}-parameter-${param.name}-collapse`;
-
-            htmlParams += html`
-                <div class="accordion-item rounded-0">
-                    <div class="accordion-header" id="headingTwo">
-                        
-                        <div class="p-2">
-                            
-                            <button class="border-0 accordion-button collapsed rounded-0 p-0" type="button" data-bs-toggle="collapse" data-bs-target="#${idCollapse}" aria-expanded="false" aria-controls="${idCollapse}">
-                                <div class="col-auto responsive-badge px-2 me-2" style="display: inline;"><strong>${param.type}</strong></div>
-                                <h6 class="font-monospace mb-1">${param.name}</h6>
-                            </button>
-                        </div>
-                    <!-- <button class="accordion-button collapsed rounded-0" type="button" data-bs-toggle="collapse" data-bs-target="#${idCollapse}" aria-expanded="false" aria-controls="${idCollapse}"><h6 class="font-monospace mb-1"><span class="text-warning bg-dark rounded-pill px-2">${param.type}</span> ${param.name}</h6></button> -->
-                    </div>
-                    <div id="${idCollapse}" class="accordion-collapse collapse rounded-0" aria-labelledby="headingTwo" data-bs-parent="#${idAccordion}">
-                        <div class="accordion-body bg-secondary">
-                            <!-- Type -->
-                            <div class="mb-3">
-                                <label for="${idParamType}" class="form-label">Type</label>
-                                ${LuaCard.renderTypeSelect(idParamType, 'The return type.', param.type, true)}
-                            </div>
-
-                            <!-- Notes -->
-                            <div class="mb-3">
-                                <label for="${idParamNotes}" class="form-label">Description</label>
-                                <textarea id="${idParamNotes}" class="form-control responsive-input" spellcheck="false">${param.notes}</textarea>
-                            </div>    
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        return html`
-        <h6 class="mb-2">Parameters</h6>
-        <div class="accordion rounded-0 mb-4" id="${idAccordion}">
-            ${htmlParams}
-        </div>
-            
-        `;
     }
 
     renderParameters(entity: { name: string, parameters: RosettaLuaParameter[] }, show: boolean = false): string {
         const { parameters } = entity;
         const idAccordion = `${entity.name}-parameters-accordion`;
         let htmlParams = '';
-
-        console.log(entity);
         for (const param of parameters) {
-            console.log(param.name);
-
             const idParamType = `${entity.name}-parameter-${param.name}-type`;
             const idParamNotes = `${entity.name}-parameter-${param.name}-notes`;
             const idCollapse = `${entity.name}-parameter-${param.name}-collapse`;
             const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
-
+            const idBtnDelete = `${entity.name}-parameter-${param.name}-delete`;
             htmlParams += html`
                 <div class="accordion-item rounded-0">
                     <div class="accordion-header" id="headingTwo">
@@ -297,29 +258,29 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                                 <h6 class="font-monospace mb-1">${param.name}</h6>
                             </button>
                         </div>
-                    <!-- <button class="accordion-button collapsed rounded-0" type="button" data-bs-toggle="collapse" data-bs-target="#${idCollapse}" aria-expanded="false" aria-controls="${idCollapse}"><h6 class="font-monospace mb-1"><span class="text-warning bg-dark rounded-pill px-2">${param.type}</span> ${param.name}</h6></button> -->
                     </div>
                     <div id="${idCollapse}" class="accordion-collapse collapse rounded-0" aria-labelledby="headingTwo" data-bs-parent="#${idAccordion}">
                         <div class="accordion-body bg-dark" style="position: relative;">
-                        
-                            <!-- Edit Button -->
-                            <div style="position: absolute; padding: 0; right: 0; top: 0">
-                                <button id="${idBtnEdit}" class="btn btn-sm responsive-icon-btn float-end" style="position: relative; top: 1rem; right: 1.25rem;">
-                                <i class="fa-solid fa-pen"></i>
-                                </button>
-                            </div>
-
                             <!-- Type -->
                             <div class="mb-3">
                                 <label for="${idParamType}" class="form-label">Type</label>
                                 ${LuaCard.renderTypeSelect(idParamType, 'The return type.', param.type, true)}
                             </div>
-
                             <!-- Notes -->
                             <div class="mb-3">
                                 <label for="${idParamNotes}" class="form-label">Description</label>
                                 <textarea id="${idParamNotes}" class="form-control responsive-input" spellcheck="false">${param.notes}</textarea>
-                            </div>    
+                            </div>
+                            <div style="position: relative; width: 100%; height: 32px;">
+                                <!-- Delete Button -->
+                                <button id="${idBtnDelete}" class="btn btn-sm responsive-icon-btn text-danger float-end ms-1">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                                <!-- Edit Button -->
+                                <button id="${idBtnEdit}" class="btn btn-sm responsive-icon-btn float-end">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -28,6 +28,13 @@ export class ItemTree {
     readonly $inputName: JQuery<HTMLInputElement>;
     readonly $btnName: JQuery<HTMLButtonElement>;
     readonly $titleName: JQuery<HTMLHeadingElement>;
+
+    // This modal is for confirming actions.
+    readonly modalConfirm: any;
+    readonly $btnConfirm: JQuery<HTMLButtonElement> | undefined;
+    readonly $titleConfirm: JQuery<HTMLHeadingElement> | undefined;
+    confirmSuccess: (() => void) | undefined;
+
     nameSelected: string | undefined;
 
     nameMode: NameModeType;
@@ -44,13 +51,34 @@ export class ItemTree {
         this.$inputName = $get('input-name');
         this.$btnName = $get('btn-name-create');
 
+        // This modal is for confirming actions.
+        // @ts-ignore
+        this.modalConfirm = new bootstrap.Modal('#modal-confirm', {});
+        this.$titleConfirm = $get('title-confirm')!;
+        this.$btnConfirm = $get('btn-confirm')!;
+        this.confirmSuccess = undefined;
+
         this.nameMode = null;
+    }
+
+    askConfirm(title: string, onSuccess: (() => void) | undefined = undefined) {
+        this.$titleName.html(title);
+        this.confirmSuccess = onSuccess;
+        this.modalConfirm.show();
     }
 
     listen() {
 
         const { app } = this;
         const _this = this;
+
+        this.$btnConfirm!.on('click', () => {
+            this.modalConfirm.hide();
+            if (this.confirmSuccess) {
+                this.confirmSuccess();
+                this.confirmSuccess = undefined;
+            }
+        });
 
         $get('new-lua-class').on('click', () => {
             this.$titleName.html('New Lua Class');
