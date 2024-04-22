@@ -9,7 +9,6 @@ import { ComponentOptions } from "./Component";
 const formatDeltaToMarkdown = (ops: any): string => {
     let notes = '';
     for (const op of ops) {
-        // console.log(next);
         if (op.insert) {
 
             let bold = false;
@@ -44,7 +43,6 @@ const formatDeltaToMarkdown = (ops: any): string => {
 
     notes = notes.trim();
     if (notes.endsWith('\n')) notes = notes.substring(0, notes.length - 1);
-    console.log(`"${notes}"`);
 
     return notes;
 };

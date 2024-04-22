@@ -123,6 +123,7 @@ export class ItemTree {
                 case 'new_class': {
                     const entity = new RosettaLuaClass(validateLuaVariableName(this.$inputName.val()!).trim());
                     app.showClass(entity);
+                    app.sidebar.itemTree.populate();
                     this.modalName.hide();
                     break;
                 }
@@ -256,10 +257,12 @@ export class ItemTree {
                 {
                     text: "Class Properties",
                     icon: LuaCard.getTypeIcon('class'),
+                    class: ['lua-class-item']
                 },
                 {
                     text: "Constructor",
                     icon: LuaCard.getTypeIcon('constructor'),
+                    class: ['lua-constructor-item']
                 },
                 {
                     text: "Fields",
@@ -294,15 +297,21 @@ export class ItemTree {
 
         // Apply jQuery listeners next.
 
-        fieldNames.sort((a, b) => a.localeCompare(b));
-        for (const fieldName of Object.keys(entity.fields)) {
-            const field = entity.fields[fieldName];
-            const id = `lua-class-${entity.name}-field-${field.name}`;
-            const $fieldNode = $get(id);
-            $fieldNode.on('click', () => {
-                console.log(`Clicked ${id}!`);
-            });
-        }
+        $('.lua-class-item').on('click', function() {
+            // Prevent wasteful selection code executions here.
+            if (_this.selected === 'class') return;
+            _this.app.showClass(entity);
+            // Let the editor know we last selected the class.
+            _this.selected = 'class';
+        });
+
+        $('.lua-constructor-item').on('click', function() {
+            // Prevent wasteful selection code executions here.
+            if (_this.selected === 'constructor') return;
+            _this.app.showConstructor(entity.conztructor);
+            // Let the editor know we last selected the constructor.
+            _this.selected = 'constructor';
+        });
 
         $('.lua-field-item').on('click', function () {
             const fieldName = this.id.split('field-')[1].trim();

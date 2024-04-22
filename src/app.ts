@@ -1,9 +1,11 @@
 import { LuaClassCard } from './asledgehammer/rosetta/component/LuaClassCard';
+import { LuaConstructorCard } from './asledgehammer/rosetta/component/LuaConstructorCard';
 import { LuaFieldCard } from './asledgehammer/rosetta/component/LuaFieldCard';
 import { LuaFunctionCard } from './asledgehammer/rosetta/component/LuaFunctionCard';
 import { Sidebar } from './asledgehammer/rosetta/component/Sidebar';
 import { generateLuaClass } from './asledgehammer/rosetta/lua/LuaGenerator';
 import { RosettaLuaClass } from './asledgehammer/rosetta/lua/RosettaLuaClass';
+import { RosettaLuaConstructor } from './asledgehammer/rosetta/lua/RosettaLuaConstructor';
 import { RosettaLuaField } from './asledgehammer/rosetta/lua/RosettaLuaField';
 import { RosettaLuaFunction } from './asledgehammer/rosetta/lua/RosettaLuaFunction';
 import { $get } from './asledgehammer/rosetta/util';
@@ -53,8 +55,19 @@ export class App {
         this.card.listen();
         this.card.update();
         this.renderCode();
-        this.sidebar.itemTree.populate();
         return this.card;
+    }
+
+    public showConstructor(entity: RosettaLuaConstructor | undefined): LuaConstructorCard {
+        const clazz = this.card?.options!.entity!;
+        if(!entity) entity = new RosettaLuaConstructor(clazz);
+        this.$screenContent.empty();
+        const card = new LuaConstructorCard(this, { entity });
+        this.$screenContent.append(card.render());
+        card.listen();
+        card.update();
+        this.renderCode();
+        return card;
     }
 
     public showField(entity: RosettaLuaField): LuaFieldCard {

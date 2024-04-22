@@ -69,7 +69,7 @@ export class LuaClassCard extends LuaCard<LuaClassCardOptions> {
             $btnName.html('Edit');
             $btnName.removeClass('btn-success');
             $btnName.addClass('btn-primary');
-            $inputName.val('');
+            $inputName.val(entity.name);
             this.app.sidebar.itemTree.nameMode = 'edit_class';
             modalName.show();
         });
