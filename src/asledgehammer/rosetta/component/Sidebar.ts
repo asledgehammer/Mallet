@@ -1,8 +1,7 @@
 import { App } from '../../../app';
-import { $get, html } from '../util';
+import { html } from '../util';
 import { Component, ComponentOptions } from './Component';
 import { ItemTree } from './ItemTree';
-import { LuaCard } from './LuaCard';
 import { SidebarPanel } from './SidebarPanel';
 import { SidebarPanelButton } from './SidebarPanelButton';
 
@@ -48,7 +47,7 @@ export class Sidebar extends Component<SidebarOptions> {
                         const json = JSON.parse(reader.result as string);
                         app.loadLuaClass(json);
                         app.renderCode();
-                        app.sidebar.populateItemTree();
+                        app.sidebar.itemTree.populate();
 
                     }
                     reader.readAsText(file);
@@ -111,9 +110,6 @@ export class Sidebar extends Component<SidebarOptions> {
             <!-- Fancy border to sit above everything -->
             <div class="border border-1 border-primary" style="pointer-events: none; position: absolute; background-color: transparent; top: 0; left: 0; width: 100%; height: 100%;"></div>
         `;
-    }
-
-    populateItemTree() {
     }
 
     listen(): void {

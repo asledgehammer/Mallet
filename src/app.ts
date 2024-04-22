@@ -113,9 +113,9 @@ async function init() {
     app.init();
 
     // // Load debug Rosetta JSON.
-    const json = await load('http://localhost:8080/assets/rosetta/patches/jab/json/client/isui/ISUIElement.json');
+    // const json = await load('http://localhost:8080/assets/rosetta/patches/jab/json/client/isui/ISUIElement.json');
 
-    app.loadLuaClass(json);
+    // app.loadLuaClass(json);
     app.sidebar.listen();
     app.renderCode();
 

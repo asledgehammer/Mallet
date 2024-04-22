@@ -13,16 +13,51 @@ export class ItemTree {
     }
 
     listen() {
+
+        const { app } = this;
+        const _this = this;
+
         $get('new-lua-class').on('click', () => {
 
         });
 
         $get('open-lua-class').on('click', () => {
-
+            const dFileLoad = document.getElementById('load-file') as any;
+            const onchange = () => {
+                const file = dFileLoad.files[0];
+                const textType = 'application/json';
+                if (file.type.match(textType)) {
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        const json = JSON.parse(reader.result as string);
+                        app.loadLuaClass(json);
+                        app.renderCode();
+                        _this.populate();
+                    }
+                    reader.readAsText(file);
+                }
+            };
+            dFileLoad.onchange = onchange;
+            dFileLoad.click();
         });
 
-        $get('save-lua-class').on('click', () => {
+        $get('save-lua-class').on('click', async () => {
+            // @ts-ignore
+            const result = await showSaveFilePicker();
 
+            const entity = this.app.card!.options!.entity!;
+            const luaClasses: any = {};
+            luaClasses[entity.name] = entity.toJSON();
+            const contents = {
+                $schema: 'https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-schema.json',
+                luaClasses
+            };
+
+            const writable = await result.createWritable();
+            await writable.write(JSON.stringify(contents, null, 2));
+            await writable.close();
+
+            return;
         });
 
         $get('new-lua-field').on('click', () => {

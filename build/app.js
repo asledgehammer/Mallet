@@ -1645,11 +1645,43 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
             this.app = app;
         }
         listen() {
+            const { app } = this;
+            const _this = this;
             (0, util_7.$get)('new-lua-class').on('click', () => {
             });
             (0, util_7.$get)('open-lua-class').on('click', () => {
+                const dFileLoad = document.getElementById('load-file');
+                const onchange = () => {
+                    const file = dFileLoad.files[0];
+                    const textType = 'application/json';
+                    if (file.type.match(textType)) {
+                        var reader = new FileReader();
+                        reader.onload = function (e) {
+                            const json = JSON.parse(reader.result);
+                            app.loadLuaClass(json);
+                            app.renderCode();
+                            _this.populate();
+                        };
+                        reader.readAsText(file);
+                    }
+                };
+                dFileLoad.onchange = onchange;
+                dFileLoad.click();
             });
-            (0, util_7.$get)('save-lua-class').on('click', () => {
+            (0, util_7.$get)('save-lua-class').on('click', async () => {
+                // @ts-ignore
+                const result = await showSaveFilePicker();
+                const entity = this.app.card.options.entity;
+                const luaClasses = {};
+                luaClasses[entity.name] = entity.toJSON();
+                const contents = {
+                    $schema: 'https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-schema.json',
+                    luaClasses
+                };
+                const writable = await result.createWritable();
+                await writable.write(JSON.stringify(contents, null, 2));
+                await writable.close();
+                return;
             });
             (0, util_7.$get)('new-lua-field').on('click', () => {
             });
@@ -1946,7 +1978,7 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                             const json = JSON.parse(reader.result);
                             app.loadLuaClass(json);
                             app.renderCode();
-                            app.sidebar.populateItemTree();
+                            app.sidebar.itemTree.populate();
                         };
                         reader.readAsText(file);
                     }
@@ -1999,8 +2031,6 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
             <!-- Fancy border to sit above everything -->
             <div class="border border-1 border-primary" style="pointer-events: none; position: absolute; background-color: transparent; top: 0; left: 0; width: 100%; height: 100%;"></div>
         `;
-        }
-        populateItemTree() {
         }
         listen() {
             this.panel.listen();
@@ -2093,8 +2123,8 @@ define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/Lu
         const app = new App();
         app.init();
         // // Load debug Rosetta JSON.
-        const json = await load('http://localhost:8080/assets/rosetta/patches/jab/json/client/isui/ISUIElement.json');
-        app.loadLuaClass(json);
+        // const json = await load('http://localhost:8080/assets/rosetta/patches/jab/json/client/isui/ISUIElement.json');
+        // app.loadLuaClass(json);
         app.sidebar.listen();
         app.renderCode();
         // @ts-ignore
