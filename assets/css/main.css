@@ -12035,6 +12035,19 @@ body {
   border-color: rgba(173, 181, 189, 0.5);
 }
 
+.responsive-icon-btn {
+  border-color: #adb5bd !important;
+  border-width: 1px;
+  border-style: solid;
+  background-color: #222 Im !important;
+  color: #adb5bd !important;
+}
+.responsive-icon-btn :hover {
+  background-color: #222 !important;
+  color: #fff !important;
+  border-color: #fff !important;
+}
+
 .responsive-input {
   background-color: #222 !important;
   color: #adb5bd !important;

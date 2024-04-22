@@ -1,7 +1,7 @@
 import { App } from '../../../app';
 import { generateLuaClass } from '../lua/LuaGenerator';
 import { RosettaLuaClass } from '../lua/RosettaLuaClass';
-import { $get, html } from '../util';
+import { html } from '../util';
 import { CardOptions } from './CardComponent';
 import { LuaCard } from './LuaCard';
 
@@ -26,6 +26,7 @@ export class LuaClassCard extends LuaCard<LuaClassCardOptions> {
     }
 
     onHeaderHTML(): string | undefined {
+        const { idBtnEdit } = this;
         const { entity } = this.options!;
         return html` 
             <div class="row">
@@ -35,9 +36,7 @@ export class LuaClassCard extends LuaCard<LuaClassCardOptions> {
                 <div class="col-auto p-0">
                     <h5 class="card-text"><strong>${entity.name}</strong></h5> 
                 </div>
-                <div style="position: absolute; padding: 0; right: 0; top: 0">
-                    <button id="${this.idBtnEdit}" class="btn btn-sm btn-primary float-end" style="position: relative; top: 5px; right: 5px;">Edit</button>
-                </div>
+                ${this.renderEdit(idBtnEdit)}
             </div>
         `;
     }
@@ -59,20 +58,8 @@ export class LuaClassCard extends LuaCard<LuaClassCardOptions> {
         const { idBtnEdit, idNotes } = this;
         const { entity } = this.options!;
 
+        this.listenEdit(entity, idBtnEdit, 'edit_class', 'Edit Lua Class');
         this.listenNotes(entity, idNotes);
-
-        $get(idBtnEdit).on('click', () => {
-
-            const { modalName, $btnName, $titleName, $inputName } = this.app.sidebar.itemTree;
-
-            $titleName.html('Edit Lua Class');
-            $btnName.html('Edit');
-            $btnName.removeClass('btn-success');
-            $btnName.addClass('btn-primary');
-            $inputName.val(entity.name);
-            this.app.sidebar.itemTree.nameMode = 'edit_class';
-            modalName.show();
-        });
     }
 }
 

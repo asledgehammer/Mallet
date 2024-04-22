@@ -45,6 +45,19 @@ body {
     border-color: rgba($light, 0.5);
 }
 
+.responsive-icon-btn {
+    border-color: $light !important;
+    border-width: 1px;
+    border-style: solid;
+    background-color: #222 Im !important;
+    color: $light !important;
+
+    :hover {
+        background-color: #222 !important;
+        color: $white !important;
+        border-color: $white !important;
+    }
+}
 
 
 .responsive-input {

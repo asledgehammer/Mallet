@@ -1081,6 +1081,10 @@ define("src/asledgehammer/rosetta/component/CardComponent", ["require", "exports
     }
     exports.CardComponent = CardComponent;
 });
+define("src/asledgehammer/rosetta/component/NameModeType", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+});
 define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/CardComponent"], function (require, exports, util_3, CardComponent_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -1136,6 +1140,36 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
             super(options);
             this.app = app;
             this.idPreview = `${this.id}-preview`;
+        }
+        listenEdit(entity, idBtnEdit, mode, title) {
+            (0, util_3.$get)(idBtnEdit).on('click', () => {
+                const { modalName, $btnName, $titleName, $inputName } = this.app.sidebar.itemTree;
+                $titleName.html(title);
+                if (mode === 'edit_class' || mode === 'edit_field' || mode === 'edit_function' || mode === 'edit_method' || mode === 'edit_value') {
+                    $btnName.html('Edit');
+                    $btnName.removeClass('btn-success');
+                    $btnName.addClass('btn-primary');
+                }
+                else {
+                    $btnName.html('Create');
+                    $btnName.addClass('btn-success');
+                    $btnName.removeClass('btn-primary');
+                }
+                $inputName.val(entity.name);
+                this.app.sidebar.itemTree.nameMode = mode;
+                this.app.sidebar.itemTree.nameSelected = entity.name;
+                modalName.show();
+            });
+        }
+        renderEdit(idBtnEdit) {
+            return (0, util_3.html) `
+            <!-- Edit Button -->
+            <div style="position: absolute; padding: 0; right: 0; top: 0">
+                <button id="${idBtnEdit}" class="btn btn-sm responsive-icon-btn float-end" style="position: relative; top: 5px; right: 5px;">
+                <i class="fa-solid fa-pen"></i>
+                </button>
+            </div>
+        `;
         }
         listenNotes(entity, idNotes) {
             const toolbarOptions = [['bold', 'italic', 'link']];
@@ -1582,6 +1616,7 @@ define("src/asledgehammer/rosetta/component/LuaClassCard", ["require", "exports"
             this.idBtnEdit = `${this.id}-edit`;
         }
         onHeaderHTML() {
+            const { idBtnEdit } = this;
             const { entity } = this.options;
             return (0, util_4.html) ` 
             <div class="row">
@@ -1591,9 +1626,7 @@ define("src/asledgehammer/rosetta/component/LuaClassCard", ["require", "exports"
                 <div class="col-auto p-0">
                     <h5 class="card-text"><strong>${entity.name}</strong></h5> 
                 </div>
-                <div style="position: absolute; padding: 0; right: 0; top: 0">
-                    <button id="${this.idBtnEdit}" class="btn btn-sm btn-primary float-end" style="position: relative; top: 5px; right: 5px;">Edit</button>
-                </div>
+                ${this.renderEdit(idBtnEdit)}
             </div>
         `;
         }
@@ -1611,17 +1644,8 @@ define("src/asledgehammer/rosetta/component/LuaClassCard", ["require", "exports"
             super.listen();
             const { idBtnEdit, idNotes } = this;
             const { entity } = this.options;
+            this.listenEdit(entity, idBtnEdit, 'edit_class', 'Edit Lua Class');
             this.listenNotes(entity, idNotes);
-            (0, util_4.$get)(idBtnEdit).on('click', () => {
-                const { modalName, $btnName, $titleName, $inputName } = this.app.sidebar.itemTree;
-                $titleName.html('Edit Lua Class');
-                $btnName.html('Edit');
-                $btnName.removeClass('btn-success');
-                $btnName.addClass('btn-primary');
-                $inputName.val(entity.name);
-                this.app.sidebar.itemTree.nameMode = 'edit_class';
-                modalName.show();
-            });
         }
     }
     exports.LuaClassCard = LuaClassCard;
@@ -1664,7 +1688,7 @@ define("src/asledgehammer/rosetta/component/LuaConstructorCard", ["require", "ex
             return (0, util_5.html) `
             ${this.renderNotes(entity.notes, idNotes)}
             <hr>
-            ${this.renderParameters({ name: 'new', parameters: entity.parameters })};
+            ${this.renderParameters({ name: 'new', parameters: entity.parameters })}
             <hr>
             ${this.renderPreview(false)}
         `;
@@ -1759,6 +1783,7 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
             this.idNotes = `${this.id}-notes`;
             this.idReturnType = `${this.id}-return-type`;
             this.idReturnNotes = `${this.id}-return-notes`;
+            this.idBtnEdit = `${this.id}-btn-edit`;
         }
         onRenderPreview() {
             if (!this.options)
@@ -1769,6 +1794,7 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
             return (0, LuaGenerator_4.generateLuaMethod)(className, entity);
         }
         onHeaderHTML() {
+            const { idBtnEdit } = this;
             const { entity, isStatic } = this.options;
             const classEntity = this.app.card.options.entity;
             const className = classEntity.name;
@@ -1784,6 +1810,7 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
                 <div class="col-auto p-0">
                     <h5 class="card-text"><strong>${name}</strong></h5> 
                 </div>
+                ${this.renderEdit(idBtnEdit)}
             </div>
         `;
         }
@@ -1801,8 +1828,9 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
         }
         listen() {
             super.listen();
-            const { idNotes, idReturnType, idReturnNotes } = this;
-            const { entity } = this.options;
+            const { idBtnEdit, idNotes, idReturnType, idReturnNotes } = this;
+            const { entity, isStatic } = this.options;
+            this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_function' : 'edit_method', `Edit Lua ${isStatic ? 'Function' : 'Method'}`);
             this.listenNotes(entity, idNotes);
             this.listenParameters(entity);
             this.listenReturns(entity, idReturnType, idReturnNotes, idReturnType);
@@ -1890,7 +1918,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
             });
             (0, util_8.$get)('new-lua-value').on('click', () => {
             });
-            (0, util_8.$get)('new-lua-method').on('click', () => {
+            (0, util_8.$get)('new-lua-method').on('click', async () => {
             });
             (0, util_8.$get)('new-lua-function').on('click', () => {
             });
@@ -1899,23 +1927,33 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
             });
             this.$btnName.on('click', () => {
                 var _a;
+                const clazz = (_a = app.card) === null || _a === void 0 ? void 0 : _a.options.entity;
                 const name = validateLuaVariableName(this.$inputName.val()).trim();
+                const nameOld = this.nameSelected;
                 switch (this.nameMode) {
                     case 'new_class': {
                         const entity = new RosettaLuaClass_1.RosettaLuaClass(validateLuaVariableName(this.$inputName.val()).trim());
                         app.showClass(entity);
                         app.sidebar.itemTree.populate();
-                        this.modalName.hide();
                         break;
                     }
                     case 'edit_class': {
-                        const entity = (_a = app.card) === null || _a === void 0 ? void 0 : _a.options.entity;
-                        entity.name = name;
-                        app.showClass(entity);
-                        this.modalName.hide();
+                        clazz.name = name;
+                        app.showClass(clazz);
+                        break;
+                    }
+                    case 'edit_method': {
+                        const method = clazz.methods[nameOld];
+                        method.name = name;
+                        clazz.methods[name] = method;
+                        delete clazz.methods[nameOld];
+                        app.showMethod(method);
+                        this.populate();
                         break;
                     }
                 }
+                this.nameSelected = undefined;
+                this.modalName.hide();
             });
         }
         render() {
@@ -1968,7 +2006,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
             const fieldNames = Object.keys(entity.fields);
             fieldNames.sort((a, b) => a.localeCompare(b));
             const fields = [];
-            for (const fieldName of Object.keys(entity.fields)) {
+            for (const fieldName of fieldNames) {
                 const field = entity.fields[fieldName];
                 const id = `lua-class-${entity.name}-field-${field.name}`;
                 fields.push({
@@ -1981,7 +2019,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
             const valueNames = Object.keys(entity.values);
             valueNames.sort((a, b) => a.localeCompare(b));
             const values = [];
-            for (const valueName of Object.keys(entity.values)) {
+            for (const valueName of valueNames) {
                 const value = entity.values[valueName];
                 const id = `lua-class-${entity.name}-value-${value.name}`;
                 values.push({
@@ -1994,7 +2032,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
             const methodNames = Object.keys(entity.methods);
             methodNames.sort((a, b) => a.localeCompare(b));
             const methods = [];
-            for (const methodName of Object.keys(entity.methods)) {
+            for (const methodName of methodNames) {
                 const method = entity.methods[methodName];
                 const id = `lua-class-${entity.name}-method-${method.name}`;
                 methods.push({
@@ -2007,7 +2045,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
             const functionNames = Object.keys(entity.functions);
             functionNames.sort((a, b) => a.localeCompare(b));
             const functions = [];
-            for (const functionName of Object.keys(entity.functions)) {
+            for (const functionName of functionNames) {
                 const func = entity.functions[functionName];
                 const id = `lua-class-${entity.name}-function-${func.name}`;
                 functions.push({

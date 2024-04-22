@@ -11,7 +11,7 @@ import { RosettaLuaReturns } from './RosettaLuaReturns';
  * @author Jab
  */
 export class RosettaLuaFunction extends RosettaEntity {
-  readonly name: string;
+  name: string;
   parameters: RosettaLuaParameter[] = [];
   returns: RosettaLuaReturns;
   notes: string | undefined;

@@ -5,6 +5,7 @@ import { RosettaLuaReturns } from "../lua/RosettaLuaReturns";
 import { $get, html } from "../util";
 import { CardComponent } from "./CardComponent";
 import { ComponentOptions } from "./Component";
+import { NameModeType } from "./NameModeType";
 
 const formatDeltaToMarkdown = (ops: any): string => {
     let notes = '';
@@ -57,6 +58,41 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         this.app = app;
 
         this.idPreview = `${this.id}-preview`;
+    }
+
+    listenEdit(entity: { name: string }, idBtnEdit: string, mode: NameModeType, title: string) {
+        $get(idBtnEdit).on('click', () => {
+
+            const { modalName, $btnName, $titleName, $inputName } = this.app.sidebar.itemTree;
+
+            $titleName.html(title);
+
+            if (mode === 'edit_class' || mode === 'edit_field' || mode === 'edit_function' || mode === 'edit_method' || mode === 'edit_value') {
+                $btnName.html('Edit');
+                $btnName.removeClass('btn-success');
+                $btnName.addClass('btn-primary');
+            } else {
+                $btnName.html('Create');
+                $btnName.addClass('btn-success');
+                $btnName.removeClass('btn-primary');
+            }
+
+            $inputName.val(entity.name);
+            this.app.sidebar.itemTree.nameMode = mode;
+            this.app.sidebar.itemTree.nameSelected = entity.name;
+            modalName.show();
+        });
+    }
+
+    renderEdit(idBtnEdit: string): string {
+        return html`
+            <!-- Edit Button -->
+            <div style="position: absolute; padding: 0; right: 0; top: 0">
+                <button id="${idBtnEdit}" class="btn btn-sm responsive-icon-btn float-end" style="position: relative; top: 5px; right: 5px;">
+                <i class="fa-solid fa-pen"></i>
+                </button>
+            </div>
+        `;
     }
 
     listenNotes(entity: { notes: string | undefined }, idNotes: string): void {

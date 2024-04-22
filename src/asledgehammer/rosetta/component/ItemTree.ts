@@ -2,6 +2,7 @@ import { App } from "../../../app";
 import { RosettaLuaClass } from "../lua/RosettaLuaClass";
 import { $get, html } from "../util";
 import { LuaCard } from "./LuaCard";
+import { NameModeType } from "./NameModeType";
 
 const validateLuaVariableName = (nameOriginal: string): string => {
     nameOriginal = nameOriginal.trim();
@@ -25,8 +26,9 @@ export class ItemTree {
     readonly $inputName: JQuery<HTMLInputElement>;
     readonly $btnName: JQuery<HTMLButtonElement>;
     readonly $titleName: JQuery<HTMLHeadingElement>;
+    nameSelected: string | undefined;
 
-    nameMode: 'new_class' | 'new_field' | 'new_value' | 'new_function' | 'new_method' | 'edit_class' | 'edit_field' | 'edit_value' | 'edit_function' | 'edit_method' | null;
+    nameMode: NameModeType;
 
     private selected: string | undefined;
 
@@ -105,7 +107,7 @@ export class ItemTree {
 
         });
 
-        $get('new-lua-method').on('click', () => {
+        $get('new-lua-method').on('click', async () => {
 
         });
 
@@ -118,23 +120,35 @@ export class ItemTree {
         });
 
         this.$btnName.on('click', () => {
+            const clazz = app.card?.options!.entity!;
             const name = validateLuaVariableName(this.$inputName.val()!).trim();
+            const nameOld = this.nameSelected!;
             switch (this.nameMode) {
                 case 'new_class': {
                     const entity = new RosettaLuaClass(validateLuaVariableName(this.$inputName.val()!).trim());
                     app.showClass(entity);
                     app.sidebar.itemTree.populate();
-                    this.modalName.hide();
                     break;
                 }
                 case 'edit_class': {
-                    const entity = app.card?.options!.entity!;
-                    entity.name = name;
-                    app.showClass(entity);
-                    this.modalName.hide();
+                    clazz.name = name;
+                    app.showClass(clazz);
+                    break;
+                }
+                case 'edit_method': {
+                    const method = clazz.methods[nameOld];
+                    method.name = name;
+                    clazz.methods[name] = method;
+                    delete clazz.methods[nameOld];
+                    
+                    app.showMethod(method);
+
+                    this.populate();
                     break;
                 }
             }
+            this.nameSelected = undefined;
+            this.modalName.hide();
         });
     }
 
@@ -192,7 +206,7 @@ export class ItemTree {
         const fieldNames = Object.keys(entity.fields);
         fieldNames.sort((a, b) => a.localeCompare(b));
         const fields = [];
-        for (const fieldName of Object.keys(entity.fields)) {
+        for (const fieldName of fieldNames) {
             const field = entity.fields[fieldName];
             const id = `lua-class-${entity.name}-field-${field.name}`;
             fields.push({
@@ -206,7 +220,7 @@ export class ItemTree {
         const valueNames = Object.keys(entity.values);
         valueNames.sort((a, b) => a.localeCompare(b));
         const values = [];
-        for (const valueName of Object.keys(entity.values)) {
+        for (const valueName of valueNames) {
             const value = entity.values[valueName];
             const id = `lua-class-${entity.name}-value-${value.name}`;
             values.push({
@@ -220,7 +234,7 @@ export class ItemTree {
         const methodNames = Object.keys(entity.methods);
         methodNames.sort((a, b) => a.localeCompare(b));
         const methods = [];
-        for (const methodName of Object.keys(entity.methods)) {
+        for (const methodName of methodNames) {
             const method = entity.methods[methodName];
             const id = `lua-class-${entity.name}-method-${method.name}`;
             methods.push({
@@ -234,7 +248,7 @@ export class ItemTree {
         const functionNames = Object.keys(entity.functions);
         functionNames.sort((a, b) => a.localeCompare(b));
         const functions = [];
-        for (const functionName of Object.keys(entity.functions)) {
+        for (const functionName of functionNames) {
             const func = entity.functions[functionName];
             const id = `lua-class-${entity.name}-function-${func.name}`;
             functions.push({

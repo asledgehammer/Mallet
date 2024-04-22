@@ -10,6 +10,7 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
     idNotes: string;
     idReturnType: string;
     idReturnNotes: string;
+    idBtnEdit: string;
 
     constructor(app: App, options: LuaFunctionCardOptions) {
         super(app, options);
@@ -17,6 +18,7 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
         this.idNotes = `${this.id}-notes`;
         this.idReturnType = `${this.id}-return-type`;
         this.idReturnNotes = `${this.id}-return-notes`;
+        this.idBtnEdit = `${this.id}-btn-edit`;
     }
 
     onRenderPreview(): string {
@@ -31,6 +33,7 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
     }
 
     onHeaderHTML(): string | undefined {
+        const { idBtnEdit } = this;
         const { entity, isStatic } = this.options!;
         const classEntity = this.app.card!.options!.entity;
         const className = classEntity.name;
@@ -48,6 +51,7 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
                 <div class="col-auto p-0">
                     <h5 class="card-text"><strong>${name}</strong></h5> 
                 </div>
+                ${this.renderEdit(idBtnEdit)}
             </div>
         `;
     }
@@ -70,9 +74,10 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
     listen(): void {
         super.listen();
 
-        const { idNotes, idReturnType, idReturnNotes } = this;
-        const { entity } = this.options!;
+        const { idBtnEdit, idNotes, idReturnType, idReturnNotes } = this;
+        const { entity, isStatic } = this.options!;
 
+        this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_function' : 'edit_method', `Edit Lua ${isStatic ? 'Function' : 'Method'}`);
         this.listenNotes(entity, idNotes);
         this.listenParameters(entity);
         this.listenReturns(entity, idReturnType, idReturnNotes, idReturnType);
