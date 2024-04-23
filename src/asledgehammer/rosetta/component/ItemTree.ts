@@ -296,38 +296,23 @@ export class ItemTree {
     render(): string {
         return html`
             <!-- New Class -->
-            <button id="new-lua-class" class="btn btn-sm btn-success rounded-0 me-1" style="width: 32px; height: 32px" title="New Class">
-                <i class="fa fa-file" style="position: relative; top: -1px"></i>
+            <button id="new-lua-class" class="btn btn-sm responsive-btn responsive-btn-success" title="New Class">
+                <i class="fa fa-file"></i>
             </button>
             
             <!-- Open Class -->
-            <button id="open-lua-class" class="btn btn-sm btn-primary rounded-0" style="width: 32px; height: 32px" title="Open Class">
-                <i class="fa-solid fa-folder-open" style="position: relative; top: -1px"></i>
+            <button id="open-lua-class" class="btn btn-sm responsive-btn responsive-btn-info" title="Open Class">
+                <i class="fa-solid fa-folder-open"></i>
             </button>
 
             <!-- Save Class -->
-            <button id="save-lua-class" class="btn btn-sm btn-primary rounded-0 me-1" style="width: 32px; height: 32px" title="Save Class">
-                <i class="fa fa-save" style="position: relative; top: -1px"></i>
-            </button>
-            
-            <!-- New Field -->
-            <button id="new-lua-field" class="btn btn-sm btn-info rounded-0" style="width: 32px; height: 32px" title="New Lua Field">
-                <i class="fa-solid fa-hashtag" style="position: relative; top: -1px"></i>
-            </button>
-
-            <!-- New Value -->
-            <button id="new-lua-value" class="btn btn-sm btn-info rounded-0" style="width: 32px; height: 32px" title="New Lua Value">
-                <i class="fa-solid fa-hashtag" style="position: relative; top: -1px"></i>
-            </button>
-
-            <!-- New Method -->
-            <button id="new-lua-method" class="btn btn-sm btn-info rounded-0" style="width: 32px; height: 32px" title="New Lua Method">
-                <i class="fa-solid fa-terminal" style="position: relative; top: -1px"></i>
+            <button id="save-lua-class" class="btn btn-sm responsive-btn responsive-btn-info" title="Save Class">
+                <i class="fa fa-save"></i>
             </button>
 
             <!-- New Function -->
-            <button id="new-lua-function" class="btn btn-sm btn-info rounded-0" style="width: 32px; height: 32px" title="New Lua Function">
-                <i class="fa-solid fa-terminal" style="position: relative; top: -1px"></i>
+            <button id="new-lua-function" class="btn btn-sm responsive-btn responsive-btn-success float-end" style="width: 32px; height: 32px" title="Add Element">
+                <i class="fa-solid fa-plus"></i>
             </button>
         `;
     }

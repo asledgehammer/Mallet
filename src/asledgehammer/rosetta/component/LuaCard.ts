@@ -1,6 +1,5 @@
 import { App } from "../../../app";
 import { RosettaEntity } from "../RosettaEntity";
-import { RosettaLuaConstructor } from "../lua/RosettaLuaConstructor";
 import { RosettaLuaParameter } from "../lua/RosettaLuaParameter";
 import { RosettaLuaReturns } from "../lua/RosettaLuaReturns";
 import { $get, html } from "../util";
@@ -267,7 +266,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                     <div class="accordion-header" id="headingTwo">
                         <div class="p-2" style="position: relative;">
                             <button class="border-0 accordion-button collapsed rounded-0 p-0 text-white" style="background-color: transparent !important" type="button" data-bs-toggle="collapse" data-bs-target="#${idCollapse}" aria-expanded="false" aria-controls="${idCollapse}">
-                                <div class="col-auto responsive-badge px-2 me-2" style="display: inline;"><strong>${param.type}</strong></div>
+                                <div class="col-auto responsive-badge border border-1 border-light-half desaturate shadow px-2 me-2" style="display: inline;"><strong>${param.type}</strong></div>
                                 <h6 class="font-monospace mb-1">${param.name}</h6>
                             </button>
                         </div>

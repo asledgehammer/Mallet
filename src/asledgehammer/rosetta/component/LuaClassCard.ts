@@ -30,8 +30,9 @@ export class LuaClassCard extends LuaCard<LuaClassCardOptions> {
         const { entity } = this.options!;
         return html` 
             <div class="row">
+                <!-- Visual Category Badge -->
                 <div class="col-auto ps-2 pe-2">
-                    <div class="text-bg-primary px-2"><strong>Lua Class</strong></div>
+                    <div class="text-bg-primary px-2 border border-1 border-light-half desaturate shadow"><strong>Lua Class</strong></div>
                 </div>
                 <div class="col-auto p-0">
                     <h5 class="card-text"><strong>${entity.name}</strong></h5> 

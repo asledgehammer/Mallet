@@ -16,7 +16,6 @@ export class Sidebar extends Component<SidebarOptions> {
         super({
             classes: ['vs-bg-6', 'shadow-lg', 'border', 'border-1'],
             style: {
-                'border-color': 'var(--vscode-color-2) !important',
                 width: '100%',
                 height: '100%',
             },
@@ -97,7 +96,7 @@ export class Sidebar extends Component<SidebarOptions> {
     protected onRender(): string {
         return html`
 
-            <div class="bg-dark p-1 border-bottom border-bottom-1 border-info shadow">
+            <div class="bg-dark p-1 border-bottom border-bottom-2 border-black shadow">
                 ${this.itemTree.render()}
             </div>
 
@@ -108,19 +107,15 @@ export class Sidebar extends Component<SidebarOptions> {
             </div>
 
             <!-- Fancy border to sit above everything -->
-            <div class="border border-1 border-primary" style="pointer-events: none; position: absolute; background-color: transparent; top: 0; left: 0; width: 100%; height: 100%;"></div>
+            <div class="border border-1 border-black" style="pointer-events: none; position: absolute; background-color: transparent; top: 0; left: 0; width: 100%; height: 100%;"></div>
         `;
     }
 
     listen(): void {
         this.panel.listen();
-
         this.itemTree.listen();
         this.itemTree.populate();
     }
-
-
-
 };
 
 export type SidebarOptions = ComponentOptions & {};

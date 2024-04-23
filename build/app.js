@@ -1326,7 +1326,7 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                     <div class="accordion-header" id="headingTwo">
                         <div class="p-2" style="position: relative;">
                             <button class="border-0 accordion-button collapsed rounded-0 p-0 text-white" style="background-color: transparent !important" type="button" data-bs-toggle="collapse" data-bs-target="#${idCollapse}" aria-expanded="false" aria-controls="${idCollapse}">
-                                <div class="col-auto responsive-badge px-2 me-2" style="display: inline;"><strong>${param.type}</strong></div>
+                                <div class="col-auto responsive-badge border border-1 border-light-half desaturate shadow px-2 me-2" style="display: inline;"><strong>${param.type}</strong></div>
                                 <h6 class="font-monospace mb-1">${param.name}</h6>
                             </button>
                         </div>
@@ -1619,8 +1619,9 @@ define("src/asledgehammer/rosetta/component/LuaClassCard", ["require", "exports"
             const { entity } = this.options;
             return (0, util_4.html) ` 
             <div class="row">
+                <!-- Visual Category Badge -->
                 <div class="col-auto ps-2 pe-2">
-                    <div class="text-bg-primary px-2"><strong>Lua Class</strong></div>
+                    <div class="text-bg-primary px-2 border border-1 border-light-half desaturate shadow"><strong>Lua Class</strong></div>
                 </div>
                 <div class="col-auto p-0">
                     <h5 class="card-text"><strong>${entity.name}</strong></h5> 
@@ -1672,9 +1673,14 @@ define("src/asledgehammer/rosetta/component/LuaConstructorCard", ["require", "ex
             const name = `${className}:new( )`;
             return (0, util_5.html) ` 
             <div class="row">
+
+                <!-- Visual Category Badge -->
                 <div class="col-auto ps-2 pe-2">
-                    <div class="responsive-badge px-2"><strong>Lua Constructor</strong></div>
+                    <div class="text-bg-primary px-2 border border-1 border-light-half desaturate shadow">
+                        <strong>Lua Constructor</strong>
+                    </div>
                 </div>
+
                 <div class="col-auto p-0">
                     <h5 class="card-text"><strong>${name}</strong></h5> 
                 </div>
@@ -1743,9 +1749,14 @@ define("src/asledgehammer/rosetta/component/LuaFieldCard", ["require", "exports"
             }
             return (0, util_6.html) ` 
             <div class="row">
+
+                <!-- Visual Category Badge -->
                 <div class="col-auto ps-2 pe-2">
-                    <div class="text-bg-info px-2"><strong>Lua ${isStatic ? 'Property' : 'Field'}</strong></div>
+                    <div class="text-bg-primary px-2 border border-1 border-light-half desaturate shadow">
+                        <strong>Lua ${isStatic ? 'Property' : 'Field'}</strong>
+                    </div>
                 </div>
+
                 <div class="col-auto p-0">
                     <h5 class="card-text"><strong>${name}</strong></h5> 
                 </div>
@@ -1834,9 +1845,14 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
             }
             return (0, util_7.html) ` 
             <div class="row">
+
+                <!-- Visual Category Badge -->
                 <div class="col-auto ps-2 pe-2">
-                    <div class="responsive-badge px-2"><strong>Lua ${isStatic ? 'Function' : 'Method'}</strong></div>
+                    <div class="text-bg-primary px-2 border border-1 border-light-half desaturate shadow">
+                        <strong>Lua ${isStatic ? 'Function' : 'Method'}</strong>
+                    </div>
                 </div>
+                
                 <div class="col-auto p-0">
                     <h5 class="card-text"><strong>${name}</strong></h5> 
                 </div>
@@ -2145,38 +2161,23 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
         render() {
             return (0, util_8.html) `
             <!-- New Class -->
-            <button id="new-lua-class" class="btn btn-sm btn-success rounded-0 me-1" style="width: 32px; height: 32px" title="New Class">
-                <i class="fa fa-file" style="position: relative; top: -1px"></i>
+            <button id="new-lua-class" class="btn btn-sm responsive-btn responsive-btn-success" title="New Class">
+                <i class="fa fa-file"></i>
             </button>
             
             <!-- Open Class -->
-            <button id="open-lua-class" class="btn btn-sm btn-primary rounded-0" style="width: 32px; height: 32px" title="Open Class">
-                <i class="fa-solid fa-folder-open" style="position: relative; top: -1px"></i>
+            <button id="open-lua-class" class="btn btn-sm responsive-btn responsive-btn-info" title="Open Class">
+                <i class="fa-solid fa-folder-open"></i>
             </button>
 
             <!-- Save Class -->
-            <button id="save-lua-class" class="btn btn-sm btn-primary rounded-0 me-1" style="width: 32px; height: 32px" title="Save Class">
-                <i class="fa fa-save" style="position: relative; top: -1px"></i>
-            </button>
-            
-            <!-- New Field -->
-            <button id="new-lua-field" class="btn btn-sm btn-info rounded-0" style="width: 32px; height: 32px" title="New Lua Field">
-                <i class="fa-solid fa-hashtag" style="position: relative; top: -1px"></i>
-            </button>
-
-            <!-- New Value -->
-            <button id="new-lua-value" class="btn btn-sm btn-info rounded-0" style="width: 32px; height: 32px" title="New Lua Value">
-                <i class="fa-solid fa-hashtag" style="position: relative; top: -1px"></i>
-            </button>
-
-            <!-- New Method -->
-            <button id="new-lua-method" class="btn btn-sm btn-info rounded-0" style="width: 32px; height: 32px" title="New Lua Method">
-                <i class="fa-solid fa-terminal" style="position: relative; top: -1px"></i>
+            <button id="save-lua-class" class="btn btn-sm responsive-btn responsive-btn-info" title="Save Class">
+                <i class="fa fa-save"></i>
             </button>
 
             <!-- New Function -->
-            <button id="new-lua-function" class="btn btn-sm btn-info rounded-0" style="width: 32px; height: 32px" title="New Lua Function">
-                <i class="fa-solid fa-terminal" style="position: relative; top: -1px"></i>
+            <button id="new-lua-function" class="btn btn-sm responsive-btn responsive-btn-success float-end" style="width: 32px; height: 32px" title="Add Element">
+                <i class="fa-solid fa-plus"></i>
             </button>
         `;
         }
@@ -2413,7 +2414,6 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
             super({
                 classes: ['vs-bg-6', 'shadow-lg', 'border', 'border-1'],
                 style: {
-                    'border-color': 'var(--vscode-color-2) !important',
                     width: '100%',
                     height: '100%',
                 },
@@ -2477,7 +2477,7 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
         onRender() {
             return (0, util_10.html) `
 
-            <div class="bg-dark p-1 border-bottom border-bottom-1 border-info shadow">
+            <div class="bg-dark p-1 border-bottom border-bottom-2 border-black shadow">
                 ${this.itemTree.render()}
             </div>
 
@@ -2488,7 +2488,7 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
             </div>
 
             <!-- Fancy border to sit above everything -->
-            <div class="border border-1 border-primary" style="pointer-events: none; position: absolute; background-color: transparent; top: 0; left: 0; width: 100%; height: 100%;"></div>
+            <div class="border border-1 border-black" style="pointer-events: none; position: absolute; background-color: transparent; top: 0; left: 0; width: 100%; height: 100%;"></div>
         `;
         }
         listen() {

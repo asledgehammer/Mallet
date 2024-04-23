@@ -34,9 +34,14 @@ export class LuaConstructorCard extends LuaCard<LuaConstructorCardOptions> {
 
         return html` 
             <div class="row">
+
+                <!-- Visual Category Badge -->
                 <div class="col-auto ps-2 pe-2">
-                    <div class="responsive-badge px-2"><strong>Lua Constructor</strong></div>
+                    <div class="text-bg-primary px-2 border border-1 border-light-half desaturate shadow">
+                        <strong>Lua Constructor</strong>
+                    </div>
                 </div>
+
                 <div class="col-auto p-0">
                     <h5 class="card-text"><strong>${name}</strong></h5> 
                 </div>
