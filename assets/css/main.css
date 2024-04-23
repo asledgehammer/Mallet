@@ -12019,8 +12019,18 @@ body {
   width: calc(100% - 1060px);
   max-width: calc(100% - 768px);
   background-size: 20px 20px;
-  background-color: #222;
-  background-image: linear-gradient(to right, #292929 1px, transparent 1px), linear-gradient(to bottom, #292929 1px, transparent 1px);
+  background-color: #1a1a1a;
+  background-image: linear-gradient(to right, #1f1f1f 1px, transparent 1px), linear-gradient(to bottom, #1f1f1f 1px, transparent 1px);
+}
+.screen-content-end .img-logo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 544px;
+  height: 544px;
+  transform: translate(-50%, -50%);
+  opacity: 0.5;
+  filter: brightness(0.15);
 }
 
 .screen-content-render {
@@ -12064,7 +12074,8 @@ body {
   border-style: solid;
   border-radius: 0;
 }
-.responsive-input :focus, .responsive-input :hover {
+.responsive-input :focus,
+.responsive-input :hover {
   background-color: #000;
   color: #adb5bd;
   border-color: rgba(48, 48, 48, 0.5);
@@ -12082,7 +12093,7 @@ body {
   background-color: #444;
 }
 .responsive-subcard pre.card-body {
-  background-color: #000 !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
   overflow: scroll;
 }
 
@@ -12105,7 +12116,9 @@ body {
   background-color: #222;
   border-color: rgba(173, 181, 189, 0.5);
 }
-.ql-snow.ql-toolbar line, .ql-snow.ql-toolbar path, .ql-snow.ql-toolbar polygon {
+.ql-snow.ql-toolbar line,
+.ql-snow.ql-toolbar path,
+.ql-snow.ql-toolbar polygon {
   color: #adb5bd;
   stroke: #adb5bd;
 }

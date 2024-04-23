@@ -2421,7 +2421,7 @@ define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/Lu
             this.card = null;
             this.sidebar = new Sidebar_1.Sidebar(this);
             this.eSidebarContainer = document.getElementById('screen-sidebar-container');
-            this.$screenContent = $('#screen-content-container');
+            this.$screenContent = $('#screen-content-end-container');
         }
         async init() {
             this.createSidebar();

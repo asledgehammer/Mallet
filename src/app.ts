@@ -25,7 +25,7 @@ export class App {
     constructor() {
         this.sidebar = new Sidebar(this);
         this.eSidebarContainer = document.getElementById('screen-sidebar-container')!;
-        this.$screenContent = $('#screen-content-container');
+        this.$screenContent = $('#screen-content-end-container');
     }
 
     async init() {
