@@ -12,12 +12,12 @@ export const generateLuaField = (field: RosettaLuaField): string => {
     // Function Description
     if (field.notes && field.notes.length) {
         const notes = field.notes.split('\n').join(' ');
-        s += `--- ${notes}\n--- \n`;
+        s += `${notes}\n`;
     }
 
-    if (s.endsWith('\n')) s = s.substring(0, s.length - 1);
+    while (s.endsWith('\n')) s = s.substring(0, s.length - 1);
 
-    return `--- @field ${field.name} ${field.type} ${s}`;
+    return `--- @field ${field.name} ${field.type} ${s.trim()}`;
 };
 
 export const generateLuaValue = (containerName: string, field: RosettaLuaField): string => {

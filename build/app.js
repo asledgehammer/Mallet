@@ -708,11 +708,11 @@ define("src/asledgehammer/rosetta/lua/LuaGenerator", ["require", "exports"], fun
         // Function Description
         if (field.notes && field.notes.length) {
             const notes = field.notes.split('\n').join(' ');
-            s += `--- ${notes}\n--- \n`;
+            s += `${notes}\n`;
         }
-        if (s.endsWith('\n'))
+        while (s.endsWith('\n'))
             s = s.substring(0, s.length - 1);
-        return `--- @field ${field.name} ${field.type} ${s}`;
+        return `--- @field ${field.name} ${field.type} ${s.trim()}`;
     };
     exports.generateLuaField = generateLuaField;
     const generateLuaValue = (containerName, field) => {
