@@ -61,7 +61,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         this.idPreview = `${this.id}-preview`;
     }
 
-        listenEdit(entity: { name: string }, idBtnEdit: string, mode: NameModeType, title: string, nameSelected: string | undefined = undefined) {
+    listenEdit(entity: { name: string }, idBtnEdit: string, mode: NameModeType, title: string, nameSelected: string | undefined = undefined) {
         $get(idBtnEdit).on('click', () => {
 
             const { modalName, $btnName, $titleName, $inputName } = this.app.sidebar.itemTree;
@@ -81,7 +81,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
             $inputName.val(entity.name);
             this.app.sidebar.itemTree.nameMode = mode;
 
-            if(!nameSelected) nameSelected = entity.name;
+            if (!nameSelected) nameSelected = entity.name;
             this.app.sidebar.itemTree.nameSelected = nameSelected;
             modalName.show();
         });
@@ -223,20 +223,33 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                 this.app.sidebar.itemTree.askConfirm(`Delete Parameter ${param.name}?`, () => {
                     console.log('delete');
                     entity.parameters.splice(entity.parameters.indexOf(param), 1);
-                    
+
                     // TODO: Clean up.
-                    if(type === 'constructor') {
+                    if (type === 'constructor') {
                         this.app.showConstructor(entity as any);
-                    } else if(type === 'function') {
+                    } else if (type === 'function') {
                         this.app.showFunction(entity as any);
-                    } else if(type === 'method') {
+                    } else if (type === 'method') {
                         this.app.showMethod(entity as any);
                     }
                 });
             });
 
-            this.listenEdit({name: param.name}, idBtnEdit, 'edit_parameter', 'Edit Parameter Name', `${entity.name}-${param.name}`);
+            this.listenEdit({ name: param.name }, idBtnEdit, 'edit_parameter', 'Edit Parameter Name', `${entity.name}-${param.name}`);
         }
+        const idBtnAdd = `btn-${entity.name}-parameter-add`;
+        $get(idBtnAdd).on('click', () => {
+
+            const { itemTree } = this.app.sidebar;
+            const { modalName, $inputName, $titleName } = itemTree;
+
+            itemTree.nameMode = 'new_parameter';
+            itemTree.nameSelected = `${type}-${entity.name}`;
+
+            $titleName.html('Add Parameter');
+            $inputName.val('');
+            modalName.show();
+        });
     }
 
     renderParameters(entity: { name: string, parameters: RosettaLuaParameter[] }, show: boolean = false): string {
@@ -287,6 +300,8 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
             `;
         }
 
+        const idBtnAdd = `btn-${entity.name}-parameter-add`;
+
         return html`
             <div class="card responsive-subcard mt-3">
                 <div class="card-header">
@@ -297,6 +312,12 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                 <div id="${idAccordion}" class="card-body mb-0 collapse${show ? ' show' : ''}">
                     <div class="accordion rounded-0">
                         ${htmlParams}
+                    </div>
+                    <div class="mt-3" style="position: relative; width: 100%; height: 32px;">
+                        <!-- Add Button -->
+                        <button id="${idBtnAdd}" class="btn btn-sm responsive-icon-btn text-success float-end ms-1">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
                     </div>
                 </div>
             </div>

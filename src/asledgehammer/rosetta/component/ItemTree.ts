@@ -203,6 +203,32 @@ export class ItemTree {
                     this.populate();
                     break;
                 }
+                case 'new_parameter': {
+                    const split = nameOld.split('-');
+                    const type = split[0];
+                    const funcName = split[1];
+
+                    let func: RosettaLuaConstructor | RosettaLuaFunction | null = null;
+                    if (type === 'constructor') {
+                        func = clazz.conztructor;
+                    } else if (type === 'function') {
+                        func = clazz.functions[funcName];
+                    } else {
+                        func = clazz.methods[funcName];
+                    }
+
+                    func.addParameter(name, 'any');
+
+                    if (type === 'constructor') {
+                        app.showConstructor(func as RosettaLuaConstructor);
+                    } else if (type === 'function') {
+                        app.showFunction(func as RosettaLuaFunction);
+                    } else {
+                        app.showMethod(func as RosettaLuaFunction);
+                    }
+
+                    app.renderCode();
+                }
                 case 'edit_parameter': {
                     const split = nameOld.split('-');
                     const funcName = split[0];
@@ -257,6 +283,8 @@ export class ItemTree {
                         app.showMethod(func as RosettaLuaFunction);
                     }
                     this.populate();
+                    app.renderCode();
+
                     break;
                 }
             }

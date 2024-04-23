@@ -1300,6 +1300,16 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                 });
                 this.listenEdit({ name: param.name }, idBtnEdit, 'edit_parameter', 'Edit Parameter Name', `${entity.name}-${param.name}`);
             }
+            const idBtnAdd = `btn-${entity.name}-parameter-add`;
+            (0, util_3.$get)(idBtnAdd).on('click', () => {
+                const { itemTree } = this.app.sidebar;
+                const { modalName, $inputName, $titleName } = itemTree;
+                itemTree.nameMode = 'new_parameter';
+                itemTree.nameSelected = `${type}-${entity.name}`;
+                $titleName.html('Add Parameter');
+                $inputName.val('');
+                modalName.show();
+            });
         }
         renderParameters(entity, show = false) {
             const { parameters } = entity;
@@ -1348,6 +1358,7 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                 </div>
             `;
             }
+            const idBtnAdd = `btn-${entity.name}-parameter-add`;
             return (0, util_3.html) `
             <div class="card responsive-subcard mt-3">
                 <div class="card-header">
@@ -1358,6 +1369,12 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                 <div id="${idAccordion}" class="card-body mb-0 collapse${show ? ' show' : ''}">
                     <div class="accordion rounded-0">
                         ${htmlParams}
+                    </div>
+                    <div class="mt-3" style="position: relative; width: 100%; height: 32px;">
+                        <!-- Add Button -->
+                        <button id="${idBtnAdd}" class="btn btn-sm responsive-icon-btn text-success float-end ms-1">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -2034,6 +2051,32 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                         this.populate();
                         break;
                     }
+                    case 'new_parameter': {
+                        const split = nameOld.split('-');
+                        const type = split[0];
+                        const funcName = split[1];
+                        let func = null;
+                        if (type === 'constructor') {
+                            func = clazz.conztructor;
+                        }
+                        else if (type === 'function') {
+                            func = clazz.functions[funcName];
+                        }
+                        else {
+                            func = clazz.methods[funcName];
+                        }
+                        func.addParameter(name, 'any');
+                        if (type === 'constructor') {
+                            app.showConstructor(func);
+                        }
+                        else if (type === 'function') {
+                            app.showFunction(func);
+                        }
+                        else {
+                            app.showMethod(func);
+                        }
+                        app.renderCode();
+                    }
                     case 'edit_parameter': {
                         const split = nameOld.split('-');
                         const funcName = split[0];
@@ -2091,6 +2134,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                             app.showMethod(func);
                         }
                         this.populate();
+                        app.renderCode();
                         break;
                     }
                 }
