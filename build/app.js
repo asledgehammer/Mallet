@@ -1820,6 +1820,7 @@ define("src/asledgehammer/rosetta/component/LuaClassCard", ["require", "exports"
             this.idNotes = `${this.id}-description`;
             this.idPreview = `${this.id}-preview`;
             this.idBtnEdit = `${this.id}-edit`;
+            this.idCheckMutable = `${this.id}-check-mutable`;
         }
         onHeaderHTML() {
             const { idBtnEdit } = this;
@@ -1838,21 +1839,33 @@ define("src/asledgehammer/rosetta/component/LuaClassCard", ["require", "exports"
         `;
         }
         onBodyHTML() {
-            const { notes } = this.options.entity;
+            const { idCheckMutable } = this;
             return (0, util_4.html) `
             <div>
                 ${this.renderNotes(this.idNotes)}
+                <div class="mb-3 form-check" title="Allows Lua to add custom properties to the class.">
+                    <input id="${idCheckMutable}" type="checkbox" class="form-check-input" id="exampleCheck1">
+                    <label class="form-check-label" for="exampleCheck1">Mutable</label>
+                </div>
                 <hr>
                 ${this.renderPreview(false)}
             </div>
+
         `;
         }
         listen() {
             super.listen();
-            const { idBtnEdit, idNotes } = this;
+            const { idCheckMutable, idBtnEdit, idNotes } = this;
             const { entity } = this.options;
+            const _this = this;
             this.listenEdit(entity, idBtnEdit, 'edit_class', 'Edit Lua Class');
             this.listenNotes(entity, idNotes);
+            const $checkMutable = (0, util_4.$get)(idCheckMutable);
+            $checkMutable.on('change', function () {
+                entity.mutable = this.checked;
+                _this.update();
+                _this.app.renderCode();
+            });
         }
     }
     exports.LuaClassCard = LuaClassCard;
