@@ -121,8 +121,8 @@ export function toDelta(md: string, forcedAttributes: DeltaAttributes | undefine
     let op: Delta = { insert: '' };
     if (forcedAttributes) op.attributes = { ...forcedAttributes };
 
-    const nextOp = () => {
-        ops.push(op);
+    const nextOp = (push: boolean = true) => {
+        if (push) ops.push(op);
         op = { insert: '' };
         if (forcedAttributes) op.attributes = { ...forcedAttributes };
     };
@@ -165,23 +165,26 @@ export function toDelta(md: string, forcedAttributes: DeltaAttributes | undefine
         let charsToSeek = '';
 
         if (ccc.startsWith('***')) {
+            if(op.insert && op.insert.length) nextOp();
             charsToSeek = '***';
             seek = 3;
             if (!op.attributes) op.attributes = {};
             op.attributes.italic = true;
             op.attributes.bold = true;
         } else if (ccc.startsWith('**')) {
+            if(op.insert && op.insert.length) nextOp();
             charsToSeek = '**';
             seek = 2;
             if (!op.attributes) op.attributes = {};
             op.attributes.bold = true;
         } else if (ccc.startsWith('*')) {
+            if(op.insert && op.insert.length) nextOp();
             charsToSeek = '*';
             seek = 1;
             if (!op.attributes) op.attributes = {};
             op.attributes.italic = true;
         } else if (c0 === '[') {
-            nextOp();
+            if(op.insert && op.insert.length) nextOp();
             linkStage = 1;
             linkSeek = 1;
             linkText = '';
@@ -234,10 +237,11 @@ export function toDelta(md: string, forcedAttributes: DeltaAttributes | undefine
             // Set link.
 
             // Check for inner-text markdown. In delta, we can stack link attributes to allow rich text features.
-            let opsCheck = toDelta(linkText, { link });
+            let opsCheck = toDelta(linkText, { ...forcedAttributes, link });
             for (const _ of opsCheck) ops.push(_);
             nextOp();
 
+            // Reset metadata.
             linkStage = 0;
             i += linkSeek - 1;
 
@@ -245,6 +249,7 @@ export function toDelta(md: string, forcedAttributes: DeltaAttributes | undefine
         }
 
         if (linkStage === 1) {
+            // Valid link. Continue on..
             if (handleLink()) continue;
         }
 
@@ -260,10 +265,16 @@ export function toDelta(md: string, forcedAttributes: DeltaAttributes | undefine
                 }
 
                 if (ccc.startsWith(charsToSeek)) {
-                    op.insert = md.substring(i + charsToSeek.length, i + seek);
+                    const ourText = md.substring(i + charsToSeek.length, i + seek);
                     seek += charsToSeek.length - 1;
                     i += seek; // Set ahead.
-                    nextOp();
+
+                    const ops3 = toDelta(ourText, { ...forcedAttributes, ...op.attributes });
+                    for (const n of ops3) {
+                        ops.push(n);
+                    }
+
+                    nextOp(true);
                     break;
                 } else {
                     seek++;
