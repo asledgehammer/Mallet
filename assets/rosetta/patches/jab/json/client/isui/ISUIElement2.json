@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-schema.json",
   "luaClasses": {
     "ISUIElement": {
-      "notes": "**ISUIElement** is the base UI class in the Project Zomboid Lua codebase.",
+      "notes": "***ISUIElement**** *class in the Project Zomboid Lua codebase.",
       "values": {
         "IDMax": {
           "type": "number",

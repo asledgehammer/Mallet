@@ -904,7 +904,7 @@ define("src/asledgehammer/rosetta/lua/LuaGenerator", ["require", "exports"], fun
 define("src/asledgehammer/rosetta/util", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.get = exports.$get = exports.combine = exports.combineArrays = exports.randomString = exports.css = exports.html = void 0;
+    exports.toDelta = exports.fromDelta = exports.get = exports.$get = exports.combine = exports.combineArrays = exports.randomString = exports.css = exports.html = void 0;
     const html = function (c, ...d) {
         let a = '';
         for (let b = 0; b < c.length - 1; b++)
@@ -983,6 +983,200 @@ define("src/asledgehammer/rosetta/util", ["require", "exports"], function (requi
         return document.getElementById(id);
     }
     exports.get = get;
+    function fromDelta(ops) {
+        let md = '';
+        for (const op of ops) {
+            const { attributes } = op;
+            let link = undefined;
+            let s = '';
+            let w = '';
+            if (op.insert)
+                s = op.insert;
+            if (attributes) {
+                if (attributes.bold && attributes.italic)
+                    w = '***';
+                else if (attributes.bold && !attributes.italic)
+                    w = '**';
+                else if (attributes.italic)
+                    w = '*';
+                if (attributes.link)
+                    link = attributes.link;
+            }
+            s = `${w}${s}${w}`;
+            if (link)
+                s = `[${s}](${link})`;
+            md += s;
+        }
+        return md;
+    }
+    exports.fromDelta = fromDelta;
+    function toDelta(md, forcedAttributes = undefined) {
+        var _a;
+        const ops = [];
+        let op = { insert: '' };
+        if (forcedAttributes)
+            op.attributes = Object.assign({}, forcedAttributes);
+        const nextOp = () => {
+            ops.push(op);
+            op = { insert: '' };
+            if (forcedAttributes)
+                op.attributes = Object.assign({}, forcedAttributes);
+        };
+        const lastOp = () => {
+            let op3 = ops.pop();
+            if (!op3) {
+                op3 = { insert: '' };
+                if (forcedAttributes)
+                    op3.attributes = Object.assign({}, forcedAttributes);
+            }
+            op = op3;
+        };
+        let c0 = '', c1 = '', c2 = '', ccc = '';
+        const next = (i) => {
+            c0 = md[i + 0]; // Character + 0
+            c1 = md[i + 1]; // Character + 1
+            c2 = md[i + 2]; // Character + 2
+            ccc = '';
+            if (c0 && c1 && c2) {
+                ccc = c0 + c1 + c2;
+            }
+            else if (c0 && c1) {
+                ccc = c0 + c1;
+            }
+            else {
+                ccc = c0;
+            }
+        };
+        let linkSeek = 0;
+        let linkStage = 0;
+        let linkText = '';
+        let link = '';
+        for (let i = 0; i < md.length; i++) {
+            next(i);
+            let seek = 0;
+            let charsToSeek = '';
+            if (ccc.startsWith('***')) {
+                charsToSeek = '***';
+                seek = 3;
+                if (!op.attributes)
+                    op.attributes = {};
+                op.attributes.italic = true;
+                op.attributes.bold = true;
+            }
+            else if (ccc.startsWith('**')) {
+                charsToSeek = '**';
+                seek = 2;
+                if (!op.attributes)
+                    op.attributes = {};
+                op.attributes.bold = true;
+            }
+            else if (ccc.startsWith('*')) {
+                charsToSeek = '*';
+                seek = 1;
+                if (!op.attributes)
+                    op.attributes = {};
+                op.attributes.italic = true;
+            }
+            else if (c0 === '[') {
+                nextOp();
+                linkStage = 1;
+                linkSeek = 1;
+                linkText = '';
+                link = '';
+            }
+            const handleLink = () => {
+                while (c0 !== ']') {
+                    c0 = md[i + linkSeek];
+                    linkSeek++;
+                    // Catch EOL here.
+                    if (!c0) {
+                        console.warn(`Invalid markdown! "${md}`);
+                        linkStage = 0;
+                        lastOp();
+                        return false;
+                    }
+                    if (c0 !== ']')
+                        linkText += c0;
+                }
+                // Catch bad link syntax here.
+                if (md.substring(i + linkSeek - 1, i + linkSeek + 1) !== '](') {
+                    console.warn(`Invalid markdown! "${md}`);
+                    // Catch EOL here.
+                    if (!c0) {
+                        console.warn(`Invalid markdown! "${md}`);
+                        linkStage = 0;
+                        lastOp();
+                        return false;
+                    }
+                }
+                while (c0 !== ')') {
+                    c0 = md[i + linkSeek];
+                    linkSeek++;
+                    // Catch EOL here.
+                    if (!c0) {
+                        console.warn(`Invalid markdown! "${md}`);
+                        linkStage = 0;
+                        lastOp();
+                        return false;
+                    }
+                    if (c0 !== ')')
+                        link += c0;
+                }
+                // Set link.
+                // Check for inner-text markdown. In delta, we can stack link attributes to allow rich text features.
+                let opsCheck = toDelta(linkText, { link });
+                for (const _ of opsCheck)
+                    ops.push(_);
+                nextOp();
+                linkStage = 0;
+                i += linkSeek - 1;
+                return true;
+            };
+            if (linkStage === 1) {
+                if (handleLink())
+                    continue;
+            }
+            // Run-out the insert length until the attribute-closure appears.
+            if (seek !== 0) {
+                while (true) {
+                    next(i + seek);
+                    // Catch EOL here.
+                    if (!c0) {
+                        console.warn(`Invalid markdown! "${md}`);
+                        return [{ insert: md }];
+                    }
+                    if (ccc.startsWith(charsToSeek)) {
+                        op.insert = md.substring(i + charsToSeek.length, i + seek);
+                        seek += charsToSeek.length - 1;
+                        i += seek; // Set ahead.
+                        nextOp();
+                        break;
+                    }
+                    else {
+                        seek++;
+                    }
+                }
+                continue;
+            }
+            // Normal insert chars.
+            op.insert += c0;
+        }
+        if ((_a = op.insert) === null || _a === void 0 ? void 0 : _a.length)
+            nextOp();
+        // Filter empty inserts.
+        let ops2 = [];
+        for (const next of ops) {
+            if (!next.insert || !next.insert.length)
+                continue;
+            ops2.push(next);
+        }
+        return ops2;
+    }
+    exports.toDelta = toDelta;
+    // @ts-ignore
+    window.fromDelta = fromDelta;
+    // @ts-ignore
+    window.toDelta = toDelta;
 });
 define("src/asledgehammer/rosetta/component/Component", ["require", "exports", "src/asledgehammer/rosetta/util"], function (require, exports, util_1) {
     "use strict";
@@ -1089,52 +1283,6 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaCard = void 0;
-    const formatDeltaToMarkdown = (ops) => {
-        let notes = '';
-        for (const op of ops) {
-            if (op.insert) {
-                let bold = false;
-                let italic = false;
-                let underline = false;
-                let link = undefined;
-                const attributes = op.attributes;
-                if (attributes) {
-                    if (attributes.bold)
-                        bold = attributes.bold;
-                    if (attributes.italic)
-                        italic = attributes.italic;
-                    if (attributes.underline)
-                        underline = attributes.underline;
-                    if (attributes.link)
-                        link = attributes.link;
-                }
-                // ATTRIBUTES
-                if (bold) {
-                    if (italic)
-                        notes += "***";
-                    else
-                        notes += '**';
-                }
-                else if (italic)
-                    notes += "*";
-                // CONTENTS
-                notes += link ? `[${op.insert}](${link})` : op.insert;
-                // ATTRIBUTES
-                if (bold) {
-                    if (italic)
-                        notes += "***";
-                    else
-                        notes += '**';
-                }
-                else if (italic)
-                    notes += "*";
-            }
-        }
-        notes = notes.trim();
-        if (notes.endsWith('\n'))
-            notes = notes.substring(0, notes.length - 1);
-        return notes;
-    };
     class LuaCard extends CardComponent_1.CardComponent {
         constructor(app, options) {
             super(options);
@@ -1167,7 +1315,7 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
             return (0, util_3.html) `
             <!-- Edit Button -->
             <div style="position: absolute; padding: 0; right: 0; top: 0">
-                <button id="${idBtnEdit}" class="btn btn-sm responsive-icon-btn float-end" style="position: relative; top: 5px; right: 5px;">
+                <button id="${idBtnEdit}" class="btn btn-sm responsive-icon-btn float-end" style="position: relative; top: 5px; right: 5px;" title="Edit Name">
                 <i class="fa-solid fa-pen"></i>
                 </button>
             </div>
@@ -1188,24 +1336,23 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
             new QuillMarkdown(editor, {});
             editor.on('text-change', () => {
                 const { ops } = editor.editor.getContents(0, 99999999);
-                entity.notes = formatDeltaToMarkdown(ops);
+                entity.notes = (0, util_3.fromDelta)(ops);
                 this.update();
                 this.app.renderCode();
             });
             // @ts-ignore
             window.editor = editor;
-            setTimeout(() => {
-                editor.editor.insertText('', '');
-            }, 1);
+            if (entity.notes && entity.notes.length) {
+                setTimeout(() => {
+                    editor.editor.insertContents(0, (0, util_3.toDelta)(entity.notes));
+                }, 1);
+            }
         }
-        renderNotes(notes, idNotes) {
-            if (!notes)
-                notes = '';
+        renderNotes(idNotes) {
             return (0, util_3.html) `
             <div class="mb-3">
                 <label for="${idNotes}" class="form-label mb-2">Description</label>
-                <div id="${idNotes}" style="background-color: #222;">${notes}</div>
-                <!-- <textarea id="${idNotes}" class="form-control responsive-input mt-1" spellcheck="false">${notes}</textarea> -->
+                <div id="${idNotes}" style="background-color: #222;"></div>
             </div>
         `;
         }
@@ -1634,7 +1781,7 @@ define("src/asledgehammer/rosetta/component/LuaClassCard", ["require", "exports"
             const { notes } = this.options.entity;
             return (0, util_4.html) `
             <div>
-                ${this.renderNotes(notes, this.idNotes)}
+                ${this.renderNotes(this.idNotes)}
                 <hr>
                 ${this.renderPreview(false)}
             </div>
@@ -1691,7 +1838,7 @@ define("src/asledgehammer/rosetta/component/LuaConstructorCard", ["require", "ex
             const { idNotes } = this;
             const { entity } = this.options;
             return (0, util_5.html) `
-            ${this.renderNotes(entity.notes, idNotes)}
+            ${this.renderNotes(idNotes)}
             <hr>
             ${this.renderParameters({ name: 'new', parameters: entity.parameters })}
             <hr>
@@ -1762,11 +1909,11 @@ define("src/asledgehammer/rosetta/component/LuaFieldCard", ["require", "exports"
                 </div>
                 <div style="position: absolute; top: 5px; width: 100%; height: 32px;">
                     <!-- Delete Button -->
-                    <button id="${idBtnDelete}" class="btn btn-sm responsive-icon-btn text-danger float-end ms-1">
+                    <button id="${idBtnDelete}" class="btn btn-sm responsive-icon-btn text-danger float-end ms-1" title="Delete ${isStatic ? 'Value' : 'Field'}">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                     <!-- Edit Button -->
-                    <button id="${idBtnEdit}" class="btn btn-sm responsive-icon-btn float-end">
+                    <button id="${idBtnEdit}" class="btn btn-sm responsive-icon-btn float-end" title="Edit Name">
                         <i class="fa-solid fa-pen"></i>
                     </button>
                 </div>
@@ -1778,7 +1925,7 @@ define("src/asledgehammer/rosetta/component/LuaFieldCard", ["require", "exports"
             const { entity } = this.options;
             return (0, util_6.html) `
             <div>
-                ${this.renderNotes(entity.notes, idNotes)}
+                ${this.renderNotes(idNotes)}
                 ${this.renderDefaultValue(entity.defaultValue, idDefaultValue)}
                 <hr>
                 ${this.renderType(entity.name, entity.type, idType)}
@@ -1858,11 +2005,11 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
                 </div>
                 <div style="position: absolute; top: 5px; width: 100%; height: 32px;">
                     <!-- Delete Button -->
-                    <button id="${idBtnDelete}" class="btn btn-sm responsive-icon-btn text-danger float-end ms-1">
+                    <button id="${idBtnDelete}" class="btn btn-sm responsive-icon-btn text-danger float-end ms-1" title="Delete ${isStatic ? 'Function' : 'Method'}">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                     <!-- Edit Button -->
-                    <button id="${idBtnEdit}" class="btn btn-sm responsive-icon-btn float-end">
+                    <button id="${idBtnEdit}" class="btn btn-sm responsive-icon-btn float-end" title="Edit Name">
                         <i class="fa-solid fa-pen"></i>
                     </button>
                 </div>
@@ -1873,7 +2020,7 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
             const { idNotes, idReturnType, idReturnNotes } = this;
             const { entity } = this.options;
             return (0, util_7.html) `
-            ${this.renderNotes(entity.notes, idNotes)}
+            ${this.renderNotes(idNotes)}
             <hr>
             ${this.renderParameters(entity)}
             ${this.renderReturns(entity, idReturnType, idReturnNotes)}

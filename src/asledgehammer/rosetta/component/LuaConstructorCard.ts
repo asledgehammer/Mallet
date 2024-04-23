@@ -55,7 +55,7 @@ export class LuaConstructorCard extends LuaCard<LuaConstructorCardOptions> {
         const { entity } = this.options!;
 
         return html`
-            ${this.renderNotes(entity.notes, idNotes)}
+            ${this.renderNotes(idNotes)}
             <hr>
             ${this.renderParameters({ name: 'new', parameters: entity.parameters })}
             <hr>

@@ -46,7 +46,7 @@ export class LuaClassCard extends LuaCard<LuaClassCardOptions> {
         const { notes } = this.options!.entity;
         return html`
             <div>
-                ${this.renderNotes(notes, this.idNotes)}
+                ${this.renderNotes(this.idNotes)}
                 <hr>
                 ${this.renderPreview(false)}
             </div>

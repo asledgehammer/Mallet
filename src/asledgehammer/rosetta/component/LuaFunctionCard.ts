@@ -60,11 +60,11 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
                 </div>
                 <div style="position: absolute; top: 5px; width: 100%; height: 32px;">
                     <!-- Delete Button -->
-                    <button id="${idBtnDelete}" class="btn btn-sm responsive-icon-btn text-danger float-end ms-1">
+                    <button id="${idBtnDelete}" class="btn btn-sm responsive-icon-btn text-danger float-end ms-1" title="Delete ${isStatic ? 'Function' : 'Method'}">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                     <!-- Edit Button -->
-                    <button id="${idBtnEdit}" class="btn btn-sm responsive-icon-btn float-end">
+                    <button id="${idBtnEdit}" class="btn btn-sm responsive-icon-btn float-end" title="Edit Name">
                         <i class="fa-solid fa-pen"></i>
                     </button>
                 </div>
@@ -78,7 +78,7 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
         const { entity } = this.options!;
 
         return html`
-            ${this.renderNotes(entity.notes, idNotes)}
+            ${this.renderNotes(idNotes)}
             <hr>
             ${this.renderParameters(entity)}
             ${this.renderReturns(entity, idReturnType, idReturnNotes)}

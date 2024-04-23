@@ -2,51 +2,10 @@ import { App } from "../../../app";
 import { RosettaEntity } from "../RosettaEntity";
 import { RosettaLuaParameter } from "../lua/RosettaLuaParameter";
 import { RosettaLuaReturns } from "../lua/RosettaLuaReturns";
-import { $get, html } from "../util";
+import { $get, fromDelta, html, toDelta } from "../util";
 import { CardComponent } from "./CardComponent";
 import { ComponentOptions } from "./Component";
 import { NameModeType } from "./NameModeType";
-
-const formatDeltaToMarkdown = (ops: any): string => {
-    let notes = '';
-    for (const op of ops) {
-        if (op.insert) {
-
-            let bold = false;
-            let italic = false;
-            let underline = false;
-            let link: string | undefined = undefined;
-
-            const attributes: any = op.attributes;
-            if (attributes) {
-                if (attributes.bold) bold = attributes.bold;
-                if (attributes.italic) italic = attributes.italic;
-                if (attributes.underline) underline = attributes.underline;
-                if (attributes.link) link = attributes.link;
-            }
-
-            // ATTRIBUTES
-            if (bold) {
-                if (italic) notes += "***";
-                else notes += '**';
-            } else if (italic) notes += "*";
-            // CONTENTS
-            notes += link ? `[${op.insert}](${link})` : op.insert;
-            // ATTRIBUTES
-            if (bold) {
-                if (italic) notes += "***";
-                else notes += '**';
-            } else if (italic) notes += "*";
-
-        }
-    }
-
-
-    notes = notes.trim();
-    if (notes.endsWith('\n')) notes = notes.substring(0, notes.length - 1);
-
-    return notes;
-};
 
 export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O> {
 
@@ -90,7 +49,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         return html`
             <!-- Edit Button -->
             <div style="position: absolute; padding: 0; right: 0; top: 0">
-                <button id="${idBtnEdit}" class="btn btn-sm responsive-icon-btn float-end" style="position: relative; top: 5px; right: 5px;">
+                <button id="${idBtnEdit}" class="btn btn-sm responsive-icon-btn float-end" style="position: relative; top: 5px; right: 5px;" title="Edit Name">
                 <i class="fa-solid fa-pen"></i>
                 </button>
             </div>
@@ -114,7 +73,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
 
         editor.on('text-change', () => {
             const { ops } = editor.editor.getContents(0, 99999999);
-            entity.notes = formatDeltaToMarkdown(ops);
+            entity.notes = fromDelta(ops);
             this.update();
             this.app.renderCode();
         });
@@ -122,18 +81,18 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         // @ts-ignore
         window.editor = editor;
 
-        setTimeout(() => {
-            editor.editor.insertText('', '');
-        }, 1);
+        if (entity.notes && entity.notes.length) {
+            setTimeout(() => {
+                editor.editor.insertContents(0, toDelta(entity.notes!));
+            }, 1);
+        }
     }
 
-    renderNotes(notes: string | undefined, idNotes: string): string {
-        if (!notes) notes = '';
+    renderNotes(idNotes: string): string {
         return html`
             <div class="mb-3">
                 <label for="${idNotes}" class="form-label mb-2">Description</label>
-                <div id="${idNotes}" style="background-color: #222;">${notes}</div>
-                <!-- <textarea id="${idNotes}" class="form-control responsive-input mt-1" spellcheck="false">${notes}</textarea> -->
+                <div id="${idNotes}" style="background-color: #222;"></div>
             </div>
         `;
     }
