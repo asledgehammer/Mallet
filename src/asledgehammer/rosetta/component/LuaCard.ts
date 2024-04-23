@@ -6,7 +6,7 @@ import { $get, html } from "../util";
 import { CardComponent } from "./CardComponent";
 import { ComponentOptions } from "./Component";
 import { NameModeType } from "./NameModeType";
-import { toDelta, fromDelta } from "../../Delta";
+import { toDelta, fromDelta, createDeltaEditor } from "../../Delta";
 
 export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O> {
 
@@ -58,32 +58,11 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
     }
 
     listenNotes(entity: { notes: string | undefined }, idNotes: string): void {
-        const toolbarOptions = [['bold', 'italic', 'link']];
-        const options = {
-            theme: 'snow',
-            modules: {
-                toolbar: toolbarOptions,
-                QuillMarkdown: {}
-            }
-        };
-
-        // @ts-ignore
-        const editor = new Quill(`#${idNotes}`, options);
-        // @ts-ignore
-        new QuillMarkdown(editor, {});
-
-        editor.on('text-change', () => {
-            const { ops } = editor.editor.getContents(0, 99999999);
-            entity.notes = fromDelta(ops);
+        createDeltaEditor(idNotes, entity.notes!, (markdown: string) => {
+            entity.notes = markdown;
             this.update();
             this.app.renderCode();
         });
-
-        if (entity.notes && entity.notes.length) {
-            setTimeout(() => {
-                editor.editor.insertContents(0, toDelta(entity.notes!));
-            }, 1);
-        }
     }
 
     renderNotes(idNotes: string): string {
@@ -124,39 +103,11 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
             const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
             const idBtnDelete = `${entity.name}-parameter-${param.name}-delete`;
 
-            // const $description = $get(idParamNotes);
-            // $description.on('input', () => {
-            //     param.notes = $description.val();
-            //     this.update();
-            //     this.app.renderCode();
-            // });
-
-            const toolbarOptions = [['bold', 'italic', 'link']];
-            const options = {
-                theme: 'snow',
-                modules: {
-                    toolbar: toolbarOptions,
-                    QuillMarkdown: {}
-                }
-            };    
-
-            // @ts-ignore
-            const editor = new Quill(`#${idParamNotes}`, options);
-            // @ts-ignore
-            new QuillMarkdown(editor, {});
-
-            editor.on('text-change', () => {
-                const { ops } = editor.editor.getContents(0, 99999999);
-                param.notes = fromDelta(ops);
+            createDeltaEditor(idParamNotes, param.notes!, (markdown: string) => {
+                param.notes = markdown;
                 this.update();
                 this.app.renderCode();
             });
-
-            if (param.notes && param.notes.length) {
-                setTimeout(() => {
-                    editor.editor.insertContents(0, toDelta(param.notes!));
-                }, 1);
-            }
 
             const $select = $get(idParamType);
             const $customInput = $get(`${idParamType}-custom-input`);

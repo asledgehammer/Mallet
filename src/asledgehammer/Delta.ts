@@ -221,3 +221,33 @@ window.fromDelta = fromDelta;
 
 // @ts-ignore
 window.toDelta = toDelta;
+
+export const createDeltaEditor = (id: string, markdown: string | undefined, onChange: (markdown: string) => void) => {
+
+    if (!markdown) markdown = '';
+
+    const toolbarOptions = [['bold', 'italic', 'link']];
+    const options = {
+        theme: 'snow',
+        modules: {
+            toolbar: toolbarOptions,
+            QuillMarkdown: {}
+        }
+    };
+
+    // @ts-ignore
+    const editor = new Quill(`#${id}`, options);
+    // @ts-ignore
+    new QuillMarkdown(editor, {});
+
+    editor.on('text-change', () => {
+        const { ops } = editor.editor.getContents(0, 99999999);
+        const markdown = fromDelta(ops);
+        onChange(markdown);
+    });
+
+    // Apply markdown as delta.
+    if (markdown && markdown.length) {
+        setTimeout(() => editor.editor.insertContents(0, toDelta(markdown!)), 1);
+    }
+}

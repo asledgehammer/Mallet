@@ -1088,7 +1088,7 @@ define("src/asledgehammer/rosetta/component/NameModeType", ["require", "exports"
 define("src/asledgehammer/Delta", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.toDelta = exports.fromDelta = void 0;
+    exports.createDeltaEditor = exports.toDelta = exports.fromDelta = void 0;
     function fromDelta(ops) {
         let md = '';
         for (const op of ops) {
@@ -1297,6 +1297,32 @@ define("src/asledgehammer/Delta", ["require", "exports"], function (require, exp
     window.fromDelta = fromDelta;
     // @ts-ignore
     window.toDelta = toDelta;
+    const createDeltaEditor = (id, markdown, onChange) => {
+        if (!markdown)
+            markdown = '';
+        const toolbarOptions = [['bold', 'italic', 'link']];
+        const options = {
+            theme: 'snow',
+            modules: {
+                toolbar: toolbarOptions,
+                QuillMarkdown: {}
+            }
+        };
+        // @ts-ignore
+        const editor = new Quill(`#${id}`, options);
+        // @ts-ignore
+        new QuillMarkdown(editor, {});
+        editor.on('text-change', () => {
+            const { ops } = editor.editor.getContents(0, 99999999);
+            const markdown = fromDelta(ops);
+            onChange(markdown);
+        });
+        // Apply markdown as delta.
+        if (markdown && markdown.length) {
+            setTimeout(() => editor.editor.insertContents(0, toDelta(markdown)), 1);
+        }
+    };
+    exports.createDeltaEditor = createDeltaEditor;
 });
 define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/CardComponent", "src/asledgehammer/Delta"], function (require, exports, util_3, CardComponent_1, Delta_1) {
     "use strict";
@@ -1341,29 +1367,11 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
         `;
         }
         listenNotes(entity, idNotes) {
-            const toolbarOptions = [['bold', 'italic', 'link']];
-            const options = {
-                theme: 'snow',
-                modules: {
-                    toolbar: toolbarOptions,
-                    QuillMarkdown: {}
-                }
-            };
-            // @ts-ignore
-            const editor = new Quill(`#${idNotes}`, options);
-            // @ts-ignore
-            new QuillMarkdown(editor, {});
-            editor.on('text-change', () => {
-                const { ops } = editor.editor.getContents(0, 99999999);
-                entity.notes = (0, Delta_1.fromDelta)(ops);
+            (0, Delta_1.createDeltaEditor)(idNotes, entity.notes, (markdown) => {
+                entity.notes = markdown;
                 this.update();
                 this.app.renderCode();
             });
-            if (entity.notes && entity.notes.length) {
-                setTimeout(() => {
-                    editor.editor.insertContents(0, (0, Delta_1.toDelta)(entity.notes));
-                }, 1);
-            }
         }
         renderNotes(idNotes) {
             return (0, util_3.html) `
@@ -1398,35 +1406,11 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                 const idParamNotes = `${entity.name}-parameter-${param.name}-notes`;
                 const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
                 const idBtnDelete = `${entity.name}-parameter-${param.name}-delete`;
-                // const $description = $get(idParamNotes);
-                // $description.on('input', () => {
-                //     param.notes = $description.val();
-                //     this.update();
-                //     this.app.renderCode();
-                // });
-                const toolbarOptions = [['bold', 'italic', 'link']];
-                const options = {
-                    theme: 'snow',
-                    modules: {
-                        toolbar: toolbarOptions,
-                        QuillMarkdown: {}
-                    }
-                };
-                // @ts-ignore
-                const editor = new Quill(`#${idParamNotes}`, options);
-                // @ts-ignore
-                new QuillMarkdown(editor, {});
-                editor.on('text-change', () => {
-                    const { ops } = editor.editor.getContents(0, 99999999);
-                    param.notes = (0, Delta_1.fromDelta)(ops);
+                (0, Delta_1.createDeltaEditor)(idParamNotes, param.notes, (markdown) => {
+                    param.notes = markdown;
                     this.update();
                     this.app.renderCode();
                 });
-                if (param.notes && param.notes.length) {
-                    setTimeout(() => {
-                        editor.editor.insertContents(0, (0, Delta_1.toDelta)(param.notes));
-                    }, 1);
-                }
                 const $select = (0, util_3.$get)(idParamType);
                 const $customInput = (0, util_3.$get)(`${idParamType}-custom-input`);
                 $select.on('change', (value) => {
