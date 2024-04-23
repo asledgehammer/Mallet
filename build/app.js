@@ -459,6 +459,8 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaClass", ["require", "exports", "
             this.fields = {};
             this.values = {};
             this.deprecated = false;
+            /** (Default: off) */
+            this.mutable = false;
             Assert.assertNonEmptyString(name, 'name');
             this.name = (0, RosettaUtils_3.formatName)(name);
             this.extendz = this.readString('extends');
@@ -507,6 +509,10 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaClass", ["require", "exports", "
                     const value = new RosettaLuaField_1.RosettaLuaField(name2, rawValue);
                     this.values[name2] = this.values[value.name] = value;
                 }
+            }
+            /* (Mutable Flag) */
+            if (raw.mutable !== undefined) {
+                this.mutable = !!raw.mutable;
             }
         }
         parse(raw) {
@@ -576,6 +582,10 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaClass", ["require", "exports", "
                         value.parse(rawValue);
                     }
                 }
+            }
+            /* (Mutable Flag) */
+            if (raw.mutable !== undefined) {
+                this.mutable = !!raw.mutable;
             }
         }
         /**
@@ -700,6 +710,8 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaClass", ["require", "exports", "
                 for (const key of keys)
                     json.functions[key] = functions[key].toJSON(patch);
             }
+            /* (Mutable Flag) */
+            json.mutable = this.mutable;
             return json;
         }
     }
@@ -883,7 +895,9 @@ define("src/asledgehammer/rosetta/lua/LuaGenerator", ["require", "exports"], fun
             }
         }
         // NOTE: This is to keep flexability in Lua for adding custom properties to existing classes.
-        s += '--- @field [any] any\n';
+        if (clazz.mutable) {
+            s += '--- @field [any] any\n';
+        }
         s += `${clazz.name} = ISBaseObject:derive("${clazz.name}");\n\n`;
         // Generate any values in the class here.
         if (valueNames.length) {

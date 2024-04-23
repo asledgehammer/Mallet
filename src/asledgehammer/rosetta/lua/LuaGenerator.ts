@@ -216,7 +216,9 @@ export const generateLuaClass = (clazz: RosettaLuaClass): string => {
     }
 
     // NOTE: This is to keep flexability in Lua for adding custom properties to existing classes.
-    s += '--- @field [any] any\n';
+    if (clazz.mutable) {
+        s += '--- @field [any] any\n';
+    }
 
     s += `${clazz.name} = ISBaseObject:derive("${clazz.name}");\n\n`;
 

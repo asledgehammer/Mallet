@@ -23,6 +23,9 @@ export class RosettaLuaClass extends RosettaEntity {
   deprecated: boolean = false;
   notes: string | undefined;
 
+  /** (Default: off) */
+  mutable: boolean = false;
+
   constructor(name: string, raw: { [key: string]: any } = {}) {
     super(raw);
 
@@ -80,6 +83,11 @@ export class RosettaLuaClass extends RosettaEntity {
         const value = new RosettaLuaField(name2, rawValue);
         this.values[name2] = this.values[value.name] = value;
       }
+    }
+
+    /* (Mutable Flag) */
+    if (raw.mutable !== undefined) {
+      this.mutable = !!raw.mutable;
     }
   }
 
@@ -152,6 +160,11 @@ export class RosettaLuaClass extends RosettaEntity {
         }
       }
     }
+
+    /* (Mutable Flag) */
+    if (raw.mutable !== undefined) {
+      this.mutable = !!raw.mutable;
+    }    
   }
 
   /**
@@ -297,6 +310,9 @@ export class RosettaLuaClass extends RosettaEntity {
       keys.sort((a, b) => a.localeCompare(b));
       for (const key of keys) json.functions[key] = functions[key].toJSON(patch);
     }
+
+    /* (Mutable Flag) */
+    json.mutable = this.mutable;
 
     return json;
   }
