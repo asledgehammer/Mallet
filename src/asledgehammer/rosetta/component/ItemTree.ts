@@ -32,7 +32,8 @@ export class ItemTree {
     // This modal is for confirming actions.
     readonly modalConfirm: any;
     readonly $btnConfirm: JQuery<HTMLButtonElement> | undefined;
-    readonly $titleConfirm: JQuery<HTMLHeadingElement> | undefined;
+    readonly $titleConfirm: JQuery<HTMLHeadingElement>;
+    readonly $bodyConfirm: JQuery<HTMLHeadingElement>;
     confirmSuccess: (() => void) | undefined;
 
     nameSelected: string | undefined;
@@ -55,14 +56,16 @@ export class ItemTree {
         // @ts-ignore
         this.modalConfirm = new bootstrap.Modal('#modal-confirm', {});
         this.$titleConfirm = $get('title-confirm')!;
+        this.$bodyConfirm = $get('body-confirm')!;
         this.$btnConfirm = $get('btn-confirm')!;
         this.confirmSuccess = undefined;
 
         this.nameMode = null;
     }
 
-    askConfirm(title: string, onSuccess: (() => void) | undefined = undefined) {
-        this.$titleName.html(title);
+    askConfirm(onSuccess: () => void, title: string = 'Confirm', body: string = 'Are you sure?') {
+        this.$titleConfirm.html(title);
+        this.$bodyConfirm.html(body);
         this.confirmSuccess = onSuccess;
         this.modalConfirm.show();
     }

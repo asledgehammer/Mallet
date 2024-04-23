@@ -219,7 +219,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
             });
 
             $get(idBtnDelete).on('click', () => {
-                this.app.sidebar.itemTree.askConfirm(`Delete Parameter ${param.name}?`, () => {
+                this.app.sidebar.itemTree.askConfirm(() => {
                     console.log('delete');
                     entity.parameters.splice(entity.parameters.indexOf(param), 1);
 
@@ -231,7 +231,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                     } else if (type === 'method') {
                         this.app.showMethod(entity as any);
                     }
-                });
+                }, `Delete Parameter ${param.name}?`);
             });
 
             this.listenEdit({ name: param.name }, idBtnEdit, 'edit_parameter', 'Edit Parameter Name', `${entity.name}-${param.name}`);

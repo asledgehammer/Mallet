@@ -110,7 +110,7 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
         this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_value' : 'edit_field', `Edit ${isStatic ? 'Value' : 'Field'} Name`);
 
         $get(idBtnDelete).on('click', () => {
-            app.sidebar.itemTree.askConfirm(`Delete ${isStatic ? 'Value' : 'Field'} ${entity.name}`, () => {
+            app.sidebar.itemTree.askConfirm(() => {
                 const clazz = app.card?.options!.entity!;
                 if (isStatic) {
                     delete clazz.values[entity.name];
@@ -119,7 +119,7 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
                 }
                 app.showClass(clazz);
                 app.sidebar.itemTree.populate();
-            });
+            }, `Delete ${isStatic ? 'Value' : 'Field'} ${entity.name}`);
         })
     }
 }

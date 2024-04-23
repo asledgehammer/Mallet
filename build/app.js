@@ -1283,7 +1283,7 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                     }
                 });
                 (0, util_3.$get)(idBtnDelete).on('click', () => {
-                    this.app.sidebar.itemTree.askConfirm(`Delete Parameter ${param.name}?`, () => {
+                    this.app.sidebar.itemTree.askConfirm(() => {
                         console.log('delete');
                         entity.parameters.splice(entity.parameters.indexOf(param), 1);
                         // TODO: Clean up.
@@ -1296,7 +1296,7 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                         else if (type === 'method') {
                             this.app.showMethod(entity);
                         }
-                    });
+                    }, `Delete Parameter ${param.name}?`);
                 });
                 this.listenEdit({ name: param.name }, idBtnEdit, 'edit_parameter', 'Edit Parameter Name', `${entity.name}-${param.name}`);
             }
@@ -1796,7 +1796,7 @@ define("src/asledgehammer/rosetta/component/LuaFieldCard", ["require", "exports"
             this.listenType(entity, idType, idType);
             this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_value' : 'edit_field', `Edit ${isStatic ? 'Value' : 'Field'} Name`);
             (0, util_6.$get)(idBtnDelete).on('click', () => {
-                app.sidebar.itemTree.askConfirm(`Delete ${isStatic ? 'Value' : 'Field'} ${entity.name}`, () => {
+                app.sidebar.itemTree.askConfirm(() => {
                     var _a;
                     const clazz = (_a = app.card) === null || _a === void 0 ? void 0 : _a.options.entity;
                     if (isStatic) {
@@ -1807,7 +1807,7 @@ define("src/asledgehammer/rosetta/component/LuaFieldCard", ["require", "exports"
                     }
                     app.showClass(clazz);
                     app.sidebar.itemTree.populate();
-                });
+                }, `Delete ${isStatic ? 'Value' : 'Field'} ${entity.name}`);
             });
         }
     }
@@ -1890,7 +1890,7 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
             this.listenParameters(entity, isStatic ? 'function' : 'method');
             this.listenReturns(entity, idReturnType, idReturnNotes, idReturnType);
             (0, util_7.$get)(idBtnDelete).on('click', () => {
-                app.sidebar.itemTree.askConfirm(`Delete ${isStatic ? 'Function' : 'Method'} ${entity.name}`, () => {
+                app.sidebar.itemTree.askConfirm(() => {
                     var _a;
                     const clazz = (_a = app.card) === null || _a === void 0 ? void 0 : _a.options.entity;
                     if (isStatic) {
@@ -1901,7 +1901,7 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
                     }
                     app.showClass(clazz);
                     app.sidebar.itemTree.populate();
-                });
+                }, `Delete ${isStatic ? 'Function' : 'Method'} ${entity.name}`);
             });
         }
     }
@@ -1939,12 +1939,14 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
             // @ts-ignore
             this.modalConfirm = new bootstrap.Modal('#modal-confirm', {});
             this.$titleConfirm = (0, util_8.$get)('title-confirm');
+            this.$bodyConfirm = (0, util_8.$get)('body-confirm');
             this.$btnConfirm = (0, util_8.$get)('btn-confirm');
             this.confirmSuccess = undefined;
             this.nameMode = null;
         }
-        askConfirm(title, onSuccess = undefined) {
-            this.$titleName.html(title);
+        askConfirm(onSuccess, title = 'Confirm', body = 'Are you sure?') {
+            this.$titleConfirm.html(title);
+            this.$bodyConfirm.html(body);
             this.confirmSuccess = onSuccess;
             this.modalConfirm.show();
         }

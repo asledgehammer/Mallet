@@ -99,7 +99,7 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
         this.listenReturns(entity, idReturnType, idReturnNotes, idReturnType);
 
         $get(idBtnDelete).on('click', () => {
-            app.sidebar.itemTree.askConfirm(`Delete ${isStatic ? 'Function' : 'Method'} ${entity.name}`, () => {
+            app.sidebar.itemTree.askConfirm(() => {
                 const clazz = app.card?.options!.entity!;
                 if (isStatic) {
                     delete clazz.functions[entity.name];
@@ -108,7 +108,7 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
                 }
                 app.showClass(clazz);
                 app.sidebar.itemTree.populate();
-            });
+            }, `Delete ${isStatic ? 'Function' : 'Method'} ${entity.name}`);
         })
 
     }
