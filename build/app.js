@@ -1577,9 +1577,14 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
         }
         listenReturns(entity, idReturnType, idReturnNotes, idSelect) {
             const { returns } = entity;
-            const $description = (0, util_3.$get)(idReturnNotes);
-            $description.on('input', () => {
-                returns.notes = $description.val();
+            // const $description = $get(idReturnNotes);
+            // $description.on('input', () => {
+            //     returns.notes = $description.val();
+            //     this.update();
+            //     this.app.renderCode();
+            // });
+            (0, Delta_1.createDeltaEditor)(idReturnNotes, entity.returns.notes, (markdown) => {
+                entity.returns.notes = markdown;
                 this.update();
                 this.app.renderCode();
             });
@@ -1643,7 +1648,7 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                     <!-- Return Notes -->
                     <div>
                         <label for="${idReturnNotes}" class="form-label">Description</label>
-                        <textarea id="${idReturnNotes}" class="form-control responsive-input" spellcheck="false">${notes}</textarea>
+                        <div id="${idReturnNotes}" style="background-color: #222 !important;"></div>
                     </div>
                 </div>
             </div>

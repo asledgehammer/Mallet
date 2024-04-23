@@ -290,9 +290,15 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
     listenReturns(entity: { returns: RosettaLuaReturns }, idReturnType: string, idReturnNotes: string, idSelect: string): void {
         const { returns } = entity;
 
-        const $description = $get(idReturnNotes);
-        $description.on('input', () => {
-            returns.notes = $description.val();
+        // const $description = $get(idReturnNotes);
+        // $description.on('input', () => {
+        //     returns.notes = $description.val();
+        //     this.update();
+        //     this.app.renderCode();
+        // });
+
+        createDeltaEditor(idReturnNotes, entity.returns.notes!, (markdown: string) => {
+            entity.returns.notes = markdown;
             this.update();
             this.app.renderCode();
         });
@@ -360,7 +366,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                     <!-- Return Notes -->
                     <div>
                         <label for="${idReturnNotes}" class="form-label">Description</label>
-                        <textarea id="${idReturnNotes}" class="form-control responsive-input" spellcheck="false">${notes}</textarea>
+                        <div id="${idReturnNotes}" style="background-color: #222 !important;"></div>
                     </div>
                 </div>
             </div>
