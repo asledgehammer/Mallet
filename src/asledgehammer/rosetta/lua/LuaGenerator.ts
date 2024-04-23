@@ -30,7 +30,20 @@ export const generateLuaValue = (containerName: string, field: RosettaLuaField):
         s += `--- ${notes}\n`;
     }
 
-    return `${s}${containerName}.${field.name} = ${field.defaultValue != null ? field.defaultValue : 'nil'};`;
+    let q = `${s}${containerName}.${field.name}`;
+    if (field.defaultValue) {
+        let d = field.defaultValue;
+
+        // Try parsing as a int.
+        if (!parseInt(d) && !parseFloat(d)) {
+            // String-wrapping with escaped double-quotes.
+            d = `"${d.replace(/"/g, '\\"').replace(/\n/g, '\\n')}"`;
+            console.log('string: ' + d);
+        }
+        q += ` = ${d}`;
+    }
+
+    return `${q};`;
 };
 
 export const generateLuaParameterBody = (params: RosettaLuaParameter[]): string => {

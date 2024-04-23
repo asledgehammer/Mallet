@@ -1,0 +1,15 @@
+{
+  "$schema": "https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-schema.json",
+  "luaClasses": {
+    "e": {
+      "notes": "This is a test.\n",
+      "values": {
+        "v": {
+          "type": "any",
+          "defaultValue": "df;lkgfgk \nerg"
+        }
+      },
+      "constructor": {}
+    }
+  }
+}

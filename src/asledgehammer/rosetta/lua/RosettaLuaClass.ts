@@ -208,11 +208,15 @@ export class RosettaLuaClass extends RosettaEntity {
    * - A method already exists with the same name in the Lua class.
    */
   createMethod(name: string): RosettaLuaFunction {
-    const method = new RosettaLuaFunction(name);
+    const method = new RosettaLuaFunction(name, { returns: { type: 'void', notes: '' } });
 
     // (Only check for the file instance)
     if (this.methods[method.name]) {
       throw new Error(`A method already exists: ${method.name}`);
+    }
+
+    if (this.functions[method.name]) {
+      throw new Error(`A function already exists with name and cannot be a method: ${method.name}`);
     }
 
     this.methods[method.name] = method;
@@ -230,12 +234,17 @@ export class RosettaLuaClass extends RosettaEntity {
    * - A method already exists with the same name in the Lua class.
    */
   createFunction(name: string): RosettaLuaFunction {
-    const func = new RosettaLuaFunction(name);
+    const func = new RosettaLuaFunction(name, { returns: { type: 'void', notes: '' } });
 
     // (Only check for the file instance)
     if (this.functions[func.name]) {
       throw new Error(`A function already exists: ${func.name}`);
     }
+
+    if (this.methods[func.name]) {
+      throw new Error(`A method already exists with name and cannot be a function: ${func.name}`);
+    }
+
 
     this.functions[func.name] = func;
 

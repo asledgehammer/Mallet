@@ -1,5 +1,5 @@
 import { App } from '../../../app';
-import { html } from '../util';
+import { $get, html } from '../util';
 import { Component, ComponentOptions } from './Component';
 import { ItemTree } from './ItemTree';
 import { SidebarPanel } from './SidebarPanel';
@@ -115,6 +115,56 @@ export class Sidebar extends Component<SidebarOptions> {
         this.panel.listen();
         this.itemTree.listen();
         this.itemTree.populate();
+
+        const { app } = this;
+
+        $get('btn-new-lua-value').on('click', () => {
+            const { card } = app;
+            if(!card) return;
+            const clazz = card.options!.entity;
+            if(!clazz) return;
+
+            this.itemTree.nameMode = 'new_value';
+             this.itemTree.$titleName.html('Create Lua Value');
+            this.itemTree.$inputName.val('');
+            this.itemTree.modalName.show();
+        });
+
+        $get('btn-new-lua-field').on('click', () => {
+            const { card } = app;
+            if(!card) return;
+            const clazz = card.options!.entity;
+            if(!clazz) return;
+
+            this.itemTree.nameMode = 'new_field';
+            this.itemTree.$titleName.html('Create Lua Field');
+            this.itemTree.$inputName.val('');
+            this.itemTree.modalName.show();
+        });
+
+        $get('btn-new-lua-function').on('click', () => {
+            const { card } = app;
+            if(!card) return;
+            const clazz = card.options!.entity;
+            if(!clazz) return;
+
+            this.itemTree.nameMode = 'new_function';
+            this.itemTree.$titleName.html('Create Lua Function');
+            this.itemTree.$inputName.val('');
+            this.itemTree.modalName.show();
+        });
+
+        $get('btn-new-lua-method').on('click', () => {
+            const { card } = app;
+            if(!card) return;
+            const clazz = card.options!.entity;
+            if(!clazz) return;
+
+            this.itemTree.nameMode = 'new_method';
+            this.itemTree.$titleName.html('Create Lua Method');
+            this.itemTree.$inputName.val('');
+            this.itemTree.modalName.show();
+        });
     }
 };
 

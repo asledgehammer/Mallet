@@ -624,10 +624,13 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaClass", ["require", "exports", "
          * - A method already exists with the same name in the Lua class.
          */
         createMethod(name) {
-            const method = new RosettaLuaFunction_1.RosettaLuaFunction(name);
+            const method = new RosettaLuaFunction_1.RosettaLuaFunction(name, { returns: { type: 'void', notes: '' } });
             // (Only check for the file instance)
             if (this.methods[method.name]) {
                 throw new Error(`A method already exists: ${method.name}`);
+            }
+            if (this.functions[method.name]) {
+                throw new Error(`A function already exists with name and cannot be a method: ${method.name}`);
             }
             this.methods[method.name] = method;
             return method;
@@ -642,10 +645,13 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaClass", ["require", "exports", "
          * - A method already exists with the same name in the Lua class.
          */
         createFunction(name) {
-            const func = new RosettaLuaFunction_1.RosettaLuaFunction(name);
+            const func = new RosettaLuaFunction_1.RosettaLuaFunction(name, { returns: { type: 'void', notes: '' } });
             // (Only check for the file instance)
             if (this.functions[func.name]) {
                 throw new Error(`A function already exists: ${func.name}`);
+            }
+            if (this.methods[func.name]) {
+                throw new Error(`A method already exists with name and cannot be a function: ${func.name}`);
             }
             this.functions[func.name] = func;
             return func;
@@ -722,7 +728,18 @@ define("src/asledgehammer/rosetta/lua/LuaGenerator", ["require", "exports"], fun
             const notes = field.notes.split('\n').join('\n--- ');
             s += `--- ${notes}\n`;
         }
-        return `${s}${containerName}.${field.name} = ${field.defaultValue != null ? field.defaultValue : 'nil'};`;
+        let q = `${s}${containerName}.${field.name}`;
+        if (field.defaultValue) {
+            let d = field.defaultValue;
+            // Try parsing as a int.
+            if (!parseInt(d) && !parseFloat(d)) {
+                // String-wrapping with escaped double-quotes.
+                d = `"${d.replace(/"/g, '\\"').replace(/\n/g, '\\n')}"`;
+                console.log('string: ' + d);
+            }
+            q += ` = ${d}`;
+        }
+        return `${q};`;
     };
     exports.generateLuaValue = generateLuaValue;
     const generateLuaParameterBody = (params) => {
@@ -2207,6 +2224,12 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                         app.showClass(clazz);
                         break;
                     }
+                    case 'new_field': {
+                        const field = clazz.createField(name);
+                        app.showField(field);
+                        app.sidebar.itemTree.populate();
+                        break;
+                    }
                     case 'edit_field': {
                         const field = clazz.fields[nameOld];
                         field.name = name;
@@ -2214,6 +2237,12 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                         delete clazz.fields[nameOld];
                         app.showField(field);
                         this.populate();
+                        break;
+                    }
+                    case 'new_value': {
+                        const value = clazz.createValue(name);
+                        app.showValue(value);
+                        app.sidebar.itemTree.populate();
                         break;
                     }
                     case 'edit_value': {
@@ -2227,6 +2256,12 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                         this.populate();
                         break;
                     }
+                    case 'new_function': {
+                        const func = clazz.createFunction(name);
+                        app.showFunction(func);
+                        app.sidebar.itemTree.populate();
+                        break;
+                    }
                     case 'edit_function': {
                         const func = clazz.functions[nameOld];
                         func.name = name;
@@ -2234,6 +2269,12 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                         delete clazz.functions[nameOld];
                         app.showFunction(func);
                         this.populate();
+                        break;
+                    }
+                    case 'new_method': {
+                        const method = clazz.createMethod(name);
+                        app.showMethod(method);
+                        app.sidebar.itemTree.populate();
                         break;
                     }
                     case 'edit_method': {
@@ -2353,10 +2394,22 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                 <i class="fa fa-save"></i>
             </button>
 
+            <div class="dropdown" style="position: absolute; top: 5px; right: 5px;">
+                <button class="btn btn-sm responsive-btn responsive-btn-success float-end" style="width: 32px; height: 32px" data-bs-toggle="dropdown" aria-expanded="false" title="Add Element">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-dark">
+                    <li><a id="btn-new-lua-value" class="dropdown-item" href="#">New Value</a></li>
+                    <li><a id="btn-new-lua-field" class="dropdown-item" href="#">New Field</a></li>
+                    <li><a id="btn-new-lua-function" class="dropdown-item" href="#">New Function</a></li>
+                    <li><a id="btn-new-lua-method" class="dropdown-item" href="#">New Method</a></li>
+                </ul>
+            </div>
+
             <!-- New Function -->
-            <button id="new-lua-function" class="btn btn-sm responsive-btn responsive-btn-success float-end" style="width: 32px; height: 32px" title="Add Element">
+            <!-- <button id="new-lua-function" class="btn btn-sm responsive-btn responsive-btn-success float-end" style="width: 32px; height: 32px" title="Add Element">
                 <i class="fa-solid fa-plus"></i>
-            </button>
+            </button> -->
         `;
         }
         populate() {
@@ -2673,6 +2726,55 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
             this.panel.listen();
             this.itemTree.listen();
             this.itemTree.populate();
+            const { app } = this;
+            (0, util_10.$get)('btn-new-lua-value').on('click', () => {
+                const { card } = app;
+                if (!card)
+                    return;
+                const clazz = card.options.entity;
+                if (!clazz)
+                    return;
+                this.itemTree.nameMode = 'new_value';
+                this.itemTree.$titleName.html('Create Lua Value');
+                this.itemTree.$inputName.val('');
+                this.itemTree.modalName.show();
+            });
+            (0, util_10.$get)('btn-new-lua-field').on('click', () => {
+                const { card } = app;
+                if (!card)
+                    return;
+                const clazz = card.options.entity;
+                if (!clazz)
+                    return;
+                this.itemTree.nameMode = 'new_field';
+                this.itemTree.$titleName.html('Create Lua Field');
+                this.itemTree.$inputName.val('');
+                this.itemTree.modalName.show();
+            });
+            (0, util_10.$get)('btn-new-lua-function').on('click', () => {
+                const { card } = app;
+                if (!card)
+                    return;
+                const clazz = card.options.entity;
+                if (!clazz)
+                    return;
+                this.itemTree.nameMode = 'new_function';
+                this.itemTree.$titleName.html('Create Lua Function');
+                this.itemTree.$inputName.val('');
+                this.itemTree.modalName.show();
+            });
+            (0, util_10.$get)('btn-new-lua-method').on('click', () => {
+                const { card } = app;
+                if (!card)
+                    return;
+                const clazz = card.options.entity;
+                if (!clazz)
+                    return;
+                this.itemTree.nameMode = 'new_method';
+                this.itemTree.$titleName.html('Create Lua Method');
+                this.itemTree.$inputName.val('');
+                this.itemTree.modalName.show();
+            });
         }
     }
     exports.Sidebar = Sidebar;
