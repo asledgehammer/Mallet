@@ -143,6 +143,10 @@ async function init() {
     // app.loadLuaClass(json);
 
     // @ts-ignore
+    const greet = new bootstrap.Modal('#modal-greet', {});
+    greet.show();
+
+    // @ts-ignore
     window.app = app;
 }
 

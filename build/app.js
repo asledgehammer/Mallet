@@ -2917,6 +2917,9 @@ define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/Lu
         // const json = await load('http://localhost:8080/assets/rosetta/patches/jab/json/client/isui/ISUIElement.json');
         // app.loadLuaClass(json);
         // @ts-ignore
+        const greet = new bootstrap.Modal('#modal-greet', {});
+        greet.show();
+        // @ts-ignore
         window.app = app;
     }
     $(() => init());
