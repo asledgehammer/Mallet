@@ -904,7 +904,7 @@ define("src/asledgehammer/rosetta/lua/LuaGenerator", ["require", "exports"], fun
 define("src/asledgehammer/rosetta/util", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.toDelta = exports.fromDelta = exports.get = exports.$get = exports.combine = exports.combineArrays = exports.randomString = exports.css = exports.html = void 0;
+    exports.get = exports.$get = exports.combine = exports.combineArrays = exports.randomString = exports.css = exports.html = void 0;
     const html = function (c, ...d) {
         let a = '';
         for (let b = 0; b < c.length - 1; b++)
@@ -983,6 +983,112 @@ define("src/asledgehammer/rosetta/util", ["require", "exports"], function (requi
         return document.getElementById(id);
     }
     exports.get = get;
+});
+define("src/asledgehammer/rosetta/component/Component", ["require", "exports", "src/asledgehammer/rosetta/util"], function (require, exports, util_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.Component = void 0;
+    class Component {
+        constructor(options) {
+            this.options = options;
+            /* (Parameter: string id) */
+            if (this.options && this.options.id) {
+                this.id = this.options.id;
+            }
+            else {
+                this.id = `component-${(0, util_1.randomString)(8)}`;
+            }
+            /* (Parameter: string[] classes) */
+            if (this.options && this.options.classes) {
+                this.classes = this.options.classes;
+            }
+            else {
+                this.classes = [];
+            }
+            /* (Parameter: {[id: string]: any} styles) */
+            if (this.options && this.options.style) {
+                this.style = this.options.style;
+            }
+            else {
+                this.style = {};
+            }
+            /* (Parameter: string domType) */
+            if (this.options && this.options.domType) {
+                this.domType = this.options.domType;
+            }
+            else {
+                this.domType = 'div';
+            }
+        }
+        render() {
+            const { id } = this;
+            return (0, util_1.html) `<div id="${id}" ${this.buildClasses()} ${this.buildStyle()}>${this.onRender()}</div>`;
+        }
+        listen() { }
+        buildClasses() {
+            const { classes } = this;
+            if (!classes.length) {
+                return '';
+            }
+            return `class="${classes.join(' ')}"`;
+        }
+        buildStyle() {
+            const keys = Object.keys(this.style);
+            if (!keys.length) {
+                return '';
+            }
+            let built = '';
+            for (const key of keys) {
+                built += `${key}: ${this.style[key]};`;
+            }
+            return `style="${built.trim()}"`;
+        }
+    }
+    exports.Component = Component;
+});
+define("src/asledgehammer/rosetta/component/CardComponent", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/Component"], function (require, exports, util_2, Component_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.CardComponent = void 0;
+    class CardComponent extends Component_1.Component {
+        constructor(options) {
+            super((0, util_2.combine)({ allowArrayDuplicates: false }, { classes: ['card', 'responsive-card', 'rounded-0', 'shadow-lg'] }, options));
+        }
+        onRender() {
+            return (0, util_2.html) `${this.headerHTML()}${this.bodyHTML()}`;
+        }
+        headerHTML() {
+            let htmlHeaderInner = this.onHeaderHTML();
+            return htmlHeaderInner ? (0, util_2.html) `<div class="card-header">${htmlHeaderInner}</div>` : '';
+        }
+        onHeaderHTML() {
+            return undefined;
+        }
+        bodyHTML() {
+            let htmlBodyInner = this.onBodyHTML();
+            return htmlBodyInner ? (0, util_2.html) `<div class="card-body">${htmlBodyInner}</div>` : '';
+        }
+        onBodyHTML() {
+            return undefined;
+        }
+        footerHTML() {
+            let htmlFooterInner = this.onFooterHTML();
+            return htmlFooterInner ? (0, util_2.html) `<div class="card-footer">${htmlFooterInner}</div>` : '';
+        }
+        onFooterHTML() {
+            return undefined;
+        }
+    }
+    exports.CardComponent = CardComponent;
+});
+define("src/asledgehammer/rosetta/component/NameModeType", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+});
+define("src/asledgehammer/Delta", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.toDelta = exports.fromDelta = void 0;
     function fromDelta(ops) {
         let md = '';
         for (const op of ops) {
@@ -1192,108 +1298,7 @@ define("src/asledgehammer/rosetta/util", ["require", "exports"], function (requi
     // @ts-ignore
     window.toDelta = toDelta;
 });
-define("src/asledgehammer/rosetta/component/Component", ["require", "exports", "src/asledgehammer/rosetta/util"], function (require, exports, util_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.Component = void 0;
-    class Component {
-        constructor(options) {
-            this.options = options;
-            /* (Parameter: string id) */
-            if (this.options && this.options.id) {
-                this.id = this.options.id;
-            }
-            else {
-                this.id = `component-${(0, util_1.randomString)(8)}`;
-            }
-            /* (Parameter: string[] classes) */
-            if (this.options && this.options.classes) {
-                this.classes = this.options.classes;
-            }
-            else {
-                this.classes = [];
-            }
-            /* (Parameter: {[id: string]: any} styles) */
-            if (this.options && this.options.style) {
-                this.style = this.options.style;
-            }
-            else {
-                this.style = {};
-            }
-            /* (Parameter: string domType) */
-            if (this.options && this.options.domType) {
-                this.domType = this.options.domType;
-            }
-            else {
-                this.domType = 'div';
-            }
-        }
-        render() {
-            const { id } = this;
-            return (0, util_1.html) `<div id="${id}" ${this.buildClasses()} ${this.buildStyle()}>${this.onRender()}</div>`;
-        }
-        listen() { }
-        buildClasses() {
-            const { classes } = this;
-            if (!classes.length) {
-                return '';
-            }
-            return `class="${classes.join(' ')}"`;
-        }
-        buildStyle() {
-            const keys = Object.keys(this.style);
-            if (!keys.length) {
-                return '';
-            }
-            let built = '';
-            for (const key of keys) {
-                built += `${key}: ${this.style[key]};`;
-            }
-            return `style="${built.trim()}"`;
-        }
-    }
-    exports.Component = Component;
-});
-define("src/asledgehammer/rosetta/component/CardComponent", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/Component"], function (require, exports, util_2, Component_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.CardComponent = void 0;
-    class CardComponent extends Component_1.Component {
-        constructor(options) {
-            super((0, util_2.combine)({ allowArrayDuplicates: false }, { classes: ['card', 'responsive-card', 'rounded-0', 'shadow-lg'] }, options));
-        }
-        onRender() {
-            return (0, util_2.html) `${this.headerHTML()}${this.bodyHTML()}`;
-        }
-        headerHTML() {
-            let htmlHeaderInner = this.onHeaderHTML();
-            return htmlHeaderInner ? (0, util_2.html) `<div class="card-header">${htmlHeaderInner}</div>` : '';
-        }
-        onHeaderHTML() {
-            return undefined;
-        }
-        bodyHTML() {
-            let htmlBodyInner = this.onBodyHTML();
-            return htmlBodyInner ? (0, util_2.html) `<div class="card-body">${htmlBodyInner}</div>` : '';
-        }
-        onBodyHTML() {
-            return undefined;
-        }
-        footerHTML() {
-            let htmlFooterInner = this.onFooterHTML();
-            return htmlFooterInner ? (0, util_2.html) `<div class="card-footer">${htmlFooterInner}</div>` : '';
-        }
-        onFooterHTML() {
-            return undefined;
-        }
-    }
-    exports.CardComponent = CardComponent;
-});
-define("src/asledgehammer/rosetta/component/NameModeType", ["require", "exports"], function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-});
-define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/CardComponent"], function (require, exports, util_3, CardComponent_1) {
+define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/CardComponent", "src/asledgehammer/Delta"], function (require, exports, util_3, CardComponent_1, Delta_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaCard = void 0;
@@ -1350,7 +1355,7 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
             new QuillMarkdown(editor, {});
             editor.on('text-change', () => {
                 const { ops } = editor.editor.getContents(0, 99999999);
-                entity.notes = (0, util_3.fromDelta)(ops);
+                entity.notes = (0, Delta_1.fromDelta)(ops);
                 this.update();
                 this.app.renderCode();
             });
@@ -1358,7 +1363,7 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
             window.editor = editor;
             if (entity.notes && entity.notes.length) {
                 setTimeout(() => {
-                    editor.editor.insertContents(0, (0, util_3.toDelta)(entity.notes));
+                    editor.editor.insertContents(0, (0, Delta_1.toDelta)(entity.notes));
                 }, 1);
             }
         }

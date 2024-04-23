@@ -2,10 +2,11 @@ import { App } from "../../../app";
 import { RosettaEntity } from "../RosettaEntity";
 import { RosettaLuaParameter } from "../lua/RosettaLuaParameter";
 import { RosettaLuaReturns } from "../lua/RosettaLuaReturns";
-import { $get, fromDelta, html, toDelta } from "../util";
+import { $get, html } from "../util";
 import { CardComponent } from "./CardComponent";
 import { ComponentOptions } from "./Component";
 import { NameModeType } from "./NameModeType";
+import { toDelta, fromDelta } from "../../Delta";
 
 export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O> {
 
