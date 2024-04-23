@@ -1696,6 +1696,7 @@ define("src/asledgehammer/rosetta/component/LuaFieldCard", ["require", "exports"
             this.idNotes = `${this.id}-notes`;
             this.idType = `${this.id}-type`;
             this.idBtnEdit = `${this.id}-btn-edit`;
+            this.idBtnDelete = `${this.id}-btn-delete`;
         }
         onRenderPreview() {
             var _a, _b;
@@ -1716,7 +1717,7 @@ define("src/asledgehammer/rosetta/component/LuaFieldCard", ["require", "exports"
         }
         onHeaderHTML() {
             var _a;
-            const { idBtnEdit } = this;
+            const { idBtnEdit, idBtnDelete } = this;
             const { entity, isStatic } = this.options;
             const luaClass = (_a = this.app.card) === null || _a === void 0 ? void 0 : _a.options.entity;
             let name = `${luaClass.name}.${entity.name}`;
@@ -1731,7 +1732,16 @@ define("src/asledgehammer/rosetta/component/LuaFieldCard", ["require", "exports"
                 <div class="col-auto p-0">
                     <h5 class="card-text"><strong>${name}</strong></h5> 
                 </div>
-                ${this.renderEdit(idBtnEdit)}
+                <div style="position: absolute; top: 5px; width: 100%; height: 32px;">
+                    <!-- Delete Button -->
+                    <button id="${idBtnDelete}" class="btn btn-sm responsive-icon-btn text-danger float-end ms-1">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <!-- Edit Button -->
+                    <button id="${idBtnEdit}" class="btn btn-sm responsive-icon-btn float-end">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                </div>
             </div>
         `;
         }
@@ -1751,12 +1761,26 @@ define("src/asledgehammer/rosetta/component/LuaFieldCard", ["require", "exports"
         }
         listen() {
             super.listen();
-            const { idBtnEdit, idDefaultValue, idNotes, idType } = this;
+            const { app, idBtnDelete, idBtnEdit, idDefaultValue, idNotes, idType } = this;
             const { entity, isStatic } = this.options;
             this.listenNotes(entity, idNotes);
             this.listenDefaultValue(entity, idDefaultValue);
             this.listenType(entity, idType, idType);
             this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_value' : 'edit_field', `Edit ${isStatic ? 'Value' : 'Field'} Name`);
+            (0, util_6.$get)(idBtnDelete).on('click', () => {
+                app.sidebar.itemTree.askConfirm(`Delete ${isStatic ? 'Value' : 'Field'} ${entity.name}`, () => {
+                    var _a;
+                    const clazz = (_a = app.card) === null || _a === void 0 ? void 0 : _a.options.entity;
+                    if (isStatic) {
+                        delete clazz.values[entity.name];
+                    }
+                    else {
+                        delete clazz.fields[entity.name];
+                    }
+                    app.showClass(clazz);
+                    app.sidebar.itemTree.populate();
+                });
+            });
         }
     }
     exports.LuaFieldCard = LuaFieldCard;
@@ -1771,6 +1795,7 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
             this.idNotes = `${this.id}-notes`;
             this.idReturnType = `${this.id}-return-type`;
             this.idReturnNotes = `${this.id}-return-notes`;
+            this.idBtnDelete = `${this.id}-btn-delete`;
             this.idBtnEdit = `${this.id}-btn-edit`;
         }
         onRenderPreview() {
@@ -1782,7 +1807,7 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
             return (0, LuaGenerator_4.generateLuaMethod)(className, entity);
         }
         onHeaderHTML() {
-            const { idBtnEdit } = this;
+            const { idBtnDelete, idBtnEdit } = this;
             const { entity, isStatic } = this.options;
             const classEntity = this.app.card.options.entity;
             const className = classEntity.name;
@@ -1798,7 +1823,16 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
                 <div class="col-auto p-0">
                     <h5 class="card-text"><strong>${name}</strong></h5> 
                 </div>
-                ${this.renderEdit(idBtnEdit)}
+                <div style="position: absolute; top: 5px; width: 100%; height: 32px;">
+                    <!-- Delete Button -->
+                    <button id="${idBtnDelete}" class="btn btn-sm responsive-icon-btn text-danger float-end ms-1">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <!-- Edit Button -->
+                    <button id="${idBtnEdit}" class="btn btn-sm responsive-icon-btn float-end">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                </div>
             </div>
         `;
         }
@@ -1816,12 +1850,26 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
         }
         listen() {
             super.listen();
-            const { idBtnEdit, idNotes, idReturnType, idReturnNotes } = this;
+            const { app, idBtnDelete, idBtnEdit, idNotes, idReturnType, idReturnNotes } = this;
             const { entity, isStatic } = this.options;
             this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_function' : 'edit_method', `Edit Lua ${isStatic ? 'Function' : 'Method'}`);
             this.listenNotes(entity, idNotes);
             this.listenParameters(entity, isStatic ? 'function' : 'method');
             this.listenReturns(entity, idReturnType, idReturnNotes, idReturnType);
+            (0, util_7.$get)(idBtnDelete).on('click', () => {
+                app.sidebar.itemTree.askConfirm(`Delete ${isStatic ? 'Function' : 'Method'} ${entity.name}`, () => {
+                    var _a;
+                    const clazz = (_a = app.card) === null || _a === void 0 ? void 0 : _a.options.entity;
+                    if (isStatic) {
+                        delete clazz.functions[entity.name];
+                    }
+                    else {
+                        delete clazz.methods[entity.name];
+                    }
+                    app.showClass(clazz);
+                    app.sidebar.itemTree.populate();
+                });
+            });
         }
     }
     exports.LuaFunctionCard = LuaFunctionCard;

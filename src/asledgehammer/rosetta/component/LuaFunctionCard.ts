@@ -10,6 +10,7 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
     idNotes: string;
     idReturnType: string;
     idReturnNotes: string;
+    idBtnDelete: string;
     idBtnEdit: string;
 
     constructor(app: App, options: LuaFunctionCardOptions) {
@@ -18,6 +19,7 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
         this.idNotes = `${this.id}-notes`;
         this.idReturnType = `${this.id}-return-type`;
         this.idReturnNotes = `${this.id}-return-notes`;
+        this.idBtnDelete = `${this.id}-btn-delete`;
         this.idBtnEdit = `${this.id}-btn-edit`;
     }
 
@@ -33,7 +35,7 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
     }
 
     onHeaderHTML(): string | undefined {
-        const { idBtnEdit } = this;
+        const { idBtnDelete, idBtnEdit } = this;
         const { entity, isStatic } = this.options!;
         const classEntity = this.app.card!.options!.entity;
         const className = classEntity.name;
@@ -51,7 +53,16 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
                 <div class="col-auto p-0">
                     <h5 class="card-text"><strong>${name}</strong></h5> 
                 </div>
-                ${this.renderEdit(idBtnEdit)}
+                <div style="position: absolute; top: 5px; width: 100%; height: 32px;">
+                    <!-- Delete Button -->
+                    <button id="${idBtnDelete}" class="btn btn-sm responsive-icon-btn text-danger float-end ms-1">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <!-- Edit Button -->
+                    <button id="${idBtnEdit}" class="btn btn-sm responsive-icon-btn float-end">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                </div>
             </div>
         `;
     }
@@ -74,13 +85,27 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
     listen(): void {
         super.listen();
 
-        const { idBtnEdit, idNotes, idReturnType, idReturnNotes } = this;
+        const { app, idBtnDelete, idBtnEdit, idNotes, idReturnType, idReturnNotes } = this;
         const { entity, isStatic } = this.options!;
 
         this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_function' : 'edit_method', `Edit Lua ${isStatic ? 'Function' : 'Method'}`);
         this.listenNotes(entity, idNotes);
         this.listenParameters(entity, isStatic ? 'function' : 'method');
         this.listenReturns(entity, idReturnType, idReturnNotes, idReturnType);
+
+        $get(idBtnDelete).on('click', () => {
+            app.sidebar.itemTree.askConfirm(`Delete ${isStatic ? 'Function' : 'Method'} ${entity.name}`, () => {
+                const clazz = app.card?.options!.entity!;
+                if (isStatic) {
+                    delete clazz.functions[entity.name];
+                } else {
+                    delete clazz.methods[entity.name];
+                }
+                app.showClass(clazz);
+                app.sidebar.itemTree.populate();
+            });
+        })
+
     }
 }
 

@@ -1,7 +1,7 @@
 import { App } from '../../../app';
 import { generateLuaField, generateLuaValue } from '../lua/LuaGenerator';
 import { RosettaLuaField } from '../lua/RosettaLuaField';
-import { html } from '../util';
+import { $get, html } from '../util';
 import { CardOptions } from './CardComponent';
 import { LuaCard } from './LuaCard';
 
@@ -11,6 +11,7 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
     readonly idNotes: string;
     readonly idType: string;
     readonly idBtnEdit: string;
+    readonly idBtnDelete: string;
 
     constructor(app: App, options: LuaFieldCardOptions) {
         super(app, options);
@@ -19,6 +20,7 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
         this.idNotes = `${this.id}-notes`;
         this.idType = `${this.id}-type`;
         this.idBtnEdit = `${this.id}-btn-edit`;
+        this.idBtnDelete = `${this.id}-btn-delete`;
     }
 
     onRenderPreview(): string {
@@ -43,7 +45,7 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
     }
 
     onHeaderHTML(): string | undefined {
-        const { idBtnEdit } = this;
+        const { idBtnEdit, idBtnDelete } = this;
         const { entity, isStatic } = this.options!;
         const luaClass = this.app.card?.options!.entity!;
 
@@ -60,7 +62,16 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
                 <div class="col-auto p-0">
                     <h5 class="card-text"><strong>${name}</strong></h5> 
                 </div>
-                ${this.renderEdit(idBtnEdit)}
+                <div style="position: absolute; top: 5px; width: 100%; height: 32px;">
+                    <!-- Delete Button -->
+                    <button id="${idBtnDelete}" class="btn btn-sm responsive-icon-btn text-danger float-end ms-1">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <!-- Edit Button -->
+                    <button id="${idBtnEdit}" class="btn btn-sm responsive-icon-btn float-end">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                </div>
             </div>
         `;
     }
@@ -85,13 +96,26 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
     listen(): void {
         super.listen();
 
-        const { idBtnEdit, idDefaultValue, idNotes, idType } = this;
+        const { app, idBtnDelete, idBtnEdit, idDefaultValue, idNotes, idType } = this;
         const { entity, isStatic } = this.options!;
 
         this.listenNotes(entity, idNotes);
         this.listenDefaultValue(entity, idDefaultValue);
         this.listenType(entity, idType, idType);
         this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_value' : 'edit_field', `Edit ${isStatic ? 'Value' : 'Field'} Name`);
+
+        $get(idBtnDelete).on('click', () => {
+            app.sidebar.itemTree.askConfirm(`Delete ${isStatic ? 'Value' : 'Field'} ${entity.name}`, () => {
+                const clazz = app.card?.options!.entity!;
+                if (isStatic) {
+                    delete clazz.values[entity.name];
+                } else {
+                    delete clazz.fields[entity.name];
+                }
+                app.showClass(clazz);
+                app.sidebar.itemTree.populate();
+            });
+        })
     }
 }
 

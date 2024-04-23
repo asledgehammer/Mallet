@@ -40,7 +40,7 @@ body {
         height: 544px;
         transform: translate(-50%, -50%);
         opacity: 0.5;
-        filter: brightness(0.15);
+        filter: brightness(0.2);
     }
 }
 
@@ -64,7 +64,7 @@ body {
     border-color: $light !important;
     border-width: 1px;
     border-style: solid;
-    background-color: #222 Im !important;
+    background-color: $dark !important;
     color: $light !important;
 
     i {
