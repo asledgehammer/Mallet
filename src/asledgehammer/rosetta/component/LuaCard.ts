@@ -79,9 +79,6 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
             this.app.renderCode();
         });
 
-        // @ts-ignore
-        window.editor = editor;
-
         if (entity.notes && entity.notes.length) {
             setTimeout(() => {
                 editor.editor.insertContents(0, toDelta(entity.notes!));
@@ -127,12 +124,39 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
             const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
             const idBtnDelete = `${entity.name}-parameter-${param.name}-delete`;
 
-            const $description = $get(idParamNotes);
-            $description.on('input', () => {
-                param.notes = $description.val();
+            // const $description = $get(idParamNotes);
+            // $description.on('input', () => {
+            //     param.notes = $description.val();
+            //     this.update();
+            //     this.app.renderCode();
+            // });
+
+            const toolbarOptions = [['bold', 'italic', 'link']];
+            const options = {
+                theme: 'snow',
+                modules: {
+                    toolbar: toolbarOptions,
+                    QuillMarkdown: {}
+                }
+            };    
+
+            // @ts-ignore
+            const editor = new Quill(`#${idParamNotes}`, options);
+            // @ts-ignore
+            new QuillMarkdown(editor, {});
+
+            editor.on('text-change', () => {
+                const { ops } = editor.editor.getContents(0, 99999999);
+                param.notes = fromDelta(ops);
                 this.update();
                 this.app.renderCode();
             });
+
+            if (param.notes && param.notes.length) {
+                setTimeout(() => {
+                    editor.editor.insertContents(0, toDelta(param.notes!));
+                }, 1);
+            }
 
             const $select = $get(idParamType);
             const $customInput = $get(`${idParamType}-custom-input`);
@@ -241,7 +265,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                             <!-- Notes -->
                             <div class="mb-3">
                                 <label for="${idParamNotes}" class="form-label">Description</label>
-                                <textarea id="${idParamNotes}" class="form-control responsive-input" spellcheck="false">${param.notes}</textarea>
+                                <div id="${idParamNotes}"></div>
                             </div>
                             <div style="position: relative; width: 100%; height: 32px;">
                                 <!-- Delete Button -->

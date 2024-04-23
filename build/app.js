@@ -1359,8 +1359,6 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                 this.update();
                 this.app.renderCode();
             });
-            // @ts-ignore
-            window.editor = editor;
             if (entity.notes && entity.notes.length) {
                 setTimeout(() => {
                     editor.editor.insertContents(0, (0, Delta_1.toDelta)(entity.notes));
@@ -1400,12 +1398,35 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                 const idParamNotes = `${entity.name}-parameter-${param.name}-notes`;
                 const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
                 const idBtnDelete = `${entity.name}-parameter-${param.name}-delete`;
-                const $description = (0, util_3.$get)(idParamNotes);
-                $description.on('input', () => {
-                    param.notes = $description.val();
+                // const $description = $get(idParamNotes);
+                // $description.on('input', () => {
+                //     param.notes = $description.val();
+                //     this.update();
+                //     this.app.renderCode();
+                // });
+                const toolbarOptions = [['bold', 'italic', 'link']];
+                const options = {
+                    theme: 'snow',
+                    modules: {
+                        toolbar: toolbarOptions,
+                        QuillMarkdown: {}
+                    }
+                };
+                // @ts-ignore
+                const editor = new Quill(`#${idParamNotes}`, options);
+                // @ts-ignore
+                new QuillMarkdown(editor, {});
+                editor.on('text-change', () => {
+                    const { ops } = editor.editor.getContents(0, 99999999);
+                    param.notes = (0, Delta_1.fromDelta)(ops);
                     this.update();
                     this.app.renderCode();
                 });
+                if (param.notes && param.notes.length) {
+                    setTimeout(() => {
+                        editor.editor.insertContents(0, (0, Delta_1.toDelta)(param.notes));
+                    }, 1);
+                }
                 const $select = (0, util_3.$get)(idParamType);
                 const $customInput = (0, util_3.$get)(`${idParamType}-custom-input`);
                 $select.on('change', (value) => {
@@ -1507,7 +1528,7 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                             <!-- Notes -->
                             <div class="mb-3">
                                 <label for="${idParamNotes}" class="form-label">Description</label>
-                                <textarea id="${idParamNotes}" class="form-control responsive-input" spellcheck="false">${param.notes}</textarea>
+                                <div id="${idParamNotes}"></div>
                             </div>
                             <div style="position: relative; width: 100%; height: 32px;">
                                 <!-- Delete Button -->
