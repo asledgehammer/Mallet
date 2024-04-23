@@ -550,25 +550,25 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
 
         switch (type.toLocaleLowerCase().trim()) {
 
-            case 'class': return 'fa-solid fa-box-archive text-light mx-2';
+            case 'class': return 'fa-solid fa-box-archive text-light mx-2 desaturate';
 
-            case 'constructor': return 'fa-solid fa-copyright text-light mx-2';
+            case 'constructor': return 'fa-solid fa-copyright text-light mx-2 desaturate';
 
-            case 'nil': return 'fa-solid fa-ban fa-danger mx-2';
+            case 'nil': return 'fa-solid fa-ban fa-danger mx-2 desaturate';
 
-            case 'void': return 'fa-solid fa-xmark mx-2';
+            case 'void': return 'fa-solid fa-xmark mx-2 desaturate';
 
-            case 'number': return 'fa-solid fa-hashtag text-warning mx-2';
+            case 'number': return 'fa-solid fa-hashtag text-warning mx-2 desaturate';
 
-            case 'string': return 'fa-solid fa-quote-left text-light mx-2';
+            case 'string': return 'fa-solid fa-quote-left text-light mx-2 desaturate';
 
-            case 'boolean': return 'fa-solid fa-flag text-info mx-2';
+            case 'boolean': return 'fa-solid fa-flag text-info mx-2 desaturate';
 
             // Uknown or other.
-            case 'any': return 'fa-solid fa-question text-danger mx-2';
+            case 'any': return 'fa-solid fa-question text-danger mx-2 desaturate';
 
             // Objects
-            default: return 'fa-solid fa-box text-success mx-2';
+            default: return 'fa-solid fa-box text-success mx-2 desaturate';
         }
     }
 }
