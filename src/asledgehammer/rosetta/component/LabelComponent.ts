@@ -7,9 +7,7 @@ export class LabelComponent extends Component<LabelOptions> {
     }
 
     protected onRender(): string {
-        return html`
-            
-        `;
+        return html``;
     }
 }
 

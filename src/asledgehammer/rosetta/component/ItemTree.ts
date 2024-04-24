@@ -1,7 +1,6 @@
 import { App } from "../../../app";
 import { RosettaLuaClass } from "../lua/RosettaLuaClass";
 import { RosettaLuaConstructor } from "../lua/RosettaLuaConstructor";
-import { RosettaLuaField } from "../lua/RosettaLuaField";
 import { RosettaLuaFunction } from "../lua/RosettaLuaFunction";
 import { $get, html } from "../util";
 import { LuaCard } from "./LuaCard";
@@ -133,22 +132,6 @@ export class ItemTree {
             return;
         });
 
-        $get('new-lua-field').on('click', () => {
-
-        });
-
-        $get('new-lua-value').on('click', () => {
-
-        });
-
-        $get('new-lua-method').on('click', async () => {
-
-        });
-
-        $get('new-lua-function').on('click', () => {
-
-        });
-
         this.$inputName.on('input', () => {
             setTimeout(() => this.$inputName.val(validateLuaVariableName(this.$inputName.val()!)), 1);
         });
@@ -191,8 +174,6 @@ export class ItemTree {
                     break;
                 }
                 case 'edit_value': {
-                    console.log(this.nameMode);
-                    console.log(nameOld);
                     const value = clazz.values[nameOld];
                     value.name = name;
                     clazz.values[name] = value;
@@ -349,11 +330,6 @@ export class ItemTree {
                     <li><a id="btn-new-lua-method" class="dropdown-item" href="#">New Method</a></li>
                 </ul>
             </div>
-
-            <!-- New Function -->
-            <!-- <button id="new-lua-function" class="btn btn-sm responsive-btn responsive-btn-success float-end" style="width: 32px; height: 32px" title="Add Element">
-                <i class="fa-solid fa-plus"></i>
-            </button> -->
         `;
     }
 

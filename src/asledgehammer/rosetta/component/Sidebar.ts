@@ -28,7 +28,6 @@ export class Sidebar extends Component<SidebarOptions> {
         const result = document.getElementById('result')! as any;
         const reader = new FileReader();
         reader.addEventListener('load', () => {
-            console.log('load!');
             result.innerHTML = reader.result;
 
         });

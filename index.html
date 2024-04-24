@@ -41,7 +41,13 @@
             <div id="screen-content-end-container"></div>
         </div>
         <!-- [Screen] - Preview -->
-        <pre id="screen-content-render" class="screen-content-render p-4 bg-black" style="overflow-y: auto;"></pre>
+        <div id="screen-content-render" class="screen-content-render bg-black" style="overflow-y: auto;">
+            <pre id="code-preview" class="w-100 h-100 p-4 m-0" style="overflow: scroll;"></pre>
+            <!-- Copy Button -->
+            <button id="btn-code-preview-copy" class="btn btn-sm responsive-btn responsive-btn-info" style="position: absolute; top: 1rem; right: 2rem; z-index: 5" title="Copy Code">
+                <i class="fa-solid fa-copy"></i>
+            </button>
+        </div>
     </div>
 
     <script type="text/javascript" src="vendor/ten-lines-typescript-amd-loader.js"></script>
@@ -99,7 +105,7 @@
         </div>
     </div>
 
-    <!-- Confirm Modal -->
+    <!-- Greet Modal -->
     <div id="modal-greet" class="modal fade" style="--bs-modal-width: 800px;" tabindex="-1" data-bs-backdrop="static">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">

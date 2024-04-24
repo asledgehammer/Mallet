@@ -38,7 +38,6 @@ export const generateLuaValue = (containerName: string, field: RosettaLuaField):
         if (!parseInt(d) && !parseFloat(d)) {
             // String-wrapping with escaped double-quotes.
             d = `"${d.replace(/"/g, '\\"').replace(/\n/g, '\\n')}"`;
-            console.log('string: ' + d);
         }
         q += ` = ${d}`;
     }

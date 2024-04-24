@@ -1,4 +1,4 @@
-import { css, html, randomString } from '../util';
+import { html, randomString } from '../util';
 
 export abstract class Component<O extends ComponentOptions> {
     readonly options?: O;
@@ -45,7 +45,7 @@ export abstract class Component<O extends ComponentOptions> {
         return html`<div id="${id}" ${this.buildClasses()} ${this.buildStyle()}>${this.onRender()}</div>`;
     }
 
-    listen(): void {}
+    listen(): void { }
 
     protected buildClasses(): string {
         const { classes } = this;
@@ -58,9 +58,7 @@ export abstract class Component<O extends ComponentOptions> {
 
     protected buildStyle(): string {
         const keys = Object.keys(this.style);
-        if (!keys.length) {
-            return '';
-        }
+        if (!keys.length) return '';
 
         let built = '';
         for (const key of keys) {

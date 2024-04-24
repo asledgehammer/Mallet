@@ -108,7 +108,7 @@ export class App {
 
     renderCode() {
 
-        const $renderPane = $get('screen-content-render');
+        const $renderPane = $get('code-preview');
 
         $renderPane.empty();
 

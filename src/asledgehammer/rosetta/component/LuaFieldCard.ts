@@ -35,12 +35,10 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
         if (isStatic) {
             return `${generateLuaField(entity)}\n\n${generateLuaValue(name, entity)}`;
         }
-
         let s = generateLuaField(entity);
         if (defaultValue) {
             s += `\n\n--- (Example of initialization of field) ---\nself.${entity.name} = ${defaultValue};`;
         }
-
         return s;
     }
 
@@ -56,14 +54,12 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
 
         return html` 
             <div class="row">
-
                 <!-- Visual Category Badge -->
                 <div class="col-auto ps-2 pe-2">
                     <div class="text-bg-primary px-2 border border-1 border-light-half desaturate shadow">
                         <strong>Lua ${isStatic ? 'Property' : 'Field'}</strong>
                     </div>
                 </div>
-
                 <div class="col-auto p-0">
                     <h5 class="card-text"><strong>${name}</strong></h5> 
                 </div>
@@ -82,10 +78,8 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
     }
 
     onBodyHTML(): string | undefined {
-
         const { idDefaultValue, idNotes, idType } = this;
         const { entity } = this.options!;
-
         return html`
             <div>
                 ${this.renderNotes(idNotes)}
@@ -103,11 +97,11 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
 
         const { app, idBtnDelete, idBtnEdit, idDefaultValue, idNotes, idType } = this;
         const { entity, isStatic } = this.options!;
-
         this.listenNotes(entity, idNotes);
         this.listenDefaultValue(entity, idDefaultValue);
         this.listenType(entity, idType, idType);
         this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_value' : 'edit_field', `Edit ${isStatic ? 'Value' : 'Field'} Name`);
+        this.listenPreview();
 
         $get(idBtnDelete).on('click', () => {
             app.sidebar.itemTree.askConfirm(() => {

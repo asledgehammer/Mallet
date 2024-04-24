@@ -6,18 +6,21 @@ import { $get, html } from "../util";
 import { CardComponent } from "./CardComponent";
 import { ComponentOptions } from "./Component";
 import { NameModeType } from "./NameModeType";
-import { toDelta, fromDelta, createDeltaEditor } from "../../Delta";
+import { createDeltaEditor } from "../../Delta";
 
 export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O> {
 
     readonly app: App;
     readonly idPreview: string;
+    readonly idPreviewCode: string;
+    readonly idBtnPreviewCopy: string;
 
     constructor(app: App, options: O) {
         super(options);
         this.app = app;
-
         this.idPreview = `${this.id}-preview`;
+        this.idPreviewCode = `${this.id}-preview-code`;
+        this.idBtnPreviewCopy = `${this.id}-preview-copy-btn`;
     }
 
     listenEdit(entity: { name: string }, idBtnEdit: string, mode: NameModeType, title: string, nameSelected: string | undefined = undefined) {
@@ -155,7 +158,6 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
 
             $get(idBtnDelete).on('click', () => {
                 this.app.sidebar.itemTree.askConfirm(() => {
-                    console.log('delete');
                     entity.parameters.splice(entity.parameters.indexOf(param), 1);
 
                     // TODO: Clean up.
@@ -259,10 +261,10 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
     }
 
     update() {
-        const { idPreview } = this;
-        const $card = $get(idPreview);
+        const { idPreviewCode } = this;
+        const $pre = $get(idPreviewCode);
 
-        $card.empty();
+        $pre.empty();
 
         let text = this.onRenderPreview();
         if (text.endsWith('\n')) text = text.substring(0, text.length - 1);
@@ -270,32 +272,42 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         // @ts-ignore
         const highlightedCode = hljs.highlight(text, { language: 'lua' }).value;
 
-        $card.append(highlightedCode);
+        $pre.append(highlightedCode);
+    }
+
+    listenPreview() {
+        const { idBtnPreviewCopy } = this;
+
+        // Copy the code.
+        $get(idBtnPreviewCopy).on('click', (event) => {
+            event.stopPropagation();
+            navigator.clipboard.writeText(this.onRenderPreview());
+        });
     }
 
     renderPreview(show: boolean): string {
-        const { idPreview } = this;
+        const { idPreview, idPreviewCode, idBtnPreviewCopy } = this;
         return html`
             <div class="card responsive-subcard mt-3">
                 <div class="card-header">
                     <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idPreview}" aria-expanded="true" aria-controls="${idPreview}">
                         <strong>Preview</strong>
                     </button>
+
+                    <!-- Copy Button -->
+                    <button id="${idBtnPreviewCopy}" class="btn btn-sm responsive-btn responsive-btn-info" style="position: absolute; top: 5px; right: 5px;" title="Copy Code">
+                        <i class="fa-solid fa-copy"></i>
+                    </button>
                 </div>
-                <pre id="${idPreview}" class="card-body mb-0 collapse${show ? ' show' : ''}" style="max-height: 512px"></pre>
+                <div id="${idPreview}" class="card-body mb-0 p-0 collapse${show ? ' show' : ''}" style="position: relative; max-height: 512px">
+                    <pre id="${idPreviewCode}" class="w-100 h-100 p-4 m-0" style="background-color: #111; overflow: scroll; max-height: 512px;"></pre>
+                </div>
             </div>
         `;
     }
 
     listenReturns(entity: { returns: RosettaLuaReturns }, idReturnType: string, idReturnNotes: string, idSelect: string): void {
         const { returns } = entity;
-
-        // const $description = $get(idReturnNotes);
-        // $description.on('input', () => {
-        //     returns.notes = $description.val();
-        //     this.update();
-        //     this.app.renderCode();
-        // });
 
         createDeltaEditor(idReturnNotes, entity.returns.notes!, (markdown: string) => {
             entity.returns.notes = markdown;

@@ -56,7 +56,6 @@ export class LuaClassCard extends LuaCard<LuaClassCardOptions> {
                 <hr>
                 ${this.renderPreview(false)}
             </div>
-
         `;
     }
 
@@ -65,12 +64,11 @@ export class LuaClassCard extends LuaCard<LuaClassCardOptions> {
 
         const { idCheckMutable, idBtnEdit, idNotes } = this;
         const { entity } = this.options!;
-
         const _this = this;
 
         this.listenEdit(entity, idBtnEdit, 'edit_class', 'Edit Lua Class');
         this.listenNotes(entity, idNotes);
-
+        this.listenPreview();
         const $checkMutable = $get(idCheckMutable);
         $checkMutable.on('change', function () {
             entity.mutable = this.checked;

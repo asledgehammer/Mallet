@@ -97,6 +97,7 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
         this.listenNotes(entity, idNotes);
         this.listenParameters(entity, isStatic ? 'function' : 'method');
         this.listenReturns(entity, idReturnType, idReturnNotes, idReturnType);
+        this.listenPreview();
 
         $get(idBtnDelete).on('click', () => {
             app.sidebar.itemTree.askConfirm(() => {

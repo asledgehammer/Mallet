@@ -747,7 +747,6 @@ define("src/asledgehammer/rosetta/lua/LuaGenerator", ["require", "exports"], fun
             if (!parseInt(d) && !parseFloat(d)) {
                 // String-wrapping with escaped double-quotes.
                 d = `"${d.replace(/"/g, '\\"').replace(/\n/g, '\\n')}"`;
-                console.log('string: ' + d);
             }
             q += ` = ${d}`;
         }
@@ -1065,9 +1064,8 @@ define("src/asledgehammer/rosetta/component/Component", ["require", "exports", "
         }
         buildStyle() {
             const keys = Object.keys(this.style);
-            if (!keys.length) {
+            if (!keys.length)
                 return '';
-            }
             let built = '';
             for (const key of keys) {
                 built += `${key}: ${this.style[key]};`;
@@ -1364,6 +1362,8 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
             super(options);
             this.app = app;
             this.idPreview = `${this.id}-preview`;
+            this.idPreviewCode = `${this.id}-preview-code`;
+            this.idBtnPreviewCopy = `${this.id}-preview-copy-btn`;
         }
         listenEdit(entity, idBtnEdit, mode, title, nameSelected = undefined) {
             (0, util_3.$get)(idBtnEdit).on('click', () => {
@@ -1486,7 +1486,6 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                 });
                 (0, util_3.$get)(idBtnDelete).on('click', () => {
                     this.app.sidebar.itemTree.askConfirm(() => {
-                        console.log('delete');
                         entity.parameters.splice(entity.parameters.indexOf(param), 1);
                         // TODO: Clean up.
                         if (type === 'constructor') {
@@ -1583,37 +1582,46 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
         `;
         }
         update() {
-            const { idPreview } = this;
-            const $card = (0, util_3.$get)(idPreview);
-            $card.empty();
+            const { idPreviewCode } = this;
+            const $pre = (0, util_3.$get)(idPreviewCode);
+            $pre.empty();
             let text = this.onRenderPreview();
             if (text.endsWith('\n'))
                 text = text.substring(0, text.length - 1);
             // @ts-ignore
             const highlightedCode = hljs.highlight(text, { language: 'lua' }).value;
-            $card.append(highlightedCode);
+            $pre.append(highlightedCode);
+        }
+        listenPreview() {
+            const { idBtnPreviewCopy } = this;
+            // Copy the code.
+            (0, util_3.$get)(idBtnPreviewCopy).on('click', (event) => {
+                event.stopPropagation();
+                navigator.clipboard.writeText(this.onRenderPreview());
+            });
         }
         renderPreview(show) {
-            const { idPreview } = this;
+            const { idPreview, idPreviewCode, idBtnPreviewCopy } = this;
             return (0, util_3.html) `
             <div class="card responsive-subcard mt-3">
                 <div class="card-header">
                     <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idPreview}" aria-expanded="true" aria-controls="${idPreview}">
                         <strong>Preview</strong>
                     </button>
+
+                    <!-- Copy Button -->
+                    <button id="${idBtnPreviewCopy}" class="btn btn-sm responsive-btn responsive-btn-info" style="position: absolute; top: 5px; right: 5px;" title="Copy Code">
+                        <i class="fa-solid fa-copy"></i>
+                    </button>
                 </div>
-                <pre id="${idPreview}" class="card-body mb-0 collapse${show ? ' show' : ''}" style="max-height: 512px"></pre>
+                <div id="${idPreview}" class="card-body mb-0 p-0 collapse${show ? ' show' : ''}" style="position: relative; max-height: 512px">
+                    <pre id="${idPreviewCode}" class="w-100 h-100 p-4 m-0" style="background-color: #111; overflow: scroll; max-height: 512px;"></pre>
+                </div>
             </div>
         `;
         }
         listenReturns(entity, idReturnType, idReturnNotes, idSelect) {
             const { returns } = entity;
-            // const $description = $get(idReturnNotes);
-            // $description.on('input', () => {
-            //     returns.notes = $description.val();
-            //     this.update();
-            //     this.app.renderCode();
-            // });
             (0, Delta_1.createDeltaEditor)(idReturnNotes, entity.returns.notes, (markdown) => {
                 entity.returns.notes = markdown;
                 this.update();
@@ -1850,7 +1858,6 @@ define("src/asledgehammer/rosetta/component/LuaClassCard", ["require", "exports"
                 <hr>
                 ${this.renderPreview(false)}
             </div>
-
         `;
         }
         listen() {
@@ -1860,6 +1867,7 @@ define("src/asledgehammer/rosetta/component/LuaClassCard", ["require", "exports"
             const _this = this;
             this.listenEdit(entity, idBtnEdit, 'edit_class', 'Edit Lua Class');
             this.listenNotes(entity, idNotes);
+            this.listenPreview();
             const $checkMutable = (0, util_4.$get)(idCheckMutable);
             $checkMutable.on('change', function () {
                 entity.mutable = this.checked;
@@ -1893,14 +1901,12 @@ define("src/asledgehammer/rosetta/component/LuaConstructorCard", ["require", "ex
             const name = `${className}:new( )`;
             return (0, util_5.html) ` 
             <div class="row">
-
                 <!-- Visual Category Badge -->
                 <div class="col-auto ps-2 pe-2">
                     <div class="text-bg-primary px-2 border border-1 border-light-half desaturate shadow">
                         <strong>Lua Constructor</strong>
                     </div>
                 </div>
-
                 <div class="col-auto p-0">
                     <h5 class="card-text"><strong>${name}</strong></h5> 
                 </div>
@@ -1924,6 +1930,7 @@ define("src/asledgehammer/rosetta/component/LuaConstructorCard", ["require", "ex
             const { entity } = this.options;
             this.listenNotes(entity, idNotes);
             this.listenParameters(Object.assign(Object.assign({}, entity), { name: 'new' }), 'constructor');
+            this.listenPreview();
         }
     }
     exports.LuaConstructorCard = LuaConstructorCard;
@@ -1969,14 +1976,12 @@ define("src/asledgehammer/rosetta/component/LuaFieldCard", ["require", "exports"
             }
             return (0, util_6.html) ` 
             <div class="row">
-
                 <!-- Visual Category Badge -->
                 <div class="col-auto ps-2 pe-2">
                     <div class="text-bg-primary px-2 border border-1 border-light-half desaturate shadow">
                         <strong>Lua ${isStatic ? 'Property' : 'Field'}</strong>
                     </div>
                 </div>
-
                 <div class="col-auto p-0">
                     <h5 class="card-text"><strong>${name}</strong></h5> 
                 </div>
@@ -2015,6 +2020,7 @@ define("src/asledgehammer/rosetta/component/LuaFieldCard", ["require", "exports"
             this.listenDefaultValue(entity, idDefaultValue);
             this.listenType(entity, idType, idType);
             this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_value' : 'edit_field', `Edit ${isStatic ? 'Value' : 'Field'} Name`);
+            this.listenPreview();
             (0, util_6.$get)(idBtnDelete).on('click', () => {
                 app.sidebar.itemTree.askConfirm(() => {
                     var _a;
@@ -2109,6 +2115,7 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
             this.listenNotes(entity, idNotes);
             this.listenParameters(entity, isStatic ? 'function' : 'method');
             this.listenReturns(entity, idReturnType, idReturnNotes, idReturnType);
+            this.listenPreview();
             (0, util_7.$get)(idBtnDelete).on('click', () => {
                 app.sidebar.itemTree.askConfirm(() => {
                     var _a;
@@ -2223,14 +2230,6 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                 await writable.close();
                 return;
             });
-            (0, util_8.$get)('new-lua-field').on('click', () => {
-            });
-            (0, util_8.$get)('new-lua-value').on('click', () => {
-            });
-            (0, util_8.$get)('new-lua-method').on('click', async () => {
-            });
-            (0, util_8.$get)('new-lua-function').on('click', () => {
-            });
             this.$inputName.on('input', () => {
                 setTimeout(() => this.$inputName.val(validateLuaVariableName(this.$inputName.val())), 1);
             });
@@ -2273,8 +2272,6 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                         break;
                     }
                     case 'edit_value': {
-                        console.log(this.nameMode);
-                        console.log(nameOld);
                         const value = clazz.values[nameOld];
                         value.name = name;
                         clazz.values[name] = value;
@@ -2432,11 +2429,6 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                     <li><a id="btn-new-lua-method" class="dropdown-item" href="#">New Method</a></li>
                 </ul>
             </div>
-
-            <!-- New Function -->
-            <!-- <button id="new-lua-function" class="btn btn-sm responsive-btn responsive-btn-success float-end" style="width: 32px; height: 32px" title="Add Element">
-                <i class="fa-solid fa-plus"></i>
-            </button> -->
         `;
         }
         populate() {
@@ -2681,7 +2673,6 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
             const result = document.getElementById('result');
             const reader = new FileReader();
             reader.addEventListener('load', () => {
-                console.log('load!');
                 result.innerHTML = reader.result;
             });
             const funcLoad = () => {
@@ -2893,7 +2884,7 @@ define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/Lu
             return card;
         }
         renderCode() {
-            const $renderPane = (0, util_11.$get)('screen-content-render');
+            const $renderPane = (0, util_11.$get)('code-preview');
             $renderPane.empty();
             if (!this.card)
                 return;
@@ -3368,9 +3359,7 @@ define("src/asledgehammer/rosetta/component/LabelComponent", ["require", "export
             super(options);
         }
         onRender() {
-            return (0, util_12.html) `
-            
-        `;
+            return (0, util_12.html) ``;
         }
     }
     exports.LabelComponent = LabelComponent;
