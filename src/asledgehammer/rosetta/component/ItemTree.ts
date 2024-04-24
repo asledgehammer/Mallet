@@ -306,22 +306,30 @@ export class ItemTree {
         return html`
             <!-- New Class -->
             <button id="new-lua-class" class="btn btn-sm responsive-btn responsive-btn-success" title="New Class">
-                <i class="fa fa-file"></i>
+                <div class="btn-pane">    
+                    <i class="fa fa-file"></i>
+                </div>
             </button>
             
             <!-- Open Class -->
             <button id="open-lua-class" class="btn btn-sm responsive-btn responsive-btn-info" title="Open Class">
-                <i class="fa-solid fa-folder-open"></i>
+                <div class="btn-pane">
+                    <i class="fa-solid fa-folder-open"></i>
+                </div>
             </button>
 
             <!-- Save Class -->
             <button id="save-lua-class" class="btn btn-sm responsive-btn responsive-btn-info" title="Save Class">
-                <i class="fa fa-save"></i>
+                <div class="btn-pane">
+                    <i class="fa fa-save"></i>
+                </div>
             </button>
 
             <div class="dropdown" style="position: absolute; top: 5px; right: 5px;">
                 <button class="btn btn-sm responsive-btn responsive-btn-success float-end" style="width: 32px; height: 32px" data-bs-toggle="dropdown" aria-expanded="false" title="Add Element">
-                    <i class="fa-solid fa-plus"></i>
+                   <div class="btn-pane">     
+                        <i class="fa-solid fa-plus"></i>
+                    </div>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-dark">
                     <li><a id="btn-new-lua-value" class="dropdown-item" href="#">New Value</a></li>

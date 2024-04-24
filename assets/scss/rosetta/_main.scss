@@ -26,102 +26,128 @@ body {
     filter: saturate(0.5);
 }
 
+.btn-pane {
+    border-radius: 2px;
+    border-color: transparent;
+    z-index: 1;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 32px;
+    height: 32px;
+    font-size: 18px !important;
+    transition: all 200ms !important;
+
+    i {
+        z-index: 2;
+        position: absolute;
+        top: calc(50% - 1px);
+        left: calc(50% - 1px);
+     
+        transform: translate(-50%, -50%);
+        scale: 1;
+
+        pointer-events: none;
+    }
+
+    :hover:active {
+        color: $black !important;
+        background-color: $white;
+        border-color: $white !important;
+    }
+}
+
 .responsive-btn {
     border-radius: 2px;
     width: 32px;
     height: 32px;
-    border-color: $white;
+    border-color: $light;
     border-width: 1px;
     border-style: solid;
     background-color: transparent !important;
-    color: $white !important;
+    color: $light !important;
     font-weight: bold;
-    font-size: 18px;
+    font-size: 18px !important;
 
     filter: saturate(0.5);
-    
-    i {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        scale: 1;
-    }
 
-    :hover {
-        color: $white;
+    :active:hover {
+        font-size: 18px !important;
+        border-color: $white !important;
+        background-color: $white !important;
+        color: $black !important;
     }
 }
 
 .responsive-btn-success {
-    border-color: $success !important;
+    border-color: $success;
     
-    :hover {
-        border-color: $success !important;
+    :hover:active {
+        border-color: transparent;
     }
 }
 
 .responsive-btn-info {
-    border-color: $info !important;
+    border-color: $info;
     
-    :hover {
-        border-color: $info !important;
+    :hover:active {
+        border-color: transparent;
     }
 }
 
 .responsive-btn-primary {
-    border-color: $primary !important;
+    border-color: $primary;
     
-    :hover {
-        border-color: $primary !important;
+    :hover:active {
+        border-color: transparent;
     }
 }
 
 .responsive-btn-secondary {
-    border-color: $secondary !important;
+    border-color: $secondary;
     
-    :hover {
-        border-color: $secondary !important;
+    :hover:active {
+        border-color: transparent;
     }
 }
 
 .responsive-btn-primary {
-    border-color: $info !important;
+    border-color: $info;
     
-    :hover {
-        border-color: $info !important;
+    :hover:active {
+        border-color: transparent;
     }
 }
 
 .responsive-btn-light {
-    border-color: $light !important;
+    border-color: $light;
     
-    :hover {
-        border-color: $light !important;
+    :hover:active {
+        border-color: transparent;
     }
 }
 
 .responsive-btn-dark {
-    border-color: $dark !important;
+    border-color: $dark;
     
-    :hover {
-        border-color: $dark !important;
+    :hover:active {
+        border-color: transparent;
     }
 }
 
 .responsive-btn-warning {
-    border-color: $warning !important;
+    border-color: $warning;
     
-    :hover {
-        border-color: $warning !important;
+    :hover:active {
+        border-color: transparent;
     }
 }
 
 .responsive-btn-danger {
-    border-color: $danger !important;
+    border-color: $danger;
     
-    :hover {
-        border-color: $danger !important;
+    :hover:active {
+        border-color: transparent;
     }
 }
 

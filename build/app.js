@@ -1391,8 +1391,10 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
             return (0, util_3.html) `
             <!-- Edit Button -->
             <div style="position: absolute; padding: 0; right: 0; top: 0">
-                <button id="${idBtnEdit}" class="btn btn-sm responsive-icon-btn float-end" style="position: relative; top: 5px; right: 5px;" title="Edit Name">
-                <i class="fa-solid fa-pen"></i>
+                <button id="${idBtnEdit}" class="btn btn-sm responsive-btn float-end" style="position: relative; top: 5px; right: 5px;" title="Edit Name">
+                    <div class="btn-pane" style="width: 30px; height: 30px;">
+                        <i class="fa-solid fa-pen"></i>
+                    </div>
                 </button>
             </div>
         `;
@@ -1546,12 +1548,16 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                             </div>
                             <div style="position: relative; width: 100%; height: 32px;">
                                 <!-- Delete Button -->
-                                <button id="${idBtnDelete}" class="btn btn-sm responsive-icon-btn text-danger float-end ms-1">
-                                    <i class="fa-solid fa-xmark"></i>
+                                <button id="${idBtnDelete}" class="btn btn-sm responsive-btn text-danger float-end ms-1">
+                                    <div class="btn-pane">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </div>
                                 </button>
                                 <!-- Edit Button -->
-                                <button id="${idBtnEdit}" class="btn btn-sm responsive-icon-btn float-end">
-                                    <i class="fa-solid fa-pen"></i>
+                                <button id="${idBtnEdit}" class="btn btn-sm responsive-btn float-end">
+                                    <div class="btn-pane"> 
+                                        <i class="fa-solid fa-pen"></i>
+                                    </div>
                                 </button>
                             </div>
                         </div>
@@ -1573,8 +1579,10 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                     </div>
                     <div class="mt-3" style="position: relative; width: 100%; height: 32px;">
                         <!-- Add Button -->
-                        <button id="${idBtnAdd}" class="btn btn-sm responsive-icon-btn text-success float-end ms-1">
-                            <i class="fa-solid fa-plus"></i>
+                        <button id="${idBtnAdd}" class="btn btn-sm responsive-btn text-success float-end ms-1">
+                            <div class="btn-pane">
+                               <i class="fa-solid fa-plus"></i>
+                            </div>
                         </button>
                     </div>
                 </div>
@@ -1610,8 +1618,10 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                     </button>
 
                     <!-- Copy Button -->
-                    <button id="${idBtnPreviewCopy}" class="btn btn-sm responsive-btn responsive-btn-info" style="position: absolute; top: 5px; right: 5px;" title="Copy Code">
-                        <i class="fa-solid fa-copy"></i>
+                    <button id="${idBtnPreviewCopy}" class="btn btn-sm responsive-btn" style="z-index: 4; position: absolute; top: 5px; right: 5px;" title="Copy Code">
+                        <div class="btn-pane"> 
+                            <i class="fa-solid fa-copy"></i>
+                        </div>
                     </button>
                 </div>
                 <div id="${idPreview}" class="card-body mb-0 p-0 collapse${show ? ' show' : ''}" style="position: relative; max-height: 512px">
@@ -1987,12 +1997,16 @@ define("src/asledgehammer/rosetta/component/LuaFieldCard", ["require", "exports"
                 </div>
                 <div style="position: absolute; top: 5px; width: 100%; height: 32px;">
                     <!-- Delete Button -->
-                    <button id="${idBtnDelete}" class="btn btn-sm responsive-icon-btn text-danger float-end ms-1" title="Delete ${isStatic ? 'Value' : 'Field'}">
-                        <i class="fa-solid fa-xmark"></i>
+                    <button id="${idBtnDelete}" class="btn btn-sm responsive-btn text-danger float-end ms-1" title="Delete ${isStatic ? 'Value' : 'Field'}">
+                        <div class="btn-pane">
+                            <i class="fa-solid fa-xmark"></i>
+                        </div>
                     </button>
                     <!-- Edit Button -->
-                    <button id="${idBtnEdit}" class="btn btn-sm responsive-icon-btn float-end" title="Edit Name">
-                        <i class="fa-solid fa-pen"></i>
+                    <button id="${idBtnEdit}" class="btn btn-sm responsive-btn float-end" title="Edit Name">
+                        <div class="btn-pane">
+                            <i class="fa-solid fa-pen"></i>
+                        </div>
                     </button>
                 </div>
             </div>
@@ -2084,12 +2098,16 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
                 </div>
                 <div style="position: absolute; top: 5px; width: 100%; height: 32px;">
                     <!-- Delete Button -->
-                    <button id="${idBtnDelete}" class="btn btn-sm responsive-icon-btn text-danger float-end ms-1" title="Delete ${isStatic ? 'Function' : 'Method'}">
-                        <i class="fa-solid fa-xmark"></i>
+                    <button id="${idBtnDelete}" class="btn btn-sm responsive-btn text-danger float-end ms-1" title="Delete ${isStatic ? 'Function' : 'Method'}">
+                        <div class="btn-pane">
+                            <i class="fa-solid fa-xmark"></i>
+                        </div>
                     </button>
                     <!-- Edit Button -->
-                    <button id="${idBtnEdit}" class="btn btn-sm responsive-icon-btn float-end" title="Edit Name">
-                        <i class="fa-solid fa-pen"></i>
+                    <button id="${idBtnEdit}" class="btn btn-sm responsive-btn float-end" title="Edit Name">
+                        <div class="btn-pane">
+                            <i class="fa-solid fa-pen"></i>
+                        </div>
                     </button>
                 </div>
             </div>
@@ -2405,22 +2423,30 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
             return (0, util_8.html) `
             <!-- New Class -->
             <button id="new-lua-class" class="btn btn-sm responsive-btn responsive-btn-success" title="New Class">
-                <i class="fa fa-file"></i>
+                <div class="btn-pane">    
+                    <i class="fa fa-file"></i>
+                </div>
             </button>
             
             <!-- Open Class -->
             <button id="open-lua-class" class="btn btn-sm responsive-btn responsive-btn-info" title="Open Class">
-                <i class="fa-solid fa-folder-open"></i>
+                <div class="btn-pane">
+                    <i class="fa-solid fa-folder-open"></i>
+                </div>
             </button>
 
             <!-- Save Class -->
             <button id="save-lua-class" class="btn btn-sm responsive-btn responsive-btn-info" title="Save Class">
-                <i class="fa fa-save"></i>
+                <div class="btn-pane">
+                    <i class="fa fa-save"></i>
+                </div>
             </button>
 
             <div class="dropdown" style="position: absolute; top: 5px; right: 5px;">
                 <button class="btn btn-sm responsive-btn responsive-btn-success float-end" style="width: 32px; height: 32px" data-bs-toggle="dropdown" aria-expanded="false" title="Add Element">
-                    <i class="fa-solid fa-plus"></i>
+                   <div class="btn-pane">     
+                        <i class="fa-solid fa-plus"></i>
+                    </div>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-dark">
                     <li><a id="btn-new-lua-value" class="dropdown-item" href="#">New Value</a></li>

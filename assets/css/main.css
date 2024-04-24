@@ -12020,91 +12020,114 @@ body {
   filter: saturate(0.5);
 }
 
+.btn-pane {
+  border-radius: 2px;
+  border-color: transparent;
+  z-index: 1;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 32px;
+  height: 32px;
+  font-size: 18px !important;
+  transition: all 200ms !important;
+}
+.btn-pane i {
+  z-index: 2;
+  position: absolute;
+  top: calc(50% - 1px);
+  left: calc(50% - 1px);
+  transform: translate(-50%, -50%);
+  scale: 1;
+  pointer-events: none;
+}
+.btn-pane :hover:active {
+  color: #000 !important;
+  background-color: #fff;
+  border-color: #fff !important;
+}
+
 .responsive-btn {
   border-radius: 2px;
   width: 32px;
   height: 32px;
-  border-color: #fff;
+  border-color: #adb5bd;
   border-width: 1px;
   border-style: solid;
   background-color: transparent !important;
-  color: #fff !important;
+  color: #adb5bd !important;
   font-weight: bold;
-  font-size: 18px;
+  font-size: 18px !important;
   filter: saturate(0.5);
 }
-.responsive-btn i {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  scale: 1;
-}
-.responsive-btn :hover {
-  color: #fff;
+.responsive-btn :active:hover {
+  font-size: 18px !important;
+  border-color: #fff !important;
+  background-color: #fff !important;
+  color: #000 !important;
 }
 
 .responsive-btn-success {
-  border-color: #00bc8c !important;
+  border-color: #00bc8c;
 }
-.responsive-btn-success :hover {
-  border-color: #00bc8c !important;
+.responsive-btn-success :hover:active {
+  border-color: transparent;
 }
 
 .responsive-btn-info {
-  border-color: #3498db !important;
+  border-color: #3498db;
 }
-.responsive-btn-info :hover {
-  border-color: #3498db !important;
+.responsive-btn-info :hover:active {
+  border-color: transparent;
 }
 
 .responsive-btn-primary {
-  border-color: #375a7f !important;
+  border-color: #375a7f;
 }
-.responsive-btn-primary :hover {
-  border-color: #375a7f !important;
+.responsive-btn-primary :hover:active {
+  border-color: transparent;
 }
 
 .responsive-btn-secondary {
-  border-color: #444 !important;
+  border-color: #444;
 }
-.responsive-btn-secondary :hover {
-  border-color: #444 !important;
+.responsive-btn-secondary :hover:active {
+  border-color: transparent;
 }
 
 .responsive-btn-primary {
-  border-color: #3498db !important;
+  border-color: #3498db;
 }
-.responsive-btn-primary :hover {
-  border-color: #3498db !important;
+.responsive-btn-primary :hover:active {
+  border-color: transparent;
 }
 
 .responsive-btn-light {
-  border-color: #adb5bd !important;
+  border-color: #adb5bd;
 }
-.responsive-btn-light :hover {
-  border-color: #adb5bd !important;
+.responsive-btn-light :hover:active {
+  border-color: transparent;
 }
 
 .responsive-btn-dark {
-  border-color: #303030 !important;
+  border-color: #303030;
 }
-.responsive-btn-dark :hover {
-  border-color: #303030 !important;
+.responsive-btn-dark :hover:active {
+  border-color: transparent;
 }
 
 .responsive-btn-warning {
-  border-color: #f39c12 !important;
+  border-color: #f39c12;
 }
-.responsive-btn-warning :hover {
-  border-color: #f39c12 !important;
+.responsive-btn-warning :hover:active {
+  border-color: transparent;
 }
 
 .responsive-btn-danger {
-  border-color: #e74c3c !important;
+  border-color: #e74c3c;
 }
-.responsive-btn-danger :hover {
-  border-color: #e74c3c !important;
+.responsive-btn-danger :hover:active {
+  border-color: transparent;
 }
 
 .screen-content-end {
