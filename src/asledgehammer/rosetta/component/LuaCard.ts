@@ -25,8 +25,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
 
     listenEdit(entity: { name: string }, idBtnEdit: string, mode: NameModeType, title: string, nameSelected: string | undefined = undefined) {
         $get(idBtnEdit).on('click', () => {
-
-            const { modalName, $btnName, $titleName, $inputName } = this.app.sidebar.itemTree;
+            const { modalName, $btnName, $titleName, $inputName } = this.app;
 
             $titleName.html(title);
 
@@ -41,10 +40,10 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
             }
 
             $inputName.val(entity.name);
-            this.app.sidebar.itemTree.nameMode = mode;
+            this.app.nameMode = mode;
 
             if (!nameSelected) nameSelected = entity.name;
-            this.app.sidebar.itemTree.nameSelected = nameSelected;
+            this.app.nameSelected = nameSelected;
             modalName.show();
         });
     }
@@ -159,7 +158,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
             });
 
             $get(idBtnDelete).on('click', () => {
-                this.app.sidebar.itemTree.askConfirm(() => {
+                this.app.askConfirm(() => {
                     entity.parameters.splice(entity.parameters.indexOf(param), 1);
 
                     // TODO: Clean up.
@@ -177,13 +176,9 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         }
         const idBtnAdd = `btn-${entity.name}-parameter-add`;
         $get(idBtnAdd).on('click', () => {
-
-            const { itemTree } = this.app.sidebar;
-            const { modalName, $inputName, $titleName } = itemTree;
-
-            itemTree.nameMode = 'new_parameter';
-            itemTree.nameSelected = `${type}-${entity.name}`;
-
+            const { modalName, $inputName, $titleName } = this.app;
+            this.app.nameMode = 'new_parameter';
+            this.app.nameSelected = `${type}-${entity.name}`;
             $titleName.html('Add Parameter');
             $inputName.val('');
             modalName.show();

@@ -1,3 +1,4 @@
+"use strict";
 define("src/asledgehammer/Assert", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -938,7 +939,7 @@ define("src/asledgehammer/rosetta/lua/LuaGenerator", ["require", "exports"], fun
 define("src/asledgehammer/rosetta/util", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.get = exports.$get = exports.combine = exports.combineArrays = exports.randomString = exports.css = exports.html = void 0;
+    exports.get = exports.$get = exports.validateLuaVariableName = exports.combine = exports.combineArrays = exports.randomString = exports.css = exports.html = void 0;
     const html = function (c, ...d) {
         let a = '';
         for (let b = 0; b < c.length - 1; b++)
@@ -1008,6 +1009,22 @@ define("src/asledgehammer/rosetta/util", ["require", "exports"], function (requi
         return obj;
     }
     exports.combine = combine;
+    const validateLuaVariableName = (nameOriginal) => {
+        nameOriginal = nameOriginal.trim();
+        let name = '';
+        for (const c of nameOriginal) {
+            if (name === '') {
+                if (c === ' ')
+                    continue; // No leading spaces.
+                else if (/[0-9]/.test(c))
+                    continue; // No leading numbers.
+            }
+            if (!/'^(%a+_%a+)$'/.test(c))
+                name += c; // Only valid lua characters.
+        }
+        return name;
+    };
+    exports.validateLuaVariableName = validateLuaVariableName;
     function $get(id) {
         return $(`#${id}`);
     }
@@ -1371,7 +1388,7 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
         }
         listenEdit(entity, idBtnEdit, mode, title, nameSelected = undefined) {
             (0, util_3.$get)(idBtnEdit).on('click', () => {
-                const { modalName, $btnName, $titleName, $inputName } = this.app.sidebar.itemTree;
+                const { modalName, $btnName, $titleName, $inputName } = this.app;
                 $titleName.html(title);
                 if (mode === 'edit_class' || mode === 'edit_field' || mode === 'edit_function' || mode === 'edit_method' || mode === 'edit_value') {
                     $btnName.html('Edit');
@@ -1384,10 +1401,10 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                     $btnName.removeClass('btn-primary');
                 }
                 $inputName.val(entity.name);
-                this.app.sidebar.itemTree.nameMode = mode;
+                this.app.nameMode = mode;
                 if (!nameSelected)
                     nameSelected = entity.name;
-                this.app.sidebar.itemTree.nameSelected = nameSelected;
+                this.app.nameSelected = nameSelected;
                 modalName.show();
             });
         }
@@ -1491,7 +1508,7 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                     }
                 });
                 (0, util_3.$get)(idBtnDelete).on('click', () => {
-                    this.app.sidebar.itemTree.askConfirm(() => {
+                    this.app.askConfirm(() => {
                         entity.parameters.splice(entity.parameters.indexOf(param), 1);
                         // TODO: Clean up.
                         if (type === 'constructor') {
@@ -1509,10 +1526,9 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
             }
             const idBtnAdd = `btn-${entity.name}-parameter-add`;
             (0, util_3.$get)(idBtnAdd).on('click', () => {
-                const { itemTree } = this.app.sidebar;
-                const { modalName, $inputName, $titleName } = itemTree;
-                itemTree.nameMode = 'new_parameter';
-                itemTree.nameSelected = `${type}-${entity.name}`;
+                const { modalName, $inputName, $titleName } = this.app;
+                this.app.nameMode = 'new_parameter';
+                this.app.nameSelected = `${type}-${entity.name}`;
                 $titleName.html('Add Parameter');
                 $inputName.val('');
                 modalName.show();
@@ -2055,7 +2071,7 @@ define("src/asledgehammer/rosetta/component/LuaFieldCard", ["require", "exports"
             this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_value' : 'edit_field', `Edit ${isStatic ? 'Value' : 'Field'} Name`);
             this.listenPreview();
             (0, util_6.$get)(idBtnDelete).on('click', () => {
-                app.sidebar.itemTree.askConfirm(() => {
+                app.askConfirm(() => {
                     var _a;
                     const clazz = (_a = app.card) === null || _a === void 0 ? void 0 : _a.options.entity;
                     if (isStatic) {
@@ -2154,7 +2170,7 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
             this.listenReturns(entity, idReturnType, idReturnNotes, idReturnType);
             this.listenPreview();
             (0, util_7.$get)(idBtnDelete).on('click', () => {
-                app.sidebar.itemTree.askConfirm(() => {
+                app.askConfirm(() => {
                     var _a;
                     const clazz = (_a = app.card) === null || _a === void 0 ? void 0 : _a.options.entity;
                     if (isStatic) {
@@ -2171,67 +2187,26 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
     }
     exports.LuaFunctionCard = LuaFunctionCard;
 });
-define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/LuaCard"], function (require, exports, RosettaLuaClass_1, util_8, LuaCard_5) {
+define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/LuaCard"], function (require, exports, util_8, LuaCard_5) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ItemTree = void 0;
-    const validateLuaVariableName = (nameOriginal) => {
-        nameOriginal = nameOriginal.trim();
-        let name = '';
-        for (const c of nameOriginal) {
-            if (name === '') {
-                if (c === ' ')
-                    continue; // No leading spaces.
-                else if (/[0-9]/.test(c))
-                    continue; // No leading numbers.
-            }
-            if (!/'^(%a+_%a+)$'/.test(c))
-                name += c; // Only valid lua characters.
-        }
-        return name;
-    };
     class ItemTree {
         constructor(app) {
             this.app = app;
-            // This modal is for new items and editing their names.
-            // @ts-ignore
-            this.modalName = new bootstrap.Modal('#modal-name', {});
-            this.$titleName = (0, util_8.$get)('title-name');
-            this.$inputName = (0, util_8.$get)('input-name');
-            this.$btnName = (0, util_8.$get)('btn-name-create');
-            // This modal is for confirming actions.
-            // @ts-ignore
-            this.modalConfirm = new bootstrap.Modal('#modal-confirm', {});
-            this.$titleConfirm = (0, util_8.$get)('title-confirm');
-            this.$bodyConfirm = (0, util_8.$get)('body-confirm');
-            this.$btnConfirm = (0, util_8.$get)('btn-confirm');
-            this.confirmSuccess = undefined;
-            this.nameMode = null;
-        }
-        askConfirm(onSuccess, title = 'Confirm', body = 'Are you sure?') {
-            this.$titleConfirm.html(title);
-            this.$bodyConfirm.html(body);
-            this.confirmSuccess = onSuccess;
-            this.modalConfirm.show();
         }
         listen() {
             const { app } = this;
             const _this = this;
-            this.$btnConfirm.on('click', () => {
-                this.modalConfirm.hide();
-                if (this.confirmSuccess) {
-                    this.confirmSuccess();
-                    this.confirmSuccess = undefined;
-                }
-            });
+            const { $titleName, $btnName, $inputName, modalName } = app;
             (0, util_8.$get)('new-lua-class').on('click', () => {
-                this.$titleName.html('New Lua Class');
-                this.$btnName.html('Create');
-                this.$btnName.removeClass('btn-primary');
-                this.$btnName.addClass('btn-success');
-                this.$inputName.val('');
-                this.nameMode = 'new_class';
-                this.modalName.show();
+                $titleName.html('New Lua Class');
+                $btnName.html('Create');
+                $btnName.removeClass('btn-primary');
+                $btnName.addClass('btn-success');
+                $inputName.val('');
+                app.nameMode = 'new_class';
+                modalName.show();
             });
             (0, util_8.$get)('open-lua-class').on('click', () => {
                 const dFileLoad = document.getElementById('load-file');
@@ -2266,176 +2241,6 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                 await writable.write(JSON.stringify(contents, null, 2));
                 await writable.close();
                 return;
-            });
-            this.$inputName.on('input', () => {
-                setTimeout(() => this.$inputName.val(validateLuaVariableName(this.$inputName.val())), 1);
-            });
-            this.$btnName.on('click', () => {
-                var _a;
-                const clazz = (_a = app.card) === null || _a === void 0 ? void 0 : _a.options.entity;
-                const name = validateLuaVariableName(this.$inputName.val()).trim();
-                const nameOld = this.nameSelected;
-                switch (this.nameMode) {
-                    case 'new_class': {
-                        const entity = new RosettaLuaClass_1.RosettaLuaClass(validateLuaVariableName(this.$inputName.val()).trim());
-                        app.showClass(entity);
-                        app.sidebar.itemTree.populate();
-                        break;
-                    }
-                    case 'edit_class': {
-                        clazz.name = name;
-                        app.showClass(clazz);
-                        break;
-                    }
-                    case 'new_field': {
-                        const field = clazz.createField(name);
-                        app.showField(field);
-                        app.sidebar.itemTree.populate();
-                        break;
-                    }
-                    case 'edit_field': {
-                        const field = clazz.fields[nameOld];
-                        field.name = name;
-                        clazz.fields[name] = field;
-                        delete clazz.fields[nameOld];
-                        app.showField(field);
-                        this.populate();
-                        break;
-                    }
-                    case 'new_value': {
-                        const value = clazz.createValue(name);
-                        app.showValue(value);
-                        app.sidebar.itemTree.populate();
-                        break;
-                    }
-                    case 'edit_value': {
-                        const value = clazz.values[nameOld];
-                        value.name = name;
-                        clazz.values[name] = value;
-                        delete clazz.values[nameOld];
-                        app.showValue(value);
-                        this.populate();
-                        break;
-                    }
-                    case 'new_function': {
-                        const func = clazz.createFunction(name);
-                        app.showFunction(func);
-                        app.sidebar.itemTree.populate();
-                        break;
-                    }
-                    case 'edit_function': {
-                        const func = clazz.functions[nameOld];
-                        func.name = name;
-                        clazz.functions[name] = func;
-                        delete clazz.functions[nameOld];
-                        app.showFunction(func);
-                        this.populate();
-                        break;
-                    }
-                    case 'new_method': {
-                        const method = clazz.createMethod(name);
-                        app.showMethod(method);
-                        app.sidebar.itemTree.populate();
-                        break;
-                    }
-                    case 'edit_method': {
-                        const method = clazz.methods[nameOld];
-                        method.name = name;
-                        clazz.methods[name] = method;
-                        delete clazz.methods[nameOld];
-                        app.showMethod(method);
-                        this.populate();
-                        break;
-                    }
-                    case 'new_parameter': {
-                        const split = nameOld.split('-');
-                        const type = split[0];
-                        const funcName = split[1];
-                        let func = null;
-                        if (type === 'constructor') {
-                            func = clazz.conztructor;
-                        }
-                        else if (type === 'function') {
-                            func = clazz.functions[funcName];
-                        }
-                        else {
-                            func = clazz.methods[funcName];
-                        }
-                        func.addParameter(name, 'any');
-                        if (type === 'constructor') {
-                            app.showConstructor(func);
-                        }
-                        else if (type === 'function') {
-                            app.showFunction(func);
-                        }
-                        else {
-                            app.showMethod(func);
-                        }
-                        app.renderCode();
-                    }
-                    case 'edit_parameter': {
-                        const split = nameOld.split('-');
-                        const funcName = split[0];
-                        const paramName = split[1];
-                        let type = null;
-                        let func = null;
-                        let param = null;
-                        // Could be the constructor.
-                        if (funcName === 'new') {
-                            func = clazz.conztructor;
-                            type = 'constructor';
-                        }
-                        else {
-                            // First, check methods.
-                            for (const methodName of Object.keys(clazz.methods)) {
-                                if (methodName === funcName) {
-                                    func = clazz.methods[methodName];
-                                    type = 'method';
-                                    break;
-                                }
-                            }
-                            // Second, check functions.
-                            if (!func) {
-                                for (const methodName of Object.keys(clazz.functions)) {
-                                    if (methodName === funcName) {
-                                        func = clazz.functions[methodName];
-                                        type = 'function';
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        if (!func) {
-                            console.warn(`Unknown function / method / constructor: ${clazz.name}.${funcName}!`);
-                            break;
-                        }
-                        for (const next of func.parameters) {
-                            if (next.name === paramName) {
-                                param = next;
-                                break;
-                            }
-                        }
-                        if (!param) {
-                            console.warn(`Unknown parameter: ${clazz.name}.${funcName}#${paramName}!`);
-                            break;
-                        }
-                        param.name = name;
-                        if (type === 'constructor') {
-                            app.showConstructor(func);
-                        }
-                        else if (type === 'function') {
-                            app.showFunction(func);
-                        }
-                        else if (type === 'method') {
-                            app.showMethod(func);
-                        }
-                        this.populate();
-                        app.renderCode();
-                        break;
-                    }
-                }
-                this.nameSelected = undefined;
-                this.modalName.hide();
             });
         }
         render() {
@@ -2587,67 +2392,67 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
             // Apply jQuery listeners next.
             $('.lua-class-item').on('click', function () {
                 // Prevent wasteful selection code executions here.
-                if (_this.selected === 'class')
+                if (_this.app.selected === 'class')
                     return;
                 _this.app.showClass(entity);
                 // Let the editor know we last selected the class.
-                _this.selected = 'class';
+                _this.app.selected = 'class';
             });
             $('.lua-constructor-item').on('click', function () {
                 // Prevent wasteful selection code executions here.
-                if (_this.selected === 'constructor')
+                if (_this.app.selected === 'constructor')
                     return;
                 _this.app.showConstructor(entity.conztructor);
                 // Let the editor know we last selected the constructor.
-                _this.selected = 'constructor';
+                _this.app.selected = 'constructor';
             });
             $('.lua-field-item').on('click', function () {
                 const fieldName = this.id.split('field-')[1].trim();
                 // Prevent wasteful selection code executions here.
-                if (_this.selected === fieldName)
+                if (_this.app.selected === fieldName)
                     return;
                 const field = entity.fields[fieldName];
                 if (!field)
                     return;
                 _this.app.showField(field);
                 // Let the editor know we last selected the field.
-                _this.selected = fieldName;
+                _this.app.selected = fieldName;
             });
             $('.lua-value-item').on('click', function () {
                 const valueName = this.id.split('value-')[1].trim();
                 // Prevent wasteful selection code executions here.
-                if (_this.selected === valueName)
+                if (_this.app.selected === valueName)
                     return;
                 const value = entity.values[valueName];
                 if (!value)
                     return;
                 _this.app.showValue(value);
                 // Let the editor know we last selected the value.
-                _this.selected = valueName;
+                _this.app.selected = valueName;
             });
             $('.lua-method-item').on('click', function () {
                 const methodName = this.id.split('method-')[1].trim();
                 // Prevent wasteful selection code executions here.
-                if (_this.selected === methodName)
+                if (_this.app.selected === methodName)
                     return;
                 const method = entity.methods[methodName];
                 if (!method)
                     return;
                 _this.app.showMethod(method);
                 // Let the editor know we last selected the method.
-                _this.selected = methodName;
+                _this.app.selected = methodName;
             });
             $('.lua-function-item').on('click', function () {
                 const functionName = this.id.split('function-')[1].trim();
                 // Prevent wasteful selection code executions here.
-                if (_this.selected === functionName)
+                if (_this.app.selected === functionName)
                     return;
                 const func = entity.functions[functionName];
                 if (!func)
                     return;
                 _this.app.showFunction(func);
                 // Let the editor know we last selected the function.
-                _this.selected = functionName;
+                _this.app.selected = functionName;
             });
         }
     }
@@ -2770,7 +2575,6 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
         }
         onRender() {
             return (0, util_10.html) `
-
             <div class="bg-dark p-1 border-bottom border-bottom-2 border-black shadow">
                 ${this.itemTree.render()}
             </div>
@@ -2797,10 +2601,10 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                 const clazz = card.options.entity;
                 if (!clazz)
                     return;
-                this.itemTree.nameMode = 'new_value';
-                this.itemTree.$titleName.html('Create Lua Value');
-                this.itemTree.$inputName.val('');
-                this.itemTree.modalName.show();
+                this.app.nameMode = 'new_value';
+                this.app.$titleName.html('Create Lua Value');
+                this.app.$inputName.val('');
+                this.app.modalName.show();
             });
             (0, util_10.$get)('btn-new-lua-field').on('click', () => {
                 const { card } = app;
@@ -2809,10 +2613,10 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                 const clazz = card.options.entity;
                 if (!clazz)
                     return;
-                this.itemTree.nameMode = 'new_field';
-                this.itemTree.$titleName.html('Create Lua Field');
-                this.itemTree.$inputName.val('');
-                this.itemTree.modalName.show();
+                this.app.nameMode = 'new_field';
+                this.app.$titleName.html('Create Lua Field');
+                this.app.$inputName.val('');
+                this.app.modalName.show();
             });
             (0, util_10.$get)('btn-new-lua-function').on('click', () => {
                 const { card } = app;
@@ -2821,10 +2625,10 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                 const clazz = card.options.entity;
                 if (!clazz)
                     return;
-                this.itemTree.nameMode = 'new_function';
-                this.itemTree.$titleName.html('Create Lua Function');
-                this.itemTree.$inputName.val('');
-                this.itemTree.modalName.show();
+                this.app.nameMode = 'new_function';
+                this.app.$titleName.html('Create Lua Function');
+                this.app.$inputName.val('');
+                this.app.modalName.show();
             });
             (0, util_10.$get)('btn-new-lua-method').on('click', () => {
                 const { card } = app;
@@ -2833,30 +2637,40 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                 const clazz = card.options.entity;
                 if (!clazz)
                     return;
-                this.itemTree.nameMode = 'new_method';
-                this.itemTree.$titleName.html('Create Lua Method');
-                this.itemTree.$inputName.val('');
-                this.itemTree.modalName.show();
+                this.app.nameMode = 'new_method';
+                this.app.$titleName.html('Create Lua Method');
+                this.app.$inputName.val('');
+                this.app.modalName.show();
             });
         }
     }
     exports.Sidebar = Sidebar;
     ;
 });
-define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/LuaClassCard", "src/asledgehammer/rosetta/component/LuaConstructorCard", "src/asledgehammer/rosetta/component/LuaFieldCard", "src/asledgehammer/rosetta/component/LuaFunctionCard", "src/asledgehammer/rosetta/component/Sidebar", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util"], function (require, exports, LuaClassCard_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, Sidebar_1, LuaGenerator_5, RosettaLuaClass_2, RosettaLuaConstructor_2, util_11) {
+define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/LuaClassCard", "src/asledgehammer/rosetta/component/LuaConstructorCard", "src/asledgehammer/rosetta/component/LuaFieldCard", "src/asledgehammer/rosetta/component/LuaFunctionCard", "src/asledgehammer/rosetta/component/Sidebar", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util"], function (require, exports, LuaClassCard_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, Sidebar_1, LuaGenerator_5, RosettaLuaClass_1, RosettaLuaConstructor_2, util_11) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.App = void 0;
-    async function load(url) {
-        return await fetch(url).then((response) => response.json());
-    }
-    ;
     class App {
         constructor() {
             this.card = null;
             this.sidebar = new Sidebar_1.Sidebar(this);
             this.eSidebarContainer = document.getElementById('screen-sidebar-container');
             this.$screenContent = $('#screen-content-end-container');
+            // This modal is for new items and editing their names.
+            // @ts-ignore
+            this.modalName = new bootstrap.Modal('#modal-name', {});
+            this.$titleName = (0, util_11.$get)('title-name');
+            this.$inputName = (0, util_11.$get)('input-name');
+            this.$btnName = (0, util_11.$get)('btn-name-create');
+            // This modal is for confirming actions.
+            // @ts-ignore
+            this.modalConfirm = new bootstrap.Modal('#modal-confirm', {});
+            this.$titleConfirm = (0, util_11.$get)('title-confirm');
+            this.$bodyConfirm = (0, util_11.$get)('body-confirm');
+            this.$btnConfirm = (0, util_11.$get)('btn-confirm');
+            this.confirmSuccess = undefined;
+            this.nameMode = null;
         }
         async init() {
             this.createSidebar();
@@ -2865,7 +2679,7 @@ define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/Lu
             this.$screenContent.empty();
             // Always get first class
             const name = Object.keys(json.luaClasses)[0];
-            const entity = new RosettaLuaClass_2.RosettaLuaClass(name, json.luaClasses[name]);
+            const entity = new RosettaLuaClass_1.RosettaLuaClass(name, json.luaClasses[name]);
             this.card = new LuaClassCard_1.LuaClassCard(this, { entity: entity });
             this.$screenContent.append(this.card.render());
             this.card.listen();
@@ -2941,6 +2755,193 @@ define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/Lu
             const { eSidebarContainer, sidebar } = this;
             eSidebarContainer.innerHTML = sidebar.render();
         }
+        listen() {
+            this.sidebar.listen();
+            const _this = this;
+            this.$btnConfirm.on('click', () => {
+                this.modalConfirm.hide();
+                if (this.confirmSuccess) {
+                    this.confirmSuccess();
+                    this.confirmSuccess = undefined;
+                }
+            });
+            this.$inputName.on('input', () => {
+                setTimeout(() => this.$inputName.val((0, util_11.validateLuaVariableName)(this.$inputName.val())), 1);
+            });
+            this.$btnName.on('click', () => {
+                var _a;
+                const clazz = (_a = this.card) === null || _a === void 0 ? void 0 : _a.options.entity;
+                const name = (0, util_11.validateLuaVariableName)(this.$inputName.val()).trim();
+                const nameOld = this.nameSelected;
+                switch (this.nameMode) {
+                    case 'new_class': {
+                        const entity = new RosettaLuaClass_1.RosettaLuaClass((0, util_11.validateLuaVariableName)(this.$inputName.val()).trim());
+                        this.showClass(entity);
+                        this.sidebar.itemTree.populate();
+                        break;
+                    }
+                    case 'edit_class': {
+                        clazz.name = name;
+                        this.showClass(clazz);
+                        break;
+                    }
+                    case 'new_field': {
+                        const field = clazz.createField(name);
+                        this.showField(field);
+                        this.sidebar.itemTree.populate();
+                        break;
+                    }
+                    case 'edit_field': {
+                        const field = clazz.fields[nameOld];
+                        field.name = name;
+                        clazz.fields[name] = field;
+                        delete clazz.fields[nameOld];
+                        this.showField(field);
+                        this.sidebar.itemTree.populate();
+                        break;
+                    }
+                    case 'new_value': {
+                        const value = clazz.createValue(name);
+                        this.showValue(value);
+                        this.sidebar.itemTree.populate();
+                        break;
+                    }
+                    case 'edit_value': {
+                        const value = clazz.values[nameOld];
+                        value.name = name;
+                        clazz.values[name] = value;
+                        delete clazz.values[nameOld];
+                        this.showValue(value);
+                        this.sidebar.itemTree.populate();
+                        break;
+                    }
+                    case 'new_function': {
+                        const func = clazz.createFunction(name);
+                        this.showFunction(func);
+                        this.sidebar.itemTree.populate();
+                        break;
+                    }
+                    case 'edit_function': {
+                        const func = clazz.functions[nameOld];
+                        func.name = name;
+                        clazz.functions[name] = func;
+                        delete clazz.functions[nameOld];
+                        this.showFunction(func);
+                        this.sidebar.itemTree.populate();
+                        break;
+                    }
+                    case 'new_method': {
+                        const method = clazz.createMethod(name);
+                        this.showMethod(method);
+                        this.sidebar.itemTree.populate();
+                        break;
+                    }
+                    case 'edit_method': {
+                        const method = clazz.methods[nameOld];
+                        method.name = name;
+                        clazz.methods[name] = method;
+                        delete clazz.methods[nameOld];
+                        this.showMethod(method);
+                        this.sidebar.itemTree.populate();
+                        break;
+                    }
+                    case 'new_parameter': {
+                        const split = nameOld.split('-');
+                        const type = split[0];
+                        const funcName = split[1];
+                        let func = null;
+                        if (type === 'constructor') {
+                            func = clazz.conztructor;
+                        }
+                        else if (type === 'function') {
+                            func = clazz.functions[funcName];
+                        }
+                        else {
+                            func = clazz.methods[funcName];
+                        }
+                        func.addParameter(name, 'any');
+                        if (type === 'constructor') {
+                            this.showConstructor(func);
+                        }
+                        else if (type === 'function') {
+                            this.showFunction(func);
+                        }
+                        else {
+                            this.showMethod(func);
+                        }
+                        this.renderCode();
+                    }
+                    case 'edit_parameter': {
+                        const split = nameOld.split('-');
+                        const funcName = split[0];
+                        const paramName = split[1];
+                        let type = null;
+                        let func = null;
+                        let param = null;
+                        // Could be the constructor.
+                        if (funcName === 'new') {
+                            func = clazz.conztructor;
+                            type = 'constructor';
+                        }
+                        else {
+                            // First, check methods.
+                            for (const methodName of Object.keys(clazz.methods)) {
+                                if (methodName === funcName) {
+                                    func = clazz.methods[methodName];
+                                    type = 'method';
+                                    break;
+                                }
+                            }
+                            // Second, check functions.
+                            if (!func) {
+                                for (const methodName of Object.keys(clazz.functions)) {
+                                    if (methodName === funcName) {
+                                        func = clazz.functions[methodName];
+                                        type = 'function';
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        if (!func) {
+                            console.warn(`Unknown function / method / constructor: ${clazz.name}.${funcName}!`);
+                            break;
+                        }
+                        for (const next of func.parameters) {
+                            if (next.name === paramName) {
+                                param = next;
+                                break;
+                            }
+                        }
+                        if (!param) {
+                            console.warn(`Unknown parameter: ${clazz.name}.${funcName}#${paramName}!`);
+                            break;
+                        }
+                        param.name = name;
+                        if (type === 'constructor') {
+                            this.showConstructor(func);
+                        }
+                        else if (type === 'function') {
+                            this.showFunction(func);
+                        }
+                        else if (type === 'method') {
+                            this.showMethod(func);
+                        }
+                        this.renderCode();
+                        this.sidebar.itemTree.populate();
+                        break;
+                    }
+                }
+                this.nameSelected = undefined;
+                this.modalName.hide();
+            });
+        }
+        askConfirm(onSuccess, title = 'Confirm', body = 'Are you sure?') {
+            this.$titleConfirm.html(title);
+            this.$bodyConfirm.html(body);
+            this.confirmSuccess = onSuccess;
+            this.modalConfirm.show();
+        }
     }
     exports.App = App;
     async function init() {
@@ -2948,10 +2949,7 @@ define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/Lu
         Quill.register('modules/QuillMarkdown', QuillMarkdown, true);
         const app = new App();
         app.init();
-        app.sidebar.listen();
-        // // Load debug Rosetta JSON.
-        // const json = await load('http://localhost:8080/assets/rosetta/patches/jab/json/client/isui/ISUIElement.json');
-        // app.loadLuaClass(json);
+        app.listen();
         // @ts-ignore
         const greet = new bootstrap.Modal('#modal-greet', {});
         greet.show();
@@ -3157,7 +3155,7 @@ define("src/asledgehammer/rosetta/RosettaFileInfo", ["require", "exports"], func
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
 });
-define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asledgehammer/rosetta/Rosetta", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/lua/RosettaLuaTableField", "src/asledgehammer/rosetta/lua/RosettaLuaClass"], function (require, exports, Rosetta_1, RosettaEntity_9, RosettaLuaFunction_3, RosettaLuaTable_1, RosettaLuaTableField_2, RosettaLuaClass_3) {
+define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asledgehammer/rosetta/Rosetta", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/lua/RosettaLuaTableField", "src/asledgehammer/rosetta/lua/RosettaLuaClass"], function (require, exports, Rosetta_1, RosettaEntity_9, RosettaLuaFunction_3, RosettaLuaTable_1, RosettaLuaTableField_2, RosettaLuaClass_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RosettaFile = void 0;
@@ -3208,7 +3206,7 @@ define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asle
                 const rawLuaClasses = raw.luaClasses;
                 for (const name of Object.keys(rawLuaClasses)) {
                     const rawLuaClass = rawLuaClasses[name];
-                    const luaClass = new RosettaLuaClass_3.RosettaLuaClass(name, rawLuaClass);
+                    const luaClass = new RosettaLuaClass_2.RosettaLuaClass(name, rawLuaClass);
                     this.luaClasses[luaClass.name] = this.luaClasses[name] = luaClass;
                 }
             }
@@ -3226,7 +3224,7 @@ define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asle
         createLuaClass(name) {
             /* (Make sure the object can be modified) */
             this.checkReadOnly();
-            const luaClass = new RosettaLuaClass_3.RosettaLuaClass(name);
+            const luaClass = new RosettaLuaClass_2.RosettaLuaClass(name);
             // (Only check for the file instance)
             if (this.luaClasses[luaClass.name]) {
                 throw new Error(`A global Lua Class already exists: ${luaClass.name}`);

@@ -69,6 +69,19 @@ export function combine<T extends any>(options: CombineOptions, ...args: any[]):
     return obj;
 }
 
+export const validateLuaVariableName = (nameOriginal: string): string => {
+    nameOriginal = nameOriginal.trim();
+    let name = '';
+    for (const c of nameOriginal) {
+        if (name === '') {
+            if (c === ' ') continue; // No leading spaces.
+            else if (/[0-9]/.test(c)) continue; // No leading numbers.
+        }
+        if (!/'^(%a+_%a+)$'/.test(c)) name += c; // Only valid lua characters.
+    }
+    return name;
+};
+
 export type CombineOptions = {
     allowArrayDuplicates: boolean;
 };

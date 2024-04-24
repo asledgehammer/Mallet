@@ -104,7 +104,7 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
         this.listenPreview();
 
         $get(idBtnDelete).on('click', () => {
-            app.sidebar.itemTree.askConfirm(() => {
+            app.askConfirm(() => {
                 const clazz = app.card?.options!.entity!;
                 if (isStatic) {
                     delete clazz.functions[entity.name];

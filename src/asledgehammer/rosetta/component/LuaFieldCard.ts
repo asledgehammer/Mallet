@@ -108,7 +108,7 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
         this.listenPreview();
 
         $get(idBtnDelete).on('click', () => {
-            app.sidebar.itemTree.askConfirm(() => {
+            app.askConfirm(() => {
                 const clazz = app.card?.options!.entity!;
                 if (isStatic) {
                     delete clazz.values[entity.name];

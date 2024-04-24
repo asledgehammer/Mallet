@@ -9,7 +9,6 @@ export class Sidebar extends Component<SidebarOptions> {
 
     private readonly panel: SidebarPanel;
     private readonly app: App;
-
     readonly itemTree: ItemTree;
 
     constructor(app: App) {
@@ -22,18 +21,14 @@ export class Sidebar extends Component<SidebarOptions> {
         });
 
         this.app = app;
-
         const buttons: SidebarPanelButton[] = [];
-
         const result = document.getElementById('result')! as any;
         const reader = new FileReader();
         reader.addEventListener('load', () => {
             result.innerHTML = reader.result;
-
         });
 
         const funcLoad = () => {
-
             const dFileLoad = document.getElementById('load-file') as any;
 
             const onchange = () => {
@@ -94,7 +89,6 @@ export class Sidebar extends Component<SidebarOptions> {
 
     protected onRender(): string {
         return html`
-
             <div class="bg-dark p-1 border-bottom border-bottom-2 border-black shadow">
                 ${this.itemTree.render()}
             </div>
@@ -123,10 +117,10 @@ export class Sidebar extends Component<SidebarOptions> {
             const clazz = card.options!.entity;
             if(!clazz) return;
 
-            this.itemTree.nameMode = 'new_value';
-             this.itemTree.$titleName.html('Create Lua Value');
-            this.itemTree.$inputName.val('');
-            this.itemTree.modalName.show();
+            this.app.nameMode = 'new_value';
+            this.app.$titleName.html('Create Lua Value');
+            this.app.$inputName.val('');
+            this.app.modalName.show();
         });
 
         $get('btn-new-lua-field').on('click', () => {
@@ -135,10 +129,10 @@ export class Sidebar extends Component<SidebarOptions> {
             const clazz = card.options!.entity;
             if(!clazz) return;
 
-            this.itemTree.nameMode = 'new_field';
-            this.itemTree.$titleName.html('Create Lua Field');
-            this.itemTree.$inputName.val('');
-            this.itemTree.modalName.show();
+            this.app.nameMode = 'new_field';
+            this.app.$titleName.html('Create Lua Field');
+            this.app.$inputName.val('');
+            this.app.modalName.show();
         });
 
         $get('btn-new-lua-function').on('click', () => {
@@ -147,10 +141,10 @@ export class Sidebar extends Component<SidebarOptions> {
             const clazz = card.options!.entity;
             if(!clazz) return;
 
-            this.itemTree.nameMode = 'new_function';
-            this.itemTree.$titleName.html('Create Lua Function');
-            this.itemTree.$inputName.val('');
-            this.itemTree.modalName.show();
+            this.app.nameMode = 'new_function';
+            this.app.$titleName.html('Create Lua Function');
+            this.app.$inputName.val('');
+            this.app.modalName.show();
         });
 
         $get('btn-new-lua-method').on('click', () => {
@@ -159,10 +153,10 @@ export class Sidebar extends Component<SidebarOptions> {
             const clazz = card.options!.entity;
             if(!clazz) return;
 
-            this.itemTree.nameMode = 'new_method';
-            this.itemTree.$titleName.html('Create Lua Method');
-            this.itemTree.$inputName.val('');
-            this.itemTree.modalName.show();
+            this.app.nameMode = 'new_method';
+            this.app.$titleName.html('Create Lua Method');
+            this.app.$inputName.val('');
+            this.app.modalName.show();
         });
     }
 };
