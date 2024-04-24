@@ -12,7 +12,7 @@ import { RosettaLuaConstructor } from './RosettaLuaConstructor';
  * @author Jab
  */
 export class RosettaLuaClass extends RosettaEntity {
-  readonly extendz: string | undefined;
+  extendz: string | undefined;
   name: string;
 
   readonly functions: { [name: string]: RosettaLuaFunction } = {};

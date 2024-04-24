@@ -219,7 +219,13 @@ export const generateLuaClass = (clazz: RosettaLuaClass): string => {
         s += '--- @field [any] any\n';
     }
 
-    s += `${clazz.name} = ISBaseObject:derive("${clazz.name}");\n\n`;
+    let sClass = 'ISBaseObject';
+    if(clazz.extendz && clazz.extendz.length) {
+        sClass = clazz.extendz.trim();
+    }
+
+
+    s += `${clazz.name} = ${sClass}:derive("${clazz.name}");\n\n`;
 
     // Generate any values in the class here.
     if (valueNames.length) {

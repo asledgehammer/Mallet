@@ -16,6 +16,7 @@ export class LuaClassCard extends LuaCard<LuaClassCardOptions> {
     readonly idPreview: string;
     readonly idBtnEdit: string;
     readonly idCheckMutable: string;
+    readonly idInputExtends: string;
 
     constructor(app: App, options: LuaClassCardOptions) {
         super(app, options);
@@ -25,6 +26,7 @@ export class LuaClassCard extends LuaCard<LuaClassCardOptions> {
         this.idPreview = `${this.id}-preview`;
         this.idBtnEdit = `${this.id}-edit`;
         this.idCheckMutable = `${this.id}-check-mutable`;
+        this.idInputExtends = `${this.id}-input-extends`;
     }
 
     onHeaderHTML(): string | undefined {
@@ -45,13 +47,21 @@ export class LuaClassCard extends LuaCard<LuaClassCardOptions> {
     }
 
     onBodyHTML(): string | undefined {
-        const { idCheckMutable } = this;
+        const { idCheckMutable, idInputExtends } = this;
+        const entity = this.options!.entity!;
+        const extendz = entity.extendz ? entity.extendz : '';
         return html`
             <div>
                 ${this.renderNotes(this.idNotes)}
+                <!-- Extends SuperClass -->
+                <div class="mb-3" title="The super-class that the Lua class extends.">
+                    <label class="form-label" for="${idInputExtends}">Extends</label>
+                    <input id="${idInputExtends}" class="form-control responsive-input mt-2" type="text" style="" value="${extendz}" />
+                </div>
+                <!-- Mutable Flag -->
                 <div class="mb-3 form-check" title="Allows Lua to add custom properties to the class.">
-                    <input id="${idCheckMutable}" type="checkbox" class="form-check-input" id="exampleCheck1">
-                    <label class="form-check-label" for="exampleCheck1">Mutable</label>
+                    <input id="${idCheckMutable}" type="checkbox" class="form-check-input" id="exampleCheck1"${entity.mutable ? ' checked' : ''}>
+                    <label class="form-check-label" for="${idCheckMutable}">Mutable</label>
                 </div>
                 <hr>
                 ${this.renderPreview(false)}
@@ -62,7 +72,7 @@ export class LuaClassCard extends LuaCard<LuaClassCardOptions> {
     listen(): void {
         super.listen();
 
-        const { idCheckMutable, idBtnEdit, idNotes } = this;
+        const { idInputExtends, idCheckMutable, idBtnEdit, idNotes } = this;
         const { entity } = this.options!;
         const _this = this;
 
@@ -72,6 +82,13 @@ export class LuaClassCard extends LuaCard<LuaClassCardOptions> {
         const $checkMutable = $get(idCheckMutable);
         $checkMutable.on('change', function () {
             entity.mutable = this.checked;
+            _this.update();
+            _this.app.renderCode();
+        });
+
+        const $inputExtends = $get(idInputExtends);
+        $inputExtends.on('input', function () {
+            entity.extendz = this.value;
             _this.update();
             _this.app.renderCode();
         });

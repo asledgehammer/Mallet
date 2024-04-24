@@ -897,7 +897,11 @@ define("src/asledgehammer/rosetta/lua/LuaGenerator", ["require", "exports"], fun
         if (clazz.mutable) {
             s += '--- @field [any] any\n';
         }
-        s += `${clazz.name} = ISBaseObject:derive("${clazz.name}");\n\n`;
+        let sClass = 'ISBaseObject';
+        if (clazz.extendz && clazz.extendz.length) {
+            sClass = clazz.extendz.trim();
+        }
+        s += `${clazz.name} = ${sClass}:derive("${clazz.name}");\n\n`;
         // Generate any values in the class here.
         if (valueNames.length) {
             valueNames.sort((a, b) => a.localeCompare(b));
@@ -1839,6 +1843,7 @@ define("src/asledgehammer/rosetta/component/LuaClassCard", ["require", "exports"
             this.idPreview = `${this.id}-preview`;
             this.idBtnEdit = `${this.id}-edit`;
             this.idCheckMutable = `${this.id}-check-mutable`;
+            this.idInputExtends = `${this.id}-input-extends`;
         }
         onHeaderHTML() {
             const { idBtnEdit } = this;
@@ -1857,13 +1862,21 @@ define("src/asledgehammer/rosetta/component/LuaClassCard", ["require", "exports"
         `;
         }
         onBodyHTML() {
-            const { idCheckMutable } = this;
+            const { idCheckMutable, idInputExtends } = this;
+            const entity = this.options.entity;
+            const extendz = entity.extendz ? entity.extendz : '';
             return (0, util_4.html) `
             <div>
                 ${this.renderNotes(this.idNotes)}
+                <!-- Extends SuperClass -->
+                <div class="mb-3" title="The super-class that the Lua class extends.">
+                    <label class="form-label" for="${idInputExtends}">Extends</label>
+                    <input id="${idInputExtends}" class="form-control responsive-input mt-2" type="text" style="" value="${extendz}" />
+                </div>
+                <!-- Mutable Flag -->
                 <div class="mb-3 form-check" title="Allows Lua to add custom properties to the class.">
-                    <input id="${idCheckMutable}" type="checkbox" class="form-check-input" id="exampleCheck1">
-                    <label class="form-check-label" for="exampleCheck1">Mutable</label>
+                    <input id="${idCheckMutable}" type="checkbox" class="form-check-input" id="exampleCheck1"${entity.mutable ? ' checked' : ''}>
+                    <label class="form-check-label" for="${idCheckMutable}">Mutable</label>
                 </div>
                 <hr>
                 ${this.renderPreview(false)}
@@ -1872,7 +1885,7 @@ define("src/asledgehammer/rosetta/component/LuaClassCard", ["require", "exports"
         }
         listen() {
             super.listen();
-            const { idCheckMutable, idBtnEdit, idNotes } = this;
+            const { idInputExtends, idCheckMutable, idBtnEdit, idNotes } = this;
             const { entity } = this.options;
             const _this = this;
             this.listenEdit(entity, idBtnEdit, 'edit_class', 'Edit Lua Class');
@@ -1881,6 +1894,12 @@ define("src/asledgehammer/rosetta/component/LuaClassCard", ["require", "exports"
             const $checkMutable = (0, util_4.$get)(idCheckMutable);
             $checkMutable.on('change', function () {
                 entity.mutable = this.checked;
+                _this.update();
+                _this.app.renderCode();
+            });
+            const $inputExtends = (0, util_4.$get)(idInputExtends);
+            $inputExtends.on('input', function () {
+                entity.extendz = this.value;
                 _this.update();
                 _this.app.renderCode();
             });
