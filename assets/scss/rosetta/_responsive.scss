@@ -1,0 +1,208 @@
+.btn-pane {
+    border-radius: 2px;
+    border-color: transparent;
+    z-index: 1;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 32px;
+    height: 32px;
+    font-size: 18px !important;
+    transition: all 200ms !important;
+
+    i {
+        z-index: 2;
+        position: absolute;
+        top: calc(50% - 1px);
+        left: calc(50% - 1px);
+
+        transform: translate(-50%, -50%);
+        scale: 1;
+
+        pointer-events: none;
+    }
+
+    :hover:active {
+        color: $black !important;
+        background-color: $white;
+        border-color: $white !important;
+    }
+}
+
+.responsive-btn {
+    border-radius: 2px;
+    width: 32px;
+    height: 32px;
+    border-color: $light;
+    border-width: 1px;
+    border-style: solid;
+    background-color: transparent !important;
+    color: $light !important;
+    font-weight: bold;
+    font-size: 18px !important;
+
+    filter: saturate(0.5);
+
+    :active:hover {
+        font-size: 18px !important;
+        border-color: $white !important;
+        background-color: $white !important;
+        color: $black !important;
+    }
+}
+
+.responsive-btn-success {
+    border-color: $success;
+
+    :hover:active {
+        border-color: transparent;
+    }
+}
+
+.responsive-btn-info {
+    border-color: $info;
+
+    :hover:active {
+        border-color: transparent;
+    }
+}
+
+.responsive-btn-primary {
+    border-color: $primary;
+
+    :hover:active {
+        border-color: transparent;
+    }
+}
+
+.responsive-btn-secondary {
+    border-color: $secondary;
+
+    :hover:active {
+        border-color: transparent;
+    }
+}
+
+.responsive-btn-primary {
+    border-color: $info;
+
+    :hover:active {
+        border-color: transparent;
+    }
+}
+
+.responsive-btn-light {
+    border-color: $light;
+
+    :hover:active {
+        border-color: transparent;
+    }
+}
+
+.responsive-btn-dark {
+    border-color: $dark;
+
+    :hover:active {
+        border-color: transparent;
+    }
+}
+
+.responsive-btn-warning {
+    border-color: $warning;
+
+    :hover:active {
+        border-color: transparent;
+    }
+}
+
+.responsive-btn-danger {
+    border-color: $danger;
+
+    :hover:active {
+        border-color: transparent;
+    }
+}
+
+.responsive-card {
+    border-color: rgba($light, 0.5);
+}
+
+.responsive-icon-btn {
+
+    width: 32px;
+    height: 32px;
+
+    border-color: $light !important;
+    border-width: 1px;
+    border-style: solid;
+    background-color: $dark !important;
+    color: $light !important;
+
+    i {
+        position: absolute;
+        top: 50;
+        left: 50;
+        transform: translate(-50%, -50%);
+    }
+
+    :hover {
+        background-color: #222 !important;
+        color: $white !important;
+        border-color: $white !important;
+    }
+}
+
+
+.responsive-input {
+
+    background-color: #222 !important;
+    color: $light !important;
+
+    border-color: rgba($light, 0.5);
+    border-radius: 1px;
+    border-style: solid;
+    border-radius: 0;
+
+    :focus,
+    :hover {
+        background-color: $black;
+        color: $light;
+        border-color: rgba($dark, 0.5);
+    }
+}
+
+.responsive-subcard {
+    border: 1px solid rgba($light, 0.5);
+    border-radius: 0;
+
+    .card-header {
+        background-color: #222;
+        cursor: pointer;
+    }
+
+    .card-body {
+        background-color: $secondary;
+    }
+
+    pre.card-body {
+        background-color: rgba(0, 0, 0, 0.5) !important;
+        overflow: scroll;
+    }
+}
+
+.responsive-select {
+    border-radius: 0;
+
+    background-color: #222 !important;
+    color: $light !important;
+
+    border-color: rgba($light, 0.5);
+    border-radius: 1px;
+    border-style: solid;
+    border-radius: 0;
+}
+
+.responsive-badge {
+    background-color: rgba($success, 0.5);
+    color: $white;
+}

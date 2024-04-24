@@ -1,0 +1,35 @@
+.ql-snow.ql-toolbar {
+
+    background-color: #222;
+    border-color: rgba($light, 0.5);
+
+    line,
+    path,
+    polygon {
+        color: $light;
+        stroke: $light;
+    }
+}
+
+.ql-snow.ql-container {
+    border-color: rgba($light, 0.5);
+}
+
+.ql-snow {
+
+    .ql-picker {
+        ::before {
+            color: $light;
+        }
+    }
+
+    .ql-picker-item {
+        ::before {
+            color: $black !important;
+        }
+    }
+}
+
+.ql-picker-label * {
+    color: $light;
+}
