@@ -5,15 +5,13 @@ import { LuaCard } from "./LuaCard";
 export class ItemTree {
 
     readonly app: App;
-    selectedItemID: string | undefined;
-
-
     readonly idItemClass: string;
     readonly idFolderField: string;
     readonly idFolderValue: string;
     readonly idFolderFunction: string;
     readonly idFolderMethod: string;
-
+    
+    selectedItemID: string | undefined;
     folderFieldOpen: boolean = false;
     folderValueOpen: boolean = false;
     folderFunctionOpen: boolean = false;
@@ -27,102 +25,6 @@ export class ItemTree {
         this.idFolderValue = `item-tree-folder-value`;
         this.idFolderFunction = `item-tree-folder-function`;
         this.idFolderMethod = `item-tree-folder-method`;
-    }
-
-    listen() {
-
-        const { app } = this;
-        const _this = this;
-
-        const { $titleName, $btnName, $inputName, modalName } = app;
-
-        $get('new-lua-class').on('click', () => {
-            $titleName.html('New Lua Class');
-            $btnName.html('Create');
-            $btnName.removeClass('btn-primary');
-            $btnName.addClass('btn-success');
-            $inputName.val('');
-            app.nameMode = 'new_class';
-            modalName.show();
-        });
-
-        $get('open-lua-class').on('click', () => {
-            const dFileLoad = document.getElementById('load-file') as any;
-            const onchange = () => {
-                const file = dFileLoad.files[0];
-                const textType = 'application/json';
-                if (file.type.match(textType)) {
-                    var reader = new FileReader();
-                    reader.onload = function (e) {
-                        const json = JSON.parse(reader.result as string);
-                        app.loadLuaClass(json);
-                        app.renderCode();
-                        _this.populate();
-                    }
-                    reader.readAsText(file);
-                }
-            };
-            dFileLoad.onchange = onchange;
-            dFileLoad.click();
-        });
-
-        $get('save-lua-class').on('click', async () => {
-            // @ts-ignore
-            const result = await showSaveFilePicker();
-
-            const entity = this.app.card!.options!.entity!;
-            const luaClasses: any = {};
-            luaClasses[entity.name] = entity.toJSON();
-            const contents = {
-                $schema: 'https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-schema.json',
-                luaClasses
-            };
-
-            const writable = await result.createWritable();
-            await writable.write(JSON.stringify(contents, null, 2));
-            await writable.close();
-
-            return;
-        });
-    }
-
-    render(): string {
-        return html`
-            <!-- New Class -->
-            <button id="new-lua-class" class="btn btn-sm responsive-btn responsive-btn-success" title="New Class">
-                <div class="btn-pane">    
-                    <i class="fa fa-file"></i>
-                </div>
-            </button>
-            
-            <!-- Open Class -->
-            <button id="open-lua-class" class="btn btn-sm responsive-btn responsive-btn-info" title="Open Class">
-                <div class="btn-pane">
-                    <i class="fa-solid fa-folder-open"></i>
-                </div>
-            </button>
-
-            <!-- Save Class -->
-            <button id="save-lua-class" class="btn btn-sm responsive-btn responsive-btn-info" title="Save Class">
-                <div class="btn-pane">
-                    <i class="fa fa-save"></i>
-                </div>
-            </button>
-
-            <div class="dropdown" style="position: absolute; top: 5px; right: 5px;">
-                <button class="btn btn-sm responsive-btn responsive-btn-success float-end" style="width: 32px; height: 32px" data-bs-toggle="dropdown" aria-expanded="false" title="Add Element">
-                   <div class="btn-pane">     
-                        <i class="fa-solid fa-plus"></i>
-                    </div>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-dark">
-                    <li><a id="btn-new-lua-value" class="dropdown-item" href="#">New Value</a></li>
-                    <li><a id="btn-new-lua-field" class="dropdown-item" href="#">New Field</a></li>
-                    <li><a id="btn-new-lua-function" class="dropdown-item" href="#">New Function</a></li>
-                    <li><a id="btn-new-lua-method" class="dropdown-item" href="#">New Method</a></li>
-                </ul>
-            </div>
-        `;
     }
 
     populate() {

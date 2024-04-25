@@ -2206,92 +2206,6 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
             this.idFolderFunction = `item-tree-folder-function`;
             this.idFolderMethod = `item-tree-folder-method`;
         }
-        listen() {
-            const { app } = this;
-            const _this = this;
-            const { $titleName, $btnName, $inputName, modalName } = app;
-            (0, util_8.$get)('new-lua-class').on('click', () => {
-                $titleName.html('New Lua Class');
-                $btnName.html('Create');
-                $btnName.removeClass('btn-primary');
-                $btnName.addClass('btn-success');
-                $inputName.val('');
-                app.nameMode = 'new_class';
-                modalName.show();
-            });
-            (0, util_8.$get)('open-lua-class').on('click', () => {
-                const dFileLoad = document.getElementById('load-file');
-                const onchange = () => {
-                    const file = dFileLoad.files[0];
-                    const textType = 'application/json';
-                    if (file.type.match(textType)) {
-                        var reader = new FileReader();
-                        reader.onload = function (e) {
-                            const json = JSON.parse(reader.result);
-                            app.loadLuaClass(json);
-                            app.renderCode();
-                            _this.populate();
-                        };
-                        reader.readAsText(file);
-                    }
-                };
-                dFileLoad.onchange = onchange;
-                dFileLoad.click();
-            });
-            (0, util_8.$get)('save-lua-class').on('click', async () => {
-                // @ts-ignore
-                const result = await showSaveFilePicker();
-                const entity = this.app.card.options.entity;
-                const luaClasses = {};
-                luaClasses[entity.name] = entity.toJSON();
-                const contents = {
-                    $schema: 'https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-schema.json',
-                    luaClasses
-                };
-                const writable = await result.createWritable();
-                await writable.write(JSON.stringify(contents, null, 2));
-                await writable.close();
-                return;
-            });
-        }
-        render() {
-            return (0, util_8.html) `
-            <!-- New Class -->
-            <button id="new-lua-class" class="btn btn-sm responsive-btn responsive-btn-success" title="New Class">
-                <div class="btn-pane">    
-                    <i class="fa fa-file"></i>
-                </div>
-            </button>
-            
-            <!-- Open Class -->
-            <button id="open-lua-class" class="btn btn-sm responsive-btn responsive-btn-info" title="Open Class">
-                <div class="btn-pane">
-                    <i class="fa-solid fa-folder-open"></i>
-                </div>
-            </button>
-
-            <!-- Save Class -->
-            <button id="save-lua-class" class="btn btn-sm responsive-btn responsive-btn-info" title="Save Class">
-                <div class="btn-pane">
-                    <i class="fa fa-save"></i>
-                </div>
-            </button>
-
-            <div class="dropdown" style="position: absolute; top: 5px; right: 5px;">
-                <button class="btn btn-sm responsive-btn responsive-btn-success float-end" style="width: 32px; height: 32px" data-bs-toggle="dropdown" aria-expanded="false" title="Add Element">
-                   <div class="btn-pane">     
-                        <i class="fa-solid fa-plus"></i>
-                    </div>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-dark">
-                    <li><a id="btn-new-lua-value" class="dropdown-item" href="#">New Value</a></li>
-                    <li><a id="btn-new-lua-field" class="dropdown-item" href="#">New Field</a></li>
-                    <li><a id="btn-new-lua-function" class="dropdown-item" href="#">New Function</a></li>
-                    <li><a id="btn-new-lua-method" class="dropdown-item" href="#">New Method</a></li>
-                </ul>
-            </div>
-        `;
-        }
         populate() {
             const _this = this;
             const { card: luaClass } = this.app;
@@ -2611,7 +2525,41 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
         onRender() {
             return (0, util_10.html) `
             <div class="bg-dark p-1 border-bottom border-bottom-2 border-black shadow">
-                ${this.itemTree.render()}
+                <!-- New Class -->
+                <button id="new-lua-class" class="btn btn-sm responsive-btn responsive-btn-success" title="New Class">
+                    <div class="btn-pane">    
+                        <i class="fa fa-file"></i>
+                    </div>
+                </button>
+                
+                <!-- Open Class -->
+                <button id="open-lua-class" class="btn btn-sm responsive-btn responsive-btn-info" title="Open Class">
+                    <div class="btn-pane">
+                        <i class="fa-solid fa-folder-open"></i>
+                    </div>
+                </button>
+
+                <!-- Save Class -->
+                <button id="save-lua-class" class="btn btn-sm responsive-btn responsive-btn-info" title="Save Class">
+                    <div class="btn-pane">
+                        <i class="fa fa-save"></i>
+                    </div>
+                </button>
+
+                <!-- New Properties -->
+                <div class="dropdown" style="position: absolute; top: 5px; right: 5px;">
+                    <button class="btn btn-sm responsive-btn responsive-btn-success float-end" style="width: 32px; height: 32px" data-bs-toggle="dropdown" aria-expanded="false" title="Add Element">
+                    <div class="btn-pane">     
+                            <i class="fa-solid fa-plus"></i>
+                        </div>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-dark">
+                        <li><a id="btn-new-lua-value" class="dropdown-item" href="#">New Value</a></li>
+                        <li><a id="btn-new-lua-field" class="dropdown-item" href="#">New Field</a></li>
+                        <li><a id="btn-new-lua-function" class="dropdown-item" href="#">New Function</a></li>
+                        <li><a id="btn-new-lua-method" class="dropdown-item" href="#">New Method</a></li>
+                    </ul>
+                </div>
             </div>
 
             <div class="bg-dark" style="height: 100%; overflow-y: auto;">${this.panel.render()}
@@ -2626,9 +2574,53 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
         }
         listen() {
             this.panel.listen();
-            this.itemTree.listen();
             this.itemTree.populate();
             const { app } = this;
+            const _this = this;
+            const { $titleName, $btnName, $inputName, modalName } = app;
+            (0, util_10.$get)('new-lua-class').on('click', () => {
+                $titleName.html('New Lua Class');
+                $btnName.html('Create');
+                $btnName.removeClass('btn-primary');
+                $btnName.addClass('btn-success');
+                $inputName.val('');
+                app.nameMode = 'new_class';
+                modalName.show();
+            });
+            (0, util_10.$get)('open-lua-class').on('click', () => {
+                const dFileLoad = document.getElementById('load-file');
+                const onchange = () => {
+                    const file = dFileLoad.files[0];
+                    const textType = 'application/json';
+                    if (file.type.match(textType)) {
+                        var reader = new FileReader();
+                        reader.onload = function (e) {
+                            const json = JSON.parse(reader.result);
+                            app.loadLuaClass(json);
+                            app.renderCode();
+                            _this.itemTree.populate();
+                        };
+                        reader.readAsText(file);
+                    }
+                };
+                dFileLoad.onchange = onchange;
+                dFileLoad.click();
+            });
+            (0, util_10.$get)('save-lua-class').on('click', async () => {
+                // @ts-ignore
+                const result = await showSaveFilePicker();
+                const entity = this.app.card.options.entity;
+                const luaClasses = {};
+                luaClasses[entity.name] = entity.toJSON();
+                const contents = {
+                    $schema: 'https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-schema.json',
+                    luaClasses
+                };
+                const writable = await result.createWritable();
+                await writable.write(JSON.stringify(contents, null, 2));
+                await writable.close();
+                return;
+            });
             (0, util_10.$get)('btn-new-lua-value').on('click', () => {
                 const { card } = app;
                 if (!card)
