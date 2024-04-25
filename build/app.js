@@ -2081,6 +2081,7 @@ define("src/asledgehammer/rosetta/component/LuaFieldCard", ["require", "exports"
                         delete clazz.fields[entity.name];
                     }
                     app.showClass(clazz);
+                    app.sidebar.itemTree.selectedItemID = undefined;
                     app.sidebar.itemTree.populate();
                 }, `Delete ${isStatic ? 'Value' : 'Field'} ${entity.name}`);
             });
@@ -2180,6 +2181,7 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
                         delete clazz.methods[entity.name];
                     }
                     app.showClass(clazz);
+                    app.sidebar.itemTree.selectedItemID = undefined;
                     app.sidebar.itemTree.populate();
                 }, `Delete ${isStatic ? 'Function' : 'Method'} ${entity.name}`);
             });
@@ -2193,7 +2195,16 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
     exports.ItemTree = void 0;
     class ItemTree {
         constructor(app) {
+            this.folderFieldOpen = false;
+            this.folderValueOpen = false;
+            this.folderFunctionOpen = false;
+            this.folderMethodOpen = false;
             this.app = app;
+            this.idItemClass = `item-tree-item-class`;
+            this.idFolderField = `item-tree-folder-field`;
+            this.idFolderValue = `item-tree-folder-value`;
+            this.idFolderFunction = `item-tree-folder-function`;
+            this.idFolderMethod = `item-tree-folder-method`;
         }
         listen() {
             const { app } = this;
@@ -2300,7 +2311,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                     text: field.name,
                     icon: LuaCard_5.LuaCard.getTypeIcon(field.type),
                     id,
-                    class: ['lua-field-item']
+                    class: ['item-tree-item', 'lua-field-item']
                 });
             }
             const valueNames = Object.keys(entity.values);
@@ -2313,7 +2324,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                     text: (0, util_8.html) `<span class="fst-italic">${value.name}</span>`,
                     icon: LuaCard_5.LuaCard.getTypeIcon(value.type),
                     id,
-                    class: ['lua-value-item']
+                    class: ['item-tree-item', 'lua-value-item']
                 });
             }
             const methodNames = Object.keys(entity.methods);
@@ -2326,7 +2337,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                     text: (0, util_8.html) `<i class="fa-solid fa-xmark me-2" title="${method.returns.type}"></i>${method.name}`,
                     icon: 'fa-solid fa-terminal text-success mx-2',
                     id,
-                    class: ['lua-method-item'],
+                    class: ['item-tree-item', 'lua-method-item'],
                 });
             }
             const functionNames = Object.keys(entity.functions);
@@ -2339,52 +2350,61 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                     text: (0, util_8.html) `<i class="fa-solid fa-xmark me-2" title="${func.returns.type}"></i>${func.name}`,
                     icon: 'fa-solid fa-terminal text-success mx-2',
                     id,
-                    class: ['lua-function-item'],
+                    class: ['item-tree-item', 'lua-function-item'],
                 });
             }
             let $tree = (0, util_8.$get)('tree');
             $tree.remove();
             (0, util_8.$get)('sidebar-content').append('<div id="tree" class="rounded-0 bg-dark text-white"></div>');
             $tree = (0, util_8.$get)('tree');
+            // If something isn't selected then the properties must be.
+            const classClasses = ['item-tree-item', 'lua-class-item'];
+            if (!_this.selectedItemID)
+                classClasses.push('selected');
             // @ts-ignore
             $tree.bstreeview({
                 data: [
                     {
+                        id: _this.idItemClass,
                         text: "Class Properties",
                         icon: LuaCard_5.LuaCard.getTypeIcon('class'),
-                        class: ['lua-class-item']
+                        class: classClasses
                     },
                     {
                         text: "Constructor",
                         icon: LuaCard_5.LuaCard.getTypeIcon('constructor'),
-                        class: ['lua-constructor-item']
+                        class: ['item-tree-item', 'lua-constructor-item']
                     },
                     {
                         text: "Fields",
                         icon: "fa-solid fa-folder text-light mx-2",
-                        class: ['bg-secondary'],
-                        // expanded: true,
+                        class: ['item-tree-folder', 'bg-secondary'],
+                        id: _this.idFolderField,
+                        expanded: _this.folderFieldOpen,
                         nodes: fields
                     },
                     {
                         text: "Values",
                         icon: "fa-solid fa-folder text-light mx-2",
-                        class: ['bg-secondary'],
-                        // expanded: true,
+                        class: ['item-tree-folder', 'bg-secondary'],
+                        id: _this.idFolderValue,
+                        expanded: _this.folderValueOpen,
                         nodes: values
                     },
                     {
                         text: "Methods",
                         icon: "fa-solid fa-folder text-light mx-2",
-                        class: ['bg-secondary'],
-                        // expanded: true,
+                        class: ['item-tree-folder', 'bg-secondary'],
+                        id: _this.idFolderMethod,
+                        expanded: _this.folderMethodOpen,
                         nodes: methods
                     },
                     {
                         text: "Functions",
                         icon: "fa-solid fa-folder text-light mx-2",
-                        class: ['bg-secondary'],
-                        // expanded: true,
+                        class: ['item-tree-folder', 'bg-secondary'],
+                        id: _this.idFolderFunction,
+                        expanded: _this.folderFunctionOpen,
                         nodes: functions
                     },
                 ]
@@ -2454,6 +2474,21 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                 // Let the editor know we last selected the function.
                 _this.app.selected = functionName;
             });
+            $('.item-tree-item').on('click', function () {
+                const $this = $(this);
+                $('.selected').removeClass('selected');
+                $this.addClass('selected');
+                _this.selectedItemID = this.id;
+            });
+            // Preserve the state of folders.
+            (0, util_8.$get)(this.idFolderField).on('click', () => this.folderFieldOpen = !this.folderFieldOpen);
+            (0, util_8.$get)(this.idFolderValue).on('click', () => this.folderValueOpen = !this.folderValueOpen);
+            (0, util_8.$get)(this.idFolderMethod).on('click', () => this.folderMethodOpen = !this.folderMethodOpen);
+            (0, util_8.$get)(this.idFolderFunction).on('click', () => this.folderFunctionOpen = !this.folderFunctionOpen);
+            // Re-apply selection for re-population.
+            const $selectedItem = this.selectedItemID ? $(this.selectedItemID) : $(this.idItemClass);
+            console.log($selectedItem);
+            $selectedItem.addClass('selected');
         }
     }
     exports.ItemTree = ItemTree;

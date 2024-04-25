@@ -116,6 +116,7 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
                     delete clazz.fields[entity.name];
                 }
                 app.showClass(clazz);
+                app.sidebar.itemTree.selectedItemID = undefined;
                 app.sidebar.itemTree.populate();
             }, `Delete ${isStatic ? 'Value' : 'Field'} ${entity.name}`);
         })

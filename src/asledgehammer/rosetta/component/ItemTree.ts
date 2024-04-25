@@ -5,9 +5,28 @@ import { LuaCard } from "./LuaCard";
 export class ItemTree {
 
     readonly app: App;
+    selectedItemID: string | undefined;
+
+
+    readonly idItemClass: string;
+    readonly idFolderField: string;
+    readonly idFolderValue: string;
+    readonly idFolderFunction: string;
+    readonly idFolderMethod: string;
+
+    folderFieldOpen: boolean = false;
+    folderValueOpen: boolean = false;
+    folderFunctionOpen: boolean = false;
+    folderMethodOpen: boolean = false;
 
     constructor(app: App) {
         this.app = app;
+
+        this.idItemClass = `item-tree-item-class`;
+        this.idFolderField = `item-tree-folder-field`;
+        this.idFolderValue = `item-tree-folder-value`;
+        this.idFolderFunction = `item-tree-folder-function`;
+        this.idFolderMethod = `item-tree-folder-method`;
     }
 
     listen() {
@@ -128,7 +147,7 @@ export class ItemTree {
                 text: field.name,
                 icon: LuaCard.getTypeIcon(field.type),
                 id,
-                class: ['lua-field-item']
+                class: ['item-tree-item', 'lua-field-item']
             });
         }
 
@@ -142,7 +161,7 @@ export class ItemTree {
                 text: html`<span class="fst-italic">${value.name}</span>`,
                 icon: LuaCard.getTypeIcon(value.type),
                 id,
-                class: ['lua-value-item']
+                class: ['item-tree-item', 'lua-value-item']
             });
         }
 
@@ -156,7 +175,7 @@ export class ItemTree {
                 text: html`<i class="fa-solid fa-xmark me-2" title="${method.returns.type}"></i>${method.name}`,
                 icon: 'fa-solid fa-terminal text-success mx-2',
                 id,
-                class: ['lua-method-item'],
+                class: ['item-tree-item', 'lua-method-item'],
             });
         }
 
@@ -170,7 +189,7 @@ export class ItemTree {
                 text: html`<i class="fa-solid fa-xmark me-2" title="${func.returns.type}"></i>${func.name}`,
                 icon: 'fa-solid fa-terminal text-success mx-2',
                 id,
-                class: ['lua-function-item'],
+                class: ['item-tree-item', 'lua-function-item'],
             });
         }
 
@@ -180,45 +199,54 @@ export class ItemTree {
         $get('sidebar-content').append('<div id="tree" class="rounded-0 bg-dark text-white"></div>');
         $tree = $get('tree');
 
+        // If something isn't selected then the properties must be.
+        const classClasses = ['item-tree-item', 'lua-class-item'];
+        if (!_this.selectedItemID) classClasses.push('selected');
+
         // @ts-ignore
         $tree.bstreeview({
             data: [
                 {
+                    id: _this.idItemClass,
                     text: "Class Properties",
                     icon: LuaCard.getTypeIcon('class'),
-                    class: ['lua-class-item']
+                    class: classClasses
                 },
                 {
                     text: "Constructor",
                     icon: LuaCard.getTypeIcon('constructor'),
-                    class: ['lua-constructor-item']
+                    class: ['item-tree-item', 'lua-constructor-item']
                 },
                 {
                     text: "Fields",
                     icon: "fa-solid fa-folder text-light mx-2",
-                    class: ['bg-secondary'],
-                    // expanded: true,
+                    class: ['item-tree-folder', 'bg-secondary'],
+                    id: _this.idFolderField,
+                    expanded: _this.folderFieldOpen,
                     nodes: fields
                 },
                 {
                     text: "Values",
                     icon: "fa-solid fa-folder text-light mx-2",
-                    class: ['bg-secondary'],
-                    // expanded: true,
+                    class: ['item-tree-folder', 'bg-secondary'],
+                    id: _this.idFolderValue,
+                    expanded: _this.folderValueOpen,
                     nodes: values
                 },
                 {
                     text: "Methods",
                     icon: "fa-solid fa-folder text-light mx-2",
-                    class: ['bg-secondary'],
-                    // expanded: true,
+                    class: ['item-tree-folder', 'bg-secondary'],
+                    id: _this.idFolderMethod,
+                    expanded: _this.folderMethodOpen,
                     nodes: methods
                 },
                 {
                     text: "Functions",
                     icon: "fa-solid fa-folder text-light mx-2",
-                    class: ['bg-secondary'],
-                    // expanded: true,
+                    class: ['item-tree-folder', 'bg-secondary'],
+                    id: _this.idFolderFunction,
+                    expanded: _this.folderFunctionOpen,
                     nodes: functions
                 },
             ]
@@ -285,5 +313,24 @@ export class ItemTree {
             // Let the editor know we last selected the function.
             _this.app.selected = functionName;
         });
+
+        $('.item-tree-item').on('click', function () {
+            const $this = $(this);
+
+            $('.selected').removeClass('selected');
+            $this.addClass('selected');
+            _this.selectedItemID = this.id;
+        });
+
+        // Preserve the state of folders.
+        $get(this.idFolderField).on('click', () => this.folderFieldOpen = !this.folderFieldOpen);
+        $get(this.idFolderValue).on('click', () => this.folderValueOpen = !this.folderValueOpen);
+        $get(this.idFolderMethod).on('click', () => this.folderMethodOpen = !this.folderMethodOpen);
+        $get(this.idFolderFunction).on('click', () => this.folderFunctionOpen = !this.folderFunctionOpen);
+
+        // Re-apply selection for re-population.
+        const $selectedItem = this.selectedItemID ? $(this.selectedItemID) : $(this.idItemClass);
+        console.log($selectedItem);
+        $selectedItem.addClass('selected');
     }
 }
