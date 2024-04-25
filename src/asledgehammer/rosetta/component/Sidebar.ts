@@ -2,12 +2,9 @@ import { App } from '../../../app';
 import { $get, html } from '../util';
 import { Component, ComponentOptions } from './Component';
 import { ItemTree } from './ItemTree';
-import { SidebarPanel } from './SidebarPanel';
-import { SidebarPanelButton } from './SidebarPanelButton';
 
 export class Sidebar extends Component<SidebarOptions> {
 
-    private readonly panel: SidebarPanel;
     private readonly app: App;
     readonly itemTree: ItemTree;
 
@@ -21,68 +18,9 @@ export class Sidebar extends Component<SidebarOptions> {
         });
 
         this.app = app;
-        const buttons: SidebarPanelButton[] = [];
         const result = document.getElementById('result')! as any;
         const reader = new FileReader();
-        reader.addEventListener('load', () => {
-            result.innerHTML = reader.result;
-        });
-
-        const funcLoad = () => {
-            const dFileLoad = document.getElementById('load-file') as any;
-
-            const onchange = () => {
-                const file = dFileLoad.files[0];
-                const textType = 'application/json';
-                if (file.type.match(textType)) {
-                    var reader = new FileReader();
-                    reader.onload = function (e) {
-                        const json = JSON.parse(reader.result as string);
-                        app.loadLuaClass(json);
-                        app.renderCode();
-                        app.sidebar.itemTree.populate();
-
-                    }
-                    reader.readAsText(file);
-                }
-            };
-
-            dFileLoad.onchange = onchange;
-            dFileLoad.click();
-        };
-
-        const funcSave = async () => {
-            // @ts-ignore
-            const result = await showSaveFilePicker();
-
-            const entity = this.app.card!.options!.entity!;
-            const luaClasses: any = {};
-            luaClasses[entity.name] = entity.toJSON();
-            const contents = {
-                $schema: 'https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-schema.json',
-                luaClasses
-            };
-
-            const writable = await result.createWritable();
-            await writable.write(JSON.stringify(contents, null, 2));
-            await writable.close();
-        };
-
-        buttons.push(new SidebarPanelButton({
-            classes: ['mb-2'],
-            label: 'Load',
-            onclick: () => funcLoad()
-        }));
-
-        buttons.push(new SidebarPanelButton({
-            classes: ['mb-2'],
-            label: 'Save',
-            onclick: () => funcSave()
-        }));
-
-        this.panel = new SidebarPanel({
-            buttons
-        });
+        reader.addEventListener('load', () => (result.innerHTML = reader.result));
 
         this.itemTree = new ItemTree(app);
     }
@@ -127,7 +65,7 @@ export class Sidebar extends Component<SidebarOptions> {
                 </div>
             </div>
 
-            <div class="bg-dark" style="height: 100%; overflow-y: auto;">${this.panel.render()}
+            <div class="bg-dark" style="height: 100%; overflow-y: auto;">
                 <div id="sidebar-content" style="position: absolute; bottom: 0; left: calc(-2.5rem + 2px); width: calc(100% + 2.5rem - 3px); height: calc(100% - 44px); overflow-y: auto;">
                     <div id="tree" class="rounded-0 bg-dark text-white"></div>
                 </div>
@@ -139,7 +77,6 @@ export class Sidebar extends Component<SidebarOptions> {
     }
 
     listen(): void {
-        this.panel.listen();
         this.itemTree.populate();
 
         const { app } = this;
@@ -147,29 +84,41 @@ export class Sidebar extends Component<SidebarOptions> {
         const { $titleName, $btnName, $inputName, modalName } = app;
 
         $get('new-lua-class').on('click', () => {
-            $titleName.html('New Lua Class');
-            $btnName.html('Create');
-            $btnName.removeClass('btn-primary');
-            $btnName.addClass('btn-success');
-            $inputName.val('');
-            app.nameMode = 'new_class';
-            modalName.show();
+            try {
+                $titleName.html('New Lua Class');
+                $btnName.html('Create');
+                $btnName.removeClass('btn-primary');
+                $btnName.addClass('btn-success');
+                $inputName.val('');
+                app.nameMode = 'new_class';
+                modalName.show();
+                app.toast.alert(`Created LuaClass.`, 'success');
+            } catch(e) {
+                app.toast.alert(`Failed to create LuaClass.`, 'error');
+                console.error(e);
+            }
         });
 
         $get('open-lua-class').on('click', () => {
             const dFileLoad = document.getElementById('load-file') as any;
             const onchange = () => {
-                const file = dFileLoad.files[0];
-                const textType = 'application/json';
-                if (file.type.match(textType)) {
-                    var reader = new FileReader();
-                    reader.onload = function (e) {
-                        const json = JSON.parse(reader.result as string);
-                        app.loadLuaClass(json);
-                        app.renderCode();
-                        _this.itemTree.populate();
+                try {
+                    const file = dFileLoad.files[0];
+                    const textType = 'application/json';
+                    if (file.type.match(textType)) {
+                        var reader = new FileReader();
+                        reader.onload = function (e) {
+                            const json = JSON.parse(reader.result as string);
+                            app.loadLuaClass(json);
+                            app.renderCode();
+                            _this.itemTree.populate();
+                        }
+                        reader.readAsText(file);
                     }
-                    reader.readAsText(file);
+                    app.toast.alert(`Loaded LuaClass.`, 'success');
+                } catch (e) {
+                    app.toast.alert(`Failed to load LuaClass.`, 'error');
+                    console.error(e);
                 }
             };
             dFileLoad.onchange = onchange;
@@ -177,70 +126,98 @@ export class Sidebar extends Component<SidebarOptions> {
         });
 
         $get('save-lua-class').on('click', async () => {
-            // @ts-ignore
-            const result = await showSaveFilePicker();
+            try {
+                // @ts-ignore
+                const result = await showSaveFilePicker();
+    
+                const entity = this.app.card!.options!.entity!;
+                const luaClasses: any = {};
+                luaClasses[entity.name] = entity.toJSON();
+                const contents = {
+                    $schema: 'https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-schema.json',
+                    luaClasses
+                };
+    
+                const writable = await result.createWritable();
+                await writable.write(JSON.stringify(contents, null, 2));
+                await writable.close();
 
-            const entity = this.app.card!.options!.entity!;
-            const luaClasses: any = {};
-            luaClasses[entity.name] = entity.toJSON();
-            const contents = {
-                $schema: 'https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-schema.json',
-                luaClasses
-            };
-
-            const writable = await result.createWritable();
-            await writable.write(JSON.stringify(contents, null, 2));
-            await writable.close();
+                app.toast.alert(`Saved LuaClass.`, 'info');
+            } catch (e) {
+                app.toast.alert(`Failed to load LuaClass.`, 'error');
+                console.error(e);
+            }
 
             return;
         });
 
         $get('btn-new-lua-value').on('click', () => {
-            const { card } = app;
-            if(!card) return;
-            const clazz = card.options!.entity;
-            if(!clazz) return;
-
-            this.app.nameMode = 'new_value';
-            this.app.$titleName.html('Create Lua Value');
-            this.app.$inputName.val('');
-            this.app.modalName.show();
+            try {
+                const { card } = app;
+                if (!card) return;
+                const clazz = card.options!.entity;
+                if (!clazz) return;
+    
+                this.app.nameMode = 'new_value';
+                this.app.$titleName.html('Create Lua Value');
+                this.app.$inputName.val('');
+                this.app.modalName.show();
+            } catch(e) {
+                app.toast.alert(`Failed to create Lua Value.`, 'error');
+                console.error(e);
+            }
         });
 
         $get('btn-new-lua-field').on('click', () => {
-            const { card } = app;
-            if(!card) return;
-            const clazz = card.options!.entity;
-            if(!clazz) return;
-
-            this.app.nameMode = 'new_field';
-            this.app.$titleName.html('Create Lua Field');
-            this.app.$inputName.val('');
-            this.app.modalName.show();
+            try {
+                const { card } = app;
+                if (!card) return;
+                const clazz = card.options!.entity;
+                if (!clazz) return;
+    
+                this.app.nameMode = 'new_field';
+                this.app.$titleName.html('Create Lua Field');
+                this.app.$inputName.val('');
+                this.app.modalName.show();
+            } catch (e) {
+                app.toast.alert(`Failed to create Lua Field.`, 'error');
+                console.error(e);
+            }
         });
 
         $get('btn-new-lua-function').on('click', () => {
-            const { card } = app;
-            if(!card) return;
-            const clazz = card.options!.entity;
-            if(!clazz) return;
-
-            this.app.nameMode = 'new_function';
-            this.app.$titleName.html('Create Lua Function');
-            this.app.$inputName.val('');
-            this.app.modalName.show();
+            try {
+                const { card } = app;
+                if (!card) return;
+                const clazz = card.options!.entity;
+                if (!clazz) return;
+    
+                this.app.nameMode = 'new_function';
+                this.app.$titleName.html('Create Lua Function');
+                this.app.$inputName.val('');
+                this.app.modalName.show();
+            } catch(e) {
+                app.toast.alert(`Failed to create Lua Function.`, 'error');
+                console.error(e);
+            }
         });
 
         $get('btn-new-lua-method').on('click', () => {
-            const { card } = app;
-            if(!card) return;
-            const clazz = card.options!.entity;
-            if(!clazz) return;
+            try {
+                const { card } = app;
+                if (!card) return;
+                const clazz = card.options!.entity;
+                if (!clazz) return;
+    
+                this.app.nameMode = 'new_method';
+                this.app.$titleName.html('Create Lua Method');
+                this.app.$inputName.val('');
+                this.app.modalName.show();
+            } catch(e) {
+                app.toast.alert(`Failed to create Lua Method.`, 'error');
+                console.error(e);
 
-            this.app.nameMode = 'new_method';
-            this.app.$titleName.html('Create Lua Method');
-            this.app.$inputName.val('');
-            this.app.modalName.show();
+            }
         });
     }
 };

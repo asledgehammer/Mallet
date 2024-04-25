@@ -2428,58 +2428,11 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
     }
     exports.ItemTree = ItemTree;
 });
-define("src/asledgehammer/rosetta/component/SidebarPanelButton", ["require", "exports", "src/asledgehammer/rosetta/component/Component", "src/asledgehammer/rosetta/util"], function (require, exports, Component_2, util_9) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.SidebarPanelButton = void 0;
-    class SidebarPanelButton extends Component_2.Component {
-        constructor(options) {
-            super(options);
-        }
-        listen() {
-            (0, util_9.$get)(this.id).on('click', () => {
-                if (this.options && this.options.onclick) {
-                    this.options.onclick();
-                }
-            });
-        }
-        onRender() {
-            const { label } = this.options;
-            return (0, util_9.html) `
-            <button class="btn btn-primary col-12 rounded-0">${label}</button>
-        `;
-        }
-    }
-    exports.SidebarPanelButton = SidebarPanelButton;
-});
-define("src/asledgehammer/rosetta/component/SidebarPanel", ["require", "exports", "src/asledgehammer/rosetta/component/Component"], function (require, exports, Component_3) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.SidebarPanel = void 0;
-    class SidebarPanel extends Component_3.Component {
-        constructor(options) {
-            super(options);
-        }
-        listen() {
-            const { buttons } = this.options;
-            if (buttons && buttons.length) {
-                for (const button of buttons) {
-                    button.listen();
-                }
-            }
-        }
-        onRender() {
-            return '';
-        }
-    }
-    exports.SidebarPanel = SidebarPanel;
-    ;
-});
-define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/Component", "src/asledgehammer/rosetta/component/ItemTree", "src/asledgehammer/rosetta/component/SidebarPanel", "src/asledgehammer/rosetta/component/SidebarPanelButton"], function (require, exports, util_10, Component_4, ItemTree_1, SidebarPanel_1, SidebarPanelButton_1) {
+define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/Component", "src/asledgehammer/rosetta/component/ItemTree"], function (require, exports, util_9, Component_2, ItemTree_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Sidebar = void 0;
-    class Sidebar extends Component_4.Component {
+    class Sidebar extends Component_2.Component {
         constructor(app) {
             super({
                 classes: ['vs-bg-6', 'shadow-lg', 'border', 'border-1'],
@@ -2489,62 +2442,13 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                 },
             });
             this.app = app;
-            const buttons = [];
             const result = document.getElementById('result');
             const reader = new FileReader();
-            reader.addEventListener('load', () => {
-                result.innerHTML = reader.result;
-            });
-            const funcLoad = () => {
-                const dFileLoad = document.getElementById('load-file');
-                const onchange = () => {
-                    const file = dFileLoad.files[0];
-                    const textType = 'application/json';
-                    if (file.type.match(textType)) {
-                        var reader = new FileReader();
-                        reader.onload = function (e) {
-                            const json = JSON.parse(reader.result);
-                            app.loadLuaClass(json);
-                            app.renderCode();
-                            app.sidebar.itemTree.populate();
-                        };
-                        reader.readAsText(file);
-                    }
-                };
-                dFileLoad.onchange = onchange;
-                dFileLoad.click();
-            };
-            const funcSave = async () => {
-                // @ts-ignore
-                const result = await showSaveFilePicker();
-                const entity = this.app.card.options.entity;
-                const luaClasses = {};
-                luaClasses[entity.name] = entity.toJSON();
-                const contents = {
-                    $schema: 'https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-schema.json',
-                    luaClasses
-                };
-                const writable = await result.createWritable();
-                await writable.write(JSON.stringify(contents, null, 2));
-                await writable.close();
-            };
-            buttons.push(new SidebarPanelButton_1.SidebarPanelButton({
-                classes: ['mb-2'],
-                label: 'Load',
-                onclick: () => funcLoad()
-            }));
-            buttons.push(new SidebarPanelButton_1.SidebarPanelButton({
-                classes: ['mb-2'],
-                label: 'Save',
-                onclick: () => funcSave()
-            }));
-            this.panel = new SidebarPanel_1.SidebarPanel({
-                buttons
-            });
+            reader.addEventListener('load', () => (result.innerHTML = reader.result));
             this.itemTree = new ItemTree_1.ItemTree(app);
         }
         onRender() {
-            return (0, util_10.html) `
+            return (0, util_9.html) `
             <div class="bg-dark p-1 border-bottom border-bottom-2 border-black shadow">
                 <!-- New Class -->
                 <button id="new-lua-class" class="btn btn-sm responsive-btn responsive-btn-success" title="New Class">
@@ -2583,7 +2487,7 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                 </div>
             </div>
 
-            <div class="bg-dark" style="height: 100%; overflow-y: auto;">${this.panel.render()}
+            <div class="bg-dark" style="height: 100%; overflow-y: auto;">
                 <div id="sidebar-content" style="position: absolute; bottom: 0; left: calc(-2.5rem + 2px); width: calc(100% + 2.5rem - 3px); height: calc(100% - 44px); overflow-y: auto;">
                     <div id="tree" class="rounded-0 bg-dark text-white"></div>
                 </div>
@@ -2594,108 +2498,152 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
         `;
         }
         listen() {
-            this.panel.listen();
             this.itemTree.populate();
             const { app } = this;
             const _this = this;
             const { $titleName, $btnName, $inputName, modalName } = app;
-            (0, util_10.$get)('new-lua-class').on('click', () => {
-                $titleName.html('New Lua Class');
-                $btnName.html('Create');
-                $btnName.removeClass('btn-primary');
-                $btnName.addClass('btn-success');
-                $inputName.val('');
-                app.nameMode = 'new_class';
-                modalName.show();
+            (0, util_9.$get)('new-lua-class').on('click', () => {
+                try {
+                    $titleName.html('New Lua Class');
+                    $btnName.html('Create');
+                    $btnName.removeClass('btn-primary');
+                    $btnName.addClass('btn-success');
+                    $inputName.val('');
+                    app.nameMode = 'new_class';
+                    modalName.show();
+                    app.toast.alert(`Created LuaClass.`, 'success');
+                }
+                catch (e) {
+                    app.toast.alert(`Failed to create LuaClass.`, 'error');
+                    console.error(e);
+                }
             });
-            (0, util_10.$get)('open-lua-class').on('click', () => {
+            (0, util_9.$get)('open-lua-class').on('click', () => {
                 const dFileLoad = document.getElementById('load-file');
                 const onchange = () => {
-                    const file = dFileLoad.files[0];
-                    const textType = 'application/json';
-                    if (file.type.match(textType)) {
-                        var reader = new FileReader();
-                        reader.onload = function (e) {
-                            const json = JSON.parse(reader.result);
-                            app.loadLuaClass(json);
-                            app.renderCode();
-                            _this.itemTree.populate();
-                        };
-                        reader.readAsText(file);
+                    try {
+                        const file = dFileLoad.files[0];
+                        const textType = 'application/json';
+                        if (file.type.match(textType)) {
+                            var reader = new FileReader();
+                            reader.onload = function (e) {
+                                const json = JSON.parse(reader.result);
+                                app.loadLuaClass(json);
+                                app.renderCode();
+                                _this.itemTree.populate();
+                            };
+                            reader.readAsText(file);
+                        }
+                        app.toast.alert(`Loaded LuaClass.`, 'success');
+                    }
+                    catch (e) {
+                        app.toast.alert(`Failed to load LuaClass.`, 'error');
+                        console.error(e);
                     }
                 };
                 dFileLoad.onchange = onchange;
                 dFileLoad.click();
             });
-            (0, util_10.$get)('save-lua-class').on('click', async () => {
-                // @ts-ignore
-                const result = await showSaveFilePicker();
-                const entity = this.app.card.options.entity;
-                const luaClasses = {};
-                luaClasses[entity.name] = entity.toJSON();
-                const contents = {
-                    $schema: 'https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-schema.json',
-                    luaClasses
-                };
-                const writable = await result.createWritable();
-                await writable.write(JSON.stringify(contents, null, 2));
-                await writable.close();
+            (0, util_9.$get)('save-lua-class').on('click', async () => {
+                try {
+                    // @ts-ignore
+                    const result = await showSaveFilePicker();
+                    const entity = this.app.card.options.entity;
+                    const luaClasses = {};
+                    luaClasses[entity.name] = entity.toJSON();
+                    const contents = {
+                        $schema: 'https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-schema.json',
+                        luaClasses
+                    };
+                    const writable = await result.createWritable();
+                    await writable.write(JSON.stringify(contents, null, 2));
+                    await writable.close();
+                    app.toast.alert(`Saved LuaClass.`, 'info');
+                }
+                catch (e) {
+                    app.toast.alert(`Failed to load LuaClass.`, 'error');
+                    console.error(e);
+                }
                 return;
             });
-            (0, util_10.$get)('btn-new-lua-value').on('click', () => {
-                const { card } = app;
-                if (!card)
-                    return;
-                const clazz = card.options.entity;
-                if (!clazz)
-                    return;
-                this.app.nameMode = 'new_value';
-                this.app.$titleName.html('Create Lua Value');
-                this.app.$inputName.val('');
-                this.app.modalName.show();
+            (0, util_9.$get)('btn-new-lua-value').on('click', () => {
+                try {
+                    const { card } = app;
+                    if (!card)
+                        return;
+                    const clazz = card.options.entity;
+                    if (!clazz)
+                        return;
+                    this.app.nameMode = 'new_value';
+                    this.app.$titleName.html('Create Lua Value');
+                    this.app.$inputName.val('');
+                    this.app.modalName.show();
+                }
+                catch (e) {
+                    app.toast.alert(`Failed to create Lua Value.`, 'error');
+                    console.error(e);
+                }
             });
-            (0, util_10.$get)('btn-new-lua-field').on('click', () => {
-                const { card } = app;
-                if (!card)
-                    return;
-                const clazz = card.options.entity;
-                if (!clazz)
-                    return;
-                this.app.nameMode = 'new_field';
-                this.app.$titleName.html('Create Lua Field');
-                this.app.$inputName.val('');
-                this.app.modalName.show();
+            (0, util_9.$get)('btn-new-lua-field').on('click', () => {
+                try {
+                    const { card } = app;
+                    if (!card)
+                        return;
+                    const clazz = card.options.entity;
+                    if (!clazz)
+                        return;
+                    this.app.nameMode = 'new_field';
+                    this.app.$titleName.html('Create Lua Field');
+                    this.app.$inputName.val('');
+                    this.app.modalName.show();
+                }
+                catch (e) {
+                    app.toast.alert(`Failed to create Lua Field.`, 'error');
+                    console.error(e);
+                }
             });
-            (0, util_10.$get)('btn-new-lua-function').on('click', () => {
-                const { card } = app;
-                if (!card)
-                    return;
-                const clazz = card.options.entity;
-                if (!clazz)
-                    return;
-                this.app.nameMode = 'new_function';
-                this.app.$titleName.html('Create Lua Function');
-                this.app.$inputName.val('');
-                this.app.modalName.show();
+            (0, util_9.$get)('btn-new-lua-function').on('click', () => {
+                try {
+                    const { card } = app;
+                    if (!card)
+                        return;
+                    const clazz = card.options.entity;
+                    if (!clazz)
+                        return;
+                    this.app.nameMode = 'new_function';
+                    this.app.$titleName.html('Create Lua Function');
+                    this.app.$inputName.val('');
+                    this.app.modalName.show();
+                }
+                catch (e) {
+                    app.toast.alert(`Failed to create Lua Function.`, 'error');
+                    console.error(e);
+                }
             });
-            (0, util_10.$get)('btn-new-lua-method').on('click', () => {
-                const { card } = app;
-                if (!card)
-                    return;
-                const clazz = card.options.entity;
-                if (!clazz)
-                    return;
-                this.app.nameMode = 'new_method';
-                this.app.$titleName.html('Create Lua Method');
-                this.app.$inputName.val('');
-                this.app.modalName.show();
+            (0, util_9.$get)('btn-new-lua-method').on('click', () => {
+                try {
+                    const { card } = app;
+                    if (!card)
+                        return;
+                    const clazz = card.options.entity;
+                    if (!clazz)
+                        return;
+                    this.app.nameMode = 'new_method';
+                    this.app.$titleName.html('Create Lua Method');
+                    this.app.$inputName.val('');
+                    this.app.modalName.show();
+                }
+                catch (e) {
+                    app.toast.alert(`Failed to create Lua Method.`, 'error');
+                    console.error(e);
+                }
             });
         }
     }
     exports.Sidebar = Sidebar;
     ;
 });
-define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/LuaClassCard", "src/asledgehammer/rosetta/component/LuaConstructorCard", "src/asledgehammer/rosetta/component/LuaFieldCard", "src/asledgehammer/rosetta/component/LuaFunctionCard", "src/asledgehammer/rosetta/component/Sidebar", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util"], function (require, exports, LuaClassCard_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, Sidebar_1, LuaGenerator_5, RosettaLuaClass_1, RosettaLuaConstructor_2, util_11) {
+define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/LuaClassCard", "src/asledgehammer/rosetta/component/LuaConstructorCard", "src/asledgehammer/rosetta/component/LuaFieldCard", "src/asledgehammer/rosetta/component/LuaFunctionCard", "src/asledgehammer/rosetta/component/Sidebar", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util"], function (require, exports, LuaClassCard_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, Sidebar_1, LuaGenerator_5, RosettaLuaClass_1, RosettaLuaConstructor_2, util_10) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.App = exports.Toast = void 0;
@@ -2709,7 +2657,7 @@ define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/Lu
         }
         alert(text, color = undefined) {
             const { idSimpleBody, idToastSimple } = this;
-            const $toast = (0, util_11.$get)(idToastSimple);
+            const $toast = (0, util_10.$get)(idToastSimple);
             // Set the background color.
             $toast.removeClass('bg-success');
             $toast.removeClass('bg-danger');
@@ -2722,7 +2670,6 @@ define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/Lu
                 $toast.addClass('bg-info');
             // Set the text content.
             document.getElementById(idSimpleBody).innerHTML = text;
-            // $(idSimpleBody).html(text);
             // Show the toast to the user.
             this.toastSimple.show();
         }
@@ -2738,15 +2685,15 @@ define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/Lu
             // This modal is for new items and editing their names.
             // @ts-ignore
             this.modalName = new bootstrap.Modal('#modal-name', {});
-            this.$titleName = (0, util_11.$get)('title-name');
-            this.$inputName = (0, util_11.$get)('input-name');
-            this.$btnName = (0, util_11.$get)('btn-name-create');
+            this.$titleName = (0, util_10.$get)('title-name');
+            this.$inputName = (0, util_10.$get)('input-name');
+            this.$btnName = (0, util_10.$get)('btn-name-create');
             // This modal is for confirming actions.
             // @ts-ignore
             this.modalConfirm = new bootstrap.Modal('#modal-confirm', {});
-            this.$titleConfirm = (0, util_11.$get)('title-confirm');
-            this.$bodyConfirm = (0, util_11.$get)('body-confirm');
-            this.$btnConfirm = (0, util_11.$get)('btn-confirm');
+            this.$titleConfirm = (0, util_10.$get)('title-confirm');
+            this.$bodyConfirm = (0, util_10.$get)('body-confirm');
+            this.$btnConfirm = (0, util_10.$get)('btn-confirm');
             this.confirmSuccess = undefined;
             this.nameMode = null;
         }
@@ -2821,7 +2768,7 @@ define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/Lu
             return card;
         }
         renderCode() {
-            const $renderPane = (0, util_11.$get)('code-preview');
+            const $renderPane = (0, util_10.$get)('code-preview');
             $renderPane.empty();
             if (!this.card)
                 return;
@@ -2844,169 +2791,254 @@ define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/Lu
                 }
             });
             this.$inputName.on('input', () => {
-                setTimeout(() => this.$inputName.val((0, util_11.validateLuaVariableName)(this.$inputName.val())), 1);
+                setTimeout(() => this.$inputName.val((0, util_10.validateLuaVariableName)(this.$inputName.val())), 1);
             });
             this.$btnName.on('click', () => {
                 var _a;
                 const clazz = (_a = this.card) === null || _a === void 0 ? void 0 : _a.options.entity;
-                const name = (0, util_11.validateLuaVariableName)(this.$inputName.val()).trim();
+                const name = (0, util_10.validateLuaVariableName)(this.$inputName.val()).trim();
                 const nameOld = this.nameSelected;
                 switch (this.nameMode) {
                     case 'new_class': {
-                        const entity = new RosettaLuaClass_1.RosettaLuaClass((0, util_11.validateLuaVariableName)(this.$inputName.val()).trim());
-                        this.showClass(entity);
-                        this.sidebar.itemTree.populate();
+                        try {
+                            const entity = new RosettaLuaClass_1.RosettaLuaClass((0, util_10.validateLuaVariableName)(this.$inputName.val()).trim());
+                            this.showClass(entity);
+                            this.sidebar.itemTree.populate();
+                            this.toast.alert('Created Lua Class.', 'success');
+                        }
+                        catch (e) {
+                            this.toast.alert(`Failed to create Lua Class.`, 'error');
+                            console.error(e);
+                        }
                         break;
                     }
                     case 'edit_class': {
-                        clazz.name = name;
-                        this.showClass(clazz);
+                        try {
+                            clazz.name = name;
+                            this.showClass(clazz);
+                            this.toast.alert('Edited Lua Class.');
+                        }
+                        catch (e) {
+                            this.toast.alert(`Failed to edit Lua Class.`, 'error');
+                            console.error(e);
+                        }
                         break;
                     }
                     case 'new_field': {
-                        const field = clazz.createField(name);
-                        this.showField(field);
-                        this.sidebar.itemTree.populate();
+                        try {
+                            const field = clazz.createField(name);
+                            this.showField(field);
+                            this.sidebar.itemTree.populate();
+                            this.toast.alert('Created Lua Field.', 'success');
+                        }
+                        catch (e) {
+                            this.toast.alert(`Failed to create Lua Field.`, 'error');
+                            console.error(e);
+                        }
                         break;
                     }
                     case 'edit_field': {
-                        const field = clazz.fields[nameOld];
-                        field.name = name;
-                        clazz.fields[name] = field;
-                        delete clazz.fields[nameOld];
-                        this.showField(field);
-                        this.sidebar.itemTree.populate();
+                        try {
+                            const field = clazz.fields[nameOld];
+                            field.name = name;
+                            clazz.fields[name] = field;
+                            delete clazz.fields[nameOld];
+                            this.showField(field);
+                            this.sidebar.itemTree.populate();
+                            this.toast.alert('Edited Lua Field.');
+                        }
+                        catch (e) {
+                            this.toast.alert(`Failed to edit Lua Field.`, 'error');
+                            console.error(e);
+                        }
                         break;
                     }
                     case 'new_value': {
-                        const value = clazz.createValue(name);
-                        this.showValue(value);
-                        this.sidebar.itemTree.populate();
+                        try {
+                            const value = clazz.createValue(name);
+                            this.showValue(value);
+                            this.sidebar.itemTree.populate();
+                            this.toast.alert('Created Lua Value.', 'success');
+                        }
+                        catch (e) {
+                            this.toast.alert(`Failed to create Lua Value.`, 'error');
+                            console.error(e);
+                        }
                         break;
                     }
                     case 'edit_value': {
-                        const value = clazz.values[nameOld];
-                        value.name = name;
-                        clazz.values[name] = value;
-                        delete clazz.values[nameOld];
-                        this.showValue(value);
-                        this.sidebar.itemTree.populate();
+                        try {
+                            const value = clazz.values[nameOld];
+                            value.name = name;
+                            clazz.values[name] = value;
+                            delete clazz.values[nameOld];
+                            this.showValue(value);
+                            this.sidebar.itemTree.populate();
+                            this.toast.alert('Edited Lua value.');
+                        }
+                        catch (e) {
+                            this.toast.alert(`Failed to edit Lua Value.`, 'error');
+                            console.error(e);
+                        }
                         break;
                     }
                     case 'new_function': {
-                        const func = clazz.createFunction(name);
-                        this.showFunction(func);
-                        this.sidebar.itemTree.populate();
+                        try {
+                            const func = clazz.createFunction(name);
+                            this.showFunction(func);
+                            this.sidebar.itemTree.populate();
+                            this.toast.alert('Created Lua Function.', 'success');
+                        }
+                        catch (e) {
+                            this.toast.alert(`Failed to create Lua Function.`, 'error');
+                            console.error(e);
+                        }
                         break;
                     }
                     case 'edit_function': {
-                        const func = clazz.functions[nameOld];
-                        func.name = name;
-                        clazz.functions[name] = func;
-                        delete clazz.functions[nameOld];
-                        this.showFunction(func);
-                        this.sidebar.itemTree.populate();
+                        try {
+                            const func = clazz.functions[nameOld];
+                            func.name = name;
+                            clazz.functions[name] = func;
+                            delete clazz.functions[nameOld];
+                            this.showFunction(func);
+                            this.sidebar.itemTree.populate();
+                            this.toast.alert('Edited Lua Function.');
+                        }
+                        catch (e) {
+                            this.toast.alert(`Failed to edit Lua Function.`, 'error');
+                            console.error(e);
+                        }
                         break;
                     }
                     case 'new_method': {
-                        const method = clazz.createMethod(name);
-                        this.showMethod(method);
-                        this.sidebar.itemTree.populate();
+                        try {
+                            const method = clazz.createMethod(name);
+                            this.showMethod(method);
+                            this.sidebar.itemTree.populate();
+                            this.toast.alert('Created Lua Method.', 'success');
+                        }
+                        catch (e) {
+                            this.toast.alert(`Failed to create Lua Method.`, 'error');
+                            console.error(e);
+                        }
                         break;
                     }
                     case 'edit_method': {
-                        const method = clazz.methods[nameOld];
-                        method.name = name;
-                        clazz.methods[name] = method;
-                        delete clazz.methods[nameOld];
-                        this.showMethod(method);
-                        this.sidebar.itemTree.populate();
+                        try {
+                            const method = clazz.methods[nameOld];
+                            method.name = name;
+                            clazz.methods[name] = method;
+                            delete clazz.methods[nameOld];
+                            this.showMethod(method);
+                            this.sidebar.itemTree.populate();
+                            this.toast.alert('Edited Lua Method.');
+                        }
+                        catch (e) {
+                            this.toast.alert(`Failed to edit Lua Method.`, 'error');
+                            console.error(e);
+                        }
                         break;
                     }
                     case 'new_parameter': {
-                        const split = nameOld.split('-');
-                        const type = split[0];
-                        const funcName = split[1];
-                        let func = null;
-                        if (type === 'constructor') {
-                            func = clazz.conztructor;
+                        try {
+                            const split = nameOld.split('-');
+                            const type = split[0];
+                            const funcName = split[1];
+                            let func = null;
+                            if (type === 'constructor') {
+                                func = clazz.conztructor;
+                            }
+                            else if (type === 'function') {
+                                func = clazz.functions[funcName];
+                            }
+                            else {
+                                func = clazz.methods[funcName];
+                            }
+                            func.addParameter(name, 'any');
+                            if (type === 'constructor') {
+                                this.showConstructor(func);
+                            }
+                            else if (type === 'function') {
+                                this.showFunction(func);
+                            }
+                            else {
+                                this.showMethod(func);
+                            }
+                            this.renderCode();
+                            this.toast.alert('Created Lua Parameter.', 'success');
                         }
-                        else if (type === 'function') {
-                            func = clazz.functions[funcName];
+                        catch (e) {
+                            this.toast.alert(`Failed to create Lua Parameter.`, 'error');
+                            console.error(e);
                         }
-                        else {
-                            func = clazz.methods[funcName];
-                        }
-                        func.addParameter(name, 'any');
-                        if (type === 'constructor') {
-                            this.showConstructor(func);
-                        }
-                        else if (type === 'function') {
-                            this.showFunction(func);
-                        }
-                        else {
-                            this.showMethod(func);
-                        }
-                        this.renderCode();
+                        break;
                     }
                     case 'edit_parameter': {
-                        const split = nameOld.split('-');
-                        const funcName = split[0];
-                        const paramName = split[1];
-                        let type = null;
-                        let func = null;
-                        let param = null;
-                        // Could be the constructor.
-                        if (funcName === 'new') {
-                            func = clazz.conztructor;
-                            type = 'constructor';
-                        }
-                        else {
-                            // First, check methods.
-                            for (const methodName of Object.keys(clazz.methods)) {
-                                if (methodName === funcName) {
-                                    func = clazz.methods[methodName];
-                                    type = 'method';
-                                    break;
-                                }
+                        try {
+                            const split = nameOld.split('-');
+                            const funcName = split[0];
+                            const paramName = split[1];
+                            let type = null;
+                            let func = null;
+                            let param = null;
+                            // Could be the constructor.
+                            if (funcName === 'new') {
+                                func = clazz.conztructor;
+                                type = 'constructor';
                             }
-                            // Second, check functions.
-                            if (!func) {
-                                for (const methodName of Object.keys(clazz.functions)) {
+                            else {
+                                // First, check methods.
+                                for (const methodName of Object.keys(clazz.methods)) {
                                     if (methodName === funcName) {
-                                        func = clazz.functions[methodName];
-                                        type = 'function';
+                                        func = clazz.methods[methodName];
+                                        type = 'method';
                                         break;
                                     }
                                 }
+                                // Second, check functions.
+                                if (!func) {
+                                    for (const methodName of Object.keys(clazz.functions)) {
+                                        if (methodName === funcName) {
+                                            func = clazz.functions[methodName];
+                                            type = 'function';
+                                            break;
+                                        }
+                                    }
+                                }
                             }
-                        }
-                        if (!func) {
-                            console.warn(`Unknown function / method / constructor: ${clazz.name}.${funcName}!`);
-                            break;
-                        }
-                        for (const next of func.parameters) {
-                            if (next.name === paramName) {
-                                param = next;
+                            if (!func) {
+                                console.warn(`Unknown function / method / constructor: ${clazz.name}.${funcName}!`);
                                 break;
                             }
+                            for (const next of func.parameters) {
+                                if (next.name === paramName) {
+                                    param = next;
+                                    break;
+                                }
+                            }
+                            if (!param) {
+                                console.warn(`Unknown parameter: ${clazz.name}.${funcName}#${paramName}!`);
+                                break;
+                            }
+                            param.name = name;
+                            if (type === 'constructor') {
+                                this.showConstructor(func);
+                            }
+                            else if (type === 'function') {
+                                this.showFunction(func);
+                            }
+                            else if (type === 'method') {
+                                this.showMethod(func);
+                            }
+                            this.renderCode();
+                            this.sidebar.itemTree.populate();
+                            this.toast.alert('Edited Lua Parameter.');
                         }
-                        if (!param) {
-                            console.warn(`Unknown parameter: ${clazz.name}.${funcName}#${paramName}!`);
-                            break;
+                        catch (e) {
+                            this.toast.alert(`Failed to edit Lua Parameter.`, 'error');
+                            console.error(e);
                         }
-                        param.name = name;
-                        if (type === 'constructor') {
-                            this.showConstructor(func);
-                        }
-                        else if (type === 'function') {
-                            this.showFunction(func);
-                        }
-                        else if (type === 'method') {
-                            this.showMethod(func);
-                        }
-                        this.renderCode();
-                        this.sidebar.itemTree.populate();
                         break;
                     }
                 }
@@ -3471,18 +3503,65 @@ define("src/asledgehammer/rosetta/SerializableComponent", ["require", "exports"]
     }
     exports.SerializableComponent = SerializableComponent;
 });
-define("src/asledgehammer/rosetta/component/LabelComponent", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/Component"], function (require, exports, util_12, Component_5) {
+define("src/asledgehammer/rosetta/component/LabelComponent", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/Component"], function (require, exports, util_11, Component_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LabelComponent = void 0;
-    class LabelComponent extends Component_5.Component {
+    class LabelComponent extends Component_3.Component {
         constructor(options) {
             super(options);
         }
         onRender() {
-            return (0, util_12.html) ``;
+            return (0, util_11.html) ``;
         }
     }
     exports.LabelComponent = LabelComponent;
+});
+define("src/asledgehammer/rosetta/component/SidebarPanelButton", ["require", "exports", "src/asledgehammer/rosetta/component/Component", "src/asledgehammer/rosetta/util"], function (require, exports, Component_4, util_12) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.SidebarPanelButton = void 0;
+    class SidebarPanelButton extends Component_4.Component {
+        constructor(options) {
+            super(options);
+        }
+        listen() {
+            (0, util_12.$get)(this.id).on('click', () => {
+                if (this.options && this.options.onclick) {
+                    this.options.onclick();
+                }
+            });
+        }
+        onRender() {
+            const { label } = this.options;
+            return (0, util_12.html) `
+            <button class="btn btn-primary col-12 rounded-0">${label}</button>
+        `;
+        }
+    }
+    exports.SidebarPanelButton = SidebarPanelButton;
+});
+define("src/asledgehammer/rosetta/component/SidebarPanel", ["require", "exports", "src/asledgehammer/rosetta/component/Component"], function (require, exports, Component_5) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.SidebarPanel = void 0;
+    class SidebarPanel extends Component_5.Component {
+        constructor(options) {
+            super(options);
+        }
+        listen() {
+            const { buttons } = this.options;
+            if (buttons && buttons.length) {
+                for (const button of buttons) {
+                    button.listen();
+                }
+            }
+        }
+        onRender() {
+            return '';
+        }
+    }
+    exports.SidebarPanel = SidebarPanel;
+    ;
 });
 //# sourceMappingURL=app.js.map
