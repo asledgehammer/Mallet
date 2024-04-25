@@ -3036,10 +3036,6 @@ define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/Lu
     }
     $(() => init());
 });
-define("src/Toast", ["require", "exports"], function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-});
 define("src/lib", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
