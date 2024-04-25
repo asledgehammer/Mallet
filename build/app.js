@@ -2032,7 +2032,7 @@ define("src/asledgehammer/rosetta/component/LuaFieldCard", ["require", "exports"
                 </div>
                 <div style="position: absolute; top: 5px; width: 100%; height: 32px;">
                     <!-- Delete Button -->
-                    <button id="${idBtnDelete}" class="btn btn-sm responsive-btn text-danger float-end ms-1" title="Delete ${isStatic ? 'Value' : 'Field'}">
+                    <button id="${idBtnDelete}" class="btn btn-sm responsive-btn float-end ms-1" title="Delete ${isStatic ? 'Value' : 'Field'}">
                         <div class="btn-pane">
                             <i class="fa-solid fa-xmark"></i>
                         </div>
@@ -2134,7 +2134,7 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
                 </div>
                 <div style="position: absolute; top: 5px; width: 100%; height: 32px;">
                     <!-- Delete Button -->
-                    <button id="${idBtnDelete}" class="btn btn-sm responsive-btn text-danger float-end ms-1" title="Delete ${isStatic ? 'Function' : 'Method'}">
+                    <button id="${idBtnDelete}" class="btn btn-sm responsive-btn float-end ms-1" title="Delete ${isStatic ? 'Function' : 'Method'}">
                         <div class="btn-pane">
                             <i class="fa-solid fa-xmark"></i>
                         </div>
