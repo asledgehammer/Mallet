@@ -2677,11 +2677,41 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
 define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/LuaClassCard", "src/asledgehammer/rosetta/component/LuaConstructorCard", "src/asledgehammer/rosetta/component/LuaFieldCard", "src/asledgehammer/rosetta/component/LuaFunctionCard", "src/asledgehammer/rosetta/component/Sidebar", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util"], function (require, exports, LuaClassCard_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, Sidebar_1, LuaGenerator_5, RosettaLuaClass_1, RosettaLuaConstructor_2, util_11) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.App = void 0;
+    exports.App = exports.Toast = void 0;
+    class Toast {
+        constructor(app) {
+            this.idSimpleBody = 'toast-simple-body';
+            this.idToastSimple = 'toast-simple';
+            this.app = app;
+            // @ts-ignore
+            this.toastSimple = new bootstrap.Toast(document.getElementById('toast-simple'), {});
+        }
+        alert(text, color = undefined) {
+            const { idSimpleBody, idToastSimple } = this;
+            const $toast = (0, util_11.$get)(idToastSimple);
+            // Set the background color.
+            $toast.removeClass('bg-success');
+            $toast.removeClass('bg-danger');
+            $toast.removeClass('bg-info');
+            if (color === 'success')
+                $toast.addClass('bg-success');
+            else if (color === 'error')
+                $toast.addClass('bg-danger');
+            else if (color === 'info')
+                $toast.addClass('bg-info');
+            // Set the text content.
+            document.getElementById(idSimpleBody).innerHTML = text;
+            // $(idSimpleBody).html(text);
+            // Show the toast to the user.
+            this.toastSimple.show();
+        }
+    }
+    exports.Toast = Toast;
     class App {
         constructor() {
             this.card = null;
             this.sidebar = new Sidebar_1.Sidebar(this);
+            this.toast = new Toast(this);
             this.eSidebarContainer = document.getElementById('screen-sidebar-container');
             this.$screenContent = $('#screen-content-end-container');
             // This modal is for new items and editing their names.
@@ -2984,6 +3014,10 @@ define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/Lu
         window.app = app;
     }
     $(() => init());
+});
+define("src/Toast", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
 });
 define("src/lib", ["require", "exports"], function (require, exports) {
     "use strict";

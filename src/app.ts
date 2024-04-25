@@ -11,9 +11,48 @@ import { RosettaLuaField } from './asledgehammer/rosetta/lua/RosettaLuaField';
 import { RosettaLuaFunction } from './asledgehammer/rosetta/lua/RosettaLuaFunction';
 import { $get, validateLuaVariableName } from './asledgehammer/rosetta/util';
 
+export class Toast {
+
+    readonly app: App;
+
+    readonly toastSimple: any;
+    readonly idSimpleBody = 'toast-simple-body';
+    readonly idToastSimple = 'toast-simple';
+
+    constructor(app: App) {
+        this.app = app;
+
+        // @ts-ignore
+        this.toastSimple = new bootstrap.Toast(document.getElementById('toast-simple'), {});
+    }
+
+
+    alert(text: string, color: 'success' | 'info' | 'error' | undefined = undefined) {
+        const { idSimpleBody, idToastSimple } = this;
+
+        const $toast = $get(idToastSimple);
+
+        // Set the background color.
+        $toast.removeClass('bg-success');
+        $toast.removeClass('bg-danger');
+        $toast.removeClass('bg-info');
+        if (color === 'success') $toast.addClass('bg-success');
+        else if (color === 'error') $toast.addClass('bg-danger');
+        else if (color === 'info') $toast.addClass('bg-info');
+
+        // Set the text content.
+        document.getElementById(idSimpleBody)!.innerHTML = text;
+        // $(idSimpleBody).html(text);
+
+        // Show the toast to the user.
+        this.toastSimple.show();
+    }
+}
+
 export class App {
 
     readonly sidebar: Sidebar;
+    readonly toast: Toast;
     readonly eSidebarContainer: HTMLElement;
     readonly $screenContent: JQuery<HTMLElement>;
 
@@ -38,6 +77,7 @@ export class App {
 
     constructor() {
         this.sidebar = new Sidebar(this);
+        this.toast = new Toast(this);
         this.eSidebarContainer = document.getElementById('screen-sidebar-container')!;
         this.$screenContent = $('#screen-content-end-container');
 
@@ -91,7 +131,7 @@ export class App {
 
     public showConstructor(entity: RosettaLuaConstructor | undefined): LuaConstructorCard {
         const clazz = this.card?.options!.entity!;
-        if(!entity) entity = new RosettaLuaConstructor(clazz);
+        if (!entity) entity = new RosettaLuaConstructor(clazz);
         this.$screenContent.empty();
         const card = new LuaConstructorCard(this, { entity });
         this.$screenContent.append(card.render());

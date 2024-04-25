@@ -39,12 +39,28 @@
         <div id="screen-content-container" class="screen-content-end p-4" style="overflow-y: auto;">
             <img class="img-logo" src="assets/media/logo_544.png" />
             <div id="screen-content-end-container"></div>
+
+            <!-- Simple Toast -->
+            <div class="p-0 m-0"
+                style="position: absolute; pointer-events: none; top: 0; left: 0; width: 100%; height: 100%;">
+                <div id="toast-simple" class="toast text-white"
+                    style="filter: saturate(0.5); position: absolute; bottom: 1rem; left: 50%; transform: translateX(-50%);"
+                    role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div id="toast-simple-body" class="toast-body"></div>
+                        <button type="button" class="btn-close me-2 m-auto text-white"
+                            style="filter: none !important; font-weight: bold;" data-bs-dismiss="toast"
+                            aria-label="Close"></button>
+                    </div>
+                </div>
+            </div>
         </div>
         <!-- [Screen] - Preview -->
         <div id="screen-content-render" class="screen-content-render bg-black" style="overflow-y: auto;">
             <pre id="code-preview" class="w-100 h-100 p-4 m-0" style="overflow: scroll;"></pre>
             <!-- Copy Button -->
-            <button id="btn-code-preview-copy" class="btn btn-sm responsive-btn" style="position: absolute; top: 1rem; right: 2rem; z-index: 5" title="Copy Code">
+            <button id="btn-code-preview-copy" class="btn btn-sm responsive-btn"
+                style="position: absolute; top: 1rem; right: 2rem; z-index: 5" title="Copy Code">
                 <div class="btn-pane">
                     <i class="fa-solid fa-copy"></i>
                 </div>
@@ -119,11 +135,12 @@
                 <div class="modal-body">
                     <p class="fs-6">
                         <strong>Mallet</strong> is a program for documenting code in <strong><a
-                                href="https://projectzomboid.com/blog/" target="_blank">Project Zomboid</a></strong>. Mallet produces
-                        JSON documents for the <strong><a
-                                href="https://github.com/asledgehammer/PZ-Rosetta" target="_blank">PZ-Rosetta</a></strong> framework,
-                        deployed through the <strong><a
-                                href="https://github.com/asledgehammer/Umbrella" target="_blank">Umbrella</a></strong> project.
+                                href="https://projectzomboid.com/blog/" target="_blank">Project Zomboid</a></strong>.
+                        Mallet produces
+                        JSON documents for the <strong><a href="https://github.com/asledgehammer/PZ-Rosetta"
+                                target="_blank">PZ-Rosetta</a></strong> framework,
+                        deployed through the <strong><a href="https://github.com/asledgehammer/Umbrella"
+                                target="_blank">Umbrella</a></strong> project.
 
                         <strong>Mallet</strong> is currently a WIP tool and is being actively developed and polished.
                         Keep in mind that there may be jerky animations (or the lack thereof), when operating the tool.
@@ -144,17 +161,22 @@
                             reference passed.</span></li>
                     </ul>
 
-                    <p>Example file: <a href="https://raw.githubusercontent.com/asledgehammer/Mallet/main/assets/rosetta/patches/jab/json/client/isui/ISUIElement.json">ISUIElement.json</a></p>
+                    <p>Example file: <a
+                            href="https://raw.githubusercontent.com/asledgehammer/Mallet/main/assets/rosetta/patches/jab/json/client/isui/ISUIElement.json">ISUIElement.json</a>
+                    </p>
                     <h4>Support</h4>
                     <p>If you like what I do and helped your community a lot, feel free to buy me a coffee!<br>
-                        <a href="https://ko-fi.com/jabdoesthings target="_blank"">https://ko-fi.com/jabdoesthings</a></br>
-                        <a
-                            href="https://www.paypal.com/paypalme/JabJabJab target="_blank"">https://www.paypal.com/paypalme/JabJabJab</a></br>
+                        <a href="https://ko-fi.com/jabdoesthings target="
+                            _blank"">https://ko-fi.com/jabdoesthings</a></br>
+                        <a href="https://www.paypal.com/paypalme/JabJabJab target="
+                            _blank"">https://www.paypal.com/paypalme/JabJabJab</a></br>
                     </p>
-                    <p>Discord Server: <a href="https://discord.gg/u3vWvcPX8f target="_blank"">https://discord.gg/u3vWvcPX8f</a></p>
+                    <p>Discord Server: <a href="https://discord.gg/u3vWvcPX8f target="
+                            _blank"">https://discord.gg/u3vWvcPX8f</a></p>
                 </div>
                 <div class="modal-footer">
-                    <button id="btn-confirm" type="button" class="btn btn-primary" data-bs-dismiss="modal">Accept</button>
+                    <button id="btn-confirm" type="button" class="btn btn-primary"
+                        data-bs-dismiss="modal">Accept</button>
                 </div>
             </div>
         </div>
