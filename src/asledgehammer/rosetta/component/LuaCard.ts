@@ -119,6 +119,8 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                 param.type = value.target.value;
                 if (param.type === 'custom') {
                     $customInput.show();
+                    // We default to 'any' for an undefined custom value.
+                    param.type = 'any';
                 } else {
                     $customInput.hide();
                     $customInput.val(''); // Clear custom field.
@@ -129,7 +131,12 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
 
             // When the custom field is changed, set this as the type.
             $customInput.on('input', () => {
-                param.type = $customInput.val();
+                const val = $customInput.val();
+                if (val === '') {
+                    param.type = 'any';
+                } else {
+                    param.type = val;
+                }
                 this.update();
                 this.app.renderCode();
             });
@@ -398,9 +405,22 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
             entity.type = value.target.value;
             if (entity.type === 'custom') {
                 $customInput.show();
+                // We default to 'any' for an undefined custom value.
+                entity.type = 'any';
             } else {
                 $customInput.hide();
                 $customInput.val(''); // Clear custom field.
+            }
+            this.update();
+            this.app.renderCode();
+        });
+
+        $customInput.on('input', () => {
+            const val = $customInput.val();
+            if (val === '') {
+                entity.type = 'any';
+            } else {
+                entity.type = val;
             }
             this.update();
             this.app.renderCode();

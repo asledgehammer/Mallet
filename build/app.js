@@ -1471,6 +1471,8 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                     param.type = value.target.value;
                     if (param.type === 'custom') {
                         $customInput.show();
+                        // We default to 'any' for an undefined custom value.
+                        param.type = 'any';
                     }
                     else {
                         $customInput.hide();
@@ -1481,7 +1483,13 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                 });
                 // When the custom field is changed, set this as the type.
                 $customInput.on('input', () => {
-                    param.type = $customInput.val();
+                    const val = $customInput.val();
+                    if (val === '') {
+                        param.type = 'any';
+                    }
+                    else {
+                        param.type = val;
+                    }
                     this.update();
                     this.app.renderCode();
                 });
@@ -1730,10 +1738,23 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                 entity.type = value.target.value;
                 if (entity.type === 'custom') {
                     $customInput.show();
+                    // We default to 'any' for an undefined custom value.
+                    entity.type = 'any';
                 }
                 else {
                     $customInput.hide();
                     $customInput.val(''); // Clear custom field.
+                }
+                this.update();
+                this.app.renderCode();
+            });
+            $customInput.on('input', () => {
+                const val = $customInput.val();
+                if (val === '') {
+                    entity.type = 'any';
+                }
+                else {
+                    entity.type = val;
                 }
                 this.update();
                 this.app.renderCode();
