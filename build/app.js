@@ -1534,6 +1534,9 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "hi
                     this.app.askConfirm(() => {
                         entity.parameters.splice(entity.parameters.indexOf(param), 1);
                         this.update();
+                        // Implicit check for refreshability for parameters.
+                        if (this.refreshParameters)
+                            this.refreshParameters();
                     }, `Delete Parameter ${param.name}?`);
                 });
                 this.listenEdit({ name: param.name }, idBtnEdit, 'edit_parameter', 'Edit Parameter Name', `${entity.name}-${param.name}`);
@@ -2008,8 +2011,7 @@ define("src/asledgehammer/rosetta/component/LuaConstructorCard", ["require", "ex
             this.listenParameters(Object.assign(Object.assign({}, entity), { name: 'new' }), 'constructor');
             this.listenPreview();
         }
-        update() {
-            super.update();
+        refreshParameters() {
             const { idParamContainer } = this;
             const { entity } = this.options;
             const $paramContainer = (0, util_5.$get)(idParamContainer);
@@ -2229,8 +2231,7 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
                 }, `Delete ${isStatic ? 'Function' : 'Method'} ${entity.name}`);
             });
         }
-        update() {
-            super.update();
+        refreshParameters() {
             const { idParamContainer } = this;
             const { entity, isStatic } = this.options;
             const $paramContainer = (0, util_7.$get)(idParamContainer);

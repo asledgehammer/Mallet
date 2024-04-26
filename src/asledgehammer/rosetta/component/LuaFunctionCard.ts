@@ -122,8 +122,7 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
         });
     }
 
-    update(): void {
-        super.update();
+    refreshParameters(): void {
         const { idParamContainer } = this;
         const { entity, isStatic } = this.options!;
         const $paramContainer = $get(idParamContainer);

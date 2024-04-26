@@ -67,8 +67,7 @@ export class LuaConstructorCard extends LuaCard<LuaConstructorCardOptions> {
         this.listenPreview();
     }
 
-    update(): void {
-        super.update();
+    refreshParameters(): void {
         const { idParamContainer } = this;
         const { entity } = this.options!;
         const $paramContainer = $get(idParamContainer);

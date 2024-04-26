@@ -166,6 +166,10 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                 this.app.askConfirm(() => {
                     entity.parameters.splice(entity.parameters.indexOf(param), 1);
                     this.update();
+
+                    // Implicit check for refreshability for parameters.
+                    if((this as any).refreshParameters) (this as any).refreshParameters();
+
                 }, `Delete Parameter ${param.name}?`);
             });
 
