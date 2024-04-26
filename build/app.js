@@ -1360,7 +1360,11 @@ define("src/asledgehammer/Delta", ["require", "exports"], function (require, exp
         const editor = new Quill(`#${id}`, options);
         // @ts-ignore
         new QuillMarkdown(editor, {});
+        let flag = false;
         const update = () => {
+            if (flag)
+                return;
+            flag = true;
             const { ops } = editor.editor.getContents(0, 99999999);
             let markdown = fromDelta(ops);
             if (markdown === '\n')
@@ -1368,13 +1372,20 @@ define("src/asledgehammer/Delta", ["require", "exports"], function (require, exp
             else if (!markdown.endsWith('\n'))
                 markdown += '\n';
             onChange(markdown);
+            flag = false;
         };
-        editor.on('text-change', () => update());
+        let flag2 = false;
+        editor.on('text-change', () => {
+            if (flag || flag2)
+                return;
+            update();
+        });
         // Apply markdown as delta.
         if (markdown && markdown.length) {
             setTimeout(() => {
+                flag2 = true;
                 editor.editor.insertContents(0, toDelta(markdown));
-                update();
+                flag2 = false;
             }, 1);
         }
     };
@@ -2791,7 +2802,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             if (!this.card)
                 return;
             const highlightedCode = hljs.default.highlightAuto((0, LuaGenerator_5.generateLuaClass)(this.card.options.entity), ['lua']).value;
-            $renderPane.append(highlightedCode);
+            $renderPane.html(highlightedCode);
         }
         createSidebar() {
             const { eSidebarContainer, sidebar } = this;
@@ -3061,6 +3072,35 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                 }
                 this.nameSelected = undefined;
                 this.modalName.hide();
+            });
+            const $container = (0, util_10.$get)('screen-content-container');
+            const $cardPreview = (0, util_10.$get)('screen-content-end-container');
+            const $codePreview = (0, util_10.$get)('code-preview');
+            const $btnCardCode = (0, util_10.$get)('btn-card-code');
+            const $iconCard = (0, util_10.$get)('icon-card');
+            const $iconCode = (0, util_10.$get)('icon-code');
+            let mode = 'card';
+            $btnCardCode.on('click', () => {
+                if (mode === 'card') {
+                    $container.removeClass('p-4');
+                    $container.addClass('p-0');
+                    $cardPreview.hide();
+                    $codePreview.show();
+                    $iconCode.hide();
+                    $iconCard.show();
+                    $btnCardCode.css({ 'right': '2rem' });
+                    mode = 'code';
+                }
+                else if (mode === 'code') {
+                    $container.removeClass('p-0');
+                    $container.addClass('p-4');
+                    $codePreview.hide();
+                    $cardPreview.slideDown(200);
+                    $iconCard.hide();
+                    $iconCode.show();
+                    $btnCardCode.css({ 'right': '1rem' });
+                    mode = 'card';
+                }
             });
         }
         askConfirm(onSuccess, title = 'Confirm', body = 'Are you sure?') {

@@ -38,7 +38,16 @@
         <!-- [Screen] - Content -->
         <div id="screen-content-container" class="screen-content-end p-4" style="overflow-y: auto;">
             <img class="img-logo" src="assets/media/logo_544.png" />
-            <div id="screen-content-end-container" class="d-flex justify-content-center"></div>
+            <div id="screen-content-end-container" class="justify-content-center" style="display: flex;"></div>
+
+            <button id="btn-card-code" class="btn btn-sm responsive-btn" style="z-index: 2; position: absolute; top: 1rem; right: 1rem;">
+                <div class="btn-pane" style="width: 30px; height: 30px;">
+                    <i id="icon-card" class="fa-regular fa-rectangle-list" style="display: none;"></i>
+                    <i id="icon-code" class="fa-solid fa-code" style="display: block;"></i>
+                </div>
+            </button>
+
+            <pre id="code-preview" class="w-100 h-100 p-4 m-0" style="display: none; position: absolute; background-color: black; overflow: scroll;"></pre>
 
             <!-- Simple Toast -->
             <div class="p-0 m-0"
@@ -75,7 +84,6 @@
         </div>
         <!-- [Screen] - Preview -->
         <div id="screen-content-render" class="screen-content-render bg-black" style="overflow-y: auto;">
-            <pre id="code-preview" class="w-100 h-100 p-4 m-0" style="overflow: scroll;"></pre>
             <!-- Copy Button -->
             <button id="btn-code-preview-copy" class="btn btn-sm responsive-btn"
                 style="position: absolute; top: 1rem; right: 2rem; z-index: 5" title="Copy Code">

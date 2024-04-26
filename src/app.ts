@@ -178,12 +178,8 @@ export class App {
         $renderPane.empty();
         if (!this.card) return;
 
-        const highlightedCode = hljs.default.highlightAuto(
-            generateLuaClass(this.card.options!.entity),
-            ['lua'],
-        ).value;
-
-        $renderPane.append(highlightedCode);
+        const highlightedCode = hljs.default.highlightAuto(generateLuaClass(this.card.options!.entity), ['lua']).value;
+        $renderPane.html(highlightedCode);
     }
 
     private createSidebar() {
@@ -445,6 +441,37 @@ export class App {
             }
             this.nameSelected = undefined;
             this.modalName.hide();
+        });
+
+        const $container = $get('screen-content-container');
+        const $cardPreview = $get('screen-content-end-container');
+        const $codePreview = $get('code-preview');
+        const $btnCardCode = $get('btn-card-code');
+        const $iconCard = $get('icon-card');
+        const $iconCode = $get('icon-code');
+
+        let mode: 'code' | 'card' = 'card';
+
+        $btnCardCode.on('click', () => {
+            if(mode === 'card') {
+                $container.removeClass('p-4');
+                $container.addClass('p-0');
+                $cardPreview.hide();
+                $codePreview.show();
+                $iconCode.hide();
+                $iconCard.show();
+                $btnCardCode.css({'right': '2rem'});
+                mode = 'code';
+            } else if(mode === 'code') {
+                $container.removeClass('p-0');
+                $container.addClass('p-4');
+                $codePreview.hide();
+                $cardPreview.slideDown(200);
+                $iconCard.hide();
+                $iconCode.show();
+                $btnCardCode.css({'right': '1rem'});
+                mode = 'card';
+            }
         });
     }
 
