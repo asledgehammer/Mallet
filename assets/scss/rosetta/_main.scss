@@ -23,12 +23,13 @@ body {
 }
 
 .screen-content-end {
+
     position: absolute;
     left: 292px;
     height: 100%;
-    // min-width: 768px;
-    width: calc(100% - (292px + 768px));
-    max-width: calc(100% - 768px);
+    width: calc(100% - 292px);
+    min-width: 480px;
+    max-width: calc(100% - 292px);
 
     background-size: 20px 20px;
     background-color: #1a1a1a;
@@ -49,25 +50,10 @@ body {
 }
 
 .screen-content-render {
-    display: block;
+    // display: block;
+    display: none;
     position: absolute;
     right: 0;
     height: 100%;
     width: 768px;
-}
-
-// Disable the preview and only let the sidebar and end content panes show.
-@media only screen and (max-width: 1400px) {
-
-    .screen-content-render {
-        display: none;
-    }
-
-    .screen-content-end {
-        position: absolute;
-        height: 100%;
-        width: calc(100% - 292px);
-        min-width: 480px;
-        max-width: calc(100% - 292px);
-    }
 }
