@@ -132,11 +132,8 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
             // When the custom field is changed, set this as the type.
             $customInput.on('input', () => {
                 const val = $customInput.val();
-                if (val === '') {
-                    param.type = 'any';
-                } else {
-                    param.type = val;
-                }
+                if (val === '') param.type = 'any';
+                else param.type = val;
                 this.update();
                 this.app.renderCode();
             });

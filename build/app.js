@@ -1480,12 +1480,10 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                 // When the custom field is changed, set this as the type.
                 $customInput.on('input', () => {
                     const val = $customInput.val();
-                    if (val === '') {
+                    if (val === '')
                         param.type = 'any';
-                    }
-                    else {
+                    else
                         param.type = val;
-                    }
                     this.update();
                     this.app.renderCode();
                 });
