@@ -57,3 +57,12 @@ body {
     height: 100%;
     width: 768px;
 }
+
+// This is to center modals in the main pane.
+.modal {
+    position: absolute;
+    float: left;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
