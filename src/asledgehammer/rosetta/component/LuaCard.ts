@@ -167,15 +167,6 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
             $get(idBtnDelete).on('click', () => {
                 this.app.askConfirm(() => {
                     entity.parameters.splice(entity.parameters.indexOf(param), 1);
-
-                    // TODO: Clean up.
-                    // if (type === 'constructor') {
-                    //     this.app.showConstructor(entity as any);
-                    // } else if (type === 'function') {
-                    //     this.app.showFunction(entity as any);
-                    // } else if (type === 'method') {
-                    //     this.app.showMethod(entity as any);
-                    // }
                     this.update();
                 }, `Delete Parameter ${param.name}?`);
             });

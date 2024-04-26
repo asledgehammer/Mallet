@@ -1514,14 +1514,6 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                 (0, util_3.$get)(idBtnDelete).on('click', () => {
                     this.app.askConfirm(() => {
                         entity.parameters.splice(entity.parameters.indexOf(param), 1);
-                        // TODO: Clean up.
-                        // if (type === 'constructor') {
-                        //     this.app.showConstructor(entity as any);
-                        // } else if (type === 'function') {
-                        //     this.app.showFunction(entity as any);
-                        // } else if (type === 'method') {
-                        //     this.app.showMethod(entity as any);
-                        // }
                         this.update();
                     }, `Delete Parameter ${param.name}?`);
                 });
