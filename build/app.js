@@ -1539,11 +1539,25 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                 const idBtnDelete = `${entity.name}-parameter-${param.name}-delete`;
                 htmlParams += (0, util_3.html) `
                 <div class="accordion-item rounded-0">
-                    <div class="accordion-header" id="headingTwo">
+                    <div class="accordion-header" style="position: relative" id="headingTwo">
                         <div class="p-2" style="position: relative;">
                             <button class="border-0 accordion-button collapsed rounded-0 p-0 text-white" style="background-color: transparent !important" type="button" data-bs-toggle="collapse" data-bs-target="#${idCollapse}" aria-expanded="false" aria-controls="${idCollapse}">
                                 <div class="col-auto responsive-badge border border-1 border-light-half desaturate shadow px-2 me-2" style="display: inline;"><strong>${param.type}</strong></div>
                                 <h6 class="font-monospace mb-1">${param.name}</h6>
+                            </button>
+                        </div>
+                        <div style="position: absolute; height: 32px; top: 5px; right: 2rem; z-index: 4;">
+                            <!-- Delete Button -->
+                            <button id="${idBtnDelete}" class="btn btn-sm responsive-btn float-end ms-1" style="z-index: 4">
+                                <div class="btn-pane">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </div>
+                            </button>
+                            <!-- Edit Button -->
+                            <button id="${idBtnEdit}" class="btn btn-sm responsive-btn float-end" style="z-index: 4">
+                                <div class="btn-pane"> 
+                                    <i class="fa-solid fa-pen"></i>
+                                </div>
                             </button>
                         </div>
                     </div>
@@ -1559,20 +1573,6 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                                 <label for="${idParamNotes}" class="form-label">Description</label>
                                 <div id="${idParamNotes}"></div>
                             </div>
-                            <div style="position: relative; width: 100%; height: 32px;">
-                                <!-- Delete Button -->
-                                <button id="${idBtnDelete}" class="btn btn-sm responsive-btn float-end ms-1">
-                                    <div class="btn-pane">
-                                        <i class="fa-solid fa-xmark"></i>
-                                    </div>
-                                </button>
-                                <!-- Edit Button -->
-                                <button id="${idBtnEdit}" class="btn btn-sm responsive-btn float-end">
-                                    <div class="btn-pane"> 
-                                        <i class="fa-solid fa-pen"></i>
-                                    </div>
-                                </button>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -1585,12 +1585,7 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                     <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idAccordion}" aria-expanded="true" aria-controls="${idAccordion}">
                         <strong>Parameters</strong>
                     </button>
-                </div>
-                <div id="${idAccordion}" class="card-body mb-0 collapse${show ? ' show' : ''}">
-                    <div class="accordion rounded-0">
-                        ${htmlParams}
-                    </div>
-                    <div class="mt-3" style="position: relative; width: 100%; height: 32px;">
+                    <div style="position: absolute; height: 32px; top: 5px; right: 5px; z-index: 4;">
                         <!-- Add Button -->
                         <button id="${idBtnAdd}" class="btn btn-sm responsive-btn float-end ms-1">
                             <div class="btn-pane">
@@ -1598,6 +1593,12 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                             </div>
                         </button>
                     </div>
+                </div>
+                <div id="${idAccordion}" class="card-body mb-0 collapse${show ? ' show' : ''}">
+                    <div class="accordion rounded-0">
+                        ${htmlParams}
+                    </div>
+                    <!-- <div class="mt-3" style="position: relative; width: 100%; height: 32px;"></div> -->
                 </div>
             </div>
         `;
