@@ -47,6 +47,14 @@
                 </div>
             </button>
 
+            <!-- Copy Button -->
+            <button id="btn-code-preview-copy" class="btn btn-sm responsive-btn"
+                style="display: none; position: absolute; top: 1rem; right: 4.5rem; z-index: 5" title="Copy Code">
+                <div class="btn-pane">
+                    <i class="fa-solid fa-copy"></i>
+                </div>
+            </button>
+
             <pre id="code-preview" class="w-100 h-100 p-4 m-0" style="display: none; position: absolute; background-color: black; overflow: scroll;"></pre>
 
             <!-- Simple Toast -->
@@ -84,13 +92,7 @@
         </div>
         <!-- [Screen] - Preview -->
         <div id="screen-content-render" class="screen-content-render bg-black" style="overflow-y: auto;">
-            <!-- Copy Button -->
-            <button id="btn-code-preview-copy" class="btn btn-sm responsive-btn"
-                style="position: absolute; top: 1rem; right: 2rem; z-index: 5" title="Copy Code">
-                <div class="btn-pane">
-                    <i class="fa-solid fa-copy"></i>
-                </div>
-            </button>
+            
         </div>
     </div>
 

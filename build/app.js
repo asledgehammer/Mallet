@@ -3073,6 +3073,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                 this.nameSelected = undefined;
                 this.modalName.hide();
             });
+            const $btnCopy = (0, util_10.$get)('btn-code-preview-copy');
             const $container = (0, util_10.$get)('screen-content-container');
             const $cardPreview = (0, util_10.$get)('screen-content-end-container');
             const $codePreview = (0, util_10.$get)('code-preview');
@@ -3085,20 +3086,27 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                     $container.removeClass('p-4');
                     $container.addClass('p-0');
                     $cardPreview.hide();
-                    $codePreview.show();
+                    $codePreview.css({ 'overflow': 'scroll' });
+                    $codePreview.show(150);
                     $iconCode.hide();
                     $iconCard.show();
                     $btnCardCode.css({ 'right': '2rem' });
+                    $btnCopy.show(150);
                     mode = 'code';
                 }
                 else if (mode === 'code') {
                     $container.removeClass('p-0');
-                    $container.addClass('p-4');
-                    $codePreview.hide();
-                    $cardPreview.slideDown(200);
+                    $container.addClass('pt-4');
+                    $codePreview.hide(150, () => {
+                        $container.removeClass('pt-4');
+                        $container.addClass('p-4');
+                        $codePreview.css({ 'overflow': 'none' });
+                    });
+                    $cardPreview.slideDown(150);
                     $iconCard.hide();
                     $iconCode.show();
                     $btnCardCode.css({ 'right': '1rem' });
+                    $btnCopy.hide(150);
                     mode = 'card';
                 }
             });
