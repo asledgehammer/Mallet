@@ -226,7 +226,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                             </div>
                             <div style="position: relative; width: 100%; height: 32px;">
                                 <!-- Delete Button -->
-                                <button id="${idBtnDelete}" class="btn btn-sm responsive-btn text-danger float-end ms-1">
+                                <button id="${idBtnDelete}" class="btn btn-sm responsive-btn float-end ms-1">
                                     <div class="btn-pane">
                                         <i class="fa-solid fa-xmark"></i>
                                     </div>
@@ -259,7 +259,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                     </div>
                     <div class="mt-3" style="position: relative; width: 100%; height: 32px;">
                         <!-- Add Button -->
-                        <button id="${idBtnAdd}" class="btn btn-sm responsive-btn text-success float-end ms-1">
+                        <button id="${idBtnAdd}" class="btn btn-sm responsive-btn float-end ms-1">
                             <div class="btn-pane">
                                <i class="fa-solid fa-plus"></i>
                             </div>
