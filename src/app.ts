@@ -1,3 +1,4 @@
+// import bootstrap = require('bootstrap');
 import { LuaClassCard } from './asledgehammer/rosetta/component/LuaClassCard';
 import { LuaConstructorCard } from './asledgehammer/rosetta/component/LuaConstructorCard';
 import { LuaFieldCard } from './asledgehammer/rosetta/component/LuaFieldCard';
@@ -14,18 +15,15 @@ import { $get, validateLuaVariableName } from './asledgehammer/rosetta/util';
 export class Toast {
 
     readonly app: App;
-
     readonly toastSimple: any;
     readonly idSimpleBody = 'toast-simple-body';
     readonly idToastSimple = 'toast-simple';
 
     constructor(app: App) {
         this.app = app;
-
         // @ts-ignore
-        this.toastSimple = new bootstrap.Toast(document.getElementById('toast-simple'), {});
+        this.toastSimple = new bootstrap.Toast(document.getElementById('toast-simple')!, {});
     }
-
 
     alert(text: string, color: 'success' | 'info' | 'error' | undefined = undefined) {
         const { idSimpleBody, idToastSimple } = this;
@@ -80,15 +78,13 @@ export class App {
         this.eSidebarContainer = document.getElementById('screen-sidebar-container')!;
         this.$screenContent = $('#screen-content-end-container');
 
-        // This modal is for new items and editing their names.
-        // @ts-ignore
+        // @ts-ignore This modal is for new items and editing their names.
         this.modalName = new bootstrap.Modal('#modal-name', {});
         this.$titleName = $get('title-name');
         this.$inputName = $get('input-name');
         this.$btnName = $get('btn-name-create');
 
-        // This modal is for confirming actions.
-        // @ts-ignore
+        // @ts-ignore This modal is for confirming actions.
         this.modalConfirm = new bootstrap.Modal('#modal-confirm', {});
         this.$titleConfirm = $get('title-confirm')!;
         this.$bodyConfirm = $get('body-confirm')!;
@@ -467,7 +463,6 @@ async function init() {
     const app = new App();
     app.init();
     app.listen();
-
     // @ts-ignore
     const greet = new bootstrap.Modal('#modal-greet', {});
     greet.show();

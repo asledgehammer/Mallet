@@ -216,12 +216,6 @@ export function toDelta(md: string, forcedAttributes: DeltaAttributes | undefine
     return ops2;
 }
 
-// @ts-ignore
-window.fromDelta = fromDelta;
-
-// @ts-ignore
-window.toDelta = toDelta;
-
 export const createDeltaEditor = (id: string, markdown: string | undefined, onChange: (markdown: string) => void) => {
 
     if (!markdown) markdown = '';

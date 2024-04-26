@@ -1343,10 +1343,6 @@ define("src/asledgehammer/Delta", ["require", "exports"], function (require, exp
         return ops2;
     }
     exports.toDelta = toDelta;
-    // @ts-ignore
-    window.fromDelta = fromDelta;
-    // @ts-ignore
-    window.toDelta = toDelta;
     const createDeltaEditor = (id, markdown, onChange) => {
         if (!markdown)
             markdown = '';
@@ -2682,14 +2678,12 @@ define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/Lu
             this.toast = new Toast(this);
             this.eSidebarContainer = document.getElementById('screen-sidebar-container');
             this.$screenContent = $('#screen-content-end-container');
-            // This modal is for new items and editing their names.
-            // @ts-ignore
+            // @ts-ignore This modal is for new items and editing their names.
             this.modalName = new bootstrap.Modal('#modal-name', {});
             this.$titleName = (0, util_10.$get)('title-name');
             this.$inputName = (0, util_10.$get)('input-name');
             this.$btnName = (0, util_10.$get)('btn-name-create');
-            // This modal is for confirming actions.
-            // @ts-ignore
+            // @ts-ignore This modal is for confirming actions.
             this.modalConfirm = new bootstrap.Modal('#modal-confirm', {});
             this.$titleConfirm = (0, util_10.$get)('title-confirm');
             this.$bodyConfirm = (0, util_10.$get)('body-confirm');
