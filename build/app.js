@@ -1515,15 +1515,14 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
                     this.app.askConfirm(() => {
                         entity.parameters.splice(entity.parameters.indexOf(param), 1);
                         // TODO: Clean up.
-                        if (type === 'constructor') {
-                            this.app.showConstructor(entity);
-                        }
-                        else if (type === 'function') {
-                            this.app.showFunction(entity);
-                        }
-                        else if (type === 'method') {
-                            this.app.showMethod(entity);
-                        }
+                        // if (type === 'constructor') {
+                        //     this.app.showConstructor(entity as any);
+                        // } else if (type === 'function') {
+                        //     this.app.showFunction(entity as any);
+                        // } else if (type === 'method') {
+                        //     this.app.showMethod(entity as any);
+                        // }
+                        this.update();
                     }, `Delete Parameter ${param.name}?`);
                 });
                 this.listenEdit({ name: param.name }, idBtnEdit, 'edit_parameter', 'Edit Parameter Name', `${entity.name}-${param.name}`);
@@ -1948,6 +1947,7 @@ define("src/asledgehammer/rosetta/component/LuaConstructorCard", ["require", "ex
         constructor(app, options) {
             super(app, options);
             this.idNotes = `${this.id}-notes`;
+            this.idParamContainer = `${this.id}-parameter-container`;
         }
         onRenderPreview() {
             if (!this.options)
@@ -1976,12 +1976,14 @@ define("src/asledgehammer/rosetta/component/LuaConstructorCard", ["require", "ex
         `;
         }
         onBodyHTML() {
-            const { idNotes } = this;
+            const { idNotes, idParamContainer } = this;
             const { entity } = this.options;
             return (0, util_5.html) `
             ${this.renderNotes(idNotes)}
             <hr>
-            ${this.renderParameters({ name: 'new', parameters: entity.parameters })}
+            <div id="${idParamContainer}">
+                ${this.renderParameters({ name: 'new', parameters: entity.parameters })}
+            </div>
             <hr>
             ${this.renderPreview(false)}
         `;
@@ -1993,6 +1995,15 @@ define("src/asledgehammer/rosetta/component/LuaConstructorCard", ["require", "ex
             this.listenNotes(entity, idNotes);
             this.listenParameters(Object.assign(Object.assign({}, entity), { name: 'new' }), 'constructor');
             this.listenPreview();
+        }
+        update() {
+            super.update();
+            const { idParamContainer } = this;
+            const { entity } = this.options;
+            const $paramContainer = (0, util_5.$get)(idParamContainer);
+            $paramContainer.empty();
+            $paramContainer.html(this.renderParameters({ name: 'new', parameters: entity.parameters }, true));
+            this.listenParameters({ name: 'new', parameters: entity.parameters }, 'constructor');
         }
     }
     exports.LuaConstructorCard = LuaConstructorCard;
@@ -2118,6 +2129,7 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
             this.idReturnNotes = `${this.id}-return-notes`;
             this.idBtnDelete = `${this.id}-btn-delete`;
             this.idBtnEdit = `${this.id}-btn-edit`;
+            this.idParamContainer = `${this.id}-parameter-container`;
         }
         onRenderPreview() {
             if (!this.options)
@@ -2167,12 +2179,14 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
         `;
         }
         onBodyHTML() {
-            const { idNotes, idReturnType, idReturnNotes } = this;
+            const { idNotes, idParamContainer, idReturnType, idReturnNotes } = this;
             const { entity } = this.options;
             return (0, util_7.html) `
             ${this.renderNotes(idNotes)}
             <hr>
-            ${this.renderParameters(entity)}
+            <div id="${idParamContainer}">
+                ${this.renderParameters(entity)}
+            </div>
             ${this.renderReturns(entity, idReturnType, idReturnNotes)}
             <hr>
             ${this.renderPreview(false)}
@@ -2202,6 +2216,15 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
                     app.sidebar.itemTree.populate();
                 }, `Delete ${isStatic ? 'Function' : 'Method'} ${entity.name}`);
             });
+        }
+        update() {
+            super.update();
+            const { idParamContainer } = this;
+            const { entity, isStatic } = this.options;
+            const $paramContainer = (0, util_7.$get)(idParamContainer);
+            $paramContainer.empty();
+            $paramContainer.html(this.renderParameters(entity, true));
+            this.listenParameters(entity, isStatic ? 'function' : 'method');
         }
     }
     exports.LuaFunctionCard = LuaFunctionCard;

@@ -12,6 +12,7 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
     idReturnNotes: string;
     idBtnDelete: string;
     idBtnEdit: string;
+    idParamContainer: string;
 
     constructor(app: App, options: LuaFunctionCardOptions) {
         super(app, options);
@@ -21,6 +22,7 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
         this.idReturnNotes = `${this.id}-return-notes`;
         this.idBtnDelete = `${this.id}-btn-delete`;
         this.idBtnEdit = `${this.id}-btn-edit`;
+        this.idParamContainer = `${this.id}-parameter-container`;
     }
 
     onRenderPreview(): string {
@@ -78,13 +80,15 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
 
     onBodyHTML(): string | undefined {
 
-        const { idNotes, idReturnType, idReturnNotes } = this;
+        const { idNotes, idParamContainer, idReturnType, idReturnNotes } = this;
         const { entity } = this.options!;
 
         return html`
             ${this.renderNotes(idNotes)}
             <hr>
-            ${this.renderParameters(entity)}
+            <div id="${idParamContainer}">
+                ${this.renderParameters(entity)}
+            </div>
             ${this.renderReturns(entity, idReturnType, idReturnNotes)}
             <hr>
             ${this.renderPreview(false)}
@@ -115,8 +119,17 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
                 app.sidebar.itemTree.selectedItemID = undefined;
                 app.sidebar.itemTree.populate();
             }, `Delete ${isStatic ? 'Function' : 'Method'} ${entity.name}`);
-        })
+        });
+    }
 
+    update(): void {
+        super.update();
+        const { idParamContainer } = this;
+        const { entity, isStatic } = this.options!;
+        const $paramContainer = $get(idParamContainer);
+        $paramContainer.empty();
+        $paramContainer.html(this.renderParameters(entity, true));
+        this.listenParameters(entity, isStatic ? 'function' : 'method');
     }
 }
 

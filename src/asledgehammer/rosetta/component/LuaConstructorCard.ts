@@ -1,17 +1,19 @@
 import { App } from '../../../app';
 import { generateLuaConstructor } from '../lua/LuaGenerator';
 import { RosettaLuaConstructor } from '../lua/RosettaLuaConstructor';
-import { html } from '../util';
+import { $get, html } from '../util';
 import { CardOptions } from './CardComponent';
 import { LuaCard } from './LuaCard';
 
 export class LuaConstructorCard extends LuaCard<LuaConstructorCardOptions> {
 
     idNotes: string;
+    idParamContainer: string;
 
     constructor(app: App, options: LuaConstructorCardOptions) {
         super(app, options);
         this.idNotes = `${this.id}-notes`;
+        this.idParamContainer = `${this.id}-parameter-container`;
     }
 
     onRenderPreview(): string {
@@ -42,12 +44,14 @@ export class LuaConstructorCard extends LuaCard<LuaConstructorCardOptions> {
     }
 
     onBodyHTML(): string | undefined {
-        const { idNotes } = this;
+        const { idNotes, idParamContainer } = this;
         const { entity } = this.options!;
         return html`
             ${this.renderNotes(idNotes)}
             <hr>
-            ${this.renderParameters({ name: 'new', parameters: entity.parameters })}
+            <div id="${idParamContainer}">
+                ${this.renderParameters({ name: 'new', parameters: entity.parameters })}
+            </div>
             <hr>
             ${this.renderPreview(false)}
         `;
@@ -61,6 +65,16 @@ export class LuaConstructorCard extends LuaCard<LuaConstructorCardOptions> {
         this.listenNotes(entity, idNotes);
         this.listenParameters({ ...entity, name: 'new' }, 'constructor');
         this.listenPreview();
+    }
+
+    update(): void {
+        super.update();
+        const { idParamContainer } = this;
+        const { entity } = this.options!;
+        const $paramContainer = $get(idParamContainer);
+        $paramContainer.empty();
+        $paramContainer.html(this.renderParameters({ name: 'new', parameters: entity.parameters }, true));
+        this.listenParameters({ name: 'new', parameters: entity.parameters }, 'constructor');
     }
 }
 
