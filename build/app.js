@@ -871,9 +871,11 @@ define("src/asledgehammer/rosetta/lua/LuaGenerator", ["require", "exports"], fun
     const generateLuaClass = (clazz) => {
         let s = '--- @meta\n\n';
         // If the class has a description.
-        if (clazz.notes && clazz.notes.length) {
+        if (clazz.notes && clazz.notes.length > 0) {
             const notes = clazz.notes.split('\n').join('\n--- ');
-            s += `--- ${notes}\n--- \n`;
+            s += `--- ${notes}\n`;
+            if (notes.endsWith('\n'))
+                s += '--- \n';
         }
         s += `--- @class ${clazz.name}\n`;
         // Generate any value-comments in the class here.
@@ -1358,19 +1360,27 @@ define("src/asledgehammer/Delta", ["require", "exports"], function (require, exp
         const editor = new Quill(`#${id}`, options);
         // @ts-ignore
         new QuillMarkdown(editor, {});
-        editor.on('text-change', () => {
+        const update = () => {
             const { ops } = editor.editor.getContents(0, 99999999);
-            const markdown = fromDelta(ops);
+            let markdown = fromDelta(ops);
+            if (markdown === '\n')
+                markdown = '';
+            else if (!markdown.endsWith('\n'))
+                markdown += '\n';
             onChange(markdown);
-        });
+        };
+        editor.on('text-change', () => update());
         // Apply markdown as delta.
         if (markdown && markdown.length) {
-            setTimeout(() => editor.editor.insertContents(0, toDelta(markdown)), 1);
+            setTimeout(() => {
+                editor.editor.insertContents(0, toDelta(markdown));
+                update();
+            }, 1);
         }
     };
     exports.createDeltaEditor = createDeltaEditor;
 });
-define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/CardComponent", "src/asledgehammer/Delta"], function (require, exports, util_3, CardComponent_1, Delta_1) {
+define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/CardComponent", "src/asledgehammer/Delta"], function (require, exports, hljs, util_3, CardComponent_1, Delta_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaCard = void 0;
@@ -1611,7 +1621,7 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "sr
             if (text.endsWith('\n'))
                 text = text.substring(0, text.length - 1);
             // @ts-ignore
-            const highlightedCode = hljs.highlight(text, { language: 'lua' }).value;
+            const highlightedCode = hljs.default.highlightAuto(text, ['lua']).value;
             $pre.append(highlightedCode);
         }
         listenPreview() {
@@ -2653,7 +2663,7 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
     exports.Sidebar = Sidebar;
     ;
 });
-define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/LuaClassCard", "src/asledgehammer/rosetta/component/LuaConstructorCard", "src/asledgehammer/rosetta/component/LuaFieldCard", "src/asledgehammer/rosetta/component/LuaFunctionCard", "src/asledgehammer/rosetta/component/Sidebar", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util"], function (require, exports, LuaClassCard_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, Sidebar_1, LuaGenerator_5, RosettaLuaClass_1, RosettaLuaConstructor_2, util_10) {
+define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/component/LuaClassCard", "src/asledgehammer/rosetta/component/LuaConstructorCard", "src/asledgehammer/rosetta/component/LuaFieldCard", "src/asledgehammer/rosetta/component/LuaFunctionCard", "src/asledgehammer/rosetta/component/Sidebar", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util"], function (require, exports, hljs, LuaClassCard_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, Sidebar_1, LuaGenerator_5, RosettaLuaClass_1, RosettaLuaConstructor_2, util_10) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.App = exports.Toast = void 0;
@@ -2780,8 +2790,7 @@ define("src/app", ["require", "exports", "src/asledgehammer/rosetta/component/Lu
             $renderPane.empty();
             if (!this.card)
                 return;
-            // @ts-ignore
-            const highlightedCode = hljs.highlight((0, LuaGenerator_5.generateLuaClass)(this.card.options.entity), { language: 'lua' }).value;
+            const highlightedCode = hljs.default.highlightAuto((0, LuaGenerator_5.generateLuaClass)(this.card.options.entity), ['lua']).value;
             $renderPane.append(highlightedCode);
         }
         createSidebar() {

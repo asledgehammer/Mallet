@@ -187,9 +187,10 @@ export const generateLuaClass = (clazz: RosettaLuaClass): string => {
     let s = '--- @meta\n\n';
 
     // If the class has a description.
-    if (clazz.notes && clazz.notes.length) {
+    if (clazz.notes && clazz.notes.length > 0) {
         const notes = clazz.notes.split('\n').join('\n--- ');
-        s += `--- ${notes}\n--- \n`;
+        s += `--- ${notes}\n`;
+        if (notes.endsWith('\n')) s += '--- \n';
     }
 
     s += `--- @class ${clazz.name}\n`;
@@ -220,7 +221,7 @@ export const generateLuaClass = (clazz: RosettaLuaClass): string => {
     }
 
     let sClass = 'ISBaseObject';
-    if(clazz.extendz && clazz.extendz.length) {
+    if (clazz.extendz && clazz.extendz.length) {
         sClass = clazz.extendz.trim();
     }
 

@@ -1,4 +1,6 @@
 window.define = function(name, required, moduleFn) {
+  // console.log(`${moduleFn}`);
+  // console.log(`${required}`);
   var require = function() { throw new Error("AMD require not supported!")}
   var exports = window.define.modules[name] = {}
   var resolved = [require, exports]

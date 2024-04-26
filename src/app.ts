@@ -1,4 +1,5 @@
 // import bootstrap = require('bootstrap');
+import hljs = require('highlight.js');
 import { LuaClassCard } from './asledgehammer/rosetta/component/LuaClassCard';
 import { LuaConstructorCard } from './asledgehammer/rosetta/component/LuaConstructorCard';
 import { LuaFieldCard } from './asledgehammer/rosetta/component/LuaFieldCard';
@@ -177,10 +178,9 @@ export class App {
         $renderPane.empty();
         if (!this.card) return;
 
-        // @ts-ignore
-        const highlightedCode = hljs.highlight(
+        const highlightedCode = hljs.default.highlightAuto(
             generateLuaClass(this.card.options!.entity),
-            { language: 'lua' }
+            ['lua'],
         ).value;
 
         $renderPane.append(highlightedCode);

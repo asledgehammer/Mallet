@@ -1,3 +1,4 @@
+import hljs = require('highlight.js');
 import { App } from "../../../app";
 import { RosettaEntity } from "../RosettaEntity";
 import { RosettaLuaParameter } from "../lua/RosettaLuaParameter";
@@ -270,7 +271,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         if (text.endsWith('\n')) text = text.substring(0, text.length - 1);
 
         // @ts-ignore
-        const highlightedCode = hljs.highlight(text, { language: 'lua' }).value;
+        const highlightedCode = hljs.default.highlightAuto(text, ['lua']).value;
 
         $pre.append(highlightedCode);
     }

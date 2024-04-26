@@ -234,14 +234,21 @@ export const createDeltaEditor = (id: string, markdown: string | undefined, onCh
     // @ts-ignore
     new QuillMarkdown(editor, {});
 
-    editor.on('text-change', () => {
+    const update = () => {
         const { ops } = editor.editor.getContents(0, 99999999);
-        const markdown = fromDelta(ops);
+        let markdown = fromDelta(ops);
+        if (markdown === '\n') markdown = '';
+        else if (!markdown.endsWith('\n')) markdown += '\n';
         onChange(markdown);
-    });
+    }
+
+    editor.on('text-change', () => update());
 
     // Apply markdown as delta.
     if (markdown && markdown.length) {
-        setTimeout(() => editor.editor.insertContents(0, toDelta(markdown!)), 1);
+        setTimeout(() => {
+            editor.editor.insertContents(0, toDelta(markdown!));
+            update();
+        }, 1);
     }
 }
