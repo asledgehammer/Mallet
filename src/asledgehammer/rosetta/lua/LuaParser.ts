@@ -85,6 +85,7 @@ export class LuaParser {
                     clazz!.conztructor.addParameter(param.name, param.type);
                 }
             } else {
+                // Make sure that any duplicates are handled properly. The last definition is the survivor.
                 let func: RosettaLuaFunction;
                 if (type === 'function') {
                     if (clazz!.functions[funcName]) {
@@ -99,22 +100,24 @@ export class LuaParser {
                     }
                     func = clazz!.createMethod(funcName);
                 }
+
                 for (const param of params) {
-                    clazz!.conztructor.addParameter(param.name, param.type);
+                    func.addParameter(param.name, param.type);
                 }
+                
                 func.returns.type = returnType;
             }
 
-            // let paramsLog = [];
-            // let { indexer } = statement.identifier;
-            // for (const param of params) {
-            //     paramsLog.push(`${param.name}: ${param.type}`);
-            // }
-            // if (funcName !== 'new') {
-            //     console.log(`Found ${type}: ${className}${indexer}${funcName}(${paramsLog.join(', ')}): any;`);
-            // } else {
-            //     console.log(`Found constructor: ${className}:new(${paramsLog.join(', ')}): ${className};`);
-            // }
+            let paramsLog = [];
+            let { indexer } = statement.identifier;
+            for (const param of params) {
+                paramsLog.push(`${param.name}: ${param.type}`);
+            }
+            if (funcName !== 'new') {
+                console.log(`Found ${type}: ${className}${indexer}${funcName}(${paramsLog.join(', ')}): any;`);
+            } else {
+                console.log(`Found constructor: ${className}:new(${paramsLog.join(', ')}): ${className};`);
+            }
         };
 
         const handleValueDec = (statement: ast.AssignmentStatement) => {
