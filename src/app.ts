@@ -12,6 +12,7 @@ import { RosettaLuaConstructor } from './asledgehammer/rosetta/lua/RosettaLuaCon
 import { RosettaLuaField } from './asledgehammer/rosetta/lua/RosettaLuaField';
 import { RosettaLuaFunction } from './asledgehammer/rosetta/lua/RosettaLuaFunction';
 import { $get, validateLuaVariableName } from './asledgehammer/rosetta/util';
+import { LuaParser } from './asledgehammer/rosetta/lua/LuaParser';
 
 export class Toast {
 
@@ -73,9 +74,12 @@ export class App {
 
     card: LuaClassCard | null = null;
 
+    readonly luaParser: LuaParser;
+
     constructor() {
         this.sidebar = new Sidebar(this);
         this.toast = new Toast(this);
+        this.luaParser = new LuaParser(this);
         this.eSidebarContainer = document.getElementById('screen-sidebar-container')!;
         this.$screenContent = $('#screen-content-end-container');
 

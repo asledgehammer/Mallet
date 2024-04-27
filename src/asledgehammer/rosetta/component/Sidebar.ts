@@ -49,6 +49,13 @@ export class Sidebar extends Component<SidebarOptions> {
                     </div>
                 </button>
 
+                <!-- Lua Wizard -->
+                <button id="lua-wizard" class="btn btn-sm responsive-btn responsive-btn-info" title="Lua Wizard">
+                    <div class="btn-pane">    
+                        <i class="fa-solid fa-wand-sparkles"></i>
+                    </div>
+                </button>
+
                 <!-- New Properties -->
                 <div class="dropdown" style="position: absolute; top: 5px; right: 5px;">
                     <button class="btn btn-sm responsive-btn responsive-btn-success float-end" style="width: 32px; height: 32px" data-bs-toggle="dropdown" aria-expanded="false" title="Add Element">
@@ -92,7 +99,6 @@ export class Sidebar extends Component<SidebarOptions> {
                 $inputName.val('');
                 app.nameMode = 'new_class';
                 modalName.show();
-                app.toast.alert(`Created LuaClass.`, 'success');
             } catch(e) {
                 app.toast.alert(`Failed to create LuaClass.`, 'error');
                 console.error(e);
@@ -218,6 +224,10 @@ export class Sidebar extends Component<SidebarOptions> {
                 console.error(e);
 
             }
+        });
+
+        $('#lua-wizard').on('click', () => {
+            app.luaParser.parseFilePicker();
         });
     }
 };
