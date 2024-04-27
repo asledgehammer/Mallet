@@ -24104,17 +24104,17 @@ body {
 
 .screen-sidebar-start {
   position: absolute;
-  width: 292px;
+  width: 400px;
   height: 100%;
 }
 
 .screen-content-end {
   position: absolute;
-  left: 292px;
+  left: 400px;
   height: 100%;
-  width: calc(100% - 292px);
+  width: calc(100% - 400px);
   min-width: 480px;
-  max-width: calc(100% - 292px);
+  max-width: calc(100% - 400px);
   background-size: 20px 20px;
   background-color: #1a1a1a;
   background-image: linear-gradient(to right, #1f1f1f 1px, transparent 1px), linear-gradient(to bottom, #1f1f1f 1px, transparent 1px);
