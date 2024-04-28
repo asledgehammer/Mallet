@@ -3,6 +3,7 @@ import { App } from '../../../app';
 import { RosettaLuaClass } from './RosettaLuaClass';
 import { RosettaLuaConstructor } from './RosettaLuaConstructor';
 import { RosettaLuaFunction } from './RosettaLuaFunction';
+import { discover } from './Scope';
 
 // @ts-ignore
 const luaparse: luaparse = ast.default;
@@ -15,6 +16,129 @@ export class LuaParser {
         this.app = app;
     }
 
+    // discover(statements: ast.Statement[], profiles: ClosureScope = {}): ClosureScope {
+
+    //     for (const statement of statements) {
+    //         switch (statement.type) {
+    //             case 'AssignmentStatement': {
+
+
+    //                 /* (Support tuple declarations) */
+    //                 for (const variable of statement.variables) {
+
+    //                     switch (variable.type) {
+    //                         case 'Identifier': {
+    //                             console.log("Please check this Identifier variable out: ");
+    //                             console.log(variable);
+    //                             break;
+    //                         }
+    //                         case 'IndexExpression': {
+    //                             console.log("Please check this IndexExpression variable out: ");
+    //                             console.log(variable);
+    //                             break;
+    //                         }
+    //                         case 'MemberExpression': {
+
+    //                             switch (variable.base.type) {
+    //                                 case 'Identifier': {
+    //                                     const baseName = variable.base.name;
+    //                                     const identifier = variable.identifier.name;
+
+    //                                     console.log('#####################');
+    //                                     console.log(statement);
+    //                                     console.log(`### ${baseName}${variable.indexer}${identifier}`);
+    //                                     console.log(' ');
+    //                                     break;
+    //                                 }
+    //                                 default: {
+    //                                     console.log("Please check this variable.base out: ");
+    //                                     console.log(variable);
+    //                                     break;
+    //                                 }
+    //                             }
+
+    //                             break;
+    //                         }
+    //                     }
+
+    //                 }
+
+
+    //                 console.log(statement);
+    //                 break;
+    //             }
+    //         }
+    //     }
+
+    //     return profiles;
+    // }
+
+    getReturnTypes(clazz: RosettaLuaClass, statements: ast.Statement[], types: string[] = []): string[] {
+
+        for (const statement of statements) {
+
+            switch (statement.type) {
+
+                /* (What we're looking for) */
+                case 'ReturnStatement': {
+                    // console.log(statement);
+
+                    /* (Void return calls) */
+                    if (!statement.arguments.length) {
+                        types.push('void');
+                        break;
+                    }
+
+                    const arg0 = statement.arguments[0];
+
+                    /* (If the return is a call to a variable or function) */
+                    if (arg0.type === 'MemberExpression') {
+
+                        break;
+                    }
+
+                    /* (Things like 'not', etc.) */
+                    else if (arg0.type === 'UnaryExpression') {
+                        switch (arg0.operator) {
+                            case 'not':
+                                types.push('boolean');
+                                break;
+                            case '-':
+                            case '~':
+                            case '#':
+                                types.push('number');
+                                break;
+                        }
+                        break;
+                    }
+
+                    break;
+                }
+
+                /* Nested Statements in loops and conditional code blocks */
+
+                case 'ForGenericStatement':
+                case 'ForNumericStatement':
+                case 'WhileStatement':
+                case 'DoStatement':
+                case 'RepeatStatement': {
+                    const lTypes = this.getReturnTypes(clazz, statement.body);
+                    if (lTypes.length) for (const type of lTypes) types.push(type);
+                    break;
+                }
+                case 'IfStatement': {
+                    for (const clause of statement.clauses) {
+                        const lTypes = this.getReturnTypes(clazz, clause.body);
+                        if (lTypes.length) for (const type of lTypes) types.push(type);
+                    }
+                    break;
+                }
+            }
+        }
+
+        return types;
+    }
+
     parse(chunk: ast.Chunk): RosettaLuaClass | undefined {
 
         let className = '';
@@ -22,7 +146,7 @@ export class LuaParser {
         let conzstructor: ast.FunctionDeclaration | null = null;
 
         const handleClassDec = (statement: ast.AssignmentStatement): boolean => {
-            console.log(statement);
+            // console.log(statement);
             // Check for ISBaseObject (or subclass), and derive call signature.
             const init0 = statement.init[0];
             if (init0.type !== 'CallExpression') return false;
@@ -67,7 +191,6 @@ export class LuaParser {
             const funcName = statement.identifier.identifier.name;
 
             const params: { name: string, type: string }[] = [];
-            const returnType = funcName === 'new' ? className : 'any';
 
             for (const param of statement.parameters) {
                 if (param.type !== 'Identifier') continue;
@@ -75,7 +198,7 @@ export class LuaParser {
             }
 
             if (funcName === 'new') {
-                console.log(statement);
+                // console.log(statement);
                 conzstructor = statement;
             }
 
@@ -104,20 +227,28 @@ export class LuaParser {
                 for (const param of params) {
                     func.addParameter(param.name, param.type);
                 }
-                
-                func.returns.type = returnType;
+
+                // Search for all return types. If none are present, void is used as the type.
+                const types = this.getReturnTypes(clazz!, statement.body);
+                if (!types.length) {
+                    func.returns.type = 'void';
+                } else {
+                    func.returns.type = types.join(' | ');
+                }
             }
 
-            let paramsLog = [];
-            let { indexer } = statement.identifier;
-            for (const param of params) {
-                paramsLog.push(`${param.name}: ${param.type}`);
-            }
-            if (funcName !== 'new') {
-                console.log(`Found ${type}: ${className}${indexer}${funcName}(${paramsLog.join(', ')}): any;`);
-            } else {
-                console.log(`Found constructor: ${className}:new(${paramsLog.join(', ')}): ${className};`);
-            }
+            // let paramsLog = [];
+            // let { indexer } = statement.identifier;
+            // for (const param of params) {
+            //     paramsLog.push(`${param.name}: ${param.type}`);
+            // }
+            // if (funcName !== 'new') {
+            //     console.log(`Found ${type}: ${className}${indexer}${funcName}(${paramsLog.join(', ')}): any;`);
+            // } else {
+            //     console.log(`Found constructor: ${className}:new(${paramsLog.join(', ')}): ${className};`);
+            // }
+
+
         };
 
         const handleValueDec = (statement: ast.AssignmentStatement) => {
@@ -156,10 +287,10 @@ export class LuaParser {
                     break;
                 }
                 case 'VarargLiteral': {
-                    console.log('#################');
-                    console.log('THIS IS A VARARG.');
-                    console.log(init0);
-                    console.log('#################');
+                    // console.log('#################');
+                    // console.log('THIS IS A VARARG.');
+                    // console.log(init0);
+                    // console.log('#################');
                     varType = 'any';
                     defaultValue = init0.value;
                     break;
@@ -262,10 +393,10 @@ export class LuaParser {
                             break;
                         }
                         case 'VarargLiteral': {
-                            console.log('#################');
-                            console.log('THIS IS A VARARG.');
-                            console.log(init0);
-                            console.log('#################');
+                            // console.log('#################');
+                            // console.log('THIS IS A VARARG.');
+                            // console.log(init0);
+                            // console.log('#################');
                             varType = 'any';
                             defaultValue = init0.value;
                             break;
@@ -286,20 +417,21 @@ export class LuaParser {
                     const field = clazz!.createField(varName);
                     field.type = varType;
 
-                    console.log(`Found field: ${className}.${varName}: ${varType};`);
-                    if (field.type === 'any') {
-                        console.log(statement);
-                    }
+                    // console.log(`Found field: ${className}.${varName}: ${varType};`);
+                    // if (field.type === 'any') {
+                    //     console.log(statement);
+                    // }
                 }
             }
         };
-
-        console.log(`conztructor: `, conzstructor);
 
         if (conzstructor) {
             handleConstructor(conzstructor);
         }
 
+
+        const locals = discover(chunk.body);
+        console.log(locals);
         console.log(clazz);
 
         return clazz;
