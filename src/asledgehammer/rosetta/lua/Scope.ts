@@ -178,16 +178,120 @@ function indent(options: RenderOptions): RenderOptions {
     return { ...options, indent: options.indent + 1 };
 }
 
-function parametersToString(params: (ast.Identifier | ast.VarargLiteral)[]): string {
+function literalToString(literal: ast.BooleanLiteral | ast.NumericLiteral | ast.NilLiteral | ast.StringLiteral | ast.VarargLiteral, options: RenderOptions = { indent: 0 }): string {
+    const i = ' '.repeat(options.indent * 4);
+    return `${i}${literal.raw}`;
+}
+
+function identifierToString(identifier: ast.Identifier, options: RenderOptions = { indent: 0 }): string {
+    const i = ' '.repeat(options.indent * 4);
+    return `${i}${identifier.name}`;
+}
+
+function indexExpressionToString(expression: ast.IndexExpression, options: RenderOptions = { indent: 0 }): string {
+    return `${expressionToString(expression.base)}[${expressionToString(expression.index)}]`;
+}
+
+function logicalExpressionToString(expression: ast.LogicalExpression, options: RenderOptions = { indent: 0 }): string {
+    const i = ' '.repeat(options.indent * 4);
+
+    return `${i}${expressionToString(expression.left)} ${expression.operator} ${expressionToString(expression.right)}`;
+}
+
+function unaryExpressionToString(expression: ast.UnaryExpression, options: RenderOptions = { indent: 0 }): string {
+    const i = ' '.repeat(options.indent * 4);
+
+    return `${i}${expression.operator}${expressionToString(expression.argument)}`;
+}
+
+function stringCallExpressionToString(expression: ast.StringCallExpression, options: RenderOptions = { indent: 0 }): string {
+    const i = ' '.repeat(options.indent * 4);
+
+    console.log(expression);
+    throw new Error('Not implemented.');
+}
+
+function tableCallExpressionToString(expression: ast.TableCallExpression, options: RenderOptions = { indent: 0 }): string {
+    const i = ' '.repeat(options.indent * 4);
+
+    console.log(expression);
+    throw new Error('Not implemented.');
+}
+
+function binaryExpressionToString(expression: ast.BinaryExpression, options: RenderOptions = { indent: 0 }): string {
+    const i = ' '.repeat(options.indent * 4);
+
+    return `${i}${expressionToString(expression.left)} ${expression.operator} ${expressionToString(expression.right)}`;
+}
+
+function argsToString(args2: ast.Expression[], options: RenderOptions = { indent: 0 }): string {
+    const i = ' '.repeat(options.indent * 4);
+    const args: string[] = [];
+    for (const arg of args2) args.push(expressionToString(arg));
+    return `${i}${args.join(', ')}`;
+}
+
+function memberExpressionToString(expression: ast.MemberExpression, options: RenderOptions = { indent: 0 }): string {
+    const i = ' '.repeat(options.indent * 4);
+    return `${i}${expressionToString(expression.base)}${expression.indexer}${expression.identifier.name}`;
+}
+
+function callExpressionToString(expression: ast.CallExpression, options: RenderOptions = { indent: 0 }): string {
+    const i = ' '.repeat(options.indent * 4);
+    return `${i}${expressionToString(expression.base)}(${argsToString(expression.arguments)})`;
+}
+
+function returnStatementToString(statement: ast.ReturnStatement, options: RenderOptions = { indent: 0 }): string {
+    const i = ' '.repeat(options.indent * 4);
+    const args: string[] = [];
+    for (const arg of statement.arguments) args.push(expressionToString(arg));
+    return `${i}return ${args.join(', ')}`;
+}
+
+function gotoStatementToString(statement: ast.GotoStatement, options: RenderOptions = { indent: 0 }): string {
+    const i = ' '.repeat(options.indent * 4);
+    return `${i}goto $${statement.label}`;
+}
+
+function labelStatementToString(statement: ast.LabelStatement, options: RenderOptions = { indent: 0 }): string {
+    const i = ' '.repeat(options.indent * 4);
+    return `${i}::${statement.label}::`;
+}
+
+function breakStatementToString(statement: ast.BreakStatement, options: RenderOptions = { indent: 0 }): string {
+    const i = ' '.repeat(options.indent * 4);
+    return `${i}break`;
+}
+
+function localStatementToString(statement: ast.LocalStatement, options: RenderOptions = { indent: 0 }): string {
+    const i = ' '.repeat(options.indent * 4);
+
+    // The local name(s).
+    const vars: string[] = [];
+    for (const _var_ of statement.variables) vars.push(_var_.name);
+
+    // The value(s) to set.
+    const inits: string[] = [];
+    for (const i of statement.init) inits.push(expressionToString(i, options));
+
+    return `${i}local ${vars.join(', ')} = ${inits.join(', ')}`;
+}
+
+function varargLiteralToString(param: ast.VarargLiteral, options: RenderOptions = { indent: 0 }): string {
+    const i = ' '.repeat(options.indent * 4);
+    return `${i}${param.raw}`;
+}
+
+function parametersToString(params: (ast.Identifier | ast.VarargLiteral)[], options: RenderOptions = { indent: 0 }): string {
     const ps: string[] = [];
     for (const param of params) {
         switch (param.type) {
             case 'Identifier': {
-                ps.push(param.name);
+                ps.push(identifierToString(param, options));
                 break;
             }
             case 'VarargLiteral': {
-                ps.push(param.raw);
+                ps.push(varargLiteralToString(param, options));
                 break;
             }
         }
@@ -195,31 +299,130 @@ function parametersToString(params: (ast.Identifier | ast.VarargLiteral)[]): str
     return ps.join(', ');
 }
 
-function functionDeclarationToString(func: ast.FunctionDeclaration, options: RenderOptions): string {
-    const { indent: i } = options;
+function bodyToString(body: ast.Statement[], options: RenderOptions = { indent: 0 }): string {
+    const i = ' '.repeat(options.indent * 4);
+    let s = '';
+    for (const statement of body) s += `${i}${statementToString(statement, options)}\n`;
+    if (s.length) s = s.substring(0, s.length - 1); // Remove the last newline. (If present)
+    return s;
+}
 
+function functionDeclarationToString(func: ast.FunctionDeclaration, options: RenderOptions = { indent: 0 }): string {
+    const i = ' '.repeat(options.indent * 4);
     const options2 = indent(options);
-    const { indent: i2 } = options2;
 
-    // TODO: Populate function body.
     let s = `${i}function (${parametersToString(func.parameters)})\n`;
-
-    // Content.
-    s += `${i2}\n`;
-
+    s += `${bodyToString(func.body, options2)}\n`;
     s += `${i}}`;
 
     return s;
 }
 
-function indexExpressionToString(expression: ast.IndexExpression): string {
-    return `${expressionToString(expression.base)}[${expressionToString(expression.index)}]`;
+function ifClauseToString(clause: ast.IfClause, isLastClause: boolean, options: RenderOptions = { indent: 0 }): string {
+    const i = ' '.repeat(options.indent * 4);
+    const options2 = indent(options);
+    let s = `${i}if ${expressionToString(clause.condition)} then\n`;
+    s += `${bodyToString(clause.body, options2)}\n`;
+    if (isLastClause) s += `${i}end`;
+    return s;
 }
 
-function tableConstructorExpressionToString(expression: ast.TableConstructorExpression): string {
+function elseIfClauseToString(clause: ast.ElseifClause, isLastClause: boolean, options: RenderOptions = { indent: 0 }): string {
+    const i = ' '.repeat(options.indent * 4);
+    const options2 = indent(options);
+    let s = `${i}elseif ${expressionToString(clause.condition)} then\n`;
+    s += `${bodyToString(clause.body, options2)}\n`;
+    if (isLastClause) s += `${i}end`;
+    return s;
+}
+
+function elseClauseToString(clause: ast.ElseClause, options: RenderOptions = { indent: 0 }): string {
+    const i = ' '.repeat(options.indent * 4);
+    const options2 = indent(options);
+    let s = `${i}else\n`;
+    for (const statement of clause.body) s += `${statementToString(statement, options2)};`;
+    s += `${i}end`;
+    return s;
+}
+
+function whileStatementToString(statement: ast.WhileStatement, options: RenderOptions): string {
+    const i = ' '.repeat(options.indent * 4);
+    const options2 = indent(options);
+    let s = `${i}while ${statement.condition} do\n`;
+    s += `${bodyToString(statement.body, options2)}\n`;
+    s += `${i}end`;
+    return s;
+}
+
+function doStatementToString(statement: ast.DoStatement, options: RenderOptions): string {
+    const i = ' '.repeat(options.indent * 4);
+    const options2 = indent(options);
+    let s = `${i}do\n`;
+    s += `${bodyToString(statement.body), options2}\n`;
+    s += `${i}end`;
+    return s;
+}
+
+function repeatStatementToString(statement: ast.RepeatStatement, options: RenderOptions): string {
+    const i = ' '.repeat(options.indent * 4);
+    const options2 = indent(options);
+    let s = `${i}repeat\n`;
+    s += `${bodyToString(statement.body, options2)}\n`;
+    s += `${i}until ${statement.condition};`;
+    return s;
+}
+
+function forNumericStatementToString(statement: ast.ForNumericStatement, options: RenderOptions): string {
+    const i = ' '.repeat(options.indent * 4);
+    const options2 = indent(options);
+    let s = `${i}for ${expressionToString(statement.start)}, ${expressionToString(statement.end)}`;
+    if (statement.step) s += `, ${expressionToString(statement.step)}`; // (Optional 3rd step argument)
+    s += `\n${bodyToString(statement.body, options2)}\n`;
+    s += `${i}end`;
+    return s;
+}
+
+function forGenericStatementToString(statement: ast.ForGenericStatement, options: RenderOptions): string {
+    const i = ' '.repeat(options.indent * 4);
+    const options2 = indent(options);
+    const vars: string[] = [];
+    for (const variable of statement.variables) vars.push(variable.name);
+    const iterate: string[] = [];
+    for (const iterator of statement.iterators) iterate.push(expressionToString(iterator));
+    let s = `${i}for ${vars.join(', ')} in ${iterate.join(', ')} do\n`;
+    s += `${bodyToString(statement.body, options2)}\n`;
+    s += 'end';
+    return s;
+}
+
+function ifStatementToString(statement: ast.IfStatement, options: RenderOptions = { indent: 0 }): string {
+    let s = '';
+    for (let index = 0; index < statement.clauses.length; index++) {
+        const isLastClause = index < statement.clauses.length - 1;
+        const clause = statement.clauses[index];
+        switch (clause.type) {
+            case 'IfClause': {
+                s += `${ifClauseToString(clause, isLastClause, options)}\n`;
+                break;
+            }
+            case 'ElseifClause': {
+                s += `${elseIfClauseToString(clause, isLastClause, options)}\n`;
+                break;
+            }
+            case 'ElseClause': {
+                s += `${elseClauseToString(clause, options)}`
+                break;
+            }
+        }
+    }
+    return ';';
+}
+
+function tableConstructorExpressionToString(expression: ast.TableConstructorExpression, options: RenderOptions = { indent: 0 }): string {
+    const i = ' '.repeat(options.indent * 4);
 
     // Empty table.
-    if (!expression.fields.length) return '{}';
+    if (!expression.fields.length) return `${i}{}`;
 
     const entries: string[] = [];
     for (const field of expression.fields) {
@@ -238,125 +441,11 @@ function tableConstructorExpressionToString(expression: ast.TableConstructorExpr
             }
         }
     }
-    return `{ ${entries.join(', ')} }`;
+    return `${i}{ ${entries.join(', ')} }`;
 }
 
-function logicalExpressionToString(expression: ast.LogicalExpression): string {
-    return `${expressionToString(expression.left)} ${expression.operator} ${expressionToString(expression.right)}`;
-}
-
-function unaryExpressionToString(expression: ast.UnaryExpression): string {
-    return `${expression.operator}${expressionToString(expression.argument)}`;
-}
-
-function stringCallExpressionToString(expression: ast.StringCallExpression): string {
-    console.log(expression);
-    throw new Error('Not implemented.');
-}
-
-function tableCallExpressionToString(expression: ast.TableCallExpression): string {
-    console.log(expression);
-    throw new Error('Not implemented.');
-}
-
-function literalToString(
-    literal: ast.BooleanLiteral
-        | ast.NumericLiteral
-        | ast.NilLiteral
-        | ast.StringLiteral
-        | ast.VarargLiteral
-): string {
-    return literal.raw;
-}
-
-function identifierToString(identifier: ast.Identifier): string {
-    return identifier.name;
-}
-
-function binaryExpressionToString(expression: ast.BinaryExpression): string {
-    return `${expressionToString(expression.left)} ${expression.operator} ${expressionToString(expression.right)}`;
-}
-
-function expressionToString(arg: ast.Expression, options: RenderOptions = { indent: 0 }): string {
-    switch (arg.type) {
-        case 'Identifier': {
-            return identifierToString(arg);
-        }
-        case 'BooleanLiteral':
-        case 'NumericLiteral':
-        case 'NilLiteral':
-        case 'StringLiteral':
-        case 'VarargLiteral': {
-            return literalToString(arg);
-        }
-        case 'BinaryExpression': {
-            return binaryExpressionToString(arg);
-        }
-        case 'CallExpression': {
-            return callExpressionToString(arg);
-        }
-        case 'MemberExpression': {
-            return memberExpressionToString(arg);
-        }
-        case 'FunctionDeclaration': {
-            return functionDeclarationToString(arg, options);
-        }
-        case 'IndexExpression': {
-            return indexExpressionToString(arg);
-        }
-        case 'TableConstructorExpression': {
-            return tableConstructorExpressionToString(arg);
-        }
-        case 'LogicalExpression': {
-            return logicalExpressionToString(arg);
-        }
-        case 'UnaryExpression': {
-            return unaryExpressionToString(arg);
-        }
-        case 'StringCallExpression': {
-            return stringCallExpressionToString(arg);
-        }
-        case 'TableCallExpression': {
-            return tableCallExpressionToString(arg);
-        }
-    }
-}
-
-function argsToString(args2: ast.Expression[]): string {
-    const args: string[] = [];
-    for (const arg of args2) {
-        args.push(expressionToString(arg));
-    }
-    return args.join(', ');
-}
-
-function memberExpressionToString(expression: ast.MemberExpression): string {
-    return `${expressionToString(expression.base)}${expression.indexer}${expression.identifier.name}`;
-}
-
-function callExpressionToString(expression: ast.CallExpression): string {
-    return `${expressionToString(expression.base)}(${argsToString(expression.arguments)})`;
-}
-
-function localStatementToString(statement: ast.LocalStatement, options: RenderOptions = { indent: 0 }): string {
-    const { indent: i } = options;
-
-    // The local name(s).
-    const vars: string[] = [];
-    for (const _var_ of statement.variables) {
-        vars.push(_var_.name);
-    }
-
-    // The value(s) to set.
-    const inits: string[] = [];
-    for (const i of statement.init) {
-        inits.push(expressionToString(i, options));
-    }
-
-    return `${i}local ${vars.join(', ')} = ${inits.join(', ')}`;
-}
-
-function assignmentStatementToString(statement: ast.AssignmentStatement): string {
+function assignmentStatementToString(statement: ast.AssignmentStatement, options: RenderOptions = { indent: 0 }): string {
+    const i = ' '.repeat(options.indent * 4);
 
     // The local name(s).
     const vars: string[] = [];
@@ -379,146 +468,56 @@ function assignmentStatementToString(statement: ast.AssignmentStatement): string
 
     // The value(s) to set.
     const inits: string[] = [];
-    for (const i of statement.init) {
-        inits.push(expressionToString(i));
-    }
+    for (const init of statement.init) inits.push(expressionToString(init));
 
-    return `${vars.join(', ')} = ${inits.join(', ')}`;
-}
-
-function returnStatementToString(statement: ast.ReturnStatement): string {
-    const args: string[] = [];
-    for (const arg of statement.arguments) {
-        args.push(expressionToString(arg));
-    }
-    return `return ${args.join(', ')}`;
-}
-
-function gotoStatementToString(statement: ast.GotoStatement): string {
-    return `goto $${statement.label}`;
-}
-
-function labelStatementToString(statement: ast.LabelStatement): string {
-    return `::${statement.label}::`;
-}
-
-function breakStatementToString(statement: ast.BreakStatement): string {
-    return 'break';
-}
-
-function ifClauseToString(clause: ast.IfClause, options: RenderOptions): string {
-    const { indent: i } = options;
-
-    return `${i};`;
-}
-
-function ifElseClauseToString(clause: ast.IfClause, options: RenderOptions): string {
-    const { indent: i } = options;
-
-    return `${i};`;
-}
-
-function elseClauseToString(clause: ast.ElseClause, options: RenderOptions): string {
-    const { indent: i } = options;
-
-    let s = `${i}else {\n`;
-    const options2 = indent(options);
-    for (const statement of clause.body) {
-        s += `${statementToString(statement, options2)};`;
-    }
-    s += `${i}}`;
-    return s;
-}
-
-function ifStatementToString(statement: ast.IfStatement, options: RenderOptions): string {
-    let s = '';
-
-    for (const clause of statement.clauses) {
-        switch (clause.type) {
-            case 'IfClause': {
-                break;
-            }
-            case 'ElseifClause': {
-                break;
-            }
-            case 'ElseClause': {
-                break;
-            }
-        }
-    }
-
-
-    return ';';
-}
-
-function whileStatementToString(statement: ast.WhileStatement, options: RenderOptions): string {
-    return ';';
-}
-
-function doStatementToString(statement: ast.DoStatement, options: RenderOptions): string {
-    return ';';
-}
-
-function repeatStatementToString(statement: ast.RepeatStatement, options: RenderOptions): string {
-    return ';';
+    return `${i}${vars.join(', ')} = ${inits.join(', ')}`;
 }
 
 function callStatementToString(statement: ast.CallStatement, options: RenderOptions): string {
-    return ';';
+    switch (statement.expression.type) {
+        case 'CallExpression': return callExpressionToString(statement.expression, options);
+        case 'StringCallExpression': return stringCallExpressionToString(statement.expression, options);
+        case 'TableCallExpression': return tableCallExpressionToString(statement.expression, options);
+    }
 }
 
-function forNumericStatementToString(statement: ast.ForNumericStatement, options: RenderOptions): string {
-    return ';';
-}
-
-function forGenericStatementToString(statement: ast.ForGenericStatement, options: RenderOptions): string {
-    return ';';
+function expressionToString(arg: ast.Expression, options: RenderOptions = { indent: 0 }): string {
+    switch (arg.type) {
+        case 'BooleanLiteral': return literalToString(arg, options);
+        case 'NumericLiteral': return literalToString(arg, options);
+        case 'NilLiteral': return literalToString(arg, options);
+        case 'StringLiteral': return literalToString(arg, options);
+        case 'VarargLiteral': return literalToString(arg, options);
+        case 'Identifier': return identifierToString(arg, options);
+        case 'BinaryExpression': return binaryExpressionToString(arg, options);
+        case 'CallExpression': return callExpressionToString(arg, options);
+        case 'MemberExpression': return memberExpressionToString(arg);
+        case 'FunctionDeclaration': return functionDeclarationToString(arg, options);
+        case 'IndexExpression': return indexExpressionToString(arg);
+        case 'TableConstructorExpression': return tableConstructorExpressionToString(arg);
+        case 'LogicalExpression': return logicalExpressionToString(arg);
+        case 'UnaryExpression': return unaryExpressionToString(arg);
+        case 'StringCallExpression': return stringCallExpressionToString(arg);
+        case 'TableCallExpression': return tableCallExpressionToString(arg);
+    }
 }
 
 function statementToString(statement: ast.Statement, options: RenderOptions): string {
     switch (statement.type) {
-        case 'LabelStatement': {
-            return labelStatementToString(statement);
-        }
-        case 'BreakStatement': {
-            return breakStatementToString(statement);
-        }
-        case 'GotoStatement': {
-            return gotoStatementToString(statement);
-        }
-        case 'ReturnStatement': {
-            return returnStatementToString(statement);
-        }
-        case 'IfStatement': {
-            return ifStatementToString(statement, options);
-        }
-        case 'WhileStatement': {
-            return whileStatementToString(statement, options);
-        }
-        case 'DoStatement': {
-            return doStatementToString(statement, options);
-        }
-        case 'RepeatStatement': {
-            return repeatStatementToString(statement, options);
-        }
-        case 'LocalStatement': {
-            return localStatementToString(statement, options);
-        }
-        case 'AssignmentStatement': {
-            return assignmentStatementToString(statement);
-        }
-        case 'CallStatement': {
-            return callStatementToString(statement, options);
-        }
-        case 'FunctionDeclaration': {
-            return functionDeclarationToString(statement, options);
-        }
-        case 'ForNumericStatement': {
-            return forNumericStatementToString(statement, options);
-        }
-        case 'ForGenericStatement': {
-            return forGenericStatementToString(statement, options);
-        }
+        case 'LabelStatement': return labelStatementToString(statement);
+        case 'BreakStatement': return breakStatementToString(statement);
+        case 'GotoStatement': return gotoStatementToString(statement);
+        case 'ReturnStatement': return returnStatementToString(statement);
+        case 'IfStatement': return ifStatementToString(statement, options);
+        case 'WhileStatement': return whileStatementToString(statement, options);
+        case 'DoStatement': return doStatementToString(statement, options);
+        case 'RepeatStatement': return repeatStatementToString(statement, options);
+        case 'LocalStatement': return localStatementToString(statement, options);
+        case 'AssignmentStatement': return assignmentStatementToString(statement);
+        case 'CallStatement': return callStatementToString(statement, options);
+        case 'FunctionDeclaration': return functionDeclarationToString(statement, options);
+        case 'ForNumericStatement': return forNumericStatementToString(statement, options);
+        case 'ForGenericStatement': return forGenericStatementToString(statement, options);
     }
 }
 
@@ -901,13 +900,7 @@ const discoverInClass = (__G: ScopeGlobal, clazz: ScopeClass, statements: ast.St
                                         }
                                     } else {
 
-                                        const scopeBase: ScopePath = {
-                                            name: `${baseName}`,
-                                            raw: `${parentScope.raw}.${baseName}`,
-                                            parent: parentScope,
-                                            valueType: 'value'
-                                        };
-
+                                        const scopeBase = getScope(__G, `${parentScope.raw}.${baseName}`, `${baseName}`, parentScope, 'value');
                                         const scopeIdentifier = getScope(__G, `${parentScope.raw}.${baseName}.${identifier}`, `${baseName}.${identifier}`, scopeBase, 'value');
 
                                         // console.log(`identifier: ${identifier}, scope: ${scopeIdentifier.raw}`);
