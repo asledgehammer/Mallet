@@ -2687,7 +2687,7 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
 define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"], function (require, exports, ast) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.discover = void 0;
+    exports.chunkToString = exports.discover = void 0;
     // @ts-ignore
     const luaparse = ast.default;
     const knownMethodTypes = {
@@ -2707,7 +2707,30 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
     }
     function literalToString(literal, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
-        return `${i}${literal.raw}`;
+        switch (literal.type) {
+            case 'BooleanLiteral': {
+                return `${i}${literal.raw}`;
+            }
+            case 'NumericLiteral': {
+                return `${i}${literal.raw}`;
+            }
+            case 'NilLiteral': {
+                return `${i}${literal.raw}`;
+            }
+            case 'StringLiteral': {
+                if (options.raw) {
+                    return `${i}${literal.value}`;
+                }
+                else {
+                    return `${i}${literal.raw}`;
+                }
+            }
+            case 'VarargLiteral': {
+                // TODO: Check validity.
+                console.warn('VarargLiteral: ', literal);
+                return `${i}${literal.raw}`;
+            }
+        }
     }
     function identifierToString(identifier, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
@@ -2722,12 +2745,14 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
     }
     function unaryExpressionToString(expression, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
-        return `${i}${expression.operator}${expressionToString(expression.argument)}`;
+        return `${i}${expression.operator} ${expressionToString(expression.argument)}`;
     }
     function stringCallExpressionToString(expression, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
+        const base = expressionToString(expression.base);
+        const arg = expressionToString(expression.argument);
         console.log(expression);
-        throw new Error('Not implemented.');
+        return `${i}${base} ${arg};`;
     }
     function tableCallExpressionToString(expression, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
@@ -2758,7 +2783,7 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
         const args = [];
         for (const arg of statement.arguments)
             args.push(expressionToString(arg));
-        return `${i}return ${args.join(', ')}`;
+        return `${i}return${args.length ? ` ${args.join(', ')}` : ''}`;
     }
     function gotoStatementToString(statement, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
@@ -2781,7 +2806,7 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
         // The value(s) to set.
         const inits = [];
         for (const i of statement.init)
-            inits.push(expressionToString(i, options));
+            inits.push(expressionToString(i));
         return `${i}local ${vars.join(', ')} = ${inits.join(', ')}`;
     }
     function varargLiteralToString(param, options = { indent: 0 }) {
@@ -2807,51 +2832,96 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
     function bodyToString(body, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
         let s = '';
-        for (const statement of body)
-            s += `${i}${statementToString(statement, options)}\n`;
+        const lastIndex = body.length ? body.length - 1 : -1;
+        for (let index = 0; index < body.length; index++) {
+            const prevStatement = body[index - 1];
+            const currStatement = body[index];
+            const nextStatement = body[index + 1];
+            // Prettier code is happier code. =)
+            let endingSemicolon = true;
+            // For cleaner separation of code.
+            let leadingNewline = false;
+            let endingNewline = false;
+            switch (currStatement.type) {
+                case 'FunctionDeclaration': {
+                    endingSemicolon = false;
+                    // No blank spaces for the first line of a body.
+                    if (prevStatement) {
+                        leadingNewline = true;
+                    }
+                    // No blank spaces at the end of a body.
+                    if (nextStatement) {
+                        endingNewline = true;
+                    }
+                }
+                case 'IfStatement':
+                case 'ForGenericStatement':
+                case 'ForNumericStatement':
+                case 'WhileStatement':
+                case 'DoStatement':
+                case 'RepeatStatement': {
+                    endingSemicolon = false;
+                    // No blank spaces at the end of a body.
+                    if (nextStatement) {
+                        endingNewline = true;
+                    }
+                    break;
+                }
+                case 'BreakStatement':
+                case 'LabelStatement': {
+                    endingSemicolon = false;
+                    break;
+                }
+            }
+            s += `${leadingNewline ? '\n' : ''}${statementToString(currStatement, options)}${endingSemicolon ? ';' : ''}\n${endingNewline ? '\n' : ''}`;
+        }
+        for (const statement of body) {
+        }
         if (s.length)
             s = s.substring(0, s.length - 1); // Remove the last newline. (If present)
         return s;
     }
+    /**
+     * Renders a Lua function declaration as a string.
+     *
+     * @param func The function to render.
+     * @param options Passed options on indenting the code.
+     * @returns The function rendered as a string.
+     */
     function functionDeclarationToString(func, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
         const options2 = indent(options);
-        let s = `${i}function (${parametersToString(func.parameters)})\n`;
-        s += `${bodyToString(func.body, options2)}\n`;
-        s += `${i}}`;
-        return s;
-    }
-    function ifClauseToString(clause, isLastClause, options = { indent: 0 }) {
-        const i = ' '.repeat(options.indent * 4);
-        const options2 = indent(options);
-        let s = `${i}if ${expressionToString(clause.condition)} then\n`;
-        s += `${bodyToString(clause.body, options2)}\n`;
-        if (isLastClause)
+        /* (If exists, generate the name of the function) */
+        let name = '';
+        if (func.identifier) {
+            switch (func.identifier.type) {
+                case 'Identifier': {
+                    name = func.identifier.name;
+                    break;
+                }
+                case 'MemberExpression': {
+                    name = memberExpressionToString(func.identifier);
+                    break;
+                }
+            }
+        }
+        /* (Build the function's declaration) */
+        let s = `${i}${func.isLocal ? 'local ' : ''}function${name && name.length ? ` ${name}` : ''}(${parametersToString(func.parameters)})`;
+        // Only render multi-line functions if its body is populated.
+        if (func.body.length) {
+            s += '\n';
+            s += `${bodyToString(func.body, options2)}\n`;
             s += `${i}end`;
-        return s;
-    }
-    function elseIfClauseToString(clause, isLastClause, options = { indent: 0 }) {
-        const i = ' '.repeat(options.indent * 4);
-        const options2 = indent(options);
-        let s = `${i}elseif ${expressionToString(clause.condition)} then\n`;
-        s += `${bodyToString(clause.body, options2)}\n`;
-        if (isLastClause)
-            s += `${i}end`;
-        return s;
-    }
-    function elseClauseToString(clause, options = { indent: 0 }) {
-        const i = ' '.repeat(options.indent * 4);
-        const options2 = indent(options);
-        let s = `${i}else\n`;
-        for (const statement of clause.body)
-            s += `${statementToString(statement, options2)};`;
-        s += `${i}end`;
+        }
+        else {
+            s += ' end';
+        }
         return s;
     }
     function whileStatementToString(statement, options) {
         const i = ' '.repeat(options.indent * 4);
         const options2 = indent(options);
-        let s = `${i}while ${statement.condition} do\n`;
+        let s = `${i}while ${expressionToString(statement.condition)} do\n`;
         s += `${bodyToString(statement.body, options2)}\n`;
         s += `${i}end`;
         return s;
@@ -2896,18 +2966,44 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
         s += 'end';
         return s;
     }
+    function ifClauseToString(clause, isLastClause, options = { indent: 0 }) {
+        const i = ' '.repeat(options.indent * 4);
+        const options2 = indent(options);
+        let s = `${i}if ${expressionToString(clause.condition)} then\n`;
+        s += `${bodyToString(clause.body, options2)}\n`;
+        if (isLastClause)
+            s += `${i}end`;
+        return s;
+    }
+    function elseIfClauseToString(clause, isLastClause, options = { indent: 0 }) {
+        const i = ' '.repeat(options.indent * 4);
+        const options2 = indent(options);
+        let s = `${i}elseif ${expressionToString(clause.condition)} then\n`;
+        s += `${bodyToString(clause.body, options2)}\n`;
+        if (isLastClause)
+            s += `${i}end`;
+        return s;
+    }
+    function elseClauseToString(clause, options = { indent: 0 }) {
+        const i = ' '.repeat(options.indent * 4);
+        const options2 = indent(options);
+        let s = `${i}else\n`;
+        s += `${bodyToString(clause.body, options2)}\n`;
+        s += `${i}end`;
+        return s;
+    }
     function ifStatementToString(statement, options = { indent: 0 }) {
         let s = '';
         for (let index = 0; index < statement.clauses.length; index++) {
-            const isLastClause = index < statement.clauses.length - 1;
+            const isLastClause = index === statement.clauses.length - 1;
             const clause = statement.clauses[index];
             switch (clause.type) {
                 case 'IfClause': {
-                    s += `${ifClauseToString(clause, isLastClause, options)}\n`;
+                    s += `${ifClauseToString(clause, isLastClause, options)}`;
                     break;
                 }
                 case 'ElseifClause': {
-                    s += `${elseIfClauseToString(clause, isLastClause, options)}\n`;
+                    s += `${elseIfClauseToString(clause, isLastClause, options)}`;
                     break;
                 }
                 case 'ElseClause': {
@@ -2916,7 +3012,7 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
                 }
             }
         }
-        return ';';
+        return s;
     }
     function tableConstructorExpressionToString(expression, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
@@ -2931,7 +3027,7 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
                     break;
                 }
                 case 'TableKeyString': {
-                    entries.push(`"${field.key.name}" = ${expressionToString(field.value)}`);
+                    entries.push(`${field.key.name} = ${expressionToString(field.value)}`);
                     break;
                 }
                 case 'TableValue': {
@@ -2966,7 +3062,7 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
         const inits = [];
         for (const init of statement.init)
             inits.push(expressionToString(init));
-        return `${i}${vars.join(', ')} = ${inits.join(', ')}`;
+        return `${i}${vars.join(', ')} = ${inits.join(', ')};`;
     }
     function callStatementToString(statement, options) {
         switch (statement.expression.type) {
@@ -2997,20 +3093,20 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
     }
     function statementToString(statement, options) {
         switch (statement.type) {
-            case 'LabelStatement': return labelStatementToString(statement);
-            case 'BreakStatement': return breakStatementToString(statement);
-            case 'GotoStatement': return gotoStatementToString(statement);
-            case 'ReturnStatement': return returnStatementToString(statement);
-            case 'IfStatement': return ifStatementToString(statement, options);
-            case 'WhileStatement': return whileStatementToString(statement, options);
-            case 'DoStatement': return doStatementToString(statement, options);
-            case 'RepeatStatement': return repeatStatementToString(statement, options);
             case 'LocalStatement': return localStatementToString(statement, options);
-            case 'AssignmentStatement': return assignmentStatementToString(statement);
             case 'CallStatement': return callStatementToString(statement, options);
-            case 'FunctionDeclaration': return functionDeclarationToString(statement, options);
+            case 'AssignmentStatement': return assignmentStatementToString(statement, options);
+            case 'ReturnStatement': return returnStatementToString(statement, options);
+            case 'IfStatement': return ifStatementToString(statement, options);
             case 'ForNumericStatement': return forNumericStatementToString(statement, options);
             case 'ForGenericStatement': return forGenericStatementToString(statement, options);
+            case 'BreakStatement': return breakStatementToString(statement, options);
+            case 'WhileStatement': return whileStatementToString(statement, options);
+            case 'RepeatStatement': return repeatStatementToString(statement, options);
+            case 'DoStatement': return doStatementToString(statement, options);
+            case 'FunctionDeclaration': return functionDeclarationToString(statement, options);
+            case 'LabelStatement': return labelStatementToString(statement, options);
+            case 'GotoStatement': return gotoStatementToString(statement, options);
         }
     }
     function newGlobalScope() {
@@ -3893,9 +3989,9 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
         }
         return changes;
     }
-    function discover(body, __G = newGlobalScope()) {
+    function discover(chunk, __G = newGlobalScope()) {
         /* (Initial Pass) */
-        passClass(body, __G);
+        passClass(chunk.body, __G);
         for (const clazz of Object.values(__G.classes)) {
             passField(clazz, __G);
         }
@@ -3903,14 +3999,44 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
         let passes = 0;
         do {
             passes++;
-            changes = pass(body, __G);
+            changes = pass(chunk.body, __G);
             console.log(`Pass ${passes}: ${changes} discoveries.`);
         } while (passes < 2 || changes !== 0);
         console.log(`__G.map.length = ${Object.keys(__G.map).length}`);
-        console.log(__G.classes['ISUIElement'].conztructor.init);
+        const conzt = __G.classes['ISUIElement'].conztructor.init;
+        console.log(conzt);
+        console.log(chunkToString(chunk));
         return __G;
     }
     exports.discover = discover;
+    function chunkToString(chunk, options = { indent: 0 }) {
+        let s = '';
+        for (const statement of chunk.body) {
+            switch (statement.type) {
+                case 'FunctionDeclaration': {
+                    s += `\n${statementToString(statement, options)}\n`;
+                    break;
+                }
+                case 'LabelStatement':
+                case 'BreakStatement':
+                case 'GotoStatement':
+                case 'ReturnStatement':
+                case 'IfStatement':
+                case 'WhileStatement':
+                case 'DoStatement':
+                case 'RepeatStatement':
+                case 'LocalStatement':
+                case 'AssignmentStatement':
+                case 'CallStatement':
+                case 'ForNumericStatement':
+                case 'ForGenericStatement':
+                    s += `${statementToString(statement, options)}\n`;
+                    break;
+            }
+        }
+        return s;
+    }
+    exports.chunkToString = chunkToString;
 });
 define("src/asledgehammer/rosetta/lua/LuaParser", ["require", "exports", "luaparse", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/lua/Scope"], function (require, exports, ast, RosettaLuaClass_1, RosettaLuaConstructor_2, Scope_1) {
     "use strict";
@@ -4297,9 +4423,9 @@ define("src/asledgehammer/rosetta/lua/LuaParser", ["require", "exports", "luapar
             if (conzstructor) {
                 handleConstructor(conzstructor);
             }
-            const locals = (0, Scope_1.discover)(chunk.body);
+            const locals = (0, Scope_1.discover)(chunk);
             console.log(locals);
-            console.log(clazz);
+            // console.log(clazz);
             return clazz;
         }
         async parseFilePicker() {
@@ -4312,7 +4438,11 @@ define("src/asledgehammer/rosetta/lua/LuaParser", ["require", "exports", "luapar
                     var reader = new FileReader();
                     reader.onload = function (e) {
                         const lua = reader.result;
-                        const chunk = luaparse.parse(lua);
+                        const chunk = luaparse.parse(lua, {
+                            luaVersion: '5.1',
+                            comments: true,
+                            locations: true,
+                        });
                         const clazz = _this.parse(chunk);
                         if (clazz) {
                             const card = app.showClass(clazz);

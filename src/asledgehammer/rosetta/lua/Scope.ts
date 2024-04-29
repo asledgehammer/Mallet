@@ -172,6 +172,9 @@ export type ScopeReferenceable = ScopeVariable
 
 export interface RenderOptions {
     indent: number;
+
+    /** For literals, we may need to render the alternative to the raw value. */
+    raw?: boolean;
 };
 
 function indent(options: RenderOptions): RenderOptions {
@@ -180,7 +183,30 @@ function indent(options: RenderOptions): RenderOptions {
 
 function literalToString(literal: ast.BooleanLiteral | ast.NumericLiteral | ast.NilLiteral | ast.StringLiteral | ast.VarargLiteral, options: RenderOptions = { indent: 0 }): string {
     const i = ' '.repeat(options.indent * 4);
-    return `${i}${literal.raw}`;
+
+    switch (literal.type) {
+        case 'BooleanLiteral': {
+            return `${i}${literal.raw}`;
+        }
+        case 'NumericLiteral': {
+            return `${i}${literal.raw}`;
+        }
+        case 'NilLiteral': {
+            return `${i}${literal.raw}`;
+        }
+        case 'StringLiteral': {
+            if (options.raw) {
+                return `${i}${literal.value}`;
+            } else {
+                return `${i}${literal.raw}`;
+            }
+        }
+        case 'VarargLiteral': {
+            // TODO: Check validity.
+            console.warn('VarargLiteral: ', literal);
+            return `${i}${literal.raw}`;
+        }
+    }
 }
 
 function identifierToString(identifier: ast.Identifier, options: RenderOptions = { indent: 0 }): string {
@@ -201,14 +227,15 @@ function logicalExpressionToString(expression: ast.LogicalExpression, options: R
 function unaryExpressionToString(expression: ast.UnaryExpression, options: RenderOptions = { indent: 0 }): string {
     const i = ' '.repeat(options.indent * 4);
 
-    return `${i}${expression.operator}${expressionToString(expression.argument)}`;
+    return `${i}${expression.operator} ${expressionToString(expression.argument)}`;
 }
 
 function stringCallExpressionToString(expression: ast.StringCallExpression, options: RenderOptions = { indent: 0 }): string {
     const i = ' '.repeat(options.indent * 4);
-
+    const base = expressionToString(expression.base);
+    const arg = expressionToString(expression.argument);
     console.log(expression);
-    throw new Error('Not implemented.');
+    return `${i}${base} ${arg};`;
 }
 
 function tableCallExpressionToString(expression: ast.TableCallExpression, options: RenderOptions = { indent: 0 }): string {
@@ -245,7 +272,7 @@ function returnStatementToString(statement: ast.ReturnStatement, options: Render
     const i = ' '.repeat(options.indent * 4);
     const args: string[] = [];
     for (const arg of statement.arguments) args.push(expressionToString(arg));
-    return `${i}return ${args.join(', ')}`;
+    return `${i}return${args.length ? ` ${args.join(', ')}` : ''}`;
 }
 
 function gotoStatementToString(statement: ast.GotoStatement, options: RenderOptions = { indent: 0 }): string {
@@ -272,7 +299,7 @@ function localStatementToString(statement: ast.LocalStatement, options: RenderOp
 
     // The value(s) to set.
     const inits: string[] = [];
-    for (const i of statement.init) inits.push(expressionToString(i, options));
+    for (const i of statement.init) inits.push(expressionToString(i));
 
     return `${i}local ${vars.join(', ')} = ${inits.join(', ')}`;
 }
@@ -302,53 +329,111 @@ function parametersToString(params: (ast.Identifier | ast.VarargLiteral)[], opti
 function bodyToString(body: ast.Statement[], options: RenderOptions = { indent: 0 }): string {
     const i = ' '.repeat(options.indent * 4);
     let s = '';
-    for (const statement of body) s += `${i}${statementToString(statement, options)}\n`;
+
+    const lastIndex = body.length ? body.length - 1 : -1;
+    for (let index = 0; index < body.length; index++) {
+        const prevStatement = body[index - 1];
+        const currStatement = body[index];
+        const nextStatement = body[index + 1];
+
+        // Prettier code is happier code. =)
+        let endingSemicolon = true;
+
+        // For cleaner separation of code.
+        let leadingNewline = false;
+        let endingNewline = false;
+
+        switch (currStatement.type) {
+            case 'FunctionDeclaration': {
+                endingSemicolon = false;
+
+                // No blank spaces for the first line of a body.
+                if (prevStatement) {
+                    leadingNewline = true;
+                }
+
+                // No blank spaces at the end of a body.
+                if (nextStatement) {
+                    endingNewline = true;
+                }
+            }
+            case 'IfStatement':
+            case 'ForGenericStatement':
+            case 'ForNumericStatement':
+            case 'WhileStatement':
+            case 'DoStatement':
+            case 'RepeatStatement': {
+                endingSemicolon = false;
+
+                // No blank spaces at the end of a body.
+                if (nextStatement) {
+                    endingNewline = true;
+                }
+                break;
+            }
+            case 'BreakStatement':
+            case 'LabelStatement': {
+                endingSemicolon = false;
+                break;
+            }
+        }
+
+        s += `${leadingNewline ? '\n' : ''}${statementToString(currStatement, options)}${endingSemicolon ? ';' : ''}\n${endingNewline ? '\n' : ''}`;
+    }
+    for (const statement of body) {
+
+
+    }
+
     if (s.length) s = s.substring(0, s.length - 1); // Remove the last newline. (If present)
     return s;
 }
 
+/**
+ * Renders a Lua function declaration as a string.
+ * 
+ * @param func The function to render.
+ * @param options Passed options on indenting the code.
+ * @returns The function rendered as a string.
+ */
 function functionDeclarationToString(func: ast.FunctionDeclaration, options: RenderOptions = { indent: 0 }): string {
     const i = ' '.repeat(options.indent * 4);
     const options2 = indent(options);
 
-    let s = `${i}function (${parametersToString(func.parameters)})\n`;
-    s += `${bodyToString(func.body, options2)}\n`;
-    s += `${i}}`;
+    /* (If exists, generate the name of the function) */
+    let name = '';
+    if (func.identifier) {
+        switch (func.identifier!.type) {
+            case 'Identifier': {
+                name = func.identifier.name;
+                break;
+            }
+            case 'MemberExpression': {
+                name = memberExpressionToString(func.identifier);
+                break;
+            }
+        }
+    }
 
-    return s;
-}
+    /* (Build the function's declaration) */
+    let s = `${i}${func.isLocal ? 'local ' : ''}function${name && name.length ? ` ${name}` : ''}(${parametersToString(func.parameters)})`;
 
-function ifClauseToString(clause: ast.IfClause, isLastClause: boolean, options: RenderOptions = { indent: 0 }): string {
-    const i = ' '.repeat(options.indent * 4);
-    const options2 = indent(options);
-    let s = `${i}if ${expressionToString(clause.condition)} then\n`;
-    s += `${bodyToString(clause.body, options2)}\n`;
-    if (isLastClause) s += `${i}end`;
-    return s;
-}
+    // Only render multi-line functions if its body is populated.
+    if (func.body.length) {
+        s += '\n';
+        s += `${bodyToString(func.body, options2)}\n`;
+        s += `${i}end`;
+    } else {
+        s += ' end';
+    }
 
-function elseIfClauseToString(clause: ast.ElseifClause, isLastClause: boolean, options: RenderOptions = { indent: 0 }): string {
-    const i = ' '.repeat(options.indent * 4);
-    const options2 = indent(options);
-    let s = `${i}elseif ${expressionToString(clause.condition)} then\n`;
-    s += `${bodyToString(clause.body, options2)}\n`;
-    if (isLastClause) s += `${i}end`;
-    return s;
-}
-
-function elseClauseToString(clause: ast.ElseClause, options: RenderOptions = { indent: 0 }): string {
-    const i = ' '.repeat(options.indent * 4);
-    const options2 = indent(options);
-    let s = `${i}else\n`;
-    for (const statement of clause.body) s += `${statementToString(statement, options2)};`;
-    s += `${i}end`;
     return s;
 }
 
 function whileStatementToString(statement: ast.WhileStatement, options: RenderOptions): string {
     const i = ' '.repeat(options.indent * 4);
     const options2 = indent(options);
-    let s = `${i}while ${statement.condition} do\n`;
+    let s = `${i}while ${expressionToString(statement.condition)} do\n`;
     s += `${bodyToString(statement.body, options2)}\n`;
     s += `${i}end`;
     return s;
@@ -395,18 +480,45 @@ function forGenericStatementToString(statement: ast.ForGenericStatement, options
     return s;
 }
 
+function ifClauseToString(clause: ast.IfClause, isLastClause: boolean, options: RenderOptions = { indent: 0 }): string {
+    const i = ' '.repeat(options.indent * 4);
+    const options2 = indent(options);
+    let s = `${i}if ${expressionToString(clause.condition)} then\n`;
+    s += `${bodyToString(clause.body, options2)}\n`;
+    if (isLastClause) s += `${i}end`;
+    return s;
+}
+
+function elseIfClauseToString(clause: ast.ElseifClause, isLastClause: boolean, options: RenderOptions = { indent: 0 }): string {
+    const i = ' '.repeat(options.indent * 4);
+    const options2 = indent(options);
+    let s = `${i}elseif ${expressionToString(clause.condition)} then\n`;
+    s += `${bodyToString(clause.body, options2)}\n`;
+    if (isLastClause) s += `${i}end`;
+    return s;
+}
+
+function elseClauseToString(clause: ast.ElseClause, options: RenderOptions = { indent: 0 }): string {
+    const i = ' '.repeat(options.indent * 4);
+    const options2 = indent(options);
+    let s = `${i}else\n`;
+    s += `${bodyToString(clause.body, options2)}\n`;
+    s += `${i}end`;
+    return s;
+}
+
 function ifStatementToString(statement: ast.IfStatement, options: RenderOptions = { indent: 0 }): string {
     let s = '';
     for (let index = 0; index < statement.clauses.length; index++) {
-        const isLastClause = index < statement.clauses.length - 1;
+        const isLastClause = index === statement.clauses.length - 1;
         const clause = statement.clauses[index];
         switch (clause.type) {
             case 'IfClause': {
-                s += `${ifClauseToString(clause, isLastClause, options)}\n`;
+                s += `${ifClauseToString(clause, isLastClause, options)}`;
                 break;
             }
             case 'ElseifClause': {
-                s += `${elseIfClauseToString(clause, isLastClause, options)}\n`;
+                s += `${elseIfClauseToString(clause, isLastClause, options)}`;
                 break;
             }
             case 'ElseClause': {
@@ -415,7 +527,7 @@ function ifStatementToString(statement: ast.IfStatement, options: RenderOptions 
             }
         }
     }
-    return ';';
+    return s;
 }
 
 function tableConstructorExpressionToString(expression: ast.TableConstructorExpression, options: RenderOptions = { indent: 0 }): string {
@@ -432,7 +544,7 @@ function tableConstructorExpressionToString(expression: ast.TableConstructorExpr
                 break;
             }
             case 'TableKeyString': {
-                entries.push(`"${field.key.name}" = ${expressionToString(field.value)}`);
+                entries.push(`${field.key.name} = ${expressionToString(field.value)}`);
                 break;
             }
             case 'TableValue': {
@@ -470,7 +582,7 @@ function assignmentStatementToString(statement: ast.AssignmentStatement, options
     const inits: string[] = [];
     for (const init of statement.init) inits.push(expressionToString(init));
 
-    return `${i}${vars.join(', ')} = ${inits.join(', ')}`;
+    return `${i}${vars.join(', ')} = ${inits.join(', ')};`;
 }
 
 function callStatementToString(statement: ast.CallStatement, options: RenderOptions): string {
@@ -504,20 +616,20 @@ function expressionToString(arg: ast.Expression, options: RenderOptions = { inde
 
 function statementToString(statement: ast.Statement, options: RenderOptions): string {
     switch (statement.type) {
-        case 'LabelStatement': return labelStatementToString(statement);
-        case 'BreakStatement': return breakStatementToString(statement);
-        case 'GotoStatement': return gotoStatementToString(statement);
-        case 'ReturnStatement': return returnStatementToString(statement);
-        case 'IfStatement': return ifStatementToString(statement, options);
-        case 'WhileStatement': return whileStatementToString(statement, options);
-        case 'DoStatement': return doStatementToString(statement, options);
-        case 'RepeatStatement': return repeatStatementToString(statement, options);
         case 'LocalStatement': return localStatementToString(statement, options);
-        case 'AssignmentStatement': return assignmentStatementToString(statement);
         case 'CallStatement': return callStatementToString(statement, options);
-        case 'FunctionDeclaration': return functionDeclarationToString(statement, options);
+        case 'AssignmentStatement': return assignmentStatementToString(statement, options);
+        case 'ReturnStatement': return returnStatementToString(statement, options);
+        case 'IfStatement': return ifStatementToString(statement, options);
         case 'ForNumericStatement': return forNumericStatementToString(statement, options);
         case 'ForGenericStatement': return forGenericStatementToString(statement, options);
+        case 'BreakStatement': return breakStatementToString(statement, options);
+        case 'WhileStatement': return whileStatementToString(statement, options);
+        case 'RepeatStatement': return repeatStatementToString(statement, options);
+        case 'DoStatement': return doStatementToString(statement, options);
+        case 'FunctionDeclaration': return functionDeclarationToString(statement, options);
+        case 'LabelStatement': return labelStatementToString(statement, options);
+        case 'GotoStatement': return gotoStatementToString(statement, options);
     }
 }
 
@@ -1494,10 +1606,10 @@ function pass(body: ast.Statement[], __G: ScopeGlobal): number {
     return changes;
 }
 
-export function discover(body: ast.Statement[], __G: ScopeGlobal = newGlobalScope()): ScopeGlobal {
+export function discover(chunk: ast.Chunk, __G: ScopeGlobal = newGlobalScope()): ScopeGlobal {
 
     /* (Initial Pass) */
-    passClass(body, __G);
+    passClass(chunk.body, __G);
     for (const clazz of Object.values(__G.classes)) {
         passField(clazz, __G);
     }
@@ -1506,13 +1618,46 @@ export function discover(body: ast.Statement[], __G: ScopeGlobal = newGlobalScop
     let passes = 0;
     do {
         passes++;
-        changes = pass(body, __G);
+        changes = pass(chunk.body, __G);
         console.log(`Pass ${passes}: ${changes} discoveries.`);
     } while (passes < 2 || changes !== 0);
 
     console.log(`__G.map.length = ${Object.keys(__G.map).length}`)
 
-    console.log(__G.classes['ISUIElement'].conztructor.init);
+    const conzt = __G.classes['ISUIElement'].conztructor.init;
+    console.log(conzt);
+
+    console.log(chunkToString(chunk));
 
     return __G;
+}
+
+export function chunkToString(chunk: ast.Chunk, options: RenderOptions = { indent: 0 }): string {
+    let s = '';
+
+    for (const statement of chunk.body) {
+        switch (statement.type) {
+            case 'FunctionDeclaration': {
+                s += `\n${statementToString(statement, options)}\n`;
+                break;
+            }
+            case 'LabelStatement':
+            case 'BreakStatement':
+            case 'GotoStatement':
+            case 'ReturnStatement':
+            case 'IfStatement':
+            case 'WhileStatement':
+            case 'DoStatement':
+            case 'RepeatStatement':
+            case 'LocalStatement':
+            case 'AssignmentStatement':
+            case 'CallStatement':
+            case 'ForNumericStatement':
+            case 'ForGenericStatement':
+                s += `${statementToString(statement, options)}\n`;
+                break;
+        }
+    }
+
+    return s;
 }

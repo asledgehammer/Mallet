@@ -3,7 +3,7 @@ import { App } from '../../../app';
 import { RosettaLuaClass } from './RosettaLuaClass';
 import { RosettaLuaConstructor } from './RosettaLuaConstructor';
 import { RosettaLuaFunction } from './RosettaLuaFunction';
-import { discover } from './Scope';
+import { RenderOptions, discover } from './Scope';
 
 // @ts-ignore
 const luaparse: luaparse = ast.default;
@@ -430,9 +430,10 @@ export class LuaParser {
         }
 
 
-        const locals = discover(chunk.body);
+        const locals = discover(chunk);
         console.log(locals);
-        console.log(clazz);
+
+        // console.log(clazz);
 
         return clazz;
     }
@@ -447,7 +448,11 @@ export class LuaParser {
                 var reader = new FileReader();
                 reader.onload = function (e) {
                     const lua = reader.result as string;
-                    const chunk: ast.Chunk = luaparse.parse(lua);
+                    const chunk: ast.Chunk = luaparse.parse(lua, { 
+                        luaVersion: '5.1',
+                        comments: true,
+                        locations: true,
+                    });
                     const clazz = _this.parse(chunk);
                     if (clazz) {
                         const card = app.showClass(clazz);
