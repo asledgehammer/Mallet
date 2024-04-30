@@ -6043,7 +6043,12 @@ define("src/asledgehammer/rosetta/lua/wizard/New", ["require", "exports"], funct
 define("src/asledgehammer/rosetta/lua/wizard/PZ", ["require", "exports", "src/asledgehammer/rosetta/lua/wizard/String"], function (require, exports, String_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.getPZMethod = exports.getPZConstructor = exports.getPZClass = void 0;
+    exports.getPZProperty = exports.getPZExecutable = exports.getPZClass = void 0;
+    /**
+     * @param statement The statement to process.
+     *
+     * @returns
+     */
     function getPZClass(statement) {
         // Check for ISBaseObject (or subclass), and derive call signature.
         const init0 = statement.init[0];
@@ -6067,7 +6072,13 @@ define("src/asledgehammer/rosetta/lua/wizard/PZ", ["require", "exports", "src/as
         return { name: vars0.name, extendz: init0.base.base.type };
     }
     exports.getPZClass = getPZClass;
-    function getPZConstructor(clazz, statement) {
+    /**
+     * @param clazz The name of the class.
+     * @param statement The statement to process.
+     *
+     * @returns
+     */
+    function getPZExecutable(clazz, statement) {
         // Check if assigned as a member declaration.
         if (statement.identifier == null)
             return undefined;
@@ -6081,48 +6092,35 @@ define("src/asledgehammer/rosetta/lua/wizard/PZ", ["require", "exports", "src/as
         // Grab the function / method name.
         if (statement.identifier.identifier.type !== 'Identifier')
             return undefined;
-        // Make sure that this is a constructor.
-        if (statement.identifier.identifier.name !== 'new')
-            return undefined;
-        // Build params.
-        const params = [];
-        for (const param of statement.parameters) {
-            switch (param.type) {
-                case 'Identifier': {
-                    params.push((0, String_2.identifierToString)(param));
-                    break;
-                }
-                case 'VarargLiteral': {
-                    params.push((0, String_2.varargLiteralToString)(param));
-                    break;
-                }
-            }
-        }
-        return { clazz, params };
-    }
-    exports.getPZConstructor = getPZConstructor;
-    function getPZMethod(clazz, statement) {
-        // Check if assigned as a member declaration.
-        if (statement.identifier == null)
-            return undefined;
-        if (statement.identifier.type !== 'MemberExpression')
-            return undefined;
-        // Verify that the base assignment table is the class.
-        if (statement.identifier.base.type !== 'Identifier')
-            return undefined;
-        if (statement.identifier.base.name !== clazz)
-            return undefined;
-        // Grab the function / method name.
-        if (statement.identifier.identifier.type !== 'Identifier')
-            return undefined;
-        // Ignore constructor declaration.
         const name = statement.identifier.identifier.name;
-        if (name === 'new')
-            return undefined;
+        let selfAlias = 'self';
         // Get type.
         let type = 'function';
-        if (statement.identifier.indexer === ':')
+        if (name === 'new') {
+            type = 'constructor';
+            // Grab the alias used to return in the constructor.
+            selfAlias = '';
+            for (let index = statement.body.length - 1; index >= 0; index--) {
+                const next = statement.body[index];
+                if (next.type !== 'ReturnStatement')
+                    continue;
+                // Sanity check for bad Lua code.
+                if (!next.arguments.length) {
+                    throw new Error(`class Constructor ${clazz}:new() has invalid return!`);
+                }
+                // Assign the constructor-alias for 'self'.
+                const arg0 = next.arguments[0];
+                selfAlias = (0, String_2.expressionToString)(arg0);
+                break;
+            }
+            // Sanity check for bad Lua code.
+            if (!selfAlias.length) {
+                throw new Error(`Class constructor ${clazz}:new() has no alias for 'self'.`);
+            }
+        }
+        else if (statement.identifier.indexer === ':') {
             type = 'method';
+        }
         // Build params.
         const params = [];
         for (const param of statement.parameters) {
@@ -6138,8 +6136,79 @@ define("src/asledgehammer/rosetta/lua/wizard/PZ", ["require", "exports", "src/as
             }
         }
         // Return result information.
-        return { clazz, type, name, params };
+        return { clazz, type, name, params, selfAlias };
     }
-    exports.getPZMethod = getPZMethod;
+    exports.getPZExecutable = getPZExecutable;
+    /**
+     * @param clazz The name of the class.
+     * @param statement The statement to process.
+     * @param selfAlias The alias used for field-declarations inside of executables within a instanced class context. (Default: 'self')
+     */
+    function getPZProperty(clazz, statement, selfAlias = 'self') {
+        // Sanity-check
+        if (!statement.variables.length)
+            return undefined;
+        const var0 = statement.variables[0];
+        // Make sure the assignment is towards a member. (The class)
+        if (var0.type !== 'MemberExpression')
+            return undefined;
+        if (var0.base.type !== 'Identifier')
+            return undefined;
+        // Sanity-check
+        if (!statement.init.length)
+            return undefined;
+        // Check what type of property it is.
+        let type = 'value';
+        if (var0.base.type === clazz) {
+            type = 'value';
+        }
+        else if (var0.base.type === selfAlias) {
+            type = 'field';
+        }
+        else {
+            // This belongs to something else.
+            return undefined;
+        }
+        // The name of the property.
+        const name = var0.identifier.name;
+        // If the assignment is a literal expression then we know what the initial type is. Grab it.
+        // We then conveniently know the default value of the property. Grab that too..
+        let types = [];
+        let defaultValue = undefined;
+        const init0 = statement.init[0];
+        switch (init0.type) {
+            case 'NumericLiteral': {
+                types.push('number');
+                defaultValue = init0.raw;
+                break;
+            }
+            case 'BooleanLiteral': {
+                types.push('boolean');
+                defaultValue = init0.raw;
+                break;
+            }
+            case 'StringLiteral': {
+                types.push('string');
+                defaultValue = init0.value;
+                break;
+            }
+            case 'NilLiteral': {
+                types.push('nil');
+                defaultValue = 'nil';
+                break;
+            }
+            case 'VarargLiteral': {
+                // TODO - Figure this out once we run into this case.
+                console.log('#################');
+                console.log('THIS IS A VARARG.');
+                console.log(init0);
+                console.log('#################');
+                defaultValue = init0.value;
+                break;
+            }
+        }
+        return { clazz, name, type, types, defaultValue };
+    }
+    exports.getPZProperty = getPZProperty;
 });
 //# sourceMappingURL=app.js.map
