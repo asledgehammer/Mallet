@@ -1,8 +1,23 @@
 import * as ast from 'luaparse';
 import { expressionToString, identifierToString, varargLiteralToString } from './String';
+import { Scope } from './Scope';
 
 export type PZPropertyType = 'field' | 'value';
 export type PZExecutableType = 'function' | 'method' | 'constructor';
+
+export interface PZGlobalInfo {
+    classes: { [name: string]: PZClassInfo };
+    tables: { [name: string]: PZTableInfo };
+    values: { [name: string]: PZPropertyInfo<'value'> };
+    funcs: { [name: string]: PZExecutableInfo<'function'> };
+}
+
+export interface PZTableInfo {
+    name?: string;
+
+    values: { [name: string]: PZPropertyInfo<'value'> };
+    funcs: { [name: string]: PZExecutableInfo<'function'> };
+}
 
 export interface PZClassInfo {
     /** The name of the class. */
@@ -10,9 +25,15 @@ export interface PZClassInfo {
 
     /** The name of the super-class the class extends. */
     extendz: string;
+
+    fields: { [name: string]: PZPropertyInfo<'field'> };
+    values: { [name: string]: PZPropertyInfo<'value'> };
+    methods: { [name: string]: PZExecutableInfo<'method'> };
+    funcs: { [name: string]: PZExecutableInfo<'function'> };
+    conztructor?: PZExecutableInfo<'constructor'>;
 }
 
-export interface PZExecutableInfo {
+export interface PZExecutableInfo<TType extends PZExecutableType> {
 
     /** The name of the class that the executable belongs. */
     clazz: string;
@@ -21,7 +42,7 @@ export interface PZExecutableInfo {
     name: string;
 
     /** The type of executable. */
-    type: PZExecutableType;
+    type: TType;
 
     /** The names of the parameters used for calling the executable. */
     params: string[];
@@ -30,7 +51,7 @@ export interface PZExecutableInfo {
     selfAlias: string;
 }
 
-export interface PZPropertyInfo {
+export interface PZPropertyInfo<TType extends PZPropertyType> {
 
     /** The class that the property belongs. */
     clazz: string;
@@ -39,7 +60,7 @@ export interface PZPropertyInfo {
     name: string;
 
     /** The type of property. */
-    type: PZPropertyType;
+    type: TType;
 
     /** Immediate types discovered when discovering the property for the first time. */
     types: string[];
@@ -65,7 +86,15 @@ export function getPZClass(statement: ast.AssignmentStatement): PZClassInfo | un
     // Check for class name here.
     const vars0 = statement.variables[0];
     if (vars0.type !== 'Identifier') return undefined;
-    return { name: vars0.name, extendz: init0.base.base.type };
+    return {
+        name: vars0.name,
+        extendz: init0.base.base.name,
+        fields: {},
+        values: {},
+        methods: {},
+        funcs: {},
+        conztructor: undefined,
+    };
 }
 
 /**
@@ -74,7 +103,7 @@ export function getPZClass(statement: ast.AssignmentStatement): PZClassInfo | un
  *  
  * @returns 
  */
-export function getPZExecutable(clazz: string, statement: ast.FunctionDeclaration): PZExecutableInfo | undefined {
+export function getPZExecutable(clazz: string, statement: ast.FunctionDeclaration): PZExecutableInfo<'constructor' | 'function' | 'method'> | undefined {
     // Check if assigned as a member declaration.
     if (statement.identifier == null) return undefined;
     if (statement.identifier.type !== 'MemberExpression') return undefined;
@@ -139,25 +168,34 @@ export function getPZExecutable(clazz: string, statement: ast.FunctionDeclaratio
  * @param statement The statement to process.
  * @param selfAlias The alias used for field-declarations inside of executables within a instanced class context. (Default: 'self')
  */
-export function getPZProperty(clazz: string, statement: ast.AssignmentStatement, selfAlias: string = 'self'): PZPropertyInfo | undefined {
+export function getPZProperty(clazz: string, statement: ast.AssignmentStatement, selfAlias: string = 'self'): PZPropertyInfo<'value' | 'field'> | undefined {
 
     // Sanity-check
-    if (!statement.variables.length) return undefined;
+    if (!statement.variables.length) {
+        return undefined;
+    }
 
     const var0 = statement.variables[0];
 
     // Make sure the assignment is towards a member. (The class)
-    if (var0.type !== 'MemberExpression') return undefined;
-    if (var0.base.type !== 'Identifier') return undefined;
-
+    if (var0.type !== 'MemberExpression') {
+        return undefined;
+    }
+    if (var0.base.type !== 'Identifier') {
+        return undefined;
+    }
     // Sanity-check
-    if (!statement.init.length) return undefined;
+    if (!statement.init.length) {
+        console.warn('no init length.');
+        console.warn(statement)
+        return undefined;
+    }
 
     // Check what type of property it is.
     let type: PZPropertyType = 'value';
-    if (var0.base.type === clazz) {
+    if (var0.base.name === clazz) {
         type = 'value';
-    } else if (var0.base.type === selfAlias) {
+    } else if (var0.base.name === selfAlias) {
         type = 'field';
     } else {
         // This belongs to something else.
@@ -202,7 +240,103 @@ export function getPZProperty(clazz: string, statement: ast.AssignmentStatement,
             defaultValue = init0.value;
             break;
         }
+        case 'TableConstructorExpression': {
+            // TODO - Figure out how to assign table-like key-values as type-assigned.
+            types.push('table');
+            break;
+        }
+        default: {
+            console.log('unhandled type / default value handle: ');
+            console.log({ statement, init: init0 });
+            break;
+        }
     }
 
     return { clazz, name, type, types, defaultValue };
+}
+
+export function getPZClasses(global: PZGlobalInfo, statements: ast.Statement[]): { [name: string]: PZClassInfo } {
+
+    const classes: { [name: string]: PZClassInfo } = {};
+
+    // Find classes.
+    for (const statement of statements) {
+        if (statement.type !== 'AssignmentStatement') continue;
+
+        const clazzInfo = getPZClass(statement);
+        if (clazzInfo) classes[clazzInfo.name] = global.classes[clazzInfo.name] = clazzInfo;
+    }
+
+    // Go through all classes, even outside of the file because other Lua files can define class functions.
+    //
+    //     FIXME: This can cause weird situations if the `require '<file>'` isn't followed. We could find issues of load-order.
+    //            Look here if this is an issue later on.
+    //
+    for (const clazzName of Object.keys(global.classes)) {
+        const clazz = global.classes[clazzName];
+
+        function processExecutable(funcDec: ast.FunctionDeclaration, executable: PZExecutableInfo<'constructor' | 'function' | 'method'>) {
+            for (const statement of funcDec.body) {
+                if (statement.type !== 'AssignmentStatement') continue;
+                const propertyInfo = getPZProperty(clazz.name, statement, executable.selfAlias);
+                if (propertyInfo && propertyInfo.type === 'field') {
+                    clazz.fields[propertyInfo.name] = propertyInfo as PZPropertyInfo<'field'>;
+                }
+            }
+        }
+
+        for (const statement of statements) {
+
+            // Look for class value(s) here..
+            if (statement.type === 'AssignmentStatement') {
+                const propertyInfo = getPZProperty(clazzName, statement, clazzName);
+                if (propertyInfo) {
+                    if (propertyInfo.type === 'value') {
+                        clazz.values[propertyInfo.name] = propertyInfo as PZPropertyInfo<'value'>;
+                    }
+                }
+            }
+
+            // Go through all functions in the chunk. These can either be: 
+            //    - Class Constructors
+            //    - Class Functions
+            //    - Class Methods
+            else if (statement.type === 'FunctionDeclaration') {
+
+                // The potential Class Executable.
+                const executableInfo = getPZExecutable(clazzName, statement);
+                if (executableInfo) {
+                    if (executableInfo.type === 'constructor') {
+                        if (clazz.conztructor) {
+                            console.warn(`Class ${clazzName} already has a constructor. Overriding with bottom-most definition..`);
+                        }
+                        clazz.conztructor = executableInfo as PZExecutableInfo<'constructor'>;
+                    } else if (executableInfo.type === 'function') {
+                        if (clazz.funcs[executableInfo.name]) {
+                            console.warn(`Class ${clazzName} already has the function ${executableInfo.name}. Overriding with bottom-most definition..`);
+                        }
+                        clazz.funcs[executableInfo.name] = executableInfo as PZExecutableInfo<'function'>;
+                    } else if (executableInfo.type === 'method') {
+                        if (clazz.methods[executableInfo.name]) {
+                            console.warn(`Class ${clazzName} already has the method ${executableInfo.name}. Overriding with bottom-most definition..`);
+                        }
+                        clazz.methods[executableInfo.name] = executableInfo as PZExecutableInfo<'method'>;
+                    }
+
+                    // Discover field(s) here.
+                    processExecutable(statement, executableInfo);
+                }
+            }
+        }
+    }
+
+    return classes;
+}
+
+export function scanFile(global: PZGlobalInfo, statements: ast.Statement[]): void {
+    getPZClasses(global, statements);
+}
+
+function scanInto(scope: Scope, statements: ast.Statement[]): void {
+
 }

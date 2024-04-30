@@ -1,6 +1,8 @@
 import * as ast from 'luaparse';
 import { ScopeClass, ScopeFunction, ScopeGlobal, ScopePath, ScopeReference, ScopeReferenceable, ScopeReturn, ScopeType, ScopeVariable, knownMethodTypes } from "./LuaWizard";
 import { assignmentStatementToString, localStatementToString, returnStatementToString } from './String';
+import { PZGlobalInfo, getPZClasses, scanFile } from './PZ';
+import { Scope } from './Scope';
 
 /**
  * NOTE: This code is old. And Ugly. And yeah, it'll get removed. Do something about it. 
@@ -1034,23 +1036,35 @@ function pass(__G: ScopeGlobal): number {
 
 export function discover(chunk: ast.Chunk, __G: ScopeGlobal = newGlobalScope()): ScopeGlobal {
 
-    /* (Initial Pass) */
-    passClass(chunk.body, __G);
-    for (const clazz of Object.values(__G.classes)) {
-        passField(clazz, __G);
-    }
+    // /* (Initial Pass) */
+    // passClass(chunk.body, __G);
+    // for (const clazz of Object.values(__G.classes)) {
+    //     passField(clazz, __G);
+    // }
 
-    let changes = 0;
-    let passes = 0;
-    do {
-        passes++;
-        changes = pass(__G);
-        console.log(`Pass ${passes}: ${changes} discoveries.`);
-    } while (passes < 2 || changes !== 0);
+    // let changes = 0;
+    // let passes = 0;
+    // do {
+    //     passes++;
+    //     changes = pass(__G);
+    //     console.log(`Pass ${passes}: ${changes} discoveries.`);
+    // } while (passes < 2 || changes !== 0);
 
-    console.log(`__G.map.length = ${Object.keys(__G.map).length}`)
-    console.log({ 'constructor': __G.classes['ISUIElement'].conztructor?.init });
-    // console.log(chunkToString(chunk));
+    // console.log(`__G.map.length = ${Object.keys(__G.map).length}`)
+    // console.log({ __G: __G });
+
+    const scopeGlobal: Scope = new Scope(__G);
+    const infoGlobal: PZGlobalInfo = {
+        classes: {},
+        tables: {},
+        values: {},
+        funcs: {}
+    };
+
+    scanFile(infoGlobal, chunk.body);
+
+    console.log(infoGlobal);
+    // console.log(chunk);
 
     return __G;
 }

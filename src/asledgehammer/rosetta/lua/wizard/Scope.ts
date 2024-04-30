@@ -58,7 +58,7 @@ export class Scope {
      * @param parent The parent scope. (Set to null if root. E.G: __G is global root)
      * @param index For statements with multiple variables, this index helps target the right one.
      */
-    constructor(element: ScopeElement, parent: Scope | undefined, index: number = 0) {
+    constructor(element: ScopeElement, parent: Scope | undefined = undefined, index: number = 0) {
         this.element = element;
         this.parent = parent;
         const name = this.generateName();

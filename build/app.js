@@ -3173,7 +3173,522 @@ define("src/asledgehammer/rosetta/lua/wizard/String", ["require", "exports", "lu
     }
     exports.chunkToString = chunkToString;
 });
-define("src/asledgehammer/rosetta/lua/wizard/Old", ["require", "exports", "src/asledgehammer/rosetta/lua/wizard/LuaWizard", "src/asledgehammer/rosetta/lua/wizard/String"], function (require, exports, LuaWizard_1, String_1) {
+define("src/asledgehammer/rosetta/lua/wizard/Scope", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.Scope = void 0;
+    /**
+     * **Scope** is a class that stores scope-based information about Lua elements and their relationshop to other elements.
+     * Data is used in this class to determine stronger types to assign to fields, returns, parameters, among other elements.
+     *
+     * @author asledgehammer
+     */
+    class Scope {
+        /////////////////////////////
+        /**
+         * @param element The element container.
+         * @param parent The parent scope. (Set to null if root. E.G: __G is global root)
+         * @param index For statements with multiple variables, this index helps target the right one.
+         */
+        constructor(element, parent = undefined, index = 0) {
+            /** Any child scopes. This is helpful with {@link Scope.resolve resolving scopes}. */
+            this.children = {};
+            /** All discovered scopes that directly call or assign this scope. */
+            this.references = [];
+            this.types = [];
+            /** For statements with multiple variables, this index helps with the initialization of Scopes. */
+            this.index = 0;
+            /** Generated or identified when constructing Scopes. */
+            this.name = '';
+            /////////////////////////////
+            // These are for children. //
+            /////////////////////////////
+            this._nextBreakID = 0;
+            this._nextGotoID = 0;
+            this._nextReturnID = 0;
+            this._nextIfID = 0;
+            this._nextIfClauseID = 0;
+            this._nextElseIfClauseID = 0;
+            this._nextElseClauseID = 0;
+            this._nextForNumericID = 0;
+            this._nextForGenericID = 0;
+            this._nextWhileID = 0;
+            this._nextDoID = 0;
+            this._nextRepeatID = 0;
+            this._nextAnonFuncID = 0;
+            this._nextCallID = 0;
+            this.element = element;
+            this.parent = parent;
+            const name = this.generateName();
+            this.path = `${parent ? `${parent.path}.` : ''}${name}`;
+            this.index = index;
+        }
+        resolve(path) {
+            if (!path.length)
+                return undefined;
+            const { parent } = this;
+            // Check into the scope first. If something resolves, we're in the most immediate scope that contains the reference which is consistent with the
+            // Lua language in scope-discovery when accessing a referenced variable in the most immediate scope.
+            let child = this.resolveInto(path);
+            if (child)
+                return child;
+            // Try to resolve in the next outer-scope. If one doesn't exist, the path does not resolve.
+            return parent === null || parent === void 0 ? void 0 : parent.resolve(path);
+        }
+        /**
+         * Search into the scope, going out-to-in.
+         *
+         * @param path The path to traverse.
+         *
+         * @returns Scope if found. undefined if not.
+         */
+        resolveInto(path) {
+            if (!path.length)
+                return undefined;
+            const { children } = this;
+            let pathSub = '';
+            let firstScope;
+            // The path is made of multiple scopes.
+            if (path.indexOf('.') !== -1) {
+                // We grab the first node here and produce the sub-path following that node.
+                let split = path.split('.');
+                split = split.reverse();
+                firstScope = split.pop();
+                pathSub = split.reverse().join();
+            }
+            else {
+                // We have one scope. The path is the scope.
+                firstScope = path;
+            }
+            const child = children[firstScope];
+            // The child doesn't exist.
+            if (!child)
+                return undefined;
+            // We still have scope to traverse. Go to the child and then repeat the process until traversed.
+            if (pathSub.length)
+                child.resolve(pathSub);
+            // We've reached the last scope in the path and located the child. 
+            return child;
+        }
+        generateName() {
+            const { element: e, parent } = this;
+            if (e.type === 'ScopeGlobal')
+                return '__G';
+            if (!parent)
+                throw new Error('A parent is required!');
+            switch (e.type) {
+                case 'ScopeVariable': return this.getStatementName(e.init);
+                case 'ScopeFunction': return e.init.identifier ? this.getExpressionName(e.init.identifier) : parent.nextAnonymousFunctionID();
+                case 'ScopeForGenericBlock': return parent.nextForGenericID();
+                case 'ScopeForNumericBlock': return parent.nextForNumericID();
+                case 'ScopeDoBlock': return parent.nextDoID();
+                case 'ScopeWhileBlock': return parent.nextWhileID();
+                case 'ScopeRepeatBlock': return parent.nextRepeatID();
+                case 'ScopeIfBlock': return parent.nextIfID();
+                case 'ScopeIfClauseBlock': return parent.nextIfClauseID();
+                case 'ScopeTable': return e.name;
+                case 'ScopeClass': return e.name;
+                case 'ScopeConstructor': return 'constructor';
+            }
+        }
+        getStatementName(statement) {
+            const { parent } = this;
+            if (!parent)
+                throw new Error('A parent is required!');
+            switch (statement.type) {
+                case 'LabelStatement': return statement.label.name;
+                case 'BreakStatement': return parent.nextBreakID();
+                case 'GotoStatement': return parent.nextGotoID();
+                case 'ReturnStatement': return parent.nextReturnID();
+                case 'IfStatement': return parent.nextIfID();
+                case 'WhileStatement': return parent.nextWhileID();
+                case 'DoStatement': return parent.nextDoID();
+                case 'RepeatStatement': return parent.nextRepeatID();
+                case 'LocalStatement': return statement.variables[this.index].name;
+                case 'AssignmentStatement': return this.getExpressionName(statement.variables[this.index]);
+                case 'CallStatement': return parent.nextCallID();
+                case 'FunctionDeclaration': return parent.nextAnonymousFunctionID();
+                case 'ForNumericStatement': return parent.nextForNumericID();
+                case 'ForGenericStatement': return parent.nextForGenericID();
+            }
+        }
+        getExpressionName(expression) {
+            if (expression.type === 'Identifier')
+                return expression.name;
+            switch (expression.type) {
+                case 'IndexExpression': return this.getExpressionName(expression.base);
+                case 'MemberExpression': return `___member_expression___${this.getExpressionName(expression.base)}${expression.indexer}${expression.identifier.name}`;
+                default: {
+                    console.log(expression);
+                    throw new Error(`Unimplemented expression in 'Scope.getExpressionName(${expression.type}). (scope path: '${this.path}') Check the line above for more info on the expression.`);
+                }
+            }
+        }
+        resetIDs() {
+            this._nextCallID = 0;
+            this._nextBreakID = 0;
+            this._nextGotoID = 0;
+            this._nextReturnID = 0;
+            this._nextIfID = 0;
+            this._nextIfClauseID = 0;
+            this._nextElseIfClauseID = 0;
+            this._nextElseClauseID = 0;
+            this._nextForNumericID = 0;
+            this._nextForGenericID = 0;
+            this._nextWhileID = 0;
+            this._nextDoID = 0;
+            this._nextRepeatID = 0;
+            this._nextAnonFuncID = 0;
+        }
+        addType(...types) {
+            let changes = 0;
+            for (const type of types) {
+                if (!this.hasType(type)) {
+                    this.types.push(type);
+                    changes++;
+                }
+            }
+            return changes;
+        }
+        sortTypes() {
+            this.types.sort((a, b) => a.localeCompare(b));
+        }
+        hasType(type) {
+            return this.types.indexOf(type) !== -1;
+        }
+        /** NOTE: Must be called from sub-scope! */
+        nextBreakID() {
+            return `${this.path}.___break___${this._nextBreakID++}`;
+        }
+        /** NOTE: Must be called from sub-scope! */
+        nextGotoID() {
+            return `${this.path}.___goto___${this._nextGotoID++}`;
+        }
+        /** NOTE: Must be called from sub-scope! */
+        nextReturnID() {
+            return `${this.path}.___return___${this._nextReturnID++}`;
+        }
+        /** NOTE: Must be called from sub-scope! */
+        nextIfID() {
+            return `${this.path}.___if___${this._nextIfID++}`;
+        }
+        /** NOTE: Must be called from sub-scope! */
+        nextIfClauseID() {
+            return `${this.path}.___clause_if___${this._nextIfClauseID++}`;
+        }
+        /** NOTE: Must be called from sub-scope! */
+        nextElseIfClauseID() {
+            return `${this.path}.___clause_elseif___${this._nextElseIfClauseID++}`;
+        }
+        /** NOTE: Must be called from sub-scope! */
+        nextElseClauseID() {
+            return `${this.path}.___clause_else___${this._nextElseClauseID++}`;
+        }
+        /** NOTE: Must be called from sub-scope! */
+        nextForNumericID() {
+            return `${this.path}.___for_numeric___${this._nextForNumericID++}`;
+        }
+        /** NOTE: Must be called from sub-scope! */
+        nextForGenericID() {
+            return `${this.path}.___for_generic___${this._nextForGenericID++}`;
+        }
+        /** NOTE: Must be called from sub-scope! */
+        nextWhileID() {
+            return `${this.path}.___while___${this._nextWhileID++}`;
+        }
+        /** NOTE: Must be called from sub-scope! */
+        nextDoID() {
+            return `${this.path}.___do___${this._nextDoID++}`;
+        }
+        /** NOTE: Must be called from sub-scope! */
+        nextRepeatID() {
+            return `${this.path}.___repeat___${this._nextRepeatID++}`;
+        }
+        /** NOTE: Must be called from sub-scope! */
+        nextAnonymousFunctionID() {
+            return `${this.path}.___anonymous_function___${this._nextAnonFuncID++}`;
+        }
+        /** NOTE: Must be called from sub-scope! */
+        nextCallID() {
+            return `${this.path}.___call___${this._nextCallID++}`;
+        }
+    }
+    exports.Scope = Scope;
+});
+define("src/asledgehammer/rosetta/lua/wizard/PZ", ["require", "exports", "src/asledgehammer/rosetta/lua/wizard/String"], function (require, exports, String_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.scanFile = exports.getPZClasses = exports.getPZProperty = exports.getPZExecutable = exports.getPZClass = void 0;
+    /**
+     * @param statement The statement to process.
+     *
+     * @returns
+     */
+    function getPZClass(statement) {
+        // Check for ISBaseObject (or subclass), and derive call signature.
+        const init0 = statement.init[0];
+        if (init0.type !== 'CallExpression')
+            return undefined;
+        // Check the assignment for a "SuperClass:derive('PurClassName')"...
+        if (init0.base.type !== 'MemberExpression')
+            return undefined;
+        if (init0.base.indexer !== ':')
+            return undefined;
+        if (init0.base.base.type !== 'Identifier')
+            return undefined;
+        if (init0.base.identifier.type !== 'Identifier')
+            return undefined;
+        if (init0.base.identifier.name !== 'derive')
+            return undefined;
+        // Check for class name here.
+        const vars0 = statement.variables[0];
+        if (vars0.type !== 'Identifier')
+            return undefined;
+        return {
+            name: vars0.name,
+            extendz: init0.base.base.name,
+            fields: {},
+            values: {},
+            methods: {},
+            funcs: {},
+            conztructor: undefined,
+        };
+    }
+    exports.getPZClass = getPZClass;
+    /**
+     * @param clazz The name of the class.
+     * @param statement The statement to process.
+     *
+     * @returns
+     */
+    function getPZExecutable(clazz, statement) {
+        // Check if assigned as a member declaration.
+        if (statement.identifier == null)
+            return undefined;
+        if (statement.identifier.type !== 'MemberExpression')
+            return undefined;
+        // Verify that the base assignment table is the class.
+        if (statement.identifier.base.type !== 'Identifier')
+            return undefined;
+        if (statement.identifier.base.name !== clazz)
+            return undefined;
+        // Grab the function / method name.
+        if (statement.identifier.identifier.type !== 'Identifier')
+            return undefined;
+        const name = statement.identifier.identifier.name;
+        let selfAlias = 'self';
+        // Get type.
+        let type = 'function';
+        if (name === 'new') {
+            type = 'constructor';
+            // Grab the alias used to return in the constructor.
+            selfAlias = '';
+            for (let index = statement.body.length - 1; index >= 0; index--) {
+                const next = statement.body[index];
+                if (next.type !== 'ReturnStatement')
+                    continue;
+                // Sanity check for bad Lua code.
+                if (!next.arguments.length) {
+                    throw new Error(`class Constructor ${clazz}:new() has invalid return!`);
+                }
+                // Assign the constructor-alias for 'self'.
+                const arg0 = next.arguments[0];
+                selfAlias = (0, String_1.expressionToString)(arg0);
+                break;
+            }
+            // Sanity check for bad Lua code.
+            if (!selfAlias.length) {
+                throw new Error(`Class constructor ${clazz}:new() has no alias for 'self'.`);
+            }
+        }
+        else if (statement.identifier.indexer === ':') {
+            type = 'method';
+        }
+        // Build params.
+        const params = [];
+        for (const param of statement.parameters) {
+            switch (param.type) {
+                case 'Identifier': {
+                    params.push((0, String_1.identifierToString)(param));
+                    break;
+                }
+                case 'VarargLiteral': {
+                    params.push((0, String_1.varargLiteralToString)(param));
+                    break;
+                }
+            }
+        }
+        // Return result information.
+        return { clazz, type, name, params, selfAlias };
+    }
+    exports.getPZExecutable = getPZExecutable;
+    /**
+     * @param clazz The name of the class.
+     * @param statement The statement to process.
+     * @param selfAlias The alias used for field-declarations inside of executables within a instanced class context. (Default: 'self')
+     */
+    function getPZProperty(clazz, statement, selfAlias = 'self') {
+        // Sanity-check
+        if (!statement.variables.length) {
+            return undefined;
+        }
+        const var0 = statement.variables[0];
+        // Make sure the assignment is towards a member. (The class)
+        if (var0.type !== 'MemberExpression') {
+            return undefined;
+        }
+        if (var0.base.type !== 'Identifier') {
+            return undefined;
+        }
+        // Sanity-check
+        if (!statement.init.length) {
+            console.warn('no init length.');
+            console.warn(statement);
+            return undefined;
+        }
+        // Check what type of property it is.
+        let type = 'value';
+        if (var0.base.name === clazz) {
+            type = 'value';
+        }
+        else if (var0.base.name === selfAlias) {
+            type = 'field';
+        }
+        else {
+            // This belongs to something else.
+            return undefined;
+        }
+        // The name of the property.
+        const name = var0.identifier.name;
+        // If the assignment is a literal expression then we know what the initial type is. Grab it.
+        // We then conveniently know the default value of the property. Grab that too..
+        let types = [];
+        let defaultValue = undefined;
+        const init0 = statement.init[0];
+        switch (init0.type) {
+            case 'NumericLiteral': {
+                types.push('number');
+                defaultValue = init0.raw;
+                break;
+            }
+            case 'BooleanLiteral': {
+                types.push('boolean');
+                defaultValue = init0.raw;
+                break;
+            }
+            case 'StringLiteral': {
+                types.push('string');
+                defaultValue = init0.value;
+                break;
+            }
+            case 'NilLiteral': {
+                types.push('nil');
+                defaultValue = 'nil';
+                break;
+            }
+            case 'VarargLiteral': {
+                // TODO - Figure this out once we run into this case.
+                console.log('#################');
+                console.log('THIS IS A VARARG.');
+                console.log(init0);
+                console.log('#################');
+                defaultValue = init0.value;
+                break;
+            }
+            case 'TableConstructorExpression': {
+                // TODO - Figure out how to assign table-like key-values as type-assigned.
+                types.push('table');
+                break;
+            }
+            default: {
+                console.log('unhandled type / default value handle: ');
+                console.log({ statement, init: init0 });
+                break;
+            }
+        }
+        return { clazz, name, type, types, defaultValue };
+    }
+    exports.getPZProperty = getPZProperty;
+    function getPZClasses(global, statements) {
+        const classes = {};
+        // Find classes.
+        for (const statement of statements) {
+            if (statement.type !== 'AssignmentStatement')
+                continue;
+            const clazzInfo = getPZClass(statement);
+            if (clazzInfo)
+                classes[clazzInfo.name] = global.classes[clazzInfo.name] = clazzInfo;
+        }
+        // Go through all classes, even outside of the file because other Lua files can define class functions.
+        //
+        //     FIXME: This can cause weird situations if the `require '<file>'` isn't followed. We could find issues of load-order.
+        //            Look here if this is an issue later on.
+        //
+        for (const clazzName of Object.keys(global.classes)) {
+            const clazz = global.classes[clazzName];
+            function processExecutable(funcDec, executable) {
+                for (const statement of funcDec.body) {
+                    if (statement.type !== 'AssignmentStatement')
+                        continue;
+                    const propertyInfo = getPZProperty(clazz.name, statement, executable.selfAlias);
+                    if (propertyInfo && propertyInfo.type === 'field') {
+                        clazz.fields[propertyInfo.name] = propertyInfo;
+                    }
+                }
+            }
+            for (const statement of statements) {
+                // Look for class value(s) here..
+                if (statement.type === 'AssignmentStatement') {
+                    const propertyInfo = getPZProperty(clazzName, statement, clazzName);
+                    if (propertyInfo) {
+                        if (propertyInfo.type === 'value') {
+                            clazz.values[propertyInfo.name] = propertyInfo;
+                        }
+                    }
+                }
+                // Go through all functions in the chunk. These can either be: 
+                //    - Class Constructors
+                //    - Class Functions
+                //    - Class Methods
+                else if (statement.type === 'FunctionDeclaration') {
+                    // The potential Class Executable.
+                    const executableInfo = getPZExecutable(clazzName, statement);
+                    if (executableInfo) {
+                        if (executableInfo.type === 'constructor') {
+                            if (clazz.conztructor) {
+                                console.warn(`Class ${clazzName} already has a constructor. Overriding with bottom-most definition..`);
+                            }
+                            clazz.conztructor = executableInfo;
+                        }
+                        else if (executableInfo.type === 'function') {
+                            if (clazz.funcs[executableInfo.name]) {
+                                console.warn(`Class ${clazzName} already has the function ${executableInfo.name}. Overriding with bottom-most definition..`);
+                            }
+                            clazz.funcs[executableInfo.name] = executableInfo;
+                        }
+                        else if (executableInfo.type === 'method') {
+                            if (clazz.methods[executableInfo.name]) {
+                                console.warn(`Class ${clazzName} already has the method ${executableInfo.name}. Overriding with bottom-most definition..`);
+                            }
+                            clazz.methods[executableInfo.name] = executableInfo;
+                        }
+                        // Discover field(s) here.
+                        processExecutable(statement, executableInfo);
+                    }
+                }
+            }
+        }
+        return classes;
+    }
+    exports.getPZClasses = getPZClasses;
+    function scanFile(global, statements) {
+        getPZClasses(global, statements);
+    }
+    exports.scanFile = scanFile;
+    function scanInto(scope, statements) {
+    }
+});
+define("src/asledgehammer/rosetta/lua/wizard/Old", ["require", "exports", "src/asledgehammer/rosetta/lua/wizard/LuaWizard", "src/asledgehammer/rosetta/lua/wizard/String", "src/asledgehammer/rosetta/lua/wizard/PZ", "src/asledgehammer/rosetta/lua/wizard/Scope"], function (require, exports, LuaWizard_1, String_2, PZ_1, Scope_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.discover = void 0;
@@ -3291,7 +3806,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Old", ["require", "exports", "src/a
                 // local x = ..
                 case 'LocalStatement': {
                     if (debug) {
-                        console.log((0, String_1.localStatementToString)(statement));
+                        console.log((0, String_2.localStatementToString)(statement));
                     }
                     // Tuple-support.
                     for (let index = 0; index < statement.variables.length; index++) {
@@ -3380,7 +3895,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Old", ["require", "exports", "src/a
                 }
                 case 'AssignmentStatement': {
                     if (debug) {
-                        console.log((0, String_1.assignmentStatementToString)(statement));
+                        console.log((0, String_2.assignmentStatementToString)(statement));
                     }
                     /* (Support tuple declarations) */
                     let index;
@@ -3773,7 +4288,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Old", ["require", "exports", "src/a
                 }
                 case 'ReturnStatement': {
                     if (debug) {
-                        console.log(`${(0, String_1.returnStatementToString)(statement)};`);
+                        console.log(`${(0, String_2.returnStatementToString)(statement)};`);
                     }
                     break;
                 }
@@ -4103,22 +4618,30 @@ define("src/asledgehammer/rosetta/lua/wizard/Old", ["require", "exports", "src/a
         return changes;
     }
     function discover(chunk, __G = newGlobalScope()) {
-        var _a;
-        /* (Initial Pass) */
-        passClass(chunk.body, __G);
-        for (const clazz of Object.values(__G.classes)) {
-            passField(clazz, __G);
-        }
-        let changes = 0;
-        let passes = 0;
-        do {
-            passes++;
-            changes = pass(__G);
-            console.log(`Pass ${passes}: ${changes} discoveries.`);
-        } while (passes < 2 || changes !== 0);
-        console.log(`__G.map.length = ${Object.keys(__G.map).length}`);
-        console.log({ 'constructor': (_a = __G.classes['ISUIElement'].conztructor) === null || _a === void 0 ? void 0 : _a.init });
-        // console.log(chunkToString(chunk));
+        // /* (Initial Pass) */
+        // passClass(chunk.body, __G);
+        // for (const clazz of Object.values(__G.classes)) {
+        //     passField(clazz, __G);
+        // }
+        // let changes = 0;
+        // let passes = 0;
+        // do {
+        //     passes++;
+        //     changes = pass(__G);
+        //     console.log(`Pass ${passes}: ${changes} discoveries.`);
+        // } while (passes < 2 || changes !== 0);
+        // console.log(`__G.map.length = ${Object.keys(__G.map).length}`)
+        // console.log({ __G: __G });
+        const scopeGlobal = new Scope_1.Scope(__G);
+        const infoGlobal = {
+            classes: {},
+            tables: {},
+            values: {},
+            funcs: {}
+        };
+        (0, PZ_1.scanFile)(infoGlobal, chunk.body);
+        console.log(infoGlobal);
+        // console.log(chunk);
         return __G;
     }
     exports.discover = discover;
@@ -5506,248 +6029,6 @@ define("src/asledgehammer/rosetta/component/SidebarPanel", ["require", "exports"
     exports.SidebarPanel = SidebarPanel;
     ;
 });
-define("src/asledgehammer/rosetta/lua/wizard/Scope", ["require", "exports"], function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.Scope = void 0;
-    /**
-     * **Scope** is a class that stores scope-based information about Lua elements and their relationshop to other elements.
-     * Data is used in this class to determine stronger types to assign to fields, returns, parameters, among other elements.
-     *
-     * @author asledgehammer
-     */
-    class Scope {
-        /////////////////////////////
-        /**
-         * @param element The element container.
-         * @param parent The parent scope. (Set to null if root. E.G: __G is global root)
-         * @param index For statements with multiple variables, this index helps target the right one.
-         */
-        constructor(element, parent, index = 0) {
-            /** Any child scopes. This is helpful with {@link Scope.resolve resolving scopes}. */
-            this.children = {};
-            /** All discovered scopes that directly call or assign this scope. */
-            this.references = [];
-            this.types = [];
-            /** For statements with multiple variables, this index helps with the initialization of Scopes. */
-            this.index = 0;
-            /** Generated or identified when constructing Scopes. */
-            this.name = '';
-            /////////////////////////////
-            // These are for children. //
-            /////////////////////////////
-            this._nextBreakID = 0;
-            this._nextGotoID = 0;
-            this._nextReturnID = 0;
-            this._nextIfID = 0;
-            this._nextIfClauseID = 0;
-            this._nextElseIfClauseID = 0;
-            this._nextElseClauseID = 0;
-            this._nextForNumericID = 0;
-            this._nextForGenericID = 0;
-            this._nextWhileID = 0;
-            this._nextDoID = 0;
-            this._nextRepeatID = 0;
-            this._nextAnonFuncID = 0;
-            this._nextCallID = 0;
-            this.element = element;
-            this.parent = parent;
-            const name = this.generateName();
-            this.path = `${parent ? `${parent.path}.` : ''}${name}`;
-            this.index = index;
-        }
-        resolve(path) {
-            if (!path.length)
-                return undefined;
-            const { parent } = this;
-            // Check into the scope first. If something resolves, we're in the most immediate scope that contains the reference which is consistent with the
-            // Lua language in scope-discovery when accessing a referenced variable in the most immediate scope.
-            let child = this.resolveInto(path);
-            if (child)
-                return child;
-            // Try to resolve in the next outer-scope. If one doesn't exist, the path does not resolve.
-            return parent === null || parent === void 0 ? void 0 : parent.resolve(path);
-        }
-        /**
-         * Search into the scope, going out-to-in.
-         *
-         * @param path The path to traverse.
-         *
-         * @returns Scope if found. undefined if not.
-         */
-        resolveInto(path) {
-            if (!path.length)
-                return undefined;
-            const { children } = this;
-            let pathSub = '';
-            let firstScope;
-            // The path is made of multiple scopes.
-            if (path.indexOf('.') !== -1) {
-                // We grab the first node here and produce the sub-path following that node.
-                let split = path.split('.');
-                split = split.reverse();
-                firstScope = split.pop();
-                pathSub = split.reverse().join();
-            }
-            else {
-                // We have one scope. The path is the scope.
-                firstScope = path;
-            }
-            const child = children[firstScope];
-            // The child doesn't exist.
-            if (!child)
-                return undefined;
-            // We still have scope to traverse. Go to the child and then repeat the process until traversed.
-            if (pathSub.length)
-                child.resolve(pathSub);
-            // We've reached the last scope in the path and located the child. 
-            return child;
-        }
-        generateName() {
-            const { element: e, parent } = this;
-            if (e.type === 'ScopeGlobal')
-                return '__G';
-            if (!parent)
-                throw new Error('A parent is required!');
-            switch (e.type) {
-                case 'ScopeVariable': return this.getStatementName(e.init);
-                case 'ScopeFunction': return e.init.identifier ? this.getExpressionName(e.init.identifier) : parent.nextAnonymousFunctionID();
-                case 'ScopeForGenericBlock': return parent.nextForGenericID();
-                case 'ScopeForNumericBlock': return parent.nextForNumericID();
-                case 'ScopeDoBlock': return parent.nextDoID();
-                case 'ScopeWhileBlock': return parent.nextWhileID();
-                case 'ScopeRepeatBlock': return parent.nextRepeatID();
-                case 'ScopeIfBlock': return parent.nextIfID();
-                case 'ScopeIfClauseBlock': return parent.nextIfClauseID();
-                case 'ScopeTable': return e.name;
-                case 'ScopeClass': return e.name;
-                case 'ScopeConstructor': return 'constructor';
-            }
-        }
-        getStatementName(statement) {
-            const { parent } = this;
-            if (!parent)
-                throw new Error('A parent is required!');
-            switch (statement.type) {
-                case 'LabelStatement': return statement.label.name;
-                case 'BreakStatement': return parent.nextBreakID();
-                case 'GotoStatement': return parent.nextGotoID();
-                case 'ReturnStatement': return parent.nextReturnID();
-                case 'IfStatement': return parent.nextIfID();
-                case 'WhileStatement': return parent.nextWhileID();
-                case 'DoStatement': return parent.nextDoID();
-                case 'RepeatStatement': return parent.nextRepeatID();
-                case 'LocalStatement': return statement.variables[this.index].name;
-                case 'AssignmentStatement': return this.getExpressionName(statement.variables[this.index]);
-                case 'CallStatement': return parent.nextCallID();
-                case 'FunctionDeclaration': return parent.nextAnonymousFunctionID();
-                case 'ForNumericStatement': return parent.nextForNumericID();
-                case 'ForGenericStatement': return parent.nextForGenericID();
-            }
-        }
-        getExpressionName(expression) {
-            if (expression.type === 'Identifier')
-                return expression.name;
-            switch (expression.type) {
-                case 'IndexExpression': return this.getExpressionName(expression.base);
-                case 'MemberExpression': return `___member_expression___${this.getExpressionName(expression.base)}${expression.indexer}${expression.identifier.name}`;
-                default: {
-                    console.log(expression);
-                    throw new Error(`Unimplemented expression in 'Scope.getExpressionName(${expression.type}). (scope path: '${this.path}') Check the line above for more info on the expression.`);
-                }
-            }
-        }
-        resetIDs() {
-            this._nextCallID = 0;
-            this._nextBreakID = 0;
-            this._nextGotoID = 0;
-            this._nextReturnID = 0;
-            this._nextIfID = 0;
-            this._nextIfClauseID = 0;
-            this._nextElseIfClauseID = 0;
-            this._nextElseClauseID = 0;
-            this._nextForNumericID = 0;
-            this._nextForGenericID = 0;
-            this._nextWhileID = 0;
-            this._nextDoID = 0;
-            this._nextRepeatID = 0;
-            this._nextAnonFuncID = 0;
-        }
-        addType(...types) {
-            let changes = 0;
-            for (const type of types) {
-                if (!this.hasType(type)) {
-                    this.types.push(type);
-                    changes++;
-                }
-            }
-            return changes;
-        }
-        sortTypes() {
-            this.types.sort((a, b) => a.localeCompare(b));
-        }
-        hasType(type) {
-            return this.types.indexOf(type) !== -1;
-        }
-        /** NOTE: Must be called from sub-scope! */
-        nextBreakID() {
-            return `${this.path}.___break___${this._nextBreakID++}`;
-        }
-        /** NOTE: Must be called from sub-scope! */
-        nextGotoID() {
-            return `${this.path}.___goto___${this._nextGotoID++}`;
-        }
-        /** NOTE: Must be called from sub-scope! */
-        nextReturnID() {
-            return `${this.path}.___return___${this._nextReturnID++}`;
-        }
-        /** NOTE: Must be called from sub-scope! */
-        nextIfID() {
-            return `${this.path}.___if___${this._nextIfID++}`;
-        }
-        /** NOTE: Must be called from sub-scope! */
-        nextIfClauseID() {
-            return `${this.path}.___clause_if___${this._nextIfClauseID++}`;
-        }
-        /** NOTE: Must be called from sub-scope! */
-        nextElseIfClauseID() {
-            return `${this.path}.___clause_elseif___${this._nextElseIfClauseID++}`;
-        }
-        /** NOTE: Must be called from sub-scope! */
-        nextElseClauseID() {
-            return `${this.path}.___clause_else___${this._nextElseClauseID++}`;
-        }
-        /** NOTE: Must be called from sub-scope! */
-        nextForNumericID() {
-            return `${this.path}.___for_numeric___${this._nextForNumericID++}`;
-        }
-        /** NOTE: Must be called from sub-scope! */
-        nextForGenericID() {
-            return `${this.path}.___for_generic___${this._nextForGenericID++}`;
-        }
-        /** NOTE: Must be called from sub-scope! */
-        nextWhileID() {
-            return `${this.path}.___while___${this._nextWhileID++}`;
-        }
-        /** NOTE: Must be called from sub-scope! */
-        nextDoID() {
-            return `${this.path}.___do___${this._nextDoID++}`;
-        }
-        /** NOTE: Must be called from sub-scope! */
-        nextRepeatID() {
-            return `${this.path}.___repeat___${this._nextRepeatID++}`;
-        }
-        /** NOTE: Must be called from sub-scope! */
-        nextAnonymousFunctionID() {
-            return `${this.path}.___anonymous_function___${this._nextAnonFuncID++}`;
-        }
-        /** NOTE: Must be called from sub-scope! */
-        nextCallID() {
-            return `${this.path}.___call___${this._nextCallID++}`;
-        }
-    }
-    exports.Scope = Scope;
-});
 define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -6039,176 +6320,5 @@ define("src/asledgehammer/rosetta/lua/wizard/New", ["require", "exports"], funct
             classes: {}
         };
     }
-});
-define("src/asledgehammer/rosetta/lua/wizard/PZ", ["require", "exports", "src/asledgehammer/rosetta/lua/wizard/String"], function (require, exports, String_2) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.getPZProperty = exports.getPZExecutable = exports.getPZClass = void 0;
-    /**
-     * @param statement The statement to process.
-     *
-     * @returns
-     */
-    function getPZClass(statement) {
-        // Check for ISBaseObject (or subclass), and derive call signature.
-        const init0 = statement.init[0];
-        if (init0.type !== 'CallExpression')
-            return undefined;
-        // Check the assignment for a "SuperClass:derive('PurClassName')"...
-        if (init0.base.type !== 'MemberExpression')
-            return undefined;
-        if (init0.base.indexer !== ':')
-            return undefined;
-        if (init0.base.base.type !== 'Identifier')
-            return undefined;
-        if (init0.base.identifier.type !== 'Identifier')
-            return undefined;
-        if (init0.base.identifier.name !== 'derive')
-            return undefined;
-        // Check for class name here.
-        const vars0 = statement.variables[0];
-        if (vars0.type !== 'Identifier')
-            return undefined;
-        return { name: vars0.name, extendz: init0.base.base.type };
-    }
-    exports.getPZClass = getPZClass;
-    /**
-     * @param clazz The name of the class.
-     * @param statement The statement to process.
-     *
-     * @returns
-     */
-    function getPZExecutable(clazz, statement) {
-        // Check if assigned as a member declaration.
-        if (statement.identifier == null)
-            return undefined;
-        if (statement.identifier.type !== 'MemberExpression')
-            return undefined;
-        // Verify that the base assignment table is the class.
-        if (statement.identifier.base.type !== 'Identifier')
-            return undefined;
-        if (statement.identifier.base.name !== clazz)
-            return undefined;
-        // Grab the function / method name.
-        if (statement.identifier.identifier.type !== 'Identifier')
-            return undefined;
-        const name = statement.identifier.identifier.name;
-        let selfAlias = 'self';
-        // Get type.
-        let type = 'function';
-        if (name === 'new') {
-            type = 'constructor';
-            // Grab the alias used to return in the constructor.
-            selfAlias = '';
-            for (let index = statement.body.length - 1; index >= 0; index--) {
-                const next = statement.body[index];
-                if (next.type !== 'ReturnStatement')
-                    continue;
-                // Sanity check for bad Lua code.
-                if (!next.arguments.length) {
-                    throw new Error(`class Constructor ${clazz}:new() has invalid return!`);
-                }
-                // Assign the constructor-alias for 'self'.
-                const arg0 = next.arguments[0];
-                selfAlias = (0, String_2.expressionToString)(arg0);
-                break;
-            }
-            // Sanity check for bad Lua code.
-            if (!selfAlias.length) {
-                throw new Error(`Class constructor ${clazz}:new() has no alias for 'self'.`);
-            }
-        }
-        else if (statement.identifier.indexer === ':') {
-            type = 'method';
-        }
-        // Build params.
-        const params = [];
-        for (const param of statement.parameters) {
-            switch (param.type) {
-                case 'Identifier': {
-                    params.push((0, String_2.identifierToString)(param));
-                    break;
-                }
-                case 'VarargLiteral': {
-                    params.push((0, String_2.varargLiteralToString)(param));
-                    break;
-                }
-            }
-        }
-        // Return result information.
-        return { clazz, type, name, params, selfAlias };
-    }
-    exports.getPZExecutable = getPZExecutable;
-    /**
-     * @param clazz The name of the class.
-     * @param statement The statement to process.
-     * @param selfAlias The alias used for field-declarations inside of executables within a instanced class context. (Default: 'self')
-     */
-    function getPZProperty(clazz, statement, selfAlias = 'self') {
-        // Sanity-check
-        if (!statement.variables.length)
-            return undefined;
-        const var0 = statement.variables[0];
-        // Make sure the assignment is towards a member. (The class)
-        if (var0.type !== 'MemberExpression')
-            return undefined;
-        if (var0.base.type !== 'Identifier')
-            return undefined;
-        // Sanity-check
-        if (!statement.init.length)
-            return undefined;
-        // Check what type of property it is.
-        let type = 'value';
-        if (var0.base.type === clazz) {
-            type = 'value';
-        }
-        else if (var0.base.type === selfAlias) {
-            type = 'field';
-        }
-        else {
-            // This belongs to something else.
-            return undefined;
-        }
-        // The name of the property.
-        const name = var0.identifier.name;
-        // If the assignment is a literal expression then we know what the initial type is. Grab it.
-        // We then conveniently know the default value of the property. Grab that too..
-        let types = [];
-        let defaultValue = undefined;
-        const init0 = statement.init[0];
-        switch (init0.type) {
-            case 'NumericLiteral': {
-                types.push('number');
-                defaultValue = init0.raw;
-                break;
-            }
-            case 'BooleanLiteral': {
-                types.push('boolean');
-                defaultValue = init0.raw;
-                break;
-            }
-            case 'StringLiteral': {
-                types.push('string');
-                defaultValue = init0.value;
-                break;
-            }
-            case 'NilLiteral': {
-                types.push('nil');
-                defaultValue = 'nil';
-                break;
-            }
-            case 'VarargLiteral': {
-                // TODO - Figure this out once we run into this case.
-                console.log('#################');
-                console.log('THIS IS A VARARG.');
-                console.log(init0);
-                console.log('#################');
-                defaultValue = init0.value;
-                break;
-            }
-        }
-        return { clazz, name, type, types, defaultValue };
-    }
-    exports.getPZProperty = getPZProperty;
 });
 //# sourceMappingURL=app.js.map

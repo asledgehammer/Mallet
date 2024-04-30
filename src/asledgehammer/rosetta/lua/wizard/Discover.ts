@@ -129,7 +129,6 @@ export function discoverTableCallExpression(__G: ScopeGlobal, expression: ast.Ta
  */
 export function discoverStringCallExpression(__G: ScopeGlobal, expression: ast.StringCallExpression, scope: Scope): number {
 
-
     // No base to assign; no change to make;
     if (!expression.base) return 0;
 
