@@ -3821,8 +3821,6 @@ define("src/asledgehammer/rosetta/lua/wizard/PZ", ["require", "exports", "src/as
         getPZClasses(global, statements);
     }
     exports.scanFile = scanFile;
-    function scanInto(scope, statements) {
-    }
 });
 define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", "luaparse", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/lua/wizard/PZ", "src/asledgehammer/rosetta/lua/wizard/Scope"], function (require, exports, ast, RosettaLuaClass_1, RosettaLuaConstructor_2, PZ_1, Scope_2) {
     "use strict";
@@ -5226,53 +5224,57 @@ define("src/asledgehammer/rosetta/component/SidebarPanel", ["require", "exports"
 define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.discoverFile = exports.discoverStatement = exports.discoverExpression = exports.discoverStringCallExpression = exports.discoverTableCallExpression = exports.discoverCallExpression = exports.discoverIndexExpression = exports.discoverMemberExpression = exports.discoverUnaryExpression = exports.discoverLogicalExpression = exports.discoverBinaryExpression = exports.discoverTableConstructorExpression = exports.discoverVarargLiteral = exports.discoverFunctionDeclaration = void 0;
-    function discoverFunctionDeclaration(__G, expression, scope) {
-        const changes = 0;
-        return changes;
-    }
-    exports.discoverFunctionDeclaration = discoverFunctionDeclaration;
-    function discoverVarargLiteral(__G, expression, scope) {
+    exports.discoverFile = exports.discoverStatement = exports.discoverForGenericStatement = exports.discoverForNumericStatement = exports.discoverCallStatement = exports.discoverAssignmentStatement = exports.discoverLocalStatement = exports.discoverRepeatStatement = exports.discoverDoStatement = exports.discoverWhileStatement = exports.discoverIfStatement = exports.discoverReturnStatement = exports.discoverGotoStatement = exports.discoverBreakStatement = exports.discoverLabelStatement = exports.discoverFunctionDeclaration = exports.discoverExpression = exports.discoverStringCallExpression = exports.discoverTableCallExpression = exports.discoverCallExpression = exports.discoverIndexExpression = exports.discoverMemberExpression = exports.discoverUnaryExpression = exports.discoverLogicalExpression = exports.discoverBinaryExpression = exports.discoverTableConstructorExpression = exports.discoverVarargLiteral = void 0;
+    function discoverVarargLiteral(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
         const changes = 0;
         return changes;
     }
     exports.discoverVarargLiteral = discoverVarargLiteral;
-    function discoverTableConstructorExpression(__G, expression, scope) {
+    function discoverTableConstructorExpression(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
         const changes = 0;
         return changes;
     }
     exports.discoverTableConstructorExpression = discoverTableConstructorExpression;
-    function discoverBinaryExpression(__G, expression, scope) {
+    function discoverBinaryExpression(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
         const changes = 0;
         return changes;
     }
     exports.discoverBinaryExpression = discoverBinaryExpression;
-    function discoverLogicalExpression(__G, expression, scope) {
+    function discoverLogicalExpression(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
         const changes = 0;
         return changes;
     }
     exports.discoverLogicalExpression = discoverLogicalExpression;
-    function discoverUnaryExpression(__G, expression, scope) {
+    function discoverUnaryExpression(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
         const changes = 0;
         return changes;
     }
     exports.discoverUnaryExpression = discoverUnaryExpression;
-    function discoverMemberExpression(__G, expression, scope) {
+    function discoverMemberExpression(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
         const changes = 0;
         return changes;
     }
     exports.discoverMemberExpression = discoverMemberExpression;
-    function discoverIndexExpression(__G, expression, scope) {
+    function discoverIndexExpression(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
         const changes = 0;
         return changes;
     }
     exports.discoverIndexExpression = discoverIndexExpression;
-    function discoverCallExpression(__G, expression, scope) {
+    function discoverCallExpression(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
         const changes = 0;
         return changes;
     }
     exports.discoverCallExpression = discoverCallExpression;
-    function discoverTableCallExpression(__G, expression, scope) {
+    function discoverTableCallExpression(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
         const changes = 0;
         return changes;
     }
@@ -5286,82 +5288,139 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports"], 
      *            local my_module = require '../my_module.lua';
      *            ```
      */
-    function discoverStringCallExpression(__G, expression, scope) {
+    function discoverStringCallExpression(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
         let changes = 0;
         return changes;
     }
     exports.discoverStringCallExpression = discoverStringCallExpression;
-    function discoverExpression(__G, expression, scope) {
+    function discoverExpression(globalInfo, expression, scope) {
         switch (expression.type) {
             case 'Identifier': return 0;
             case 'StringLiteral': return scope.addType('string');
             case 'NumericLiteral': return scope.addType('number');
             case 'BooleanLiteral': return scope.addType('boolean');
             case 'NilLiteral': return scope.addType('nil');
-            case 'FunctionDeclaration': return discoverFunctionDeclaration(__G, expression, scope);
-            case 'VarargLiteral': return discoverVarargLiteral(__G, expression, scope);
-            case 'TableConstructorExpression': return discoverTableConstructorExpression(__G, expression, scope);
-            case 'BinaryExpression': return discoverBinaryExpression(__G, expression, scope);
-            case 'LogicalExpression': return discoverLogicalExpression(__G, expression, scope);
-            case 'UnaryExpression': return discoverUnaryExpression(__G, expression, scope);
-            case 'MemberExpression': return discoverMemberExpression(__G, expression, scope);
-            case 'IndexExpression': return discoverIndexExpression(__G, expression, scope);
-            case 'CallExpression': return discoverCallExpression(__G, expression, scope);
-            case 'TableCallExpression': return discoverTableCallExpression(__G, expression, scope);
-            case 'StringCallExpression': return discoverStringCallExpression(__G, expression, scope);
+            case 'FunctionDeclaration': return discoverFunctionDeclaration(globalInfo, expression, scope);
+            case 'VarargLiteral': return discoverVarargLiteral(globalInfo, expression, scope);
+            case 'TableConstructorExpression': return discoverTableConstructorExpression(globalInfo, expression, scope);
+            case 'BinaryExpression': return discoverBinaryExpression(globalInfo, expression, scope);
+            case 'LogicalExpression': return discoverLogicalExpression(globalInfo, expression, scope);
+            case 'UnaryExpression': return discoverUnaryExpression(globalInfo, expression, scope);
+            case 'MemberExpression': return discoverMemberExpression(globalInfo, expression, scope);
+            case 'IndexExpression': return discoverIndexExpression(globalInfo, expression, scope);
+            case 'CallExpression': return discoverCallExpression(globalInfo, expression, scope);
+            case 'TableCallExpression': return discoverTableCallExpression(globalInfo, expression, scope);
+            case 'StringCallExpression': return discoverStringCallExpression(globalInfo, expression, scope);
         }
     }
     exports.discoverExpression = discoverExpression;
-    function discoverStatement(globalInfo, scope, statement) {
+    function discoverFunctionDeclaration(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverFunctionDeclaration = discoverFunctionDeclaration;
+    function discoverLabelStatement(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverLabelStatement = discoverLabelStatement;
+    function discoverBreakStatement(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverBreakStatement = discoverBreakStatement;
+    function discoverGotoStatement(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverGotoStatement = discoverGotoStatement;
+    function discoverReturnStatement(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverReturnStatement = discoverReturnStatement;
+    function discoverIfStatement(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverIfStatement = discoverIfStatement;
+    function discoverWhileStatement(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverWhileStatement = discoverWhileStatement;
+    function discoverDoStatement(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverDoStatement = discoverDoStatement;
+    function discoverRepeatStatement(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverRepeatStatement = discoverRepeatStatement;
+    function discoverLocalStatement(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverLocalStatement = discoverLocalStatement;
+    function discoverAssignmentStatement(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverAssignmentStatement = discoverAssignmentStatement;
+    function discoverCallStatement(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverCallStatement = discoverCallStatement;
+    function discoverForNumericStatement(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverForNumericStatement = discoverForNumericStatement;
+    function discoverForGenericStatement(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverForGenericStatement = discoverForGenericStatement;
+    function discoverStatement(globalInfo, statement, scope) {
         switch (statement.type) {
-            case 'LabelStatement': {
-                break;
-            }
-            case 'BreakStatement': {
-                break;
-            }
-            case 'GotoStatement': {
-                break;
-            }
-            case 'ReturnStatement': {
-                break;
-            }
-            case 'IfStatement': {
-                break;
-            }
-            case 'WhileStatement': {
-                break;
-            }
-            case 'DoStatement': {
-                break;
-            }
-            case 'RepeatStatement': {
-                break;
-            }
-            case 'LocalStatement': {
-                break;
-            }
-            case 'AssignmentStatement': {
-                break;
-            }
-            case 'CallStatement': {
-                break;
-            }
-            case 'FunctionDeclaration': {
-                break;
-            }
-            case 'ForNumericStatement': {
-                break;
-            }
-            case 'ForGenericStatement': {
-                break;
-            }
+            case 'FunctionDeclaration': return discoverFunctionDeclaration(globalInfo, statement, scope);
+            case 'LabelStatement': return discoverLabelStatement(globalInfo, statement, scope);
+            case 'BreakStatement': return discoverBreakStatement(globalInfo, statement, scope);
+            case 'GotoStatement': return discoverGotoStatement(globalInfo, statement, scope);
+            case 'ReturnStatement': return discoverReturnStatement(globalInfo, statement, scope);
+            case 'IfStatement': return discoverIfStatement(globalInfo, statement, scope);
+            case 'WhileStatement': return discoverWhileStatement(globalInfo, statement, scope);
+            case 'DoStatement': return discoverDoStatement(globalInfo, statement, scope);
+            case 'RepeatStatement': return discoverRepeatStatement(globalInfo, statement, scope);
+            case 'LocalStatement': return discoverLocalStatement(globalInfo, statement, scope);
+            case 'AssignmentStatement': return discoverAssignmentStatement(globalInfo, statement, scope);
+            case 'CallStatement': return discoverCallStatement(globalInfo, statement, scope);
+            case 'ForNumericStatement': return discoverForNumericStatement(globalInfo, statement, scope);
+            case 'ForGenericStatement': return discoverForGenericStatement(globalInfo, statement, scope);
         }
     }
     exports.discoverStatement = discoverStatement;
     function discoverFile(globalInfo, __G, chunk) {
         for (const statement of chunk.body) {
-            discoverStatement(globalInfo, __G, statement);
+            discoverStatement(globalInfo, statement, __G);
         }
     }
     exports.discoverFile = discoverFile;

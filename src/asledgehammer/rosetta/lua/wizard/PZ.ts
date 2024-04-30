@@ -412,7 +412,3 @@ export function getPZClasses(globalInfo: PZGlobalInfo, statements: ast.Statement
 export function scanFile(global: PZGlobalInfo, statements: ast.Statement[]): void {
     getPZClasses(global, statements);
 }
-
-function scanInto(scope: Scope, statements: ast.Statement[]): void {
-
-}
