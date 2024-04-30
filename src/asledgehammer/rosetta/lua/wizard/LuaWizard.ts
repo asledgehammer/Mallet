@@ -41,7 +41,7 @@ export interface ScopeReference extends ScopeBase<'ScopeReference'> {
     value: ScopeReferenceable;
 }
 
-export interface ScopeVariable extends ScopeBase<'ScopeVariable'> {
+export interface ScopeVariable extends Base<'ScopeVariable'> {
 
     /** The name of the variable in Lua code. */
     name: string;
@@ -52,8 +52,11 @@ export interface ScopeVariable extends ScopeBase<'ScopeVariable'> {
     /** The luaparse AST object. */
     init: ast.Statement;
 
-    /** Any direct references to assignments so when the types are discovered they'll be linked to the same type(s). */
+    /** Any references to this variable so when the types are discovered they'll be linked to the same type(s). */
     references: { [scopeRaw: string]: ScopeReference };
+
+    /** Any assignments of this variable to a variable or table. */
+    assignments: { [path: string]: ScopeReference };
 }
 
 export interface ScopeReturn extends Base<'ScopeReturn'> {
@@ -92,7 +95,10 @@ export interface ScopeRepeatBlock extends ScopeBlock<'ScopeRepeatBlock'> {
     init: ast.RepeatStatement;
 }
 
-export interface ScopeFunction extends ScopeBase<'ScopeFunction'> {
+export interface ScopeFunction extends Base<'ScopeFunction'> {
+
+    name?: string;
+
     values: { [name: string]: ScopeVariable };
     params: ScopeVariable[];
     returns: ScopeReturn;
@@ -100,8 +106,11 @@ export interface ScopeFunction extends ScopeBase<'ScopeFunction'> {
     /** The luaparse AST object. */
     init: ast.FunctionDeclaration;
 
-    /** Any direct references to assignments so when the types are discovered they'll be linked to the same type(s). */
+    /** Any references to this function so when the types are discovered they'll be linked to the same type(s). */
     references: { [scopeRaw: string]: ScopeReference };
+
+    /** Any assignments of this function to a variable or table. */
+    assignments: { [path: string]: ScopeReference };
 };
 
 export interface ScopeConstructor extends ScopeBase<'ScopeConstructor'> {
@@ -114,8 +123,11 @@ export interface ScopeConstructor extends ScopeBase<'ScopeConstructor'> {
     /** This is the aliased table object that is returned as 'self' when constructing a class. */
     selfAlias: string;
 
-    /** Any direct references to assignments so when the types are discovered they'll be linked to the same type(s). */
+    /** Any references to this constructor so when the types are discovered they'll be linked to the same type(s). */
     references: { [scopeRaw: string]: ScopeReference };
+
+    /** Any assignments of this constructor to a variable or table. */
+    assignments: { [path: string]: ScopeReference };
 };
 
 export interface ScopeTable extends ScopeBase<'ScopeTable'> {
@@ -123,11 +135,14 @@ export interface ScopeTable extends ScopeBase<'ScopeTable'> {
     values: { [name: string]: ScopeVariable };
     funcs: { [name: string]: ScopeFunction };
 
-    /** Any direct references to assignments so when the types are discovered they'll be linked to the same type(s). */
+    /** Any references to this table so when the types are discovered they'll be linked to the same type(s). */
     references: { [scopeRaw: string]: ScopeReference };
+
+    /** Any assignments of this table to a variable or table. */
+    assignments: { [path: string]: ScopeReference };
 };
 
-export interface ScopeClass extends ScopeBase<'ScopeClass'> {
+export interface ScopeClass extends Base<'ScopeClass'> {
     name: string;
     extendz?: ScopeClass | string;
     conztructor?: ScopeConstructor;
@@ -136,20 +151,15 @@ export interface ScopeClass extends ScopeBase<'ScopeClass'> {
     funcs: { [name: string]: ScopeFunction };
     methods: { [name: string]: ScopeFunction };
 
-    /** Any direct references to assignments so when the types are discovered they'll be linked to the same type(s). */
+    /** Any references to this class so when the types are discovered they'll be linked to the same type(s). */
     references: { [scopeRaw: string]: ScopeReference };
+
+    /** Any assignments of this class to a variable or table. */
+    assignments: { [path: string]: ScopeReference };
 };
 
-export interface ScopeGlobal extends ScopeBase<'ScopeGlobal'> {
-    map: { [name: string]: ScopeElement },
-    values: { [name: string]: ScopeVariable };
-    funcs: { [name: string]: ScopeFunction };
-    tables: { [name: string]: ScopeTable };
-    classes: { [name: string]: ScopeClass };
-}
-
-export type ScopeElement = ScopeGlobal
-    | ScopeVariable
+export type ScopeElement =
+    ScopeVariable
     | ScopeFunction
     | ScopeForGenericBlock
     | ScopeForNumericBlock

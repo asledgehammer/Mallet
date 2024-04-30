@@ -1,5 +1,6 @@
 import * as ast from 'luaparse';
 import { ScopeElement } from './LuaWizard';
+import { indexExpressionToString, localStatementToString } from './String';
 
 /**
  * **Scope** is a class that stores scope-based information about Lua elements and their relationshop to other elements.
@@ -10,7 +11,7 @@ import { ScopeElement } from './LuaWizard';
 export class Scope {
 
     /** The element container. */
-    readonly element: ScopeElement;
+    readonly element: ScopeElement | undefined;
 
     /** The parent scope. If it doesn't exist, this scope is considered the root. */
     readonly parent?: Scope;
@@ -32,10 +33,13 @@ export class Scope {
     /** The full path of the scope. */
     readonly path: string;
 
+    readonly map: { [path: string]: Scope };
+
     /////////////////////////////
     // These are for children. //
     /////////////////////////////
 
+    private _nextMemberExpressionID: number = 0;
     private _nextBreakID: number = 0;
     private _nextGotoID: number = 0;
     private _nextReturnID: number = 0;
@@ -58,18 +62,66 @@ export class Scope {
      * @param parent The parent scope. (Set to null if root. E.G: __G is global root)
      * @param index For statements with multiple variables, this index helps target the right one.
      */
-    constructor(element: ScopeElement, parent: Scope | undefined = undefined, index: number = 0) {
+    constructor(element: ScopeElement | undefined = undefined, parent: Scope | undefined = undefined, index: number = 0) {
         this.element = element;
         this.parent = parent;
         const name = this.generateName();
         this.path = `${parent ? `${parent.path}.` : ''}${name}`;
         this.index = index;
+
+        // Assign the parent this new child.
+        if (parent) {
+            parent.addChild(this);
+            this.addToRootMap(this);
+        }
+
+        this.map = {};
+    }
+
+    addChild(child: Scope) {
+
+        // Add child to parent Scope.
+        this.children[child.name] = child;
+    }
+
+    private addToRootMap(child: Scope) {
+        // Add child to root Scope's map.
+        let currScope: Scope | undefined = this;
+        while (currScope.parent !== undefined) {
+            currScope = currScope.parent;
+        }
+        currScope.map[child.path] = child;
+    }
+
+    /**
+     * Resolves a scope from the top-level Scope.
+     * 
+     * @param path The absolute path to resolve.
+     * @returns 
+     */
+    resolveAbsolute(path: string): Scope | undefined {
+
+        // Replace the signifier for top-level Lua scope lookup.
+        if (path.indexOf('__G.')) path = path.replace('__G.', '');
+
+        // Get to the root Scope.
+        let currScope: Scope = this;
+        while (currScope.parent) currScope = currScope.parent;
+        // Look inward like a relative Scope.
+        return currScope.resolveInto(path);
     }
 
     resolve(path: string): Scope | undefined {
         if (!path.length) return undefined;
 
         const { parent } = this;
+
+        // If __G is the start of the path, immediately go to the top and search down.
+        // This is an absolute path, not a relative path.
+        if (path.startsWith('__G.')) {
+            path = path.replace('__G.', '');
+            return this.resolveAbsolute(path);
+        }
 
         // Check into the scope first. If something resolves, we're in the most immediate scope that contains the reference which is consistent with the
         // Lua language in scope-discovery when accessing a referenced variable in the most immediate scope.
@@ -120,11 +172,47 @@ export class Scope {
 
     private generateName(): string {
         const { element: e, parent } = this;
-        if (e.type === 'ScopeGlobal') return '__G';
+        if (!e) return '__G';
         if (!parent) throw new Error('A parent is required!');
         switch (e.type) {
-            case 'ScopeVariable': return this.getStatementName(e.init);
-            case 'ScopeFunction': return e.init.identifier ? this.getExpressionName(e.init.identifier!) : parent.nextAnonymousFunctionID();
+            case 'ScopeVariable': {
+                switch (e.init.type) {
+                    case 'LocalStatement': {
+                        return localStatementToString(e.init);
+                    }
+                    case 'AssignmentStatement': {
+                        const variable = e.init.variables[this.index];
+                        switch (variable.type) {
+                            case 'Identifier': {
+                                return variable.name;
+                            }
+                            case 'IndexExpression': {
+                                return indexExpressionToString(variable);
+                            }
+                            case 'MemberExpression': {
+                                return variable.identifier.name;
+                            }
+                        }
+                    }
+                    default: {
+                        console.warn(e);
+                        throw new Error(`Unsupported statement for ScopeVariable name: ${e.init.type}`);
+                    }
+                }
+            }
+            case 'ScopeFunction': {
+                // Named functions / methods.
+                if (e.init.identifier) {
+                    switch (e.init.identifier.type) {
+                        case 'Identifier':
+                            return e.init.identifier.name;
+                        case 'MemberExpression':
+                            return e.init.identifier.identifier.name;
+                    }
+                }
+                // Anonymous functions.
+                return parent?.nextAnonymousFunctionID();
+            }
             case 'ScopeForGenericBlock': return parent.nextForGenericID();
             case 'ScopeForNumericBlock': return parent.nextForNumericID();
             case 'ScopeDoBlock': return parent.nextDoID();
@@ -163,7 +251,7 @@ export class Scope {
         if (expression.type === 'Identifier') return expression.name;
         switch (expression.type) {
             case 'IndexExpression': return this.getExpressionName(expression.base);
-            case 'MemberExpression': return `___member_expression___${this.getExpressionName(expression.base)}${expression.indexer}${expression.identifier.name}`;
+            case 'MemberExpression': return `${this.getExpressionName(expression.base)}${expression.indexer}${expression.identifier.name}`;
             default: {
                 console.log(expression);
                 throw new Error(`Unimplemented expression in 'Scope.getExpressionName(${expression.type}). (scope path: '${this.path}') Check the line above for more info on the expression.`);
@@ -172,6 +260,7 @@ export class Scope {
     }
 
     resetIDs() {
+        this._nextMemberExpressionID = 0;
         this._nextCallID = 0;
         this._nextBreakID = 0;
         this._nextGotoID = 0;
@@ -208,72 +297,77 @@ export class Scope {
     }
 
     /** NOTE: Must be called from sub-scope! */
+    nextMemberExpressionID(): string {
+        return `___member_expression___${this._nextMemberExpressionID++}`;
+    }
+
+    /** NOTE: Must be called from sub-scope! */
     nextBreakID(): string {
-        return `${this.path}.___break___${this._nextBreakID++}`;
+        return `___break___${this._nextBreakID++}`;
     }
 
     /** NOTE: Must be called from sub-scope! */
     nextGotoID(): string {
-        return `${this.path}.___goto___${this._nextGotoID++}`;
+        return `___goto___${this._nextGotoID++}`;
     }
 
     /** NOTE: Must be called from sub-scope! */
     nextReturnID(): string {
-        return `${this.path}.___return___${this._nextReturnID++}`;
+        return `___return___${this._nextReturnID++}`;
     }
 
     /** NOTE: Must be called from sub-scope! */
     nextIfID(): string {
-        return `${this.path}.___if___${this._nextIfID++}`;
+        return `___if___${this._nextIfID++}`;
     }
 
     /** NOTE: Must be called from sub-scope! */
     nextIfClauseID(): string {
-        return `${this.path}.___clause_if___${this._nextIfClauseID++}`;
+        return `___clause_if___${this._nextIfClauseID++}`;
     }
 
     /** NOTE: Must be called from sub-scope! */
     nextElseIfClauseID(): string {
-        return `${this.path}.___clause_elseif___${this._nextElseIfClauseID++}`;
+        return `___clause_elseif___${this._nextElseIfClauseID++}`;
     }
 
     /** NOTE: Must be called from sub-scope! */
     nextElseClauseID(): string {
-        return `${this.path}.___clause_else___${this._nextElseClauseID++}`;
+        return `___clause_else___${this._nextElseClauseID++}`;
     }
 
     /** NOTE: Must be called from sub-scope! */
     nextForNumericID(): string {
-        return `${this.path}.___for_numeric___${this._nextForNumericID++}`;
+        return `___for_numeric___${this._nextForNumericID++}`;
     }
 
     /** NOTE: Must be called from sub-scope! */
     nextForGenericID(): string {
-        return `${this.path}.___for_generic___${this._nextForGenericID++}`;
+        return `___for_generic___${this._nextForGenericID++}`;
     }
 
     /** NOTE: Must be called from sub-scope! */
     nextWhileID(): string {
-        return `${this.path}.___while___${this._nextWhileID++}`;
+        return `___while___${this._nextWhileID++}`;
     }
 
     /** NOTE: Must be called from sub-scope! */
     nextDoID(): string {
-        return `${this.path}.___do___${this._nextDoID++}`;
+        return `___do___${this._nextDoID++}`;
     }
 
     /** NOTE: Must be called from sub-scope! */
     nextRepeatID(): string {
-        return `${this.path}.___repeat___${this._nextRepeatID++}`;
+        return `___repeat___${this._nextRepeatID++}`;
     }
 
     /** NOTE: Must be called from sub-scope! */
     nextAnonymousFunctionID(): string {
-        return `${this.path}.___anonymous_function___${this._nextAnonFuncID++}`;
+        return `___anonymous_function___${this._nextAnonFuncID++}`;
     }
 
     /** NOTE: Must be called from sub-scope! */
     nextCallID(): string {
-        return `${this.path}.___call___${this._nextCallID++}`;
+        return `___call___${this._nextCallID++}`;
     }
 }

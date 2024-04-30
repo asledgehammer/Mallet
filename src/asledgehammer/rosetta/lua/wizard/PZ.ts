@@ -1,6 +1,7 @@
 import * as ast from 'luaparse';
 import { expressionToString, identifierToString, varargLiteralToString } from './String';
 import { Scope } from './Scope';
+import { ScopeClass, ScopeFunction, ScopeReturn, ScopeVariable } from './LuaWizard';
 
 export type PZPropertyType = 'field' | 'value';
 export type PZExecutableType = 'function' | 'method' | 'constructor';
@@ -10,6 +11,7 @@ export interface PZGlobalInfo {
     tables: { [name: string]: PZTableInfo };
     values: { [name: string]: PZPropertyInfo<'value'> };
     funcs: { [name: string]: PZExecutableInfo<'function'> };
+    scope: Scope;
 }
 
 export interface PZTableInfo {
@@ -17,6 +19,8 @@ export interface PZTableInfo {
 
     values: { [name: string]: PZPropertyInfo<'value'> };
     funcs: { [name: string]: PZExecutableInfo<'function'> };
+
+    scope: Scope;
 }
 
 export interface PZClassInfo {
@@ -31,6 +35,7 @@ export interface PZClassInfo {
     methods: { [name: string]: PZExecutableInfo<'method'> };
     funcs: { [name: string]: PZExecutableInfo<'function'> };
     conztructor?: PZExecutableInfo<'constructor'>;
+    scope: Scope;
 }
 
 export interface PZExecutableInfo<TType extends PZExecutableType> {
@@ -49,6 +54,8 @@ export interface PZExecutableInfo<TType extends PZExecutableType> {
 
     /** The class 'self' alias. (This is the last `return var;` in constructors) */
     selfAlias: string;
+
+    scope: Scope;
 }
 
 export interface PZPropertyInfo<TType extends PZPropertyType> {
@@ -66,6 +73,8 @@ export interface PZPropertyInfo<TType extends PZPropertyType> {
     types: string[];
 
     defaultValue?: string;
+
+    scope: Scope;
 }
 
 /**
@@ -73,7 +82,7 @@ export interface PZPropertyInfo<TType extends PZPropertyType> {
  *  
  * @returns 
  */
-export function getPZClass(statement: ast.AssignmentStatement): PZClassInfo | undefined {
+export function getPZClass(global: Scope, statement: ast.AssignmentStatement): PZClassInfo | undefined {
     // Check for ISBaseObject (or subclass), and derive call signature.
     const init0 = statement.init[0];
     if (init0.type !== 'CallExpression') return undefined;
@@ -86,6 +95,20 @@ export function getPZClass(statement: ast.AssignmentStatement): PZClassInfo | un
     // Check for class name here.
     const vars0 = statement.variables[0];
     if (vars0.type !== 'Identifier') return undefined;
+
+    const scopeClass: ScopeClass = {
+        type: 'ScopeClass',
+        name: vars0.name,
+        values: {},
+        fields: {},
+        funcs: {},
+        methods: {},
+        references: {},
+        assignments: {}
+    };
+
+    const scope = new Scope(scopeClass, global);
+
     return {
         name: vars0.name,
         extendz: init0.base.base.name,
@@ -94,6 +117,7 @@ export function getPZClass(statement: ast.AssignmentStatement): PZClassInfo | un
         methods: {},
         funcs: {},
         conztructor: undefined,
+        scope
     };
 }
 
@@ -103,7 +127,7 @@ export function getPZClass(statement: ast.AssignmentStatement): PZClassInfo | un
  *  
  * @returns 
  */
-export function getPZExecutable(clazz: string, statement: ast.FunctionDeclaration): PZExecutableInfo<'constructor' | 'function' | 'method'> | undefined {
+export function getPZExecutable(global: Scope, clazz: string, statement: ast.FunctionDeclaration): PZExecutableInfo<'constructor' | 'function' | 'method'> | undefined {
     // Check if assigned as a member declaration.
     if (statement.identifier == null) return undefined;
     if (statement.identifier.type !== 'MemberExpression') return undefined;
@@ -159,8 +183,26 @@ export function getPZExecutable(clazz: string, statement: ast.FunctionDeclaratio
         }
     }
 
+    const returns: ScopeReturn = {
+        type: 'ScopeReturn',
+        types: []
+    };
+
+    const scopeFunc: ScopeFunction = {
+        type: 'ScopeFunction',
+        init: statement,
+        name,
+        params: [],
+        values: {},
+        returns,
+        references: {},
+        assignments: {},
+    };
+
+    const scope = new Scope(scopeFunc, global);
+
     // Return result information.
-    return { clazz, type, name, params, selfAlias };
+    return { clazz, type, name, params, selfAlias, scope };
 }
 
 /**
@@ -168,7 +210,7 @@ export function getPZExecutable(clazz: string, statement: ast.FunctionDeclaratio
  * @param statement The statement to process.
  * @param selfAlias The alias used for field-declarations inside of executables within a instanced class context. (Default: 'self')
  */
-export function getPZProperty(clazz: string, statement: ast.AssignmentStatement, selfAlias: string = 'self'): PZPropertyInfo<'value' | 'field'> | undefined {
+export function getPZProperty(scopeParent: Scope, clazz: string, statement: ast.AssignmentStatement, selfAlias: string = 'self'): PZPropertyInfo<'value' | 'field'> | undefined {
 
     // Sanity-check
     if (!statement.variables.length) {
@@ -246,16 +288,28 @@ export function getPZProperty(clazz: string, statement: ast.AssignmentStatement,
             break;
         }
         default: {
-            console.log('unhandled type / default value handle: ');
-            console.log({ statement, init: init0 });
+            // console.log('unhandled type / default value handle: ');
+            // console.log({ statement, init: init0 });
             break;
         }
     }
 
-    return { clazz, name, type, types, defaultValue };
+    const property: ScopeVariable = {
+        type: 'ScopeVariable',
+        name,
+        types: [],
+        init: statement,
+        references: {},
+        assignments: {}
+    };
+
+    const scope = new Scope(property, scopeParent);
+    console.log(`property ${name}: `, scope);
+
+    return { clazz, name, type, types, defaultValue, scope };
 }
 
-export function getPZClasses(global: PZGlobalInfo, statements: ast.Statement[]): { [name: string]: PZClassInfo } {
+export function getPZClasses(globalInfo: PZGlobalInfo, statements: ast.Statement[]): { [name: string]: PZClassInfo } {
 
     const classes: { [name: string]: PZClassInfo } = {};
 
@@ -263,8 +317,8 @@ export function getPZClasses(global: PZGlobalInfo, statements: ast.Statement[]):
     for (const statement of statements) {
         if (statement.type !== 'AssignmentStatement') continue;
 
-        const clazzInfo = getPZClass(statement);
-        if (clazzInfo) classes[clazzInfo.name] = global.classes[clazzInfo.name] = clazzInfo;
+        const clazzInfo = getPZClass(globalInfo.scope, statement);
+        if (clazzInfo) classes[clazzInfo.name] = globalInfo.classes[clazzInfo.name] = clazzInfo;
     }
 
     // Go through all classes, even outside of the file because other Lua files can define class functions.
@@ -272,14 +326,36 @@ export function getPZClasses(global: PZGlobalInfo, statements: ast.Statement[]):
     //     FIXME: This can cause weird situations if the `require '<file>'` isn't followed. We could find issues of load-order.
     //            Look here if this is an issue later on.
     //
-    for (const clazzName of Object.keys(global.classes)) {
-        const clazz = global.classes[clazzName];
+    for (const clazzName of Object.keys(globalInfo.classes)) {
+        const clazz = globalInfo.classes[clazzName];
+        const clazzScope = clazz.scope;
 
         function processExecutable(funcDec: ast.FunctionDeclaration, executable: PZExecutableInfo<'constructor' | 'function' | 'method'>) {
             for (const statement of funcDec.body) {
+                
                 if (statement.type !== 'AssignmentStatement') continue;
-                const propertyInfo = getPZProperty(clazz.name, statement, executable.selfAlias);
+
+                const propertyInfo = getPZProperty(clazzScope, clazz.name, statement, executable.selfAlias);
                 if (propertyInfo && propertyInfo.type === 'field') {
+                    
+                    // Only add the result propertyInfo if not found already.
+                    if (clazz.fields[propertyInfo.name]) {
+                        const other = clazz.fields[propertyInfo.name];
+
+                        // Apply back the old scope and object.
+                        clazzScope.children[other.scope.name] = other.scope;
+
+                        // Merge any unassigned types.
+                        if (propertyInfo.types.length) {
+                            for (const type of propertyInfo.types) {
+                                if (other.types.indexOf(type) === -1) other.types.push(type);
+                            }
+                        }
+
+                        continue;
+                    }
+
+                    // Add the discovery.
                     clazz.fields[propertyInfo.name] = propertyInfo as PZPropertyInfo<'field'>;
                 }
             }
@@ -287,9 +363,9 @@ export function getPZClasses(global: PZGlobalInfo, statements: ast.Statement[]):
 
         for (const statement of statements) {
 
-            // Look for class value(s) here..
+            // Look for class value(s) defined above class-level bodies here..
             if (statement.type === 'AssignmentStatement') {
-                const propertyInfo = getPZProperty(clazzName, statement, clazzName);
+                const propertyInfo = getPZProperty(clazzScope, clazzName, statement, clazzName);
                 if (propertyInfo) {
                     if (propertyInfo.type === 'value') {
                         clazz.values[propertyInfo.name] = propertyInfo as PZPropertyInfo<'value'>;
@@ -304,7 +380,7 @@ export function getPZClasses(global: PZGlobalInfo, statements: ast.Statement[]):
             else if (statement.type === 'FunctionDeclaration') {
 
                 // The potential Class Executable.
-                const executableInfo = getPZExecutable(clazzName, statement);
+                const executableInfo = getPZExecutable(clazzScope, clazzName, statement);
                 if (executableInfo) {
                     if (executableInfo.type === 'constructor') {
                         if (clazz.conztructor) {

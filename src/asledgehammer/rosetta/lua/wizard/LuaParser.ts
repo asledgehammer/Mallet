@@ -3,7 +3,9 @@ import { App } from '../../../../app';
 import { RosettaLuaClass } from '../RosettaLuaClass';
 import { RosettaLuaConstructor } from '../RosettaLuaConstructor';
 import { RosettaLuaFunction } from '../RosettaLuaFunction';
-import { discover } from './Old';
+import { PZGlobalInfo, scanFile } from './PZ';
+import { Scope } from './Scope';
+// import { discover } from './Old';
 
 // @ts-ignore
 const luaparse: luaparse = ast.default;
@@ -430,8 +432,8 @@ export class LuaParser {
         }
 
 
-        const locals = discover(chunk);
-        console.log(locals);
+        // const locals = discover(chunk);
+        // console.log(locals);
 
         // console.log(clazz);
 
@@ -453,6 +455,28 @@ export class LuaParser {
                         comments: true,
                         locations: true,
                     });
+                    
+                    ////////////////////
+                    // LuaWizard Code //
+                    ////////////////////
+
+                    const globalScope = new Scope();
+                    const globalInfo: PZGlobalInfo = {
+                        classes: {},
+                        tables: {},
+                        values: {},
+                        funcs: {},
+                        scope: globalScope
+                    };
+
+                    scanFile(globalInfo, chunk.body);
+
+                    console.log("### LuaWizard ###");
+                    console.log(globalInfo);
+
+                    ////////////////////
+                    
+                    
                     const clazz = _this.parse(chunk);
                     if (clazz) {
                         const card = app.showClass(clazz);
@@ -463,6 +487,8 @@ export class LuaParser {
 
                 }
                 reader.readAsText(file);
+
+
                 app.toast.alert(`Loaded LuaClass.`, 'success');
             } catch (e) {
                 app.toast.alert(`Failed to load LuaClass.`, 'error');
