@@ -2684,13 +2684,11 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
     exports.Sidebar = Sidebar;
     ;
 });
-define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"], function (require, exports, ast) {
+define("src/asledgehammer/rosetta/lua/wizard/LuaWizard", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.chunkToString = exports.discover = void 0;
-    // @ts-ignore
-    const luaparse = ast.default;
-    const knownMethodTypes = {
+    exports.knownMethodTypes = void 0;
+    exports.knownMethodTypes = {
         'math.min': ['number'],
         'math.max': ['number'],
         'math.floor': ['number'],
@@ -2701,30 +2699,26 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
     ;
     ;
     ;
+});
+define("src/asledgehammer/rosetta/lua/wizard/String", ["require", "exports", "luaparse"], function (require, exports, ast) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.chunkToString = exports.statementToString = exports.expressionToString = exports.callStatementToString = exports.assignmentStatementToString = exports.tableConstructorExpressionToString = exports.ifStatementToString = exports.elseClauseToString = exports.elseIfClauseToString = exports.ifClauseToString = exports.forGenericStatementToString = exports.forNumericStatementToString = exports.repeatStatementToString = exports.doStatementToString = exports.whileStatementToString = exports.functionDeclarationToString = exports.bodyToString = exports.parametersToString = exports.varargLiteralToString = exports.localStatementToString = exports.breakStatementToString = exports.labelStatementToString = exports.gotoStatementToString = exports.returnStatementToString = exports.callExpressionToString = exports.memberExpressionToString = exports.argsToString = exports.binaryExpressionToString = exports.tableCallExpressionToString = exports.stringCallExpressionToString = exports.unaryExpressionToString = exports.logicalExpressionToString = exports.indexExpressionToString = exports.identifierToString = exports.literalToString = exports.indent = void 0;
+    // @ts-ignore
+    const luaparse = ast.default;
     ;
     function indent(options) {
         return Object.assign(Object.assign({}, options), { indent: options.indent + 1 });
     }
+    exports.indent = indent;
     function literalToString(literal, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
         switch (literal.type) {
-            case 'BooleanLiteral': {
-                return `${i}${literal.raw}`;
-            }
-            case 'NumericLiteral': {
-                return `${i}${literal.raw}`;
-            }
-            case 'NilLiteral': {
-                return `${i}${literal.raw}`;
-            }
-            case 'StringLiteral': {
-                if (options.raw) {
-                    return `${i}${literal.value}`;
-                }
-                else {
-                    return `${i}${literal.raw}`;
-                }
-            }
+            // Simple raw-calls.
+            case 'BooleanLiteral':
+            case 'NumericLiteral':
+            case 'NilLiteral': return `${i}${literal.raw}`;
+            case 'StringLiteral': return (options.raw) ? `${i}${literal.value}` : `${i}${literal.raw}`;
             case 'VarargLiteral': {
                 // TODO: Check validity.
                 console.warn('VarargLiteral: ', literal);
@@ -2732,37 +2726,45 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
             }
         }
     }
+    exports.literalToString = literalToString;
     function identifierToString(identifier, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
         return `${i}${identifier.name}`;
     }
+    exports.identifierToString = identifierToString;
     function indexExpressionToString(expression, options = { indent: 0 }) {
         return `${expressionToString(expression.base)}[${expressionToString(expression.index)}]`;
     }
+    exports.indexExpressionToString = indexExpressionToString;
     function logicalExpressionToString(expression, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
         return `${i}${expressionToString(expression.left)} ${expression.operator} ${expressionToString(expression.right)}`;
     }
+    exports.logicalExpressionToString = logicalExpressionToString;
     function unaryExpressionToString(expression, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
         return `${i}${expression.operator} ${expressionToString(expression.argument)}`;
     }
+    exports.unaryExpressionToString = unaryExpressionToString;
     function stringCallExpressionToString(expression, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
         const base = expressionToString(expression.base);
         const arg = expressionToString(expression.argument);
         console.log(expression);
-        return `${i}${base} ${arg};`;
+        return `${i}${base} ${arg}`;
     }
+    exports.stringCallExpressionToString = stringCallExpressionToString;
     function tableCallExpressionToString(expression, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
         console.log(expression);
         throw new Error('Not implemented.');
     }
+    exports.tableCallExpressionToString = tableCallExpressionToString;
     function binaryExpressionToString(expression, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
         return `${i}${expressionToString(expression.left)} ${expression.operator} ${expressionToString(expression.right)}`;
     }
+    exports.binaryExpressionToString = binaryExpressionToString;
     function argsToString(args2, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
         const args = [];
@@ -2770,14 +2772,17 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
             args.push(expressionToString(arg));
         return `${i}${args.join(', ')}`;
     }
+    exports.argsToString = argsToString;
     function memberExpressionToString(expression, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
         return `${i}${expressionToString(expression.base)}${expression.indexer}${expression.identifier.name}`;
     }
+    exports.memberExpressionToString = memberExpressionToString;
     function callExpressionToString(expression, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
         return `${i}${expressionToString(expression.base)}(${argsToString(expression.arguments)})`;
     }
+    exports.callExpressionToString = callExpressionToString;
     function returnStatementToString(statement, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
         const args = [];
@@ -2785,18 +2790,22 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
             args.push(expressionToString(arg));
         return `${i}return${args.length ? ` ${args.join(', ')}` : ''}`;
     }
+    exports.returnStatementToString = returnStatementToString;
     function gotoStatementToString(statement, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
         return `${i}goto $${statement.label}`;
     }
+    exports.gotoStatementToString = gotoStatementToString;
     function labelStatementToString(statement, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
         return `${i}::${statement.label}::`;
     }
+    exports.labelStatementToString = labelStatementToString;
     function breakStatementToString(statement, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
         return `${i}break`;
     }
+    exports.breakStatementToString = breakStatementToString;
     function localStatementToString(statement, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
         // The local name(s).
@@ -2809,10 +2818,12 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
             inits.push(expressionToString(i));
         return `${i}local ${vars.join(', ')} = ${inits.join(', ')}`;
     }
+    exports.localStatementToString = localStatementToString;
     function varargLiteralToString(param, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
         return `${i}${param.raw}`;
     }
+    exports.varargLiteralToString = varargLiteralToString;
     function parametersToString(params, options = { indent: 0 }) {
         const ps = [];
         for (const param of params) {
@@ -2829,30 +2840,26 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
         }
         return ps.join(', ');
     }
+    exports.parametersToString = parametersToString;
     function bodyToString(body, options = { indent: 0 }) {
-        const i = ' '.repeat(options.indent * 4);
         let s = '';
-        const lastIndex = body.length ? body.length - 1 : -1;
         for (let index = 0; index < body.length; index++) {
             const prevStatement = body[index - 1];
             const currStatement = body[index];
             const nextStatement = body[index + 1];
-            // Prettier code is happier code. =)
-            let endingSemicolon = true;
             // For cleaner separation of code.
+            let endingSemicolon = true;
             let leadingNewline = false;
             let endingNewline = false;
             switch (currStatement.type) {
                 case 'FunctionDeclaration': {
                     endingSemicolon = false;
                     // No blank spaces for the first line of a body.
-                    if (prevStatement) {
+                    if (prevStatement)
                         leadingNewline = true;
-                    }
                     // No blank spaces at the end of a body.
-                    if (nextStatement) {
+                    if (nextStatement)
                         endingNewline = true;
-                    }
                 }
                 case 'IfStatement':
                 case 'ForGenericStatement':
@@ -2862,9 +2869,8 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
                 case 'RepeatStatement': {
                     endingSemicolon = false;
                     // No blank spaces at the end of a body.
-                    if (nextStatement) {
+                    if (nextStatement)
                         endingNewline = true;
-                    }
                     break;
                 }
                 case 'BreakStatement':
@@ -2875,12 +2881,12 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
             }
             s += `${leadingNewline ? '\n' : ''}${statementToString(currStatement, options)}${endingSemicolon ? ';' : ''}\n${endingNewline ? '\n' : ''}`;
         }
-        for (const statement of body) {
-        }
+        // Remove the last newline. (If present)
         if (s.length)
-            s = s.substring(0, s.length - 1); // Remove the last newline. (If present)
+            s = s.substring(0, s.length - 1);
         return s;
     }
+    exports.bodyToString = bodyToString;
     /**
      * Renders a Lua function declaration as a string.
      *
@@ -2918,6 +2924,7 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
         }
         return s;
     }
+    exports.functionDeclarationToString = functionDeclarationToString;
     function whileStatementToString(statement, options) {
         const i = ' '.repeat(options.indent * 4);
         const options2 = indent(options);
@@ -2926,6 +2933,7 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
         s += `${i}end`;
         return s;
     }
+    exports.whileStatementToString = whileStatementToString;
     function doStatementToString(statement, options) {
         const i = ' '.repeat(options.indent * 4);
         const options2 = indent(options);
@@ -2934,6 +2942,7 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
         s += `${i}end`;
         return s;
     }
+    exports.doStatementToString = doStatementToString;
     function repeatStatementToString(statement, options) {
         const i = ' '.repeat(options.indent * 4);
         const options2 = indent(options);
@@ -2942,6 +2951,7 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
         s += `${i}until ${statement.condition};`;
         return s;
     }
+    exports.repeatStatementToString = repeatStatementToString;
     function forNumericStatementToString(statement, options) {
         const i = ' '.repeat(options.indent * 4);
         const options2 = indent(options);
@@ -2952,6 +2962,7 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
         s += `${i}end`;
         return s;
     }
+    exports.forNumericStatementToString = forNumericStatementToString;
     function forGenericStatementToString(statement, options) {
         const i = ' '.repeat(options.indent * 4);
         const options2 = indent(options);
@@ -2966,6 +2977,7 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
         s += 'end';
         return s;
     }
+    exports.forGenericStatementToString = forGenericStatementToString;
     function ifClauseToString(clause, isLastClause, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
         const options2 = indent(options);
@@ -2975,6 +2987,7 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
             s += `${i}end`;
         return s;
     }
+    exports.ifClauseToString = ifClauseToString;
     function elseIfClauseToString(clause, isLastClause, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
         const options2 = indent(options);
@@ -2984,6 +2997,7 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
             s += `${i}end`;
         return s;
     }
+    exports.elseIfClauseToString = elseIfClauseToString;
     function elseClauseToString(clause, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
         const options2 = indent(options);
@@ -2992,6 +3006,7 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
         s += `${i}end`;
         return s;
     }
+    exports.elseClauseToString = elseClauseToString;
     function ifStatementToString(statement, options = { indent: 0 }) {
         let s = '';
         for (let index = 0; index < statement.clauses.length; index++) {
@@ -3014,6 +3029,7 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
         }
         return s;
     }
+    exports.ifStatementToString = ifStatementToString;
     function tableConstructorExpressionToString(expression, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
         // Empty table.
@@ -3038,6 +3054,7 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
         }
         return `${i}{ ${entries.join(', ')} }`;
     }
+    exports.tableConstructorExpressionToString = tableConstructorExpressionToString;
     function assignmentStatementToString(statement, options = { indent: 0 }) {
         const i = ' '.repeat(options.indent * 4);
         // The local name(s).
@@ -3062,8 +3079,9 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
         const inits = [];
         for (const init of statement.init)
             inits.push(expressionToString(init));
-        return `${i}${vars.join(', ')} = ${inits.join(', ')};`;
+        return `${i}${vars.join(', ')} = ${inits.join(', ')}`;
     }
+    exports.assignmentStatementToString = assignmentStatementToString;
     function callStatementToString(statement, options) {
         switch (statement.expression.type) {
             case 'CallExpression': return callExpressionToString(statement.expression, options);
@@ -3071,6 +3089,7 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
             case 'TableCallExpression': return tableCallExpressionToString(statement.expression, options);
         }
     }
+    exports.callStatementToString = callStatementToString;
     function expressionToString(arg, options = { indent: 0 }) {
         switch (arg.type) {
             case 'BooleanLiteral': return literalToString(arg, options);
@@ -3091,6 +3110,7 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
             case 'TableCallExpression': return tableCallExpressionToString(arg);
         }
     }
+    exports.expressionToString = expressionToString;
     function statementToString(statement, options) {
         switch (statement.type) {
             case 'LocalStatement': return localStatementToString(statement, options);
@@ -3109,6 +3129,60 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
             case 'GotoStatement': return gotoStatementToString(statement, options);
         }
     }
+    exports.statementToString = statementToString;
+    function chunkToString(chunk, options = { indent: 0 }) {
+        let s = '';
+        console.log({ chunk });
+        for (let index = 0; index < chunk.body.length; index++) {
+            const currStatement = chunk.body[index + 0];
+            const nextStatement = chunk.body[index + 1];
+            switch (currStatement.type) {
+                case 'FunctionDeclaration': {
+                    s += `\n${statementToString(currStatement, options)}\n`;
+                    break;
+                }
+                case 'AssignmentStatement': {
+                    s += `${assignmentStatementToString(currStatement, options)};\n`;
+                    break;
+                }
+                case 'LabelStatement':
+                case 'BreakStatement':
+                case 'GotoStatement':
+                case 'ReturnStatement':
+                case 'IfStatement':
+                case 'WhileStatement':
+                case 'DoStatement':
+                case 'RepeatStatement':
+                case 'LocalStatement':
+                case 'CallStatement': {
+                    const callStatement = currStatement;
+                    s += `${callStatementToString(callStatement, options)};\n`;
+                    // Clean seperation from `require` lines.
+                    if ((nextStatement === null || nextStatement === void 0 ? void 0 : nextStatement.type) !== 'CallStatement') {
+                        s += '\n';
+                    }
+                    break;
+                }
+                case 'ForNumericStatement':
+                case 'ForGenericStatement':
+                    s += `${statementToString(currStatement, options)}\n`;
+                    break;
+            }
+        }
+        return s;
+    }
+    exports.chunkToString = chunkToString;
+});
+define("src/asledgehammer/rosetta/lua/wizard/Old", ["require", "exports", "src/asledgehammer/rosetta/lua/wizard/LuaWizard", "src/asledgehammer/rosetta/lua/wizard/String"], function (require, exports, LuaWizard_1, String_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.discover = void 0;
+    /**
+     * NOTE: This code is old. And Ugly. And yeah, it'll get removed. Do something about it.
+     */
+    /**
+     * @returns ScopeGlobal
+     */
     function newGlobalScope() {
         return {
             scope: {
@@ -3162,7 +3236,49 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
             valueType
         };
     };
-    const discoverInClass = (__G, clazz, statements, parentScope, selfAlias = 'self', debug = false) => {
+    /**
+     * Discovers and maps anything related to the local statement.
+     *
+     * @param __G The global context.
+     * @param clazz The class context.
+     * @param statement The local statement to discover.
+     * @param parent The parent scope.
+     * @param self The context for self. Here, the context can change. E.G: constructors use 'local o = {};' and return it as 'self'. (Default: 'self')
+     * @param debug If true, any console-prints will fire.
+     *
+     * @returns The amount of changes made during the discovery.
+     */
+    const discoverLocalStatement = (__G, clazz, statement, parent, self = 'self', debug = false) => {
+        let changes = 0;
+        return changes;
+    };
+    const discoverBody = (__G, clazz, statements, parent, self = 'self', debug = false) => {
+        let changes = 0;
+        for (let index = 0; index < statements.length; index++) {
+            const currStatement = statements[index];
+            switch (currStatement.type) {
+                case 'LocalStatement': {
+                    changes += discoverLocalStatement(__G, clazz, currStatement, parent, self, debug);
+                    break;
+                }
+                case 'LabelStatement':
+                case 'BreakStatement':
+                case 'GotoStatement':
+                case 'ReturnStatement':
+                case 'IfStatement':
+                case 'WhileStatement':
+                case 'DoStatement':
+                case 'RepeatStatement':
+                case 'AssignmentStatement':
+                case 'CallStatement':
+                case 'FunctionDeclaration':
+                case 'ForNumericStatement':
+                case 'ForGenericStatement':
+            }
+        }
+        return changes;
+    };
+    const discoverInClass2 = (__G, clazz, statements, parentScope, selfAlias = 'self', debug = false) => {
         let changes = 0;
         let ifIndex = 0;
         let forGenericIndex = 0;
@@ -3175,7 +3291,7 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
                 // local x = ..
                 case 'LocalStatement': {
                     if (debug) {
-                        console.log(localStatementToString(statement));
+                        console.log((0, String_1.localStatementToString)(statement));
                     }
                     // Tuple-support.
                     for (let index = 0; index < statement.variables.length; index++) {
@@ -3264,7 +3380,7 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
                 }
                 case 'AssignmentStatement': {
                     if (debug) {
-                        console.log(assignmentStatementToString(statement));
+                        console.log((0, String_1.assignmentStatementToString)(statement));
                     }
                     /* (Support tuple declarations) */
                     let index;
@@ -3304,8 +3420,8 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
                                                         const funcName = base.identifier.name === 'new' ? 'constructor' : base.identifier.name;
                                                         const call = `${objName}${base.indexer}${funcName}`;
                                                         // Check to see if this is a call to a known Lua core API or something else we've pre-defined.
-                                                        if (knownMethodTypes[call]) {
-                                                            const _types_ = knownMethodTypes[call];
+                                                        if (LuaWizard_1.knownMethodTypes[call]) {
+                                                            const _types_ = LuaWizard_1.knownMethodTypes[call];
                                                             for (const _type_ of _types_) {
                                                                 if (scopeVariable.types.indexOf(_type_) === -1) {
                                                                     scopeVariable.types.push(_type_);
@@ -3400,8 +3516,8 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
                                                     // x = obj.y;
                                                     const call = `${baseName}${variable.indexer}${identifier}`;
                                                     const types = [];
-                                                    if (knownMethodTypes[call]) {
-                                                        for (const type of knownMethodTypes[call]) {
+                                                    if (LuaWizard_1.knownMethodTypes[call]) {
+                                                        for (const type of LuaWizard_1.knownMethodTypes[call]) {
                                                             types.push(type);
                                                         }
                                                     }
@@ -3540,7 +3656,7 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
                         };
                         __G.map[scopeForGeneric.raw] = _for_;
                     }
-                    discoverInClass(__G, clazz, statement.body, scopeForGeneric);
+                    discoverBody(__G, clazz, statement.body, scopeForGeneric);
                     break;
                 }
                 case 'ForNumericStatement': {
@@ -3559,7 +3675,7 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
                         };
                         __G.map[scopeForNumeric.raw] = _for_;
                     }
-                    discoverInClass(__G, clazz, statement.body, scopeForNumeric);
+                    discoverBody(__G, clazz, statement.body, scopeForNumeric);
                     break;
                 }
                 case 'WhileStatement': {
@@ -3578,7 +3694,7 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
                         };
                         __G.map[scopeWhile.raw] = _while_;
                     }
-                    discoverInClass(__G, clazz, statement.body, scopeWhile);
+                    discoverBody(__G, clazz, statement.body, scopeWhile);
                     break;
                 }
                 case 'DoStatement': {
@@ -3597,7 +3713,7 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
                         };
                         __G.map[scopeDo.raw] = _do_;
                     }
-                    discoverInClass(__G, clazz, statement.body, scopeDo);
+                    discoverBody(__G, clazz, statement.body, scopeDo);
                     break;
                 }
                 case 'RepeatStatement': {
@@ -3616,7 +3732,7 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
                         };
                         __G.map[scopeRepeat.raw] = _repeat_;
                     }
-                    discoverInClass(__G, clazz, statement.body, scopeRepeat);
+                    discoverBody(__G, clazz, statement.body, scopeRepeat);
                     break;
                 }
                 case 'IfStatement': {
@@ -3651,13 +3767,13 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
                             };
                             __G.map[scopeClause.raw] = _clause_;
                         }
-                        discoverInClass(__G, clazz, clause.body, scopeClause);
+                        discoverBody(__G, clazz, clause.body, scopeClause);
                     }
                     break;
                 }
                 case 'ReturnStatement': {
                     if (debug) {
-                        console.log(`${returnStatementToString(statement)};`);
+                        console.log(`${(0, String_1.returnStatementToString)(statement)};`);
                     }
                     break;
                 }
@@ -3684,7 +3800,7 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
         let changes = 0;
         for (const methodName of Object.keys(clazz.methods)) {
             const method = clazz.methods[methodName];
-            changes += discoverInClass(__G, clazz, method.init.body, method.scope);
+            changes += discoverBody(__G, clazz, method.init.body, method.scope);
         }
         return changes;
     }
@@ -3738,6 +3854,7 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
                     continue;
                 const scopeParam = getScope(__G, `${scopeFunc.raw}.${param.name}`, param.name, scopeFunc, 'value');
                 const p = {
+                    init: statement,
                     type: 'ScopeVariable',
                     scope: scopeParam,
                     name: param.name,
@@ -3794,6 +3911,7 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
                     continue;
                 const scopeParam = getScope(__G, `${conzstructorScope.raw}.${param.name}`, param.name, conzstructorScope, 'value');
                 const _param_ = {
+                    init: statement,
                     type: 'ScopeVariable',
                     scope: scopeParam,
                     name: param.name,
@@ -3950,14 +4068,6 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
                         type: 'ScopeClass',
                         scope: classScope,
                         name: className,
-                        conztructor: {
-                            scope: getScope(__G, `__G.${className}.constructor`, 'constructor', classScope, 'function'),
-                            type: 'ScopeConstructor',
-                            values: {},
-                            params: [],
-                            references: {},
-                            selfAlias: 'self'
-                        },
                         fields: {},
                         values: {},
                         funcs: {},
@@ -3976,20 +4086,24 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
         }
         return changes;
     }
-    function pass(body, __G) {
+    function pass(__G) {
         let changes = 0;
         for (const clazz of Object.values(__G.classes)) {
-            changes += discoverInClass(__G, clazz, clazz.conztructor.init.body, clazz.conztructor.scope, clazz.conztructor.selfAlias, true);
+            if (clazz.conztructor) {
+                const { conztructor } = clazz;
+                changes += discoverBody(__G, clazz, conztructor.init.body, conztructor.scope, conztructor.selfAlias, true);
+            }
             for (const func of Object.values(clazz.funcs)) {
-                changes += discoverInClass(__G, clazz, func.init.body, func.scope);
+                changes += discoverBody(__G, clazz, func.init.body, func.scope);
             }
             for (const method of Object.values(clazz.methods)) {
-                changes += discoverInClass(__G, clazz, method.init.body, method.scope);
+                changes += discoverBody(__G, clazz, method.init.body, method.scope);
             }
         }
         return changes;
     }
     function discover(chunk, __G = newGlobalScope()) {
+        var _a;
         /* (Initial Pass) */
         passClass(chunk.body, __G);
         for (const clazz of Object.values(__G.classes)) {
@@ -3999,46 +4113,17 @@ define("src/asledgehammer/rosetta/lua/Scope", ["require", "exports", "luaparse"]
         let passes = 0;
         do {
             passes++;
-            changes = pass(chunk.body, __G);
+            changes = pass(__G);
             console.log(`Pass ${passes}: ${changes} discoveries.`);
         } while (passes < 2 || changes !== 0);
         console.log(`__G.map.length = ${Object.keys(__G.map).length}`);
-        const conzt = __G.classes['ISUIElement'].conztructor.init;
-        console.log(conzt);
-        console.log(chunkToString(chunk));
+        console.log({ 'constructor': (_a = __G.classes['ISUIElement'].conztructor) === null || _a === void 0 ? void 0 : _a.init });
+        // console.log(chunkToString(chunk));
         return __G;
     }
     exports.discover = discover;
-    function chunkToString(chunk, options = { indent: 0 }) {
-        let s = '';
-        for (const statement of chunk.body) {
-            switch (statement.type) {
-                case 'FunctionDeclaration': {
-                    s += `\n${statementToString(statement, options)}\n`;
-                    break;
-                }
-                case 'LabelStatement':
-                case 'BreakStatement':
-                case 'GotoStatement':
-                case 'ReturnStatement':
-                case 'IfStatement':
-                case 'WhileStatement':
-                case 'DoStatement':
-                case 'RepeatStatement':
-                case 'LocalStatement':
-                case 'AssignmentStatement':
-                case 'CallStatement':
-                case 'ForNumericStatement':
-                case 'ForGenericStatement':
-                    s += `${statementToString(statement, options)}\n`;
-                    break;
-            }
-        }
-        return s;
-    }
-    exports.chunkToString = chunkToString;
 });
-define("src/asledgehammer/rosetta/lua/LuaParser", ["require", "exports", "luaparse", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/lua/Scope"], function (require, exports, ast, RosettaLuaClass_1, RosettaLuaConstructor_2, Scope_1) {
+define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", "luaparse", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/lua/wizard/Old"], function (require, exports, ast, RosettaLuaClass_1, RosettaLuaConstructor_2, Old_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaParser = void 0;
@@ -4423,7 +4508,7 @@ define("src/asledgehammer/rosetta/lua/LuaParser", ["require", "exports", "luapar
             if (conzstructor) {
                 handleConstructor(conzstructor);
             }
-            const locals = (0, Scope_1.discover)(chunk);
+            const locals = (0, Old_1.discover)(chunk);
             console.log(locals);
             // console.log(clazz);
             return clazz;
@@ -4465,7 +4550,7 @@ define("src/asledgehammer/rosetta/lua/LuaParser", ["require", "exports", "luapar
     }
     exports.LuaParser = LuaParser;
 });
-define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/component/LuaClassCard", "src/asledgehammer/rosetta/component/LuaConstructorCard", "src/asledgehammer/rosetta/component/LuaFieldCard", "src/asledgehammer/rosetta/component/LuaFunctionCard", "src/asledgehammer/rosetta/component/Sidebar", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/lua/LuaParser"], function (require, exports, hljs, LuaClassCard_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, Sidebar_1, LuaGenerator_5, RosettaLuaClass_2, RosettaLuaConstructor_3, util_10, LuaParser_1) {
+define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/component/LuaClassCard", "src/asledgehammer/rosetta/component/LuaConstructorCard", "src/asledgehammer/rosetta/component/LuaFieldCard", "src/asledgehammer/rosetta/component/LuaFunctionCard", "src/asledgehammer/rosetta/component/Sidebar", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/lua/wizard/LuaParser"], function (require, exports, hljs, LuaClassCard_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, Sidebar_1, LuaGenerator_5, RosettaLuaClass_2, RosettaLuaConstructor_3, util_10, LuaParser_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.App = exports.Toast = void 0;
@@ -5420,5 +5505,523 @@ define("src/asledgehammer/rosetta/component/SidebarPanel", ["require", "exports"
     }
     exports.SidebarPanel = SidebarPanel;
     ;
+});
+define("src/asledgehammer/rosetta/lua/wizard/Scope", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.Scope = void 0;
+    /**
+     * **Scope** is a class that stores scope-based information about Lua elements and their relationshop to other elements.
+     * Data is used in this class to determine stronger types to assign to fields, returns, parameters, among other elements.
+     *
+     * @author asledgehammer
+     */
+    class Scope {
+        /////////////////////////////
+        /**
+         * @param element The element container.
+         * @param parent The parent scope. (Set to null if root. E.G: __G is global root)
+         * @param index For statements with multiple variables, this index helps target the right one.
+         */
+        constructor(element, parent, index = 0) {
+            /** Any child scopes. This is helpful with {@link Scope.resolve resolving scopes}. */
+            this.children = {};
+            /** All discovered scopes that directly call or assign this scope. */
+            this.references = [];
+            this.types = [];
+            /** For statements with multiple variables, this index helps with the initialization of Scopes. */
+            this.index = 0;
+            /** Generated or identified when constructing Scopes. */
+            this.name = '';
+            /////////////////////////////
+            // These are for children. //
+            /////////////////////////////
+            this._nextBreakID = 0;
+            this._nextGotoID = 0;
+            this._nextReturnID = 0;
+            this._nextIfID = 0;
+            this._nextIfClauseID = 0;
+            this._nextElseIfClauseID = 0;
+            this._nextElseClauseID = 0;
+            this._nextForNumericID = 0;
+            this._nextForGenericID = 0;
+            this._nextWhileID = 0;
+            this._nextDoID = 0;
+            this._nextRepeatID = 0;
+            this._nextAnonFuncID = 0;
+            this._nextCallID = 0;
+            this.element = element;
+            this.parent = parent;
+            const name = this.generateName();
+            this.path = `${parent ? `${parent.path}.` : ''}${name}`;
+            this.index = index;
+        }
+        resolve(path) {
+            if (!path.length)
+                return undefined;
+            const { parent } = this;
+            // Check into the scope first. If something resolves, we're in the most immediate scope that contains the reference which is consistent with the
+            // Lua language in scope-discovery when accessing a referenced variable in the most immediate scope.
+            let child = this.resolveInto(path);
+            if (child)
+                return child;
+            // Try to resolve in the next outer-scope. If one doesn't exist, the path does not resolve.
+            return parent === null || parent === void 0 ? void 0 : parent.resolve(path);
+        }
+        /**
+         * Search into the scope, going out-to-in.
+         *
+         * @param path The path to traverse.
+         *
+         * @returns Scope if found. undefined if not.
+         */
+        resolveInto(path) {
+            if (!path.length)
+                return undefined;
+            const { children } = this;
+            let pathSub = '';
+            let firstScope;
+            // The path is made of multiple scopes.
+            if (path.indexOf('.') !== -1) {
+                // We grab the first node here and produce the sub-path following that node.
+                let split = path.split('.');
+                split = split.reverse();
+                firstScope = split.pop();
+                pathSub = split.reverse().join();
+            }
+            else {
+                // We have one scope. The path is the scope.
+                firstScope = path;
+            }
+            const child = children[firstScope];
+            // The child doesn't exist.
+            if (!child)
+                return undefined;
+            // We still have scope to traverse. Go to the child and then repeat the process until traversed.
+            if (pathSub.length)
+                child.resolve(pathSub);
+            // We've reached the last scope in the path and located the child. 
+            return child;
+        }
+        generateName() {
+            const { element: e, parent } = this;
+            if (e.type === 'ScopeGlobal')
+                return '__G';
+            if (!parent)
+                throw new Error('A parent is required!');
+            switch (e.type) {
+                case 'ScopeVariable': return this.getStatementName(e.init);
+                case 'ScopeFunction': return e.init.identifier ? this.getExpressionName(e.init.identifier) : parent.nextAnonymousFunctionID();
+                case 'ScopeForGenericBlock': return parent.nextForGenericID();
+                case 'ScopeForNumericBlock': return parent.nextForNumericID();
+                case 'ScopeDoBlock': return parent.nextDoID();
+                case 'ScopeWhileBlock': return parent.nextWhileID();
+                case 'ScopeRepeatBlock': return parent.nextRepeatID();
+                case 'ScopeIfBlock': return parent.nextIfID();
+                case 'ScopeIfClauseBlock': return parent.nextIfClauseID();
+                case 'ScopeTable': return e.name;
+                case 'ScopeClass': return e.name;
+                case 'ScopeConstructor': return 'constructor';
+            }
+        }
+        getStatementName(statement) {
+            const { parent } = this;
+            if (!parent)
+                throw new Error('A parent is required!');
+            switch (statement.type) {
+                case 'LabelStatement': return statement.label.name;
+                case 'BreakStatement': return parent.nextBreakID();
+                case 'GotoStatement': return parent.nextGotoID();
+                case 'ReturnStatement': return parent.nextReturnID();
+                case 'IfStatement': return parent.nextIfID();
+                case 'WhileStatement': return parent.nextWhileID();
+                case 'DoStatement': return parent.nextDoID();
+                case 'RepeatStatement': return parent.nextRepeatID();
+                case 'LocalStatement': return statement.variables[this.index].name;
+                case 'AssignmentStatement': return this.getExpressionName(statement.variables[this.index]);
+                case 'CallStatement': return parent.nextCallID();
+                case 'FunctionDeclaration': return parent.nextAnonymousFunctionID();
+                case 'ForNumericStatement': return parent.nextForNumericID();
+                case 'ForGenericStatement': return parent.nextForGenericID();
+            }
+        }
+        getExpressionName(expression) {
+            if (expression.type === 'Identifier')
+                return expression.name;
+            switch (expression.type) {
+                case 'IndexExpression': return this.getExpressionName(expression.base);
+                case 'MemberExpression': return `___member_expression___${this.getExpressionName(expression.base)}${expression.indexer}${expression.identifier.name}`;
+                default: {
+                    console.log(expression);
+                    throw new Error(`Unimplemented expression in 'Scope.getExpressionName(${expression.type}). (scope path: '${this.path}') Check the line above for more info on the expression.`);
+                }
+            }
+        }
+        resetIDs() {
+            this._nextCallID = 0;
+            this._nextBreakID = 0;
+            this._nextGotoID = 0;
+            this._nextReturnID = 0;
+            this._nextIfID = 0;
+            this._nextIfClauseID = 0;
+            this._nextElseIfClauseID = 0;
+            this._nextElseClauseID = 0;
+            this._nextForNumericID = 0;
+            this._nextForGenericID = 0;
+            this._nextWhileID = 0;
+            this._nextDoID = 0;
+            this._nextRepeatID = 0;
+            this._nextAnonFuncID = 0;
+        }
+        addType(...types) {
+            let changes = 0;
+            for (const type of types) {
+                if (!this.hasType(type)) {
+                    this.types.push(type);
+                    changes++;
+                }
+            }
+            return changes;
+        }
+        sortTypes() {
+            this.types.sort((a, b) => a.localeCompare(b));
+        }
+        hasType(type) {
+            return this.types.indexOf(type) !== -1;
+        }
+        /** NOTE: Must be called from sub-scope! */
+        nextBreakID() {
+            return `${this.path}.___break___${this._nextBreakID++}`;
+        }
+        /** NOTE: Must be called from sub-scope! */
+        nextGotoID() {
+            return `${this.path}.___goto___${this._nextGotoID++}`;
+        }
+        /** NOTE: Must be called from sub-scope! */
+        nextReturnID() {
+            return `${this.path}.___return___${this._nextReturnID++}`;
+        }
+        /** NOTE: Must be called from sub-scope! */
+        nextIfID() {
+            return `${this.path}.___if___${this._nextIfID++}`;
+        }
+        /** NOTE: Must be called from sub-scope! */
+        nextIfClauseID() {
+            return `${this.path}.___clause_if___${this._nextIfClauseID++}`;
+        }
+        /** NOTE: Must be called from sub-scope! */
+        nextElseIfClauseID() {
+            return `${this.path}.___clause_elseif___${this._nextElseIfClauseID++}`;
+        }
+        /** NOTE: Must be called from sub-scope! */
+        nextElseClauseID() {
+            return `${this.path}.___clause_else___${this._nextElseClauseID++}`;
+        }
+        /** NOTE: Must be called from sub-scope! */
+        nextForNumericID() {
+            return `${this.path}.___for_numeric___${this._nextForNumericID++}`;
+        }
+        /** NOTE: Must be called from sub-scope! */
+        nextForGenericID() {
+            return `${this.path}.___for_generic___${this._nextForGenericID++}`;
+        }
+        /** NOTE: Must be called from sub-scope! */
+        nextWhileID() {
+            return `${this.path}.___while___${this._nextWhileID++}`;
+        }
+        /** NOTE: Must be called from sub-scope! */
+        nextDoID() {
+            return `${this.path}.___do___${this._nextDoID++}`;
+        }
+        /** NOTE: Must be called from sub-scope! */
+        nextRepeatID() {
+            return `${this.path}.___repeat___${this._nextRepeatID++}`;
+        }
+        /** NOTE: Must be called from sub-scope! */
+        nextAnonymousFunctionID() {
+            return `${this.path}.___anonymous_function___${this._nextAnonFuncID++}`;
+        }
+        /** NOTE: Must be called from sub-scope! */
+        nextCallID() {
+            return `${this.path}.___call___${this._nextCallID++}`;
+        }
+    }
+    exports.Scope = Scope;
+});
+define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.discoverExpression = exports.discoverStringCallExpression = exports.discoverTableCallExpression = exports.discoverCallExpression = exports.discoverIndexExpression = exports.discoverMemberExpression = exports.discoverUnaryExpression = exports.discoverLogicalExpression = exports.discoverBinaryExpression = exports.discoverTableConstructorExpression = exports.discoverVarargLiteral = exports.discoverFunctionDeclaration = exports.getRelativeScope = void 0;
+    function getRelativeScope(expression) {
+        var _a;
+        switch (expression.type) {
+            case 'Identifier': {
+                return expression.name;
+            }
+            case 'FunctionDeclaration': {
+                // This function has no name.
+                if (!expression.identifier)
+                    return undefined;
+                switch ((_a = expression.identifier) === null || _a === void 0 ? void 0 : _a.type) {
+                    case 'Identifier': {
+                        return expression.identifier.name;
+                    }
+                }
+            }
+            case 'StringLiteral':
+            case 'NumericLiteral':
+            case 'BooleanLiteral':
+            case 'NilLiteral':
+            case 'VarargLiteral':
+            case 'TableConstructorExpression':
+            case 'BinaryExpression':
+            case 'LogicalExpression':
+            case 'UnaryExpression':
+            case 'MemberExpression':
+            case 'IndexExpression':
+            case 'CallExpression':
+            case 'TableCallExpression':
+            case 'StringCallExpression':
+        }
+        return undefined;
+    }
+    exports.getRelativeScope = getRelativeScope;
+    function discoverFunctionDeclaration(__G, expression, scope) {
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverFunctionDeclaration = discoverFunctionDeclaration;
+    function discoverVarargLiteral(__G, expression, scope) {
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverVarargLiteral = discoverVarargLiteral;
+    function discoverTableConstructorExpression(__G, expression, scope) {
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverTableConstructorExpression = discoverTableConstructorExpression;
+    function discoverBinaryExpression(__G, expression, scope) {
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverBinaryExpression = discoverBinaryExpression;
+    function discoverLogicalExpression(__G, expression, scope) {
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverLogicalExpression = discoverLogicalExpression;
+    function discoverUnaryExpression(__G, expression, scope) {
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverUnaryExpression = discoverUnaryExpression;
+    function discoverMemberExpression(__G, expression, scope) {
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverMemberExpression = discoverMemberExpression;
+    function discoverIndexExpression(__G, expression, scope) {
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverIndexExpression = discoverIndexExpression;
+    function discoverCallExpression(__G, expression, scope) {
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverCallExpression = discoverCallExpression;
+    function discoverTableCallExpression(__G, expression, scope) {
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverTableCallExpression = discoverTableCallExpression;
+    /**
+     * TODO: Implement Lua Modules references.
+     *
+     *       E.G:
+     *            ```lua
+     *            --- #type MyModule
+     *            local my_module = require '../my_module.lua';
+     *            ```
+     */
+    function discoverStringCallExpression(__G, expression, scope) {
+        // No base to assign; no change to make;
+        if (!expression.base)
+            return 0;
+        const basePath = `${scope.path}.${getRelativeScope(expression)}`;
+        const o = __G.map[scope.path];
+        // No object known; no changes made.
+        if (!o)
+            return 0;
+        let changes = 0;
+        switch (o.type) {
+            case 'ScopeVariable':
+            case 'ScopeFunction':
+            case 'ScopeForGenericBlock':
+            case 'ScopeForNumericBlock':
+            case 'ScopeDoBlock':
+            case 'ScopeWhileBlock':
+            case 'ScopeRepeatBlock':
+            case 'ScopeIfBlock':
+            case 'ScopeIfClauseBlock':
+            case 'ScopeTable':
+            case 'ScopeClass':
+            case 'ScopeConstructor':
+        }
+        return changes;
+    }
+    exports.discoverStringCallExpression = discoverStringCallExpression;
+    function discoverExpression(__G, expression, scope) {
+        switch (expression.type) {
+            case 'Identifier': return 0;
+            case 'StringLiteral': return scope.addType('string');
+            case 'NumericLiteral': return scope.addType('number');
+            case 'BooleanLiteral': return scope.addType('boolean');
+            case 'NilLiteral': return scope.addType('nil');
+            case 'FunctionDeclaration': return discoverFunctionDeclaration(__G, expression, scope);
+            case 'VarargLiteral': return discoverVarargLiteral(__G, expression, scope);
+            case 'TableConstructorExpression': return discoverTableConstructorExpression(__G, expression, scope);
+            case 'BinaryExpression': return discoverBinaryExpression(__G, expression, scope);
+            case 'LogicalExpression': return discoverLogicalExpression(__G, expression, scope);
+            case 'UnaryExpression': return discoverUnaryExpression(__G, expression, scope);
+            case 'MemberExpression': return discoverMemberExpression(__G, expression, scope);
+            case 'IndexExpression': return discoverIndexExpression(__G, expression, scope);
+            case 'CallExpression': return discoverCallExpression(__G, expression, scope);
+            case 'TableCallExpression': return discoverTableCallExpression(__G, expression, scope);
+            case 'StringCallExpression': return discoverStringCallExpression(__G, expression, scope);
+        }
+    }
+    exports.discoverExpression = discoverExpression;
+});
+define("src/asledgehammer/rosetta/lua/wizard/Extract", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.extractChunk = exports.extractStatement = exports.extractForGenericStatement = exports.extractForNumericStatement = exports.extractFunctionDeclaration = exports.extractCallStatement = exports.extractAssignmentStatement = exports.extractLocalStatement = exports.extractRepeatStatement = exports.extractDoStatement = exports.extractWhileStatement = exports.extractIfStatement = exports.extractReturnStatement = void 0;
+    function extractReturnStatement(bag, statement) {
+        let changes = 0;
+        // Make sure we have something to return / discover.
+        if (!statement.arguments.length)
+            return changes;
+        for (const arg of statement.arguments) {
+        }
+        return changes;
+    }
+    exports.extractReturnStatement = extractReturnStatement;
+    function extractIfStatement(bag, statement) {
+        let changes = 0;
+        return changes;
+    }
+    exports.extractIfStatement = extractIfStatement;
+    function extractWhileStatement(bag, statement) {
+        let changes = 0;
+        return changes;
+    }
+    exports.extractWhileStatement = extractWhileStatement;
+    function extractDoStatement(bag, statement) {
+        let changes = 0;
+        return changes;
+    }
+    exports.extractDoStatement = extractDoStatement;
+    function extractRepeatStatement(bag, statement) {
+        let changes = 0;
+        return changes;
+    }
+    exports.extractRepeatStatement = extractRepeatStatement;
+    function extractLocalStatement(bag, statement) {
+        let changes = 0;
+        return changes;
+    }
+    exports.extractLocalStatement = extractLocalStatement;
+    function extractAssignmentStatement(bag, statement) {
+        let changes = 0;
+        return changes;
+    }
+    exports.extractAssignmentStatement = extractAssignmentStatement;
+    function extractCallStatement(bag, statement) {
+        let changes = 0;
+        return changes;
+    }
+    exports.extractCallStatement = extractCallStatement;
+    function extractFunctionDeclaration(bag, statement) {
+        let changes = 0;
+        return changes;
+    }
+    exports.extractFunctionDeclaration = extractFunctionDeclaration;
+    function extractForNumericStatement(bag, statement) {
+        let changes = 0;
+        return changes;
+    }
+    exports.extractForNumericStatement = extractForNumericStatement;
+    function extractForGenericStatement(bag, statement) {
+        let changes = 0;
+        return changes;
+    }
+    exports.extractForGenericStatement = extractForGenericStatement;
+    function extractStatement(bag, statement) {
+        let changes = 0;
+        switch (statement.type) {
+            // Nothing to discover.
+            case 'LabelStatement':
+            case 'BreakStatement':
+            case 'GotoStatement':
+                break;
+            case 'ReturnStatement': {
+                changes += extractReturnStatement(bag, statement);
+                break;
+            }
+            case 'IfStatement': {
+                changes += extractIfStatement(bag, statement);
+                break;
+            }
+            case 'WhileStatement': {
+                changes += extractWhileStatement(bag, statement);
+                break;
+            }
+            case 'DoStatement': {
+                changes += extractDoStatement(bag, statement);
+                break;
+            }
+            case 'RepeatStatement': {
+                changes += extractRepeatStatement(bag, statement);
+                break;
+            }
+            case 'LocalStatement': {
+                changes += extractLocalStatement(bag, statement);
+                break;
+            }
+            case 'AssignmentStatement': {
+                changes += extractAssignmentStatement(bag, statement);
+                break;
+            }
+            case 'CallStatement': {
+                changes += extractCallStatement(bag, statement);
+                break;
+            }
+            case 'FunctionDeclaration': {
+                changes += extractFunctionDeclaration(bag, statement);
+                break;
+            }
+            case 'ForNumericStatement': {
+                changes += extractForNumericStatement(bag, statement);
+                break;
+            }
+            case 'ForGenericStatement': {
+                changes += extractForGenericStatement(bag, statement);
+                break;
+            }
+        }
+        return changes;
+    }
+    exports.extractStatement = extractStatement;
+    function extractChunk(bag, chunk) {
+        let changes = 0;
+        for (let index = 0; index < chunk.body.length; index++) {
+            const statement = chunk.body[index];
+            changes += extractStatement(bag, statement);
+        }
+        return changes;
+    }
+    exports.extractChunk = extractChunk;
 });
 //# sourceMappingURL=app.js.map

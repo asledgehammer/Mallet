@@ -1,9 +1,9 @@
 import * as ast from 'luaparse';
-import { App } from '../../../app';
-import { RosettaLuaClass } from './RosettaLuaClass';
-import { RosettaLuaConstructor } from './RosettaLuaConstructor';
-import { RosettaLuaFunction } from './RosettaLuaFunction';
-import { RenderOptions, discover } from './Scope';
+import { App } from '../../../../app';
+import { RosettaLuaClass } from '../RosettaLuaClass';
+import { RosettaLuaConstructor } from '../RosettaLuaConstructor';
+import { RosettaLuaFunction } from '../RosettaLuaFunction';
+import { discover } from './Old';
 
 // @ts-ignore
 const luaparse: luaparse = ast.default;

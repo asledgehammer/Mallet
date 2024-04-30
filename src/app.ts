@@ -12,7 +12,7 @@ import { RosettaLuaConstructor } from './asledgehammer/rosetta/lua/RosettaLuaCon
 import { RosettaLuaField } from './asledgehammer/rosetta/lua/RosettaLuaField';
 import { RosettaLuaFunction } from './asledgehammer/rosetta/lua/RosettaLuaFunction';
 import { $get, validateLuaVariableName } from './asledgehammer/rosetta/util';
-import { LuaParser } from './asledgehammer/rosetta/lua/LuaParser';
+import { LuaParser } from './asledgehammer/rosetta/lua/wizard/LuaParser';
 
 export class Toast {
 

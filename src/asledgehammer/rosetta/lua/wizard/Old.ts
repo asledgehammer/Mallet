@@ -1,638 +1,14 @@
 import * as ast from 'luaparse';
-import { isFunctionDeclaration, isWhileStatement, server } from 'typescript';
-// @ts-ignore
-const luaparse: luaparse = ast.default;
-
-export type MethodReferenceType = 'void'
-    | 'nil'
-    | 'boolean'
-    | 'number'
-    | 'string'
-    | 'table'
-    ;
-
-const knownMethodTypes: { [path: string]: string[] } = {
-    'math.min': ['number'],
-    'math.max': ['number'],
-    'math.floor': ['number'],
-    'math.ceil': ['number'],
-    'math.round': ['number']
-};
-
-export type ScopeType = 'class' | 'table' | 'function' | 'field' | 'value' | 'block';
-
-export interface ScopePath {
-    raw: string;
-    name: string;
-    parent?: ScopePath;
-    children?: ScopePath[];
-    valueType: ScopeType;
-}
-
-export interface Base<TType extends string> {
-    type: TType;
-}
-
-export interface ScopeBase<TType extends string> extends Base<TType> {
-    scope: ScopePath;
-}
+import { ScopeClass, ScopeFunction, ScopeGlobal, ScopePath, ScopeReference, ScopeReferenceable, ScopeReturn, ScopeType, ScopeVariable, knownMethodTypes } from "./LuaWizard";
+import { assignmentStatementToString, localStatementToString, returnStatementToString } from './String';
 
 /**
- * *ScopeReference* stores indirect value assignments for fields, values, and local variables. This is used to 
- * chain-assign types when types are discovered for the end-target of the chain.
+ * NOTE: This code is old. And Ugly. And yeah, it'll get removed. Do something about it. 
  */
-export interface ScopeReference extends ScopeBase<'ScopeReference'> {
-    value: ScopeReferenceable;
-}
-
-export interface ScopeVariable extends ScopeBase<'ScopeVariable'> {
-
-    /** The name of the variable in Lua code. */
-    name: string;
-
-    /** All type(s) discovered for the variable. */
-    types: string[];
-
-    /** The luaparse AST object. */
-    init?: ast.Statement;
-
-    /** Any direct references to assignments so when the types are discovered they'll be linked to the same type(s). */
-    references: { [scopeRaw: string]: ScopeReference };
-}
-
-export interface ScopeReturn extends Base<'ScopeReturn'> {
-    types: string[];
-}
-
-export interface ScopeBlock<TType extends string> extends ScopeBase<TType> {
-    values: { [name: string]: ScopeVariable };
-}
-
-export interface ScopeForGenericBlock extends ScopeBlock<'ScopeForGenericBlock'> {
-    init: ast.ForGenericStatement;
-}
-
-export interface ScopeForNumericBlock extends ScopeBlock<'ScopeForNumericBlock'> {
-    init: ast.ForNumericStatement;
-}
-
-export interface ScopeWhileBlock extends ScopeBlock<'ScopeWhileBlock'> {
-    init: ast.WhileStatement;
-}
-
-export interface ScopeDoBlock extends ScopeBlock<'ScopeDoBlock'> {
-    init: ast.DoStatement;
-}
-
-export interface ScopeIfBlock extends ScopeBlock<'ScopeIfBlock'> {
-    init: ast.IfStatement;
-}
-
-export interface ScopeIfClauseBlock extends ScopeBlock<'ScopeIfClauseBlock'> {
-    init: ast.IfClause | ast.ElseifClause | ast.ElseClause;
-}
-
-export interface ScopeRepeatBlock extends ScopeBlock<'ScopeRepeatBlock'> {
-    init: ast.RepeatStatement;
-}
-
-export interface ScopeFunction extends ScopeBase<'ScopeFunction'> {
-    values: { [name: string]: ScopeVariable };
-    params: ScopeVariable[];
-    returns: ScopeReturn;
-
-    /** The luaparse AST object. */
-    init: ast.FunctionDeclaration;
-
-    /** Any direct references to assignments so when the types are discovered they'll be linked to the same type(s). */
-    references: { [scopeRaw: string]: ScopeReference };
-};
-
-export interface ScopeConstructor extends ScopeBase<'ScopeConstructor'> {
-    values: { [name: string]: ScopeVariable };
-    params: ScopeVariable[];
-
-    /** The luaparse AST object. */
-    init?: ast.FunctionDeclaration;
-
-    /** This is the aliased table object that is returned as 'self' when constructing a class. */
-    selfAlias: string;
-
-    /** Any direct references to assignments so when the types are discovered they'll be linked to the same type(s). */
-    references: { [scopeRaw: string]: ScopeReference };
-};
-
-export interface ScopeTable extends ScopeBase<'ScopeTable'> {
-    values: { [name: string]: ScopeVariable };
-    funcs: { [name: string]: ScopeFunction };
-
-    /** Any direct references to assignments so when the types are discovered they'll be linked to the same type(s). */
-    references: { [scopeRaw: string]: ScopeReference };
-};
-
-export interface ScopeClass extends ScopeBase<'ScopeClass'> {
-    name: string;
-    extendz?: ScopeClass | string;
-    conztructor: ScopeConstructor;
-    values: { [name: string]: ScopeVariable };
-    fields: { [name: string]: ScopeVariable };
-    funcs: { [name: string]: ScopeFunction };
-    methods: { [name: string]: ScopeFunction };
-
-    /** Any direct references to assignments so when the types are discovered they'll be linked to the same type(s). */
-    references: { [scopeRaw: string]: ScopeReference };
-};
-
-export interface ScopeGlobal extends ScopeBase<'ScopeGlobal'> {
-    map: { [name: string]: ScopeElement },
-    values: { [name: string]: ScopeVariable };
-    funcs: { [name: string]: ScopeFunction };
-    tables: { [name: string]: ScopeTable };
-    classes: { [name: string]: ScopeClass };
-}
-
-export type ScopeElement = ScopeVariable
-    | ScopeFunction
-    | ScopeForGenericBlock
-    | ScopeForNumericBlock
-    | ScopeDoBlock
-    | ScopeWhileBlock
-    | ScopeRepeatBlock
-    | ScopeIfBlock
-    | ScopeIfClauseBlock
-    | ScopeTable
-    | ScopeClass
-    | ScopeConstructor;
-
-export type ScopeReferenceable = ScopeVariable
-    | ScopeFunction
-    | ScopeConstructor
-    | ScopeTable
-    | ScopeClass;
-
-export interface RenderOptions {
-    indent: number;
-
-    /** For literals, we may need to render the alternative to the raw value. */
-    raw?: boolean;
-};
-
-function indent(options: RenderOptions): RenderOptions {
-    return { ...options, indent: options.indent + 1 };
-}
-
-function literalToString(literal: ast.BooleanLiteral | ast.NumericLiteral | ast.NilLiteral | ast.StringLiteral | ast.VarargLiteral, options: RenderOptions = { indent: 0 }): string {
-    const i = ' '.repeat(options.indent * 4);
-
-    switch (literal.type) {
-        case 'BooleanLiteral': {
-            return `${i}${literal.raw}`;
-        }
-        case 'NumericLiteral': {
-            return `${i}${literal.raw}`;
-        }
-        case 'NilLiteral': {
-            return `${i}${literal.raw}`;
-        }
-        case 'StringLiteral': {
-            if (options.raw) {
-                return `${i}${literal.value}`;
-            } else {
-                return `${i}${literal.raw}`;
-            }
-        }
-        case 'VarargLiteral': {
-            // TODO: Check validity.
-            console.warn('VarargLiteral: ', literal);
-            return `${i}${literal.raw}`;
-        }
-    }
-}
-
-function identifierToString(identifier: ast.Identifier, options: RenderOptions = { indent: 0 }): string {
-    const i = ' '.repeat(options.indent * 4);
-    return `${i}${identifier.name}`;
-}
-
-function indexExpressionToString(expression: ast.IndexExpression, options: RenderOptions = { indent: 0 }): string {
-    return `${expressionToString(expression.base)}[${expressionToString(expression.index)}]`;
-}
-
-function logicalExpressionToString(expression: ast.LogicalExpression, options: RenderOptions = { indent: 0 }): string {
-    const i = ' '.repeat(options.indent * 4);
-
-    return `${i}${expressionToString(expression.left)} ${expression.operator} ${expressionToString(expression.right)}`;
-}
-
-function unaryExpressionToString(expression: ast.UnaryExpression, options: RenderOptions = { indent: 0 }): string {
-    const i = ' '.repeat(options.indent * 4);
-
-    return `${i}${expression.operator} ${expressionToString(expression.argument)}`;
-}
-
-function stringCallExpressionToString(expression: ast.StringCallExpression, options: RenderOptions = { indent: 0 }): string {
-    const i = ' '.repeat(options.indent * 4);
-    const base = expressionToString(expression.base);
-    const arg = expressionToString(expression.argument);
-    console.log(expression);
-    return `${i}${base} ${arg};`;
-}
-
-function tableCallExpressionToString(expression: ast.TableCallExpression, options: RenderOptions = { indent: 0 }): string {
-    const i = ' '.repeat(options.indent * 4);
-
-    console.log(expression);
-    throw new Error('Not implemented.');
-}
-
-function binaryExpressionToString(expression: ast.BinaryExpression, options: RenderOptions = { indent: 0 }): string {
-    const i = ' '.repeat(options.indent * 4);
-
-    return `${i}${expressionToString(expression.left)} ${expression.operator} ${expressionToString(expression.right)}`;
-}
-
-function argsToString(args2: ast.Expression[], options: RenderOptions = { indent: 0 }): string {
-    const i = ' '.repeat(options.indent * 4);
-    const args: string[] = [];
-    for (const arg of args2) args.push(expressionToString(arg));
-    return `${i}${args.join(', ')}`;
-}
-
-function memberExpressionToString(expression: ast.MemberExpression, options: RenderOptions = { indent: 0 }): string {
-    const i = ' '.repeat(options.indent * 4);
-    return `${i}${expressionToString(expression.base)}${expression.indexer}${expression.identifier.name}`;
-}
-
-function callExpressionToString(expression: ast.CallExpression, options: RenderOptions = { indent: 0 }): string {
-    const i = ' '.repeat(options.indent * 4);
-    return `${i}${expressionToString(expression.base)}(${argsToString(expression.arguments)})`;
-}
-
-function returnStatementToString(statement: ast.ReturnStatement, options: RenderOptions = { indent: 0 }): string {
-    const i = ' '.repeat(options.indent * 4);
-    const args: string[] = [];
-    for (const arg of statement.arguments) args.push(expressionToString(arg));
-    return `${i}return${args.length ? ` ${args.join(', ')}` : ''}`;
-}
-
-function gotoStatementToString(statement: ast.GotoStatement, options: RenderOptions = { indent: 0 }): string {
-    const i = ' '.repeat(options.indent * 4);
-    return `${i}goto $${statement.label}`;
-}
-
-function labelStatementToString(statement: ast.LabelStatement, options: RenderOptions = { indent: 0 }): string {
-    const i = ' '.repeat(options.indent * 4);
-    return `${i}::${statement.label}::`;
-}
-
-function breakStatementToString(statement: ast.BreakStatement, options: RenderOptions = { indent: 0 }): string {
-    const i = ' '.repeat(options.indent * 4);
-    return `${i}break`;
-}
-
-function localStatementToString(statement: ast.LocalStatement, options: RenderOptions = { indent: 0 }): string {
-    const i = ' '.repeat(options.indent * 4);
-
-    // The local name(s).
-    const vars: string[] = [];
-    for (const _var_ of statement.variables) vars.push(_var_.name);
-
-    // The value(s) to set.
-    const inits: string[] = [];
-    for (const i of statement.init) inits.push(expressionToString(i));
-
-    return `${i}local ${vars.join(', ')} = ${inits.join(', ')}`;
-}
-
-function varargLiteralToString(param: ast.VarargLiteral, options: RenderOptions = { indent: 0 }): string {
-    const i = ' '.repeat(options.indent * 4);
-    return `${i}${param.raw}`;
-}
-
-function parametersToString(params: (ast.Identifier | ast.VarargLiteral)[], options: RenderOptions = { indent: 0 }): string {
-    const ps: string[] = [];
-    for (const param of params) {
-        switch (param.type) {
-            case 'Identifier': {
-                ps.push(identifierToString(param, options));
-                break;
-            }
-            case 'VarargLiteral': {
-                ps.push(varargLiteralToString(param, options));
-                break;
-            }
-        }
-    }
-    return ps.join(', ');
-}
-
-function bodyToString(body: ast.Statement[], options: RenderOptions = { indent: 0 }): string {
-    const i = ' '.repeat(options.indent * 4);
-    let s = '';
-
-    const lastIndex = body.length ? body.length - 1 : -1;
-    for (let index = 0; index < body.length; index++) {
-        const prevStatement = body[index - 1];
-        const currStatement = body[index];
-        const nextStatement = body[index + 1];
-
-        // Prettier code is happier code. =)
-        let endingSemicolon = true;
-
-        // For cleaner separation of code.
-        let leadingNewline = false;
-        let endingNewline = false;
-
-        switch (currStatement.type) {
-            case 'FunctionDeclaration': {
-                endingSemicolon = false;
-
-                // No blank spaces for the first line of a body.
-                if (prevStatement) {
-                    leadingNewline = true;
-                }
-
-                // No blank spaces at the end of a body.
-                if (nextStatement) {
-                    endingNewline = true;
-                }
-            }
-            case 'IfStatement':
-            case 'ForGenericStatement':
-            case 'ForNumericStatement':
-            case 'WhileStatement':
-            case 'DoStatement':
-            case 'RepeatStatement': {
-                endingSemicolon = false;
-
-                // No blank spaces at the end of a body.
-                if (nextStatement) {
-                    endingNewline = true;
-                }
-                break;
-            }
-            case 'BreakStatement':
-            case 'LabelStatement': {
-                endingSemicolon = false;
-                break;
-            }
-        }
-
-        s += `${leadingNewline ? '\n' : ''}${statementToString(currStatement, options)}${endingSemicolon ? ';' : ''}\n${endingNewline ? '\n' : ''}`;
-    }
-    for (const statement of body) {
-
-
-    }
-
-    if (s.length) s = s.substring(0, s.length - 1); // Remove the last newline. (If present)
-    return s;
-}
 
 /**
- * Renders a Lua function declaration as a string.
- * 
- * @param func The function to render.
- * @param options Passed options on indenting the code.
- * @returns The function rendered as a string.
+ * @returns ScopeGlobal
  */
-function functionDeclarationToString(func: ast.FunctionDeclaration, options: RenderOptions = { indent: 0 }): string {
-    const i = ' '.repeat(options.indent * 4);
-    const options2 = indent(options);
-
-    /* (If exists, generate the name of the function) */
-    let name = '';
-    if (func.identifier) {
-        switch (func.identifier!.type) {
-            case 'Identifier': {
-                name = func.identifier.name;
-                break;
-            }
-            case 'MemberExpression': {
-                name = memberExpressionToString(func.identifier);
-                break;
-            }
-        }
-    }
-
-    /* (Build the function's declaration) */
-    let s = `${i}${func.isLocal ? 'local ' : ''}function${name && name.length ? ` ${name}` : ''}(${parametersToString(func.parameters)})`;
-
-    // Only render multi-line functions if its body is populated.
-    if (func.body.length) {
-        s += '\n';
-        s += `${bodyToString(func.body, options2)}\n`;
-        s += `${i}end`;
-    } else {
-        s += ' end';
-    }
-
-    return s;
-}
-
-function whileStatementToString(statement: ast.WhileStatement, options: RenderOptions): string {
-    const i = ' '.repeat(options.indent * 4);
-    const options2 = indent(options);
-    let s = `${i}while ${expressionToString(statement.condition)} do\n`;
-    s += `${bodyToString(statement.body, options2)}\n`;
-    s += `${i}end`;
-    return s;
-}
-
-function doStatementToString(statement: ast.DoStatement, options: RenderOptions): string {
-    const i = ' '.repeat(options.indent * 4);
-    const options2 = indent(options);
-    let s = `${i}do\n`;
-    s += `${bodyToString(statement.body), options2}\n`;
-    s += `${i}end`;
-    return s;
-}
-
-function repeatStatementToString(statement: ast.RepeatStatement, options: RenderOptions): string {
-    const i = ' '.repeat(options.indent * 4);
-    const options2 = indent(options);
-    let s = `${i}repeat\n`;
-    s += `${bodyToString(statement.body, options2)}\n`;
-    s += `${i}until ${statement.condition};`;
-    return s;
-}
-
-function forNumericStatementToString(statement: ast.ForNumericStatement, options: RenderOptions): string {
-    const i = ' '.repeat(options.indent * 4);
-    const options2 = indent(options);
-    let s = `${i}for ${expressionToString(statement.start)}, ${expressionToString(statement.end)}`;
-    if (statement.step) s += `, ${expressionToString(statement.step)}`; // (Optional 3rd step argument)
-    s += `\n${bodyToString(statement.body, options2)}\n`;
-    s += `${i}end`;
-    return s;
-}
-
-function forGenericStatementToString(statement: ast.ForGenericStatement, options: RenderOptions): string {
-    const i = ' '.repeat(options.indent * 4);
-    const options2 = indent(options);
-    const vars: string[] = [];
-    for (const variable of statement.variables) vars.push(variable.name);
-    const iterate: string[] = [];
-    for (const iterator of statement.iterators) iterate.push(expressionToString(iterator));
-    let s = `${i}for ${vars.join(', ')} in ${iterate.join(', ')} do\n`;
-    s += `${bodyToString(statement.body, options2)}\n`;
-    s += 'end';
-    return s;
-}
-
-function ifClauseToString(clause: ast.IfClause, isLastClause: boolean, options: RenderOptions = { indent: 0 }): string {
-    const i = ' '.repeat(options.indent * 4);
-    const options2 = indent(options);
-    let s = `${i}if ${expressionToString(clause.condition)} then\n`;
-    s += `${bodyToString(clause.body, options2)}\n`;
-    if (isLastClause) s += `${i}end`;
-    return s;
-}
-
-function elseIfClauseToString(clause: ast.ElseifClause, isLastClause: boolean, options: RenderOptions = { indent: 0 }): string {
-    const i = ' '.repeat(options.indent * 4);
-    const options2 = indent(options);
-    let s = `${i}elseif ${expressionToString(clause.condition)} then\n`;
-    s += `${bodyToString(clause.body, options2)}\n`;
-    if (isLastClause) s += `${i}end`;
-    return s;
-}
-
-function elseClauseToString(clause: ast.ElseClause, options: RenderOptions = { indent: 0 }): string {
-    const i = ' '.repeat(options.indent * 4);
-    const options2 = indent(options);
-    let s = `${i}else\n`;
-    s += `${bodyToString(clause.body, options2)}\n`;
-    s += `${i}end`;
-    return s;
-}
-
-function ifStatementToString(statement: ast.IfStatement, options: RenderOptions = { indent: 0 }): string {
-    let s = '';
-    for (let index = 0; index < statement.clauses.length; index++) {
-        const isLastClause = index === statement.clauses.length - 1;
-        const clause = statement.clauses[index];
-        switch (clause.type) {
-            case 'IfClause': {
-                s += `${ifClauseToString(clause, isLastClause, options)}`;
-                break;
-            }
-            case 'ElseifClause': {
-                s += `${elseIfClauseToString(clause, isLastClause, options)}`;
-                break;
-            }
-            case 'ElseClause': {
-                s += `${elseClauseToString(clause, options)}`
-                break;
-            }
-        }
-    }
-    return s;
-}
-
-function tableConstructorExpressionToString(expression: ast.TableConstructorExpression, options: RenderOptions = { indent: 0 }): string {
-    const i = ' '.repeat(options.indent * 4);
-
-    // Empty table.
-    if (!expression.fields.length) return `${i}{}`;
-
-    const entries: string[] = [];
-    for (const field of expression.fields) {
-        switch (field.type) {
-            case 'TableKey': {
-                entries.push(`${expressionToString(field.key)} = ${expressionToString(field.value)}`);
-                break;
-            }
-            case 'TableKeyString': {
-                entries.push(`${field.key.name} = ${expressionToString(field.value)}`);
-                break;
-            }
-            case 'TableValue': {
-                entries.push(expressionToString(field.value));
-                break;
-            }
-        }
-    }
-    return `${i}{ ${entries.join(', ')} }`;
-}
-
-function assignmentStatementToString(statement: ast.AssignmentStatement, options: RenderOptions = { indent: 0 }): string {
-    const i = ' '.repeat(options.indent * 4);
-
-    // The local name(s).
-    const vars: string[] = [];
-    for (const _var_ of statement.variables) {
-        switch (_var_.type) {
-            case 'Identifier': {
-                vars.push(identifierToString(_var_));
-                break;
-            }
-            case 'IndexExpression': {
-                vars.push(indexExpressionToString(_var_));
-                break;
-            }
-            case 'MemberExpression': {
-                vars.push(memberExpressionToString(_var_));
-                break;
-            }
-        }
-    }
-
-    // The value(s) to set.
-    const inits: string[] = [];
-    for (const init of statement.init) inits.push(expressionToString(init));
-
-    return `${i}${vars.join(', ')} = ${inits.join(', ')};`;
-}
-
-function callStatementToString(statement: ast.CallStatement, options: RenderOptions): string {
-    switch (statement.expression.type) {
-        case 'CallExpression': return callExpressionToString(statement.expression, options);
-        case 'StringCallExpression': return stringCallExpressionToString(statement.expression, options);
-        case 'TableCallExpression': return tableCallExpressionToString(statement.expression, options);
-    }
-}
-
-function expressionToString(arg: ast.Expression, options: RenderOptions = { indent: 0 }): string {
-    switch (arg.type) {
-        case 'BooleanLiteral': return literalToString(arg, options);
-        case 'NumericLiteral': return literalToString(arg, options);
-        case 'NilLiteral': return literalToString(arg, options);
-        case 'StringLiteral': return literalToString(arg, options);
-        case 'VarargLiteral': return literalToString(arg, options);
-        case 'Identifier': return identifierToString(arg, options);
-        case 'BinaryExpression': return binaryExpressionToString(arg, options);
-        case 'CallExpression': return callExpressionToString(arg, options);
-        case 'MemberExpression': return memberExpressionToString(arg);
-        case 'FunctionDeclaration': return functionDeclarationToString(arg, options);
-        case 'IndexExpression': return indexExpressionToString(arg);
-        case 'TableConstructorExpression': return tableConstructorExpressionToString(arg);
-        case 'LogicalExpression': return logicalExpressionToString(arg);
-        case 'UnaryExpression': return unaryExpressionToString(arg);
-        case 'StringCallExpression': return stringCallExpressionToString(arg);
-        case 'TableCallExpression': return tableCallExpressionToString(arg);
-    }
-}
-
-function statementToString(statement: ast.Statement, options: RenderOptions): string {
-    switch (statement.type) {
-        case 'LocalStatement': return localStatementToString(statement, options);
-        case 'CallStatement': return callStatementToString(statement, options);
-        case 'AssignmentStatement': return assignmentStatementToString(statement, options);
-        case 'ReturnStatement': return returnStatementToString(statement, options);
-        case 'IfStatement': return ifStatementToString(statement, options);
-        case 'ForNumericStatement': return forNumericStatementToString(statement, options);
-        case 'ForGenericStatement': return forGenericStatementToString(statement, options);
-        case 'BreakStatement': return breakStatementToString(statement, options);
-        case 'WhileStatement': return whileStatementToString(statement, options);
-        case 'RepeatStatement': return repeatStatementToString(statement, options);
-        case 'DoStatement': return doStatementToString(statement, options);
-        case 'FunctionDeclaration': return functionDeclarationToString(statement, options);
-        case 'LabelStatement': return labelStatementToString(statement, options);
-        case 'GotoStatement': return gotoStatementToString(statement, options);
-    }
-}
-
 function newGlobalScope(): ScopeGlobal {
     return {
         scope: {
@@ -694,7 +70,59 @@ const getScope = (__G: ScopeGlobal, raw: string, name: string, parent: ScopePath
     };
 }
 
-const discoverInClass = (__G: ScopeGlobal, clazz: ScopeClass, statements: ast.Statement[], parentScope: ScopePath, selfAlias: string = 'self', debug: boolean = false): number => {
+/**
+ * Discovers and maps anything related to the local statement.
+ * 
+ * @param __G The global context.
+ * @param clazz The class context.
+ * @param statement The local statement to discover.
+ * @param parent The parent scope.
+ * @param self The context for self. Here, the context can change. E.G: constructors use 'local o = {};' and return it as 'self'. (Default: 'self')
+ * @param debug If true, any console-prints will fire.
+ * 
+ * @returns The amount of changes made during the discovery.
+ */
+const discoverLocalStatement = (__G: ScopeGlobal, clazz: ScopeClass, statement: ast.LocalStatement, parent: ScopePath, self: string = 'self', debug: boolean = false): number => {
+    let changes = 0;
+
+
+
+    return changes;
+}
+
+const discoverBody = (__G: ScopeGlobal, clazz: ScopeClass, statements: ast.Statement[], parent: ScopePath, self: string = 'self', debug: boolean = false): number => {
+    let changes = 0;
+
+    for (let index = 0; index < statements.length; index++) {
+
+        const currStatement = statements[index];
+
+        switch (currStatement.type) {
+            case 'LocalStatement': {
+                changes += discoverLocalStatement(__G, clazz, currStatement, parent, self, debug);
+                break;
+            }
+            case 'LabelStatement':
+            case 'BreakStatement':
+            case 'GotoStatement':
+            case 'ReturnStatement':
+            case 'IfStatement':
+            case 'WhileStatement':
+            case 'DoStatement':
+            case 'RepeatStatement':
+            case 'AssignmentStatement':
+            case 'CallStatement':
+            case 'FunctionDeclaration':
+            case 'ForNumericStatement':
+            case 'ForGenericStatement':
+        }
+
+    }
+
+    return changes;
+}
+
+const discoverInClass2 = (__G: ScopeGlobal, clazz: ScopeClass, statements: ast.Statement[], parentScope: ScopePath, selfAlias: string = 'self', debug: boolean = false): number => {
 
     let changes = 0;
     let ifIndex = 0;
@@ -1115,7 +543,7 @@ const discoverInClass = (__G: ScopeGlobal, clazz: ScopeClass, statements: ast.St
                     __G.map[scopeForGeneric.raw] = _for_;
                 }
 
-                discoverInClass(__G, clazz, statement.body, scopeForGeneric);
+                discoverBody(__G, clazz, statement.body, scopeForGeneric);
                 break;
             }
             case 'ForNumericStatement': {
@@ -1135,7 +563,7 @@ const discoverInClass = (__G: ScopeGlobal, clazz: ScopeClass, statements: ast.St
                     __G.map[scopeForNumeric.raw] = _for_;
                 }
 
-                discoverInClass(__G, clazz, statement.body, scopeForNumeric);
+                discoverBody(__G, clazz, statement.body, scopeForNumeric);
                 break;
             }
             case 'WhileStatement': {
@@ -1155,7 +583,7 @@ const discoverInClass = (__G: ScopeGlobal, clazz: ScopeClass, statements: ast.St
                     __G.map[scopeWhile.raw] = _while_;
                 }
 
-                discoverInClass(__G, clazz, statement.body, scopeWhile);
+                discoverBody(__G, clazz, statement.body, scopeWhile);
                 break;
             }
             case 'DoStatement': {
@@ -1175,7 +603,7 @@ const discoverInClass = (__G: ScopeGlobal, clazz: ScopeClass, statements: ast.St
                     __G.map[scopeDo.raw] = _do_;
                 }
 
-                discoverInClass(__G, clazz, statement.body, scopeDo);
+                discoverBody(__G, clazz, statement.body, scopeDo);
                 break;
             }
             case 'RepeatStatement': {
@@ -1195,7 +623,7 @@ const discoverInClass = (__G: ScopeGlobal, clazz: ScopeClass, statements: ast.St
                     __G.map[scopeRepeat.raw] = _repeat_;
                 }
 
-                discoverInClass(__G, clazz, statement.body, scopeRepeat);
+                discoverBody(__G, clazz, statement.body, scopeRepeat);
                 break;
             }
             case 'IfStatement': {
@@ -1230,7 +658,7 @@ const discoverInClass = (__G: ScopeGlobal, clazz: ScopeClass, statements: ast.St
                         };
                         __G.map[scopeClause.raw] = _clause_;
                     }
-                    discoverInClass(__G, clazz, clause.body, scopeClause);
+                    discoverBody(__G, clazz, clause.body, scopeClause);
                 }
                 break;
             }
@@ -1267,7 +695,7 @@ function passField(clazz: ScopeClass, __G: ScopeGlobal): number {
 
     for (const methodName of Object.keys(clazz.methods)) {
         const method = clazz.methods[methodName];
-        changes += discoverInClass(__G, clazz, method.init.body, method.scope);
+        changes += discoverBody(__G, clazz, method.init.body, method.scope);
     }
 
     return changes;
@@ -1324,6 +752,7 @@ function passFunction(body: ast.Statement[], clazz: ScopeClass, __G: ScopeGlobal
             if (param.type !== 'Identifier') continue;
             const scopeParam = getScope(__G, `${scopeFunc.raw}.${param.name}`, param.name, scopeFunc, 'value');
             const p: ScopeVariable = {
+                init: statement,
                 type: 'ScopeVariable',
                 scope: scopeParam,
                 name: param.name,
@@ -1389,6 +818,7 @@ function passConstructor(body: ast.Statement[], clazz: ScopeClass, __G: ScopeGlo
             const scopeParam = getScope(__G, `${conzstructorScope.raw}.${param.name}`, param.name, conzstructorScope, 'value');
 
             const _param_: ScopeVariable = {
+                init: statement,
                 type: 'ScopeVariable',
                 scope: scopeParam,
                 name: param.name,
@@ -1525,6 +955,7 @@ function passConstructor(body: ast.Statement[], clazz: ScopeClass, __G: ScopeGlo
 
 function passClass(body: ast.Statement[], __G: ScopeGlobal): number {
     let changes = 0;
+
     for (const statement of body) {
         switch (statement.type) {
             case 'AssignmentStatement': {
@@ -1557,14 +988,6 @@ function passClass(body: ast.Statement[], __G: ScopeGlobal): number {
                     type: 'ScopeClass',
                     scope: classScope,
                     name: className,
-                    conztructor: {
-                        scope: getScope(__G, `__G.${className}.constructor`, 'constructor', classScope, 'function'),
-                        type: 'ScopeConstructor',
-                        values: {},
-                        params: [],
-                        references: {},
-                        selfAlias: 'self'
-                    },
                     fields: {},
                     values: {},
                     funcs: {},
@@ -1588,18 +1011,21 @@ function passClass(body: ast.Statement[], __G: ScopeGlobal): number {
     return changes;
 }
 
-function pass(body: ast.Statement[], __G: ScopeGlobal): number {
+function pass(__G: ScopeGlobal): number {
     let changes = 0;
 
     for (const clazz of Object.values(__G.classes)) {
-        changes += discoverInClass(__G, clazz, clazz.conztructor.init!.body, clazz.conztructor.scope, clazz.conztructor.selfAlias, true);
+        if (clazz.conztructor) {
+            const { conztructor } = clazz;
+            changes += discoverBody(__G, clazz, conztructor.init!.body, conztructor!.scope, conztructor!.selfAlias, true);
+        }
 
         for (const func of Object.values(clazz.funcs)) {
-            changes += discoverInClass(__G, clazz, func.init.body, func.scope);
+            changes += discoverBody(__G, clazz, func.init.body, func.scope);
         }
 
         for (const method of Object.values(clazz.methods)) {
-            changes += discoverInClass(__G, clazz, method.init.body, method.scope);
+            changes += discoverBody(__G, clazz, method.init.body, method.scope);
         }
     }
 
@@ -1618,46 +1044,13 @@ export function discover(chunk: ast.Chunk, __G: ScopeGlobal = newGlobalScope()):
     let passes = 0;
     do {
         passes++;
-        changes = pass(chunk.body, __G);
+        changes = pass(__G);
         console.log(`Pass ${passes}: ${changes} discoveries.`);
     } while (passes < 2 || changes !== 0);
 
     console.log(`__G.map.length = ${Object.keys(__G.map).length}`)
-
-    const conzt = __G.classes['ISUIElement'].conztructor.init;
-    console.log(conzt);
-
-    console.log(chunkToString(chunk));
+    console.log({ 'constructor': __G.classes['ISUIElement'].conztructor?.init });
+    // console.log(chunkToString(chunk));
 
     return __G;
-}
-
-export function chunkToString(chunk: ast.Chunk, options: RenderOptions = { indent: 0 }): string {
-    let s = '';
-
-    for (const statement of chunk.body) {
-        switch (statement.type) {
-            case 'FunctionDeclaration': {
-                s += `\n${statementToString(statement, options)}\n`;
-                break;
-            }
-            case 'LabelStatement':
-            case 'BreakStatement':
-            case 'GotoStatement':
-            case 'ReturnStatement':
-            case 'IfStatement':
-            case 'WhileStatement':
-            case 'DoStatement':
-            case 'RepeatStatement':
-            case 'LocalStatement':
-            case 'AssignmentStatement':
-            case 'CallStatement':
-            case 'ForNumericStatement':
-            case 'ForGenericStatement':
-                s += `${statementToString(statement, options)}\n`;
-                break;
-        }
-    }
-
-    return s;
 }
