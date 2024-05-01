@@ -1,6 +1,8 @@
 import * as ast from 'luaparse';
 import { Scope } from './Scope';
 import { PZGlobalInfo } from './PZ';
+import { ScopeConstructor, ScopeFunction, ScopeReturn, ScopeVariable, knownMethodTypes } from './LuaWizard';
+import { expressionToString, memberExpressionToString } from './String';
 
 export function discoverVarargLiteral(globalInfo: PZGlobalInfo, expression: ast.VarargLiteral, scope: Scope): number {
     const { scope: __G } = globalInfo;
@@ -123,10 +125,133 @@ export function discoverExpression(globalInfo: PZGlobalInfo, expression: ast.Exp
 }
 
 export function discoverFunctionDeclaration(globalInfo: PZGlobalInfo, expression: ast.FunctionDeclaration, scope: Scope): number {
+
+    // console.log(`func-dec: `, expression);
+
     const { scope: __G } = globalInfo;
     const changes = 0;
 
+    let scopeToAssign: Scope = scope;
 
+    let name: string = '';
+    let scopeFunc;
+    if (expression.identifier) {
+        switch (expression.identifier.type) {
+            case 'Identifier': {
+                name = expression.identifier.name;
+                scopeToAssign = scope;
+                break;
+            }
+            case 'MemberExpression': {
+
+                name = memberExpressionToString(expression.identifier);
+                while (name.indexOf(':') !== -1) name = name.replace(':', '.');
+                // We need to locate the actual scope of the member reference here.
+                let scope2 = scope.resolve(name);
+                if (!scope2) {
+                    scope2 = scope.resolveAbsolute(name);
+                }
+                if (scope2) {
+                    scopeToAssign = scope2;
+                } else {
+                    console.warn(`couldn't resolve scope: ${name} (Parent scope: ${scope.path})`)
+                }
+
+                break;
+            }
+        }
+    } else {
+        console.warn(scope, expression);
+        throw new Error('A function declaration here wouldn\'t make sense.');
+    }
+
+    scopeFunc = scope.resolve(name);
+    if (!scopeFunc) scopeFunc = scope.resolveAbsolute(name);
+    if (!scopeFunc) {
+
+        const params: ScopeVariable[] = [];
+        for (const param of expression.parameters) {
+            switch (param.type) {
+                case 'Identifier': {
+                    params.push({
+                        type: 'ScopeVariable',
+                        name: param.name,
+                        types: [],
+                        init: param,
+                        index: 0,
+                        references: {},
+                        assignments: {},
+                    });
+                    break;
+                }
+                case 'VarargLiteral': {
+                    params.push({
+                        type: 'ScopeVariable',
+                        name: param.raw,
+                        types: [],
+                        init: param,
+                        index: 0,
+                        references: {},
+                        assignments: {},
+                    });
+                    break;
+                }
+            }
+        }
+
+        name = name.indexOf('.') !== -1 ? name.split('.').pop()! : name;
+        console.log('name: ' + name)
+        let selfAlias = 'self';
+
+        let type: 'function' | 'constructor' = 'function';
+        if (name === 'new') {
+            type = 'constructor';
+            selfAlias = '';
+        }
+
+        let func: ScopeConstructor | ScopeFunction;
+        if (type === 'constructor') {
+            func = {
+                type: 'ScopeConstructor',
+                init: expression,
+                params: [],
+                values: {},
+                selfAlias,
+                references: {},
+                assignments: {},
+            };
+        } else {
+            const returns: ScopeReturn = {
+                type: 'ScopeReturn',
+                types: []
+            };
+            func = {
+                type: 'ScopeFunction',
+                init: expression,
+                name,
+                params: [],
+                values: {},
+                selfAlias,
+                returns,
+                references: {},
+                assignments: {},
+            };
+        }
+
+
+        scopeFunc = new Scope(func, scopeToAssign);
+    }
+
+    if (name === 'new') {
+        console.log('new: ', scopeFunc);
+    }
+
+    // Handle body statements.
+    for (const statement of expression.body) {
+        discoverStatement(globalInfo, statement, scopeFunc);
+    }
+
+    // Handle return statements.
 
     return changes;
 }
@@ -203,11 +328,163 @@ export function discoverRepeatStatement(globalInfo: PZGlobalInfo, expression: as
     return changes;
 }
 
-export function discoverLocalStatement(globalInfo: PZGlobalInfo, expression: ast.LocalStatement, scope: Scope): number {
+export function discoverLocalStatement(globalInfo: PZGlobalInfo, statement: ast.LocalStatement, scope: Scope): number {
+
+    //console.log(`local: `, statement);
+
     const { scope: __G } = globalInfo;
-    const changes = 0;
+    let changes = 0;
 
+    // (Support for tuples)
+    for (let index = 0; index < statement.variables.length; index++) {
 
+        const name = statement.variables[index].name;
+
+        // We already defined this local.
+        if (scope.children[name]) {
+            // console.warn(`Local statement already exists: ${scope.children[name].path}`);
+            continue;
+        }
+        const types: string[] = [];
+
+        const init = statement.init[index];
+
+        const variable: ScopeVariable = {
+            type: 'ScopeVariable',
+            name,
+            types,
+            init: statement,
+            index,
+            references: {},
+            assignments: {},
+        };
+
+        switch (init.type) {
+
+            // Not a thing.
+            case 'Identifier': break;
+
+            case 'FunctionDeclaration':
+                // TODO - Implement.
+                variable.types.push('fun');
+                break;
+            case 'StringLiteral': {
+                variable.types.push('string');
+                variable.defaultValue = `${init.value}`;
+                break;
+            }
+            case 'NumericLiteral': {
+                variable.types.push('number');
+                variable.defaultValue = `${init.value}`;
+                break;
+            }
+            case 'BooleanLiteral': {
+                variable.types.push('boolean');
+                variable.defaultValue = `${init.value}`;
+                break;
+            }
+            case 'NilLiteral': {
+                variable.types.push('nil');
+                variable.defaultValue = 'nil';
+                break;
+            }
+
+            case 'VarargLiteral': {
+                // TODO - Implement.
+                variable.types.push(`<${init.value}>`);
+                break;
+            }
+
+            case 'TableConstructorExpression':
+                // TODO - Implement.
+                variable.types.push('table');
+
+                // let s: string[] = [];
+                // for (const field of init.fields) {
+                //     switch (field.type) {
+                //         case 'TableKey': {
+                //             s.push(`${expressionToString(field.key)} = ${expressionToString(field.value)}`);
+                //             break;
+                //         }
+                //         case 'TableKeyString': {
+                //             s.push(`${expressionToString(field.key)} = ${expressionToString(field.value)}`);
+                //             break;
+                //         }
+                //         case 'TableValue': {
+                //             s.push(expressionToString(field.value));
+                //             break;
+                //         }
+                //     }
+                // }
+                // if(s.length) {
+                // } else {
+                // }
+
+                break;
+
+            case 'BinaryExpression': {
+                types.push('number');
+                break;
+            }
+            case 'LogicalExpression': {
+                types.push('boolean');
+                break;
+            }
+            case 'UnaryExpression': {
+                switch (init.operator) {
+                    case '~':
+                    case 'not': {
+                        types.push('boolean');
+                        break;
+                    }
+                    case '-':
+                    case '#': {
+                        types.push('number');
+                        break;
+                    }
+                }
+            }
+            case 'MemberExpression': {
+                // TODO - Build reference link.
+                break;
+            }
+            case 'IndexExpression': {
+                // TODO - Build reference link.
+                break;
+            }
+            case 'CallExpression': {
+                // TODO - Build reference link.
+                break;
+            }
+            case 'TableCallExpression': {
+                // TODO - Build reference link.
+                break;
+            }
+            case 'StringCallExpression': {
+                // TODO - Build reference link.
+                break;
+            }
+        }
+
+        // Lastly check for known API for types.
+        if (!types.length) {
+            const str = expressionToString(init);
+            console.log(str);
+            const kTypes = knownMethodTypes[expressionToString(init)];
+            console.log(kTypes);
+            if (kTypes) {
+                for (const kType of kTypes) {
+                    if (types.indexOf(kType) === -1) types.push(kType);
+                }
+            }
+        }
+
+        // (Self-assigning)
+        const lScope = new Scope(variable, scope);
+        console.log(scope);
+
+        changes++;
+    }
 
     return changes;
 }
@@ -267,8 +544,8 @@ export function discoverStatement(globalInfo: PZGlobalInfo, statement: ast.State
     }
 }
 
-export function discoverFile(globalInfo: PZGlobalInfo, __G: Scope, chunk: ast.Chunk) {
-    for (const statement of chunk.body) {
-        discoverStatement(globalInfo, statement, __G);
+export function discoverFile(globalInfo: PZGlobalInfo, statements: ast.Statement[]) {
+    for (const statement of statements) {
+        discoverStatement(globalInfo, statement, globalInfo.scope);
     }
 }

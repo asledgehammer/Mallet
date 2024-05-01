@@ -1,7 +1,7 @@
 import * as ast from 'luaparse';
 import { expressionToString, identifierToString, varargLiteralToString } from './String';
 import { Scope } from './Scope';
-import { ScopeClass, ScopeFunction, ScopeReturn, ScopeVariable } from './LuaWizard';
+import { ScopeClass, ScopeConstructor, ScopeFunction, ScopeReturn, ScopeVariable } from './LuaWizard';
 
 export type PZPropertyType = 'field' | 'value';
 export type PZExecutableType = 'function' | 'method' | 'constructor';
@@ -188,16 +188,30 @@ export function getPZExecutable(global: Scope, clazz: string, statement: ast.Fun
         types: []
     };
 
-    const scopeFunc: ScopeFunction = {
-        type: 'ScopeFunction',
-        init: statement,
-        name,
-        params: [],
-        values: {},
-        returns,
-        references: {},
-        assignments: {},
-    };
+    let scopeFunc: ScopeConstructor | ScopeFunction;
+    if (type === 'constructor') {
+        scopeFunc = {
+            type: 'ScopeConstructor',
+            init: statement,
+            params: [],
+            values: {},
+            selfAlias,
+            references: {},
+            assignments: {},
+        };
+    } else {
+        scopeFunc = {
+            type: 'ScopeFunction',
+            init: statement,
+            name,
+            params: [],
+            values: {},
+            selfAlias,
+            returns,
+            references: {},
+            assignments: {},
+        };
+    }
 
     const scope = new Scope(scopeFunc, global);
 
@@ -218,6 +232,7 @@ export function getPZProperty(scopeParent: Scope, clazz: string, statement: ast.
     }
 
     const var0 = statement.variables[0];
+    const init0 = statement.init[0];
 
     // Make sure the assignment is towards a member. (The class)
     if (var0.type !== 'MemberExpression') {
@@ -251,7 +266,6 @@ export function getPZProperty(scopeParent: Scope, clazz: string, statement: ast.
     // We then conveniently know the default value of the property. Grab that too..
     let types: string[] = [];
     let defaultValue: string | undefined = undefined;
-    const init0 = statement.init[0];
     switch (init0.type) {
         case 'NumericLiteral': {
             types.push('number');
@@ -287,6 +301,10 @@ export function getPZProperty(scopeParent: Scope, clazz: string, statement: ast.
             types.push('table');
             break;
         }
+        case 'MemberExpression': {
+            console.warn(init0);
+            break;
+        }
         default: {
             // console.log('unhandled type / default value handle: ');
             // console.log({ statement, init: init0 });
@@ -300,11 +318,28 @@ export function getPZProperty(scopeParent: Scope, clazz: string, statement: ast.
         types: [],
         init: statement,
         references: {},
-        assignments: {}
+        assignments: {},
+        index: 0,
     };
 
-    const scope = new Scope(property, scopeParent);
-    console.log(`property ${name}: `, scope);
+    // Find out if this is a class variable via selfAlias reference.
+    const base0 = var0.base;
+    const baseName = base0.name;
+    let scopeToAssign = scopeParent;
+    if (selfAlias === baseName) {
+
+        // In some situations, the parent is the class so we don't need to hop-skip and jump to get it.
+        if (scopeParent.element?.type !== 'ScopeClass') {
+            const scopeFound = scopeParent.parent!;
+            if (!scopeFound) {
+                console.warn(`Couldn't resolve scope: ${baseName} (scope: ${scopeParent.path})`);
+            }
+            scopeToAssign = scopeFound!;
+        }
+    }
+
+    const scope = new Scope(property, scopeToAssign, 0, name);
+    // console.log(`property ${name}: `, scope);
 
     return { clazz, name, type, types, defaultValue, scope };
 }
@@ -332,12 +367,12 @@ export function getPZClasses(globalInfo: PZGlobalInfo, statements: ast.Statement
 
         function processExecutable(funcDec: ast.FunctionDeclaration, executable: PZExecutableInfo<'constructor' | 'function' | 'method'>) {
             for (const statement of funcDec.body) {
-                
+
                 if (statement.type !== 'AssignmentStatement') continue;
 
                 const propertyInfo = getPZProperty(clazzScope, clazz.name, statement, executable.selfAlias);
                 if (propertyInfo && propertyInfo.type === 'field') {
-                    
+
                     // Only add the result propertyInfo if not found already.
                     if (clazz.fields[propertyInfo.name]) {
                         const other = clazz.fields[propertyInfo.name];

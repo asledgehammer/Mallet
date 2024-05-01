@@ -3166,7 +3166,10 @@ define("src/asledgehammer/rosetta/lua/wizard/LuaWizard", ["require", "exports"],
         'math.max': ['number'],
         'math.floor': ['number'],
         'math.ceil': ['number'],
-        'math.round': ['number']
+        'math.round': ['number'],
+        /* PZ Java API */
+        'getCore():getScreenWidth()': ['number'],
+        'getCore():getScreenHeight()': ['number'],
     };
     ;
     ;
@@ -3190,7 +3193,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Scope", ["require", "exports", "src
          * @param parent The parent scope. (Set to null if root. E.G: __G is global root)
          * @param index For statements with multiple variables, this index helps target the right one.
          */
-        constructor(element = undefined, parent = undefined, index = 0) {
+        constructor(element = undefined, parent = undefined, index = 0, name = undefined) {
             /** Any child scopes. This is helpful with {@link Scope.resolve resolving scopes}. */
             this.children = {};
             /** All discovered scopes that directly call or assign this scope. */
@@ -3220,13 +3223,27 @@ define("src/asledgehammer/rosetta/lua/wizard/Scope", ["require", "exports", "src
             this._nextCallID = 0;
             this.element = element;
             this.parent = parent;
-            const name = this.generateName();
-            this.path = `${parent ? `${parent.path}.` : ''}${name}`;
+            if (name) {
+                this.name = name;
+            }
+            else {
+                this.name = this.generateName();
+            }
+            this.path = `${parent ? `${parent.path}.` : ''}${this.name}`;
+            if (this.path === '__G.addChild') {
+                // throw new Error();
+            }
             this.index = index;
             // Assign the parent this new child.
             if (parent) {
                 parent.addChild(this);
                 this.addToRootMap(this);
+            }
+            // Forward any types.
+            if (element && element.types) {
+                for (const type of element.types) {
+                    this.types.push(type);
+                }
             }
             this.map = {};
         }
@@ -3300,7 +3317,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Scope", ["require", "exports", "src
             }
             else {
                 // We have one scope. The path is the scope.
-                firstScope = path;
+                return children[path];
             }
             const child = children[firstScope];
             // The child doesn't exist.
@@ -3308,7 +3325,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Scope", ["require", "exports", "src
                 return undefined;
             // We still have scope to traverse. Go to the child and then repeat the process until traversed.
             if (pathSub.length)
-                child.resolve(pathSub);
+                return child.resolveInto(pathSub);
             // We've reached the last scope in the path and located the child. 
             return child;
         }
@@ -3322,7 +3339,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Scope", ["require", "exports", "src
                 case 'ScopeVariable': {
                     switch (e.init.type) {
                         case 'LocalStatement': {
-                            return (0, String_1.localStatementToString)(e.init);
+                            return e.init.variables[this.index].name;
                         }
                         case 'AssignmentStatement': {
                             const variable = e.init.variables[this.index];
@@ -3334,13 +3351,35 @@ define("src/asledgehammer/rosetta/lua/wizard/Scope", ["require", "exports", "src
                                     return (0, String_1.indexExpressionToString)(variable);
                                 }
                                 case 'MemberExpression': {
-                                    return variable.identifier.name;
+                                    const baseName = (0, String_1.expressionToString)(variable.base);
+                                    if (this.parent) {
+                                        if (this.parent.element) {
+                                            switch (this.parent.element.type) {
+                                                case 'ScopeFunction': {
+                                                    if (this.parent.element.selfAlias === baseName) {
+                                                        return `${this.parent.parent.name}.${variable.identifier.name}`;
+                                                    }
+                                                    break;
+                                                }
+                                                case 'ScopeConstructor': {
+                                                    if (this.parent.element.selfAlias === baseName) {
+                                                        return `${this.parent.parent.name}.${variable.identifier.name}`;
+                                                    }
+                                                    break;
+                                                }
+                                                default: {
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    return `${baseName}${variable.indexer}${variable.identifier.name}`;
                                 }
                             }
                         }
                         default: {
                             console.warn(e);
-                            throw new Error(`Unsupported statement for ScopeVariable name: ${e.init.type}`);
+                            throw new Error(`Unsupported statement for ScopeVariable name: ${e.init.type} `);
                         }
                     }
                 }
@@ -3366,7 +3405,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Scope", ["require", "exports", "src
                 case 'ScopeIfClauseBlock': return parent.nextIfClauseID();
                 case 'ScopeTable': return e.name;
                 case 'ScopeClass': return e.name;
-                case 'ScopeConstructor': return 'constructor';
+                case 'ScopeConstructor': return 'new';
             }
         }
         getStatementName(statement) {
@@ -3395,10 +3434,10 @@ define("src/asledgehammer/rosetta/lua/wizard/Scope", ["require", "exports", "src
                 return expression.name;
             switch (expression.type) {
                 case 'IndexExpression': return this.getExpressionName(expression.base);
-                case 'MemberExpression': return `${this.getExpressionName(expression.base)}${expression.indexer}${expression.identifier.name}`;
+                case 'MemberExpression': return `${this.getExpressionName(expression.base)}${expression.indexer}${expression.identifier.name} `;
                 default: {
                     console.log(expression);
-                    throw new Error(`Unimplemented expression in 'Scope.getExpressionName(${expression.type}). (scope path: '${this.path}') Check the line above for more info on the expression.`);
+                    throw new Error(`Unimplemented expression in 'Scope.getExpressionName(${expression.type}). (scope path: '${this.path} ') Check the line above for more info on the expression.`);
                 }
             }
         }
@@ -3617,16 +3656,31 @@ define("src/asledgehammer/rosetta/lua/wizard/PZ", ["require", "exports", "src/as
             type: 'ScopeReturn',
             types: []
         };
-        const scopeFunc = {
-            type: 'ScopeFunction',
-            init: statement,
-            name,
-            params: [],
-            values: {},
-            returns,
-            references: {},
-            assignments: {},
-        };
+        let scopeFunc;
+        if (type === 'constructor') {
+            scopeFunc = {
+                type: 'ScopeConstructor',
+                init: statement,
+                params: [],
+                values: {},
+                selfAlias,
+                references: {},
+                assignments: {},
+            };
+        }
+        else {
+            scopeFunc = {
+                type: 'ScopeFunction',
+                init: statement,
+                name,
+                params: [],
+                values: {},
+                selfAlias,
+                returns,
+                references: {},
+                assignments: {},
+            };
+        }
         const scope = new Scope_1.Scope(scopeFunc, global);
         // Return result information.
         return { clazz, type, name, params, selfAlias, scope };
@@ -3638,11 +3692,13 @@ define("src/asledgehammer/rosetta/lua/wizard/PZ", ["require", "exports", "src/as
      * @param selfAlias The alias used for field-declarations inside of executables within a instanced class context. (Default: 'self')
      */
     function getPZProperty(scopeParent, clazz, statement, selfAlias = 'self') {
+        var _a;
         // Sanity-check
         if (!statement.variables.length) {
             return undefined;
         }
         const var0 = statement.variables[0];
+        const init0 = statement.init[0];
         // Make sure the assignment is towards a member. (The class)
         if (var0.type !== 'MemberExpression') {
             return undefined;
@@ -3674,7 +3730,6 @@ define("src/asledgehammer/rosetta/lua/wizard/PZ", ["require", "exports", "src/as
         // We then conveniently know the default value of the property. Grab that too..
         let types = [];
         let defaultValue = undefined;
-        const init0 = statement.init[0];
         switch (init0.type) {
             case 'NumericLiteral': {
                 types.push('number');
@@ -3710,6 +3765,10 @@ define("src/asledgehammer/rosetta/lua/wizard/PZ", ["require", "exports", "src/as
                 types.push('table');
                 break;
             }
+            case 'MemberExpression': {
+                console.warn(init0);
+                break;
+            }
             default: {
                 // console.log('unhandled type / default value handle: ');
                 // console.log({ statement, init: init0 });
@@ -3722,10 +3781,25 @@ define("src/asledgehammer/rosetta/lua/wizard/PZ", ["require", "exports", "src/as
             types: [],
             init: statement,
             references: {},
-            assignments: {}
+            assignments: {},
+            index: 0,
         };
-        const scope = new Scope_1.Scope(property, scopeParent);
-        console.log(`property ${name}: `, scope);
+        // Find out if this is a class variable via selfAlias reference.
+        const base0 = var0.base;
+        const baseName = base0.name;
+        let scopeToAssign = scopeParent;
+        if (selfAlias === baseName) {
+            // In some situations, the parent is the class so we don't need to hop-skip and jump to get it.
+            if (((_a = scopeParent.element) === null || _a === void 0 ? void 0 : _a.type) !== 'ScopeClass') {
+                const scopeFound = scopeParent.parent;
+                if (!scopeFound) {
+                    console.warn(`Couldn't resolve scope: ${baseName} (scope: ${scopeParent.path})`);
+                }
+                scopeToAssign = scopeFound;
+            }
+        }
+        const scope = new Scope_1.Scope(property, scopeToAssign, 0, name);
+        // console.log(`property ${name}: `, scope);
         return { clazz, name, type, types, defaultValue, scope };
     }
     exports.getPZProperty = getPZProperty;
@@ -3822,7 +3896,462 @@ define("src/asledgehammer/rosetta/lua/wizard/PZ", ["require", "exports", "src/as
     }
     exports.scanFile = scanFile;
 });
-define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", "luaparse", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/lua/wizard/PZ", "src/asledgehammer/rosetta/lua/wizard/Scope"], function (require, exports, ast, RosettaLuaClass_1, RosettaLuaConstructor_2, PZ_1, Scope_2) {
+define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "src/asledgehammer/rosetta/lua/wizard/Scope", "src/asledgehammer/rosetta/lua/wizard/LuaWizard", "src/asledgehammer/rosetta/lua/wizard/String"], function (require, exports, Scope_2, LuaWizard_1, String_3) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.discoverFile = exports.discoverStatement = exports.discoverForGenericStatement = exports.discoverForNumericStatement = exports.discoverCallStatement = exports.discoverAssignmentStatement = exports.discoverLocalStatement = exports.discoverRepeatStatement = exports.discoverDoStatement = exports.discoverWhileStatement = exports.discoverIfStatement = exports.discoverReturnStatement = exports.discoverGotoStatement = exports.discoverBreakStatement = exports.discoverLabelStatement = exports.discoverFunctionDeclaration = exports.discoverExpression = exports.discoverStringCallExpression = exports.discoverTableCallExpression = exports.discoverCallExpression = exports.discoverIndexExpression = exports.discoverMemberExpression = exports.discoverUnaryExpression = exports.discoverLogicalExpression = exports.discoverBinaryExpression = exports.discoverTableConstructorExpression = exports.discoverVarargLiteral = void 0;
+    function discoverVarargLiteral(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverVarargLiteral = discoverVarargLiteral;
+    function discoverTableConstructorExpression(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverTableConstructorExpression = discoverTableConstructorExpression;
+    function discoverBinaryExpression(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverBinaryExpression = discoverBinaryExpression;
+    function discoverLogicalExpression(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverLogicalExpression = discoverLogicalExpression;
+    function discoverUnaryExpression(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverUnaryExpression = discoverUnaryExpression;
+    function discoverMemberExpression(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverMemberExpression = discoverMemberExpression;
+    function discoverIndexExpression(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverIndexExpression = discoverIndexExpression;
+    function discoverCallExpression(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverCallExpression = discoverCallExpression;
+    function discoverTableCallExpression(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverTableCallExpression = discoverTableCallExpression;
+    /**
+     * TODO: Implement Lua Modules references.
+     *
+     *       E.G:
+     *            ```lua
+     *            --- \@type MyModule
+     *            local my_module = require '../my_module.lua';
+     *            ```
+     */
+    function discoverStringCallExpression(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        let changes = 0;
+        return changes;
+    }
+    exports.discoverStringCallExpression = discoverStringCallExpression;
+    function discoverExpression(globalInfo, expression, scope) {
+        switch (expression.type) {
+            case 'Identifier': return 0;
+            case 'StringLiteral': return scope.addType('string');
+            case 'NumericLiteral': return scope.addType('number');
+            case 'BooleanLiteral': return scope.addType('boolean');
+            case 'NilLiteral': return scope.addType('nil');
+            case 'FunctionDeclaration': return discoverFunctionDeclaration(globalInfo, expression, scope);
+            case 'VarargLiteral': return discoverVarargLiteral(globalInfo, expression, scope);
+            case 'TableConstructorExpression': return discoverTableConstructorExpression(globalInfo, expression, scope);
+            case 'BinaryExpression': return discoverBinaryExpression(globalInfo, expression, scope);
+            case 'LogicalExpression': return discoverLogicalExpression(globalInfo, expression, scope);
+            case 'UnaryExpression': return discoverUnaryExpression(globalInfo, expression, scope);
+            case 'MemberExpression': return discoverMemberExpression(globalInfo, expression, scope);
+            case 'IndexExpression': return discoverIndexExpression(globalInfo, expression, scope);
+            case 'CallExpression': return discoverCallExpression(globalInfo, expression, scope);
+            case 'TableCallExpression': return discoverTableCallExpression(globalInfo, expression, scope);
+            case 'StringCallExpression': return discoverStringCallExpression(globalInfo, expression, scope);
+        }
+    }
+    exports.discoverExpression = discoverExpression;
+    function discoverFunctionDeclaration(globalInfo, expression, scope) {
+        // console.log(`func-dec: `, expression);
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        let scopeToAssign = scope;
+        let name = '';
+        let scopeFunc;
+        if (expression.identifier) {
+            switch (expression.identifier.type) {
+                case 'Identifier': {
+                    name = expression.identifier.name;
+                    scopeToAssign = scope;
+                    break;
+                }
+                case 'MemberExpression': {
+                    name = (0, String_3.memberExpressionToString)(expression.identifier);
+                    while (name.indexOf(':') !== -1)
+                        name = name.replace(':', '.');
+                    // We need to locate the actual scope of the member reference here.
+                    let scope2 = scope.resolve(name);
+                    if (!scope2) {
+                        scope2 = scope.resolveAbsolute(name);
+                    }
+                    if (scope2) {
+                        scopeToAssign = scope2;
+                    }
+                    else {
+                        console.warn(`couldn't resolve scope: ${name} (Parent scope: ${scope.path})`);
+                    }
+                    break;
+                }
+            }
+        }
+        else {
+            console.warn(scope, expression);
+            throw new Error('A function declaration here wouldn\'t make sense.');
+        }
+        scopeFunc = scope.resolve(name);
+        if (!scopeFunc)
+            scopeFunc = scope.resolveAbsolute(name);
+        if (!scopeFunc) {
+            const params = [];
+            for (const param of expression.parameters) {
+                switch (param.type) {
+                    case 'Identifier': {
+                        params.push({
+                            type: 'ScopeVariable',
+                            name: param.name,
+                            types: [],
+                            init: param,
+                            index: 0,
+                            references: {},
+                            assignments: {},
+                        });
+                        break;
+                    }
+                    case 'VarargLiteral': {
+                        params.push({
+                            type: 'ScopeVariable',
+                            name: param.raw,
+                            types: [],
+                            init: param,
+                            index: 0,
+                            references: {},
+                            assignments: {},
+                        });
+                        break;
+                    }
+                }
+            }
+            name = name.indexOf('.') !== -1 ? name.split('.').pop() : name;
+            console.log('name: ' + name);
+            let selfAlias = 'self';
+            let type = 'function';
+            if (name === 'new') {
+                type = 'constructor';
+                selfAlias = '';
+            }
+            let func;
+            if (type === 'constructor') {
+                func = {
+                    type: 'ScopeConstructor',
+                    init: expression,
+                    params: [],
+                    values: {},
+                    selfAlias,
+                    references: {},
+                    assignments: {},
+                };
+            }
+            else {
+                const returns = {
+                    type: 'ScopeReturn',
+                    types: []
+                };
+                func = {
+                    type: 'ScopeFunction',
+                    init: expression,
+                    name,
+                    params: [],
+                    values: {},
+                    selfAlias,
+                    returns,
+                    references: {},
+                    assignments: {},
+                };
+            }
+            scopeFunc = new Scope_2.Scope(func, scopeToAssign);
+        }
+        if (name === 'new') {
+            console.log('new: ', scopeFunc);
+        }
+        // Handle body statements.
+        for (const statement of expression.body) {
+            discoverStatement(globalInfo, statement, scopeFunc);
+        }
+        // Handle return statements.
+        return changes;
+    }
+    exports.discoverFunctionDeclaration = discoverFunctionDeclaration;
+    function discoverLabelStatement(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverLabelStatement = discoverLabelStatement;
+    function discoverBreakStatement(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverBreakStatement = discoverBreakStatement;
+    function discoverGotoStatement(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverGotoStatement = discoverGotoStatement;
+    function discoverReturnStatement(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverReturnStatement = discoverReturnStatement;
+    function discoverIfStatement(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverIfStatement = discoverIfStatement;
+    function discoverWhileStatement(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverWhileStatement = discoverWhileStatement;
+    function discoverDoStatement(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverDoStatement = discoverDoStatement;
+    function discoverRepeatStatement(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverRepeatStatement = discoverRepeatStatement;
+    function discoverLocalStatement(globalInfo, statement, scope) {
+        //console.log(`local: `, statement);
+        const { scope: __G } = globalInfo;
+        let changes = 0;
+        // (Support for tuples)
+        for (let index = 0; index < statement.variables.length; index++) {
+            const name = statement.variables[index].name;
+            // We already defined this local.
+            if (scope.children[name]) {
+                // console.warn(`Local statement already exists: ${scope.children[name].path}`);
+                continue;
+            }
+            const types = [];
+            const init = statement.init[index];
+            const variable = {
+                type: 'ScopeVariable',
+                name,
+                types,
+                init: statement,
+                index,
+                references: {},
+                assignments: {},
+            };
+            switch (init.type) {
+                // Not a thing.
+                case 'Identifier': break;
+                case 'FunctionDeclaration':
+                    // TODO - Implement.
+                    variable.types.push('fun');
+                    break;
+                case 'StringLiteral': {
+                    variable.types.push('string');
+                    variable.defaultValue = `${init.value}`;
+                    break;
+                }
+                case 'NumericLiteral': {
+                    variable.types.push('number');
+                    variable.defaultValue = `${init.value}`;
+                    break;
+                }
+                case 'BooleanLiteral': {
+                    variable.types.push('boolean');
+                    variable.defaultValue = `${init.value}`;
+                    break;
+                }
+                case 'NilLiteral': {
+                    variable.types.push('nil');
+                    variable.defaultValue = 'nil';
+                    break;
+                }
+                case 'VarargLiteral': {
+                    // TODO - Implement.
+                    variable.types.push(`<${init.value}>`);
+                    break;
+                }
+                case 'TableConstructorExpression':
+                    // TODO - Implement.
+                    variable.types.push('table');
+                    // let s: string[] = [];
+                    // for (const field of init.fields) {
+                    //     switch (field.type) {
+                    //         case 'TableKey': {
+                    //             s.push(`${expressionToString(field.key)} = ${expressionToString(field.value)}`);
+                    //             break;
+                    //         }
+                    //         case 'TableKeyString': {
+                    //             s.push(`${expressionToString(field.key)} = ${expressionToString(field.value)}`);
+                    //             break;
+                    //         }
+                    //         case 'TableValue': {
+                    //             s.push(expressionToString(field.value));
+                    //             break;
+                    //         }
+                    //     }
+                    // }
+                    // if(s.length) {
+                    // } else {
+                    // }
+                    break;
+                case 'BinaryExpression': {
+                    types.push('number');
+                    break;
+                }
+                case 'LogicalExpression': {
+                    types.push('boolean');
+                    break;
+                }
+                case 'UnaryExpression': {
+                    switch (init.operator) {
+                        case '~':
+                        case 'not': {
+                            types.push('boolean');
+                            break;
+                        }
+                        case '-':
+                        case '#': {
+                            types.push('number');
+                            break;
+                        }
+                    }
+                }
+                case 'MemberExpression': {
+                    // TODO - Build reference link.
+                    break;
+                }
+                case 'IndexExpression': {
+                    // TODO - Build reference link.
+                    break;
+                }
+                case 'CallExpression': {
+                    // TODO - Build reference link.
+                    break;
+                }
+                case 'TableCallExpression': {
+                    // TODO - Build reference link.
+                    break;
+                }
+                case 'StringCallExpression': {
+                    // TODO - Build reference link.
+                    break;
+                }
+            }
+            // Lastly check for known API for types.
+            if (!types.length) {
+                const str = (0, String_3.expressionToString)(init);
+                console.log(str);
+                const kTypes = LuaWizard_1.knownMethodTypes[(0, String_3.expressionToString)(init)];
+                console.log(kTypes);
+                if (kTypes) {
+                    for (const kType of kTypes) {
+                        if (types.indexOf(kType) === -1)
+                            types.push(kType);
+                    }
+                }
+            }
+            // (Self-assigning)
+            const lScope = new Scope_2.Scope(variable, scope);
+            console.log(scope);
+            changes++;
+        }
+        return changes;
+    }
+    exports.discoverLocalStatement = discoverLocalStatement;
+    function discoverAssignmentStatement(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverAssignmentStatement = discoverAssignmentStatement;
+    function discoverCallStatement(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverCallStatement = discoverCallStatement;
+    function discoverForNumericStatement(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverForNumericStatement = discoverForNumericStatement;
+    function discoverForGenericStatement(globalInfo, expression, scope) {
+        const { scope: __G } = globalInfo;
+        const changes = 0;
+        return changes;
+    }
+    exports.discoverForGenericStatement = discoverForGenericStatement;
+    function discoverStatement(globalInfo, statement, scope) {
+        switch (statement.type) {
+            case 'FunctionDeclaration': return discoverFunctionDeclaration(globalInfo, statement, scope);
+            case 'LabelStatement': return discoverLabelStatement(globalInfo, statement, scope);
+            case 'BreakStatement': return discoverBreakStatement(globalInfo, statement, scope);
+            case 'GotoStatement': return discoverGotoStatement(globalInfo, statement, scope);
+            case 'ReturnStatement': return discoverReturnStatement(globalInfo, statement, scope);
+            case 'IfStatement': return discoverIfStatement(globalInfo, statement, scope);
+            case 'WhileStatement': return discoverWhileStatement(globalInfo, statement, scope);
+            case 'DoStatement': return discoverDoStatement(globalInfo, statement, scope);
+            case 'RepeatStatement': return discoverRepeatStatement(globalInfo, statement, scope);
+            case 'LocalStatement': return discoverLocalStatement(globalInfo, statement, scope);
+            case 'AssignmentStatement': return discoverAssignmentStatement(globalInfo, statement, scope);
+            case 'CallStatement': return discoverCallStatement(globalInfo, statement, scope);
+            case 'ForNumericStatement': return discoverForNumericStatement(globalInfo, statement, scope);
+            case 'ForGenericStatement': return discoverForGenericStatement(globalInfo, statement, scope);
+        }
+    }
+    exports.discoverStatement = discoverStatement;
+    function discoverFile(globalInfo, statements) {
+        for (const statement of statements) {
+            discoverStatement(globalInfo, statement, globalInfo.scope);
+        }
+    }
+    exports.discoverFile = discoverFile;
+});
+define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", "luaparse", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/lua/wizard/PZ", "src/asledgehammer/rosetta/lua/wizard/Scope", "src/asledgehammer/rosetta/lua/wizard/Discover"], function (require, exports, ast, RosettaLuaClass_1, RosettaLuaConstructor_2, PZ_1, Scope_3, Discover_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaParser = void 0;
@@ -4231,7 +4760,7 @@ define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", 
                         ////////////////////
                         // LuaWizard Code //
                         ////////////////////
-                        const globalScope = new Scope_2.Scope();
+                        const globalScope = new Scope_3.Scope();
                         const globalInfo = {
                             classes: {},
                             tables: {},
@@ -4240,6 +4769,7 @@ define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", 
                             scope: globalScope
                         };
                         (0, PZ_1.scanFile)(globalInfo, chunk.body);
+                        (0, Discover_1.discoverFile)(globalInfo, chunk.body);
                         console.log("### LuaWizard ###");
                         console.log(globalInfo);
                         ////////////////////
@@ -5220,210 +5750,6 @@ define("src/asledgehammer/rosetta/component/SidebarPanel", ["require", "exports"
     }
     exports.SidebarPanel = SidebarPanel;
     ;
-});
-define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports"], function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.discoverFile = exports.discoverStatement = exports.discoverForGenericStatement = exports.discoverForNumericStatement = exports.discoverCallStatement = exports.discoverAssignmentStatement = exports.discoverLocalStatement = exports.discoverRepeatStatement = exports.discoverDoStatement = exports.discoverWhileStatement = exports.discoverIfStatement = exports.discoverReturnStatement = exports.discoverGotoStatement = exports.discoverBreakStatement = exports.discoverLabelStatement = exports.discoverFunctionDeclaration = exports.discoverExpression = exports.discoverStringCallExpression = exports.discoverTableCallExpression = exports.discoverCallExpression = exports.discoverIndexExpression = exports.discoverMemberExpression = exports.discoverUnaryExpression = exports.discoverLogicalExpression = exports.discoverBinaryExpression = exports.discoverTableConstructorExpression = exports.discoverVarargLiteral = void 0;
-    function discoverVarargLiteral(globalInfo, expression, scope) {
-        const { scope: __G } = globalInfo;
-        const changes = 0;
-        return changes;
-    }
-    exports.discoverVarargLiteral = discoverVarargLiteral;
-    function discoverTableConstructorExpression(globalInfo, expression, scope) {
-        const { scope: __G } = globalInfo;
-        const changes = 0;
-        return changes;
-    }
-    exports.discoverTableConstructorExpression = discoverTableConstructorExpression;
-    function discoverBinaryExpression(globalInfo, expression, scope) {
-        const { scope: __G } = globalInfo;
-        const changes = 0;
-        return changes;
-    }
-    exports.discoverBinaryExpression = discoverBinaryExpression;
-    function discoverLogicalExpression(globalInfo, expression, scope) {
-        const { scope: __G } = globalInfo;
-        const changes = 0;
-        return changes;
-    }
-    exports.discoverLogicalExpression = discoverLogicalExpression;
-    function discoverUnaryExpression(globalInfo, expression, scope) {
-        const { scope: __G } = globalInfo;
-        const changes = 0;
-        return changes;
-    }
-    exports.discoverUnaryExpression = discoverUnaryExpression;
-    function discoverMemberExpression(globalInfo, expression, scope) {
-        const { scope: __G } = globalInfo;
-        const changes = 0;
-        return changes;
-    }
-    exports.discoverMemberExpression = discoverMemberExpression;
-    function discoverIndexExpression(globalInfo, expression, scope) {
-        const { scope: __G } = globalInfo;
-        const changes = 0;
-        return changes;
-    }
-    exports.discoverIndexExpression = discoverIndexExpression;
-    function discoverCallExpression(globalInfo, expression, scope) {
-        const { scope: __G } = globalInfo;
-        const changes = 0;
-        return changes;
-    }
-    exports.discoverCallExpression = discoverCallExpression;
-    function discoverTableCallExpression(globalInfo, expression, scope) {
-        const { scope: __G } = globalInfo;
-        const changes = 0;
-        return changes;
-    }
-    exports.discoverTableCallExpression = discoverTableCallExpression;
-    /**
-     * TODO: Implement Lua Modules references.
-     *
-     *       E.G:
-     *            ```lua
-     *            --- \@type MyModule
-     *            local my_module = require '../my_module.lua';
-     *            ```
-     */
-    function discoverStringCallExpression(globalInfo, expression, scope) {
-        const { scope: __G } = globalInfo;
-        let changes = 0;
-        return changes;
-    }
-    exports.discoverStringCallExpression = discoverStringCallExpression;
-    function discoverExpression(globalInfo, expression, scope) {
-        switch (expression.type) {
-            case 'Identifier': return 0;
-            case 'StringLiteral': return scope.addType('string');
-            case 'NumericLiteral': return scope.addType('number');
-            case 'BooleanLiteral': return scope.addType('boolean');
-            case 'NilLiteral': return scope.addType('nil');
-            case 'FunctionDeclaration': return discoverFunctionDeclaration(globalInfo, expression, scope);
-            case 'VarargLiteral': return discoverVarargLiteral(globalInfo, expression, scope);
-            case 'TableConstructorExpression': return discoverTableConstructorExpression(globalInfo, expression, scope);
-            case 'BinaryExpression': return discoverBinaryExpression(globalInfo, expression, scope);
-            case 'LogicalExpression': return discoverLogicalExpression(globalInfo, expression, scope);
-            case 'UnaryExpression': return discoverUnaryExpression(globalInfo, expression, scope);
-            case 'MemberExpression': return discoverMemberExpression(globalInfo, expression, scope);
-            case 'IndexExpression': return discoverIndexExpression(globalInfo, expression, scope);
-            case 'CallExpression': return discoverCallExpression(globalInfo, expression, scope);
-            case 'TableCallExpression': return discoverTableCallExpression(globalInfo, expression, scope);
-            case 'StringCallExpression': return discoverStringCallExpression(globalInfo, expression, scope);
-        }
-    }
-    exports.discoverExpression = discoverExpression;
-    function discoverFunctionDeclaration(globalInfo, expression, scope) {
-        const { scope: __G } = globalInfo;
-        const changes = 0;
-        return changes;
-    }
-    exports.discoverFunctionDeclaration = discoverFunctionDeclaration;
-    function discoverLabelStatement(globalInfo, expression, scope) {
-        const { scope: __G } = globalInfo;
-        const changes = 0;
-        return changes;
-    }
-    exports.discoverLabelStatement = discoverLabelStatement;
-    function discoverBreakStatement(globalInfo, expression, scope) {
-        const { scope: __G } = globalInfo;
-        const changes = 0;
-        return changes;
-    }
-    exports.discoverBreakStatement = discoverBreakStatement;
-    function discoverGotoStatement(globalInfo, expression, scope) {
-        const { scope: __G } = globalInfo;
-        const changes = 0;
-        return changes;
-    }
-    exports.discoverGotoStatement = discoverGotoStatement;
-    function discoverReturnStatement(globalInfo, expression, scope) {
-        const { scope: __G } = globalInfo;
-        const changes = 0;
-        return changes;
-    }
-    exports.discoverReturnStatement = discoverReturnStatement;
-    function discoverIfStatement(globalInfo, expression, scope) {
-        const { scope: __G } = globalInfo;
-        const changes = 0;
-        return changes;
-    }
-    exports.discoverIfStatement = discoverIfStatement;
-    function discoverWhileStatement(globalInfo, expression, scope) {
-        const { scope: __G } = globalInfo;
-        const changes = 0;
-        return changes;
-    }
-    exports.discoverWhileStatement = discoverWhileStatement;
-    function discoverDoStatement(globalInfo, expression, scope) {
-        const { scope: __G } = globalInfo;
-        const changes = 0;
-        return changes;
-    }
-    exports.discoverDoStatement = discoverDoStatement;
-    function discoverRepeatStatement(globalInfo, expression, scope) {
-        const { scope: __G } = globalInfo;
-        const changes = 0;
-        return changes;
-    }
-    exports.discoverRepeatStatement = discoverRepeatStatement;
-    function discoverLocalStatement(globalInfo, expression, scope) {
-        const { scope: __G } = globalInfo;
-        const changes = 0;
-        return changes;
-    }
-    exports.discoverLocalStatement = discoverLocalStatement;
-    function discoverAssignmentStatement(globalInfo, expression, scope) {
-        const { scope: __G } = globalInfo;
-        const changes = 0;
-        return changes;
-    }
-    exports.discoverAssignmentStatement = discoverAssignmentStatement;
-    function discoverCallStatement(globalInfo, expression, scope) {
-        const { scope: __G } = globalInfo;
-        const changes = 0;
-        return changes;
-    }
-    exports.discoverCallStatement = discoverCallStatement;
-    function discoverForNumericStatement(globalInfo, expression, scope) {
-        const { scope: __G } = globalInfo;
-        const changes = 0;
-        return changes;
-    }
-    exports.discoverForNumericStatement = discoverForNumericStatement;
-    function discoverForGenericStatement(globalInfo, expression, scope) {
-        const { scope: __G } = globalInfo;
-        const changes = 0;
-        return changes;
-    }
-    exports.discoverForGenericStatement = discoverForGenericStatement;
-    function discoverStatement(globalInfo, statement, scope) {
-        switch (statement.type) {
-            case 'FunctionDeclaration': return discoverFunctionDeclaration(globalInfo, statement, scope);
-            case 'LabelStatement': return discoverLabelStatement(globalInfo, statement, scope);
-            case 'BreakStatement': return discoverBreakStatement(globalInfo, statement, scope);
-            case 'GotoStatement': return discoverGotoStatement(globalInfo, statement, scope);
-            case 'ReturnStatement': return discoverReturnStatement(globalInfo, statement, scope);
-            case 'IfStatement': return discoverIfStatement(globalInfo, statement, scope);
-            case 'WhileStatement': return discoverWhileStatement(globalInfo, statement, scope);
-            case 'DoStatement': return discoverDoStatement(globalInfo, statement, scope);
-            case 'RepeatStatement': return discoverRepeatStatement(globalInfo, statement, scope);
-            case 'LocalStatement': return discoverLocalStatement(globalInfo, statement, scope);
-            case 'AssignmentStatement': return discoverAssignmentStatement(globalInfo, statement, scope);
-            case 'CallStatement': return discoverCallStatement(globalInfo, statement, scope);
-            case 'ForNumericStatement': return discoverForNumericStatement(globalInfo, statement, scope);
-            case 'ForGenericStatement': return discoverForGenericStatement(globalInfo, statement, scope);
-        }
-    }
-    exports.discoverStatement = discoverStatement;
-    function discoverFile(globalInfo, __G, chunk) {
-        for (const statement of chunk.body) {
-            discoverStatement(globalInfo, statement, __G);
-        }
-    }
-    exports.discoverFile = discoverFile;
 });
 define("src/asledgehammer/rosetta/lua/wizard/Extract", ["require", "exports"], function (require, exports) {
     "use strict";

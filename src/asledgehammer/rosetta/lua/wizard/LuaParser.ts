@@ -5,6 +5,7 @@ import { RosettaLuaConstructor } from '../RosettaLuaConstructor';
 import { RosettaLuaFunction } from '../RosettaLuaFunction';
 import { PZGlobalInfo, scanFile } from './PZ';
 import { Scope } from './Scope';
+import { discoverFile } from './Discover';
 // import { discover } from './Old';
 
 // @ts-ignore
@@ -450,12 +451,12 @@ export class LuaParser {
                 var reader = new FileReader();
                 reader.onload = function (e) {
                     const lua = reader.result as string;
-                    const chunk: ast.Chunk = luaparse.parse(lua, { 
+                    const chunk: ast.Chunk = luaparse.parse(lua, {
                         luaVersion: '5.1',
                         comments: true,
                         locations: true,
                     });
-                    
+
                     ////////////////////
                     // LuaWizard Code //
                     ////////////////////
@@ -470,13 +471,14 @@ export class LuaParser {
                     };
 
                     scanFile(globalInfo, chunk.body);
+                    discoverFile(globalInfo, chunk.body);
 
                     console.log("### LuaWizard ###");
                     console.log(globalInfo);
 
                     ////////////////////
-                    
-                    
+
+
                     const clazz = _this.parse(chunk);
                     if (clazz) {
                         const card = app.showClass(clazz);

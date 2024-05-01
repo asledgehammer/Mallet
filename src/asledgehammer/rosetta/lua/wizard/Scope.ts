@@ -1,6 +1,6 @@
 import * as ast from 'luaparse';
 import { ScopeElement } from './LuaWizard';
-import { indexExpressionToString, localStatementToString } from './String';
+import { expressionToString, indexExpressionToString, localStatementToString } from './String';
 
 /**
  * **Scope** is a class that stores scope-based information about Lua elements and their relationshop to other elements.
@@ -62,17 +62,35 @@ export class Scope {
      * @param parent The parent scope. (Set to null if root. E.G: __G is global root)
      * @param index For statements with multiple variables, this index helps target the right one.
      */
-    constructor(element: ScopeElement | undefined = undefined, parent: Scope | undefined = undefined, index: number = 0) {
+    constructor(element: ScopeElement | undefined = undefined, parent: Scope | undefined = undefined, index: number = 0, name: string | undefined = undefined) {
         this.element = element;
         this.parent = parent;
-        const name = this.generateName();
-        this.path = `${parent ? `${parent.path}.` : ''}${name}`;
+
+        if (name) {
+            this.name = name;
+        } else {
+            this.name = this.generateName();
+        }
+
+        this.path = `${parent ? `${parent.path}.` : ''}${this.name}`;
+
+        if (this.path === '__G.addChild') {
+            // throw new Error();
+        }
+
         this.index = index;
 
         // Assign the parent this new child.
         if (parent) {
             parent.addChild(this);
             this.addToRootMap(this);
+        }
+
+        // Forward any types.
+        if(element && (element as any).types) {
+            for(const type of (element as any).types) {
+                this.types.push(type);
+            }
         }
 
         this.map = {};
@@ -156,15 +174,16 @@ export class Scope {
             pathSub = split.reverse().join();
         } else {
             // We have one scope. The path is the scope.
-            firstScope = path;
+            return children[path];
         }
 
         const child = children[firstScope];
+
         // The child doesn't exist.
         if (!child) return undefined;
 
         // We still have scope to traverse. Go to the child and then repeat the process until traversed.
-        if (pathSub.length) child.resolve(pathSub);
+        if (pathSub.length) return child.resolveInto(pathSub);
 
         // We've reached the last scope in the path and located the child. 
         return child;
@@ -178,7 +197,7 @@ export class Scope {
             case 'ScopeVariable': {
                 switch (e.init.type) {
                     case 'LocalStatement': {
-                        return localStatementToString(e.init);
+                        return e.init.variables[this.index].name;
                     }
                     case 'AssignmentStatement': {
                         const variable = e.init.variables[this.index];
@@ -190,13 +209,35 @@ export class Scope {
                                 return indexExpressionToString(variable);
                             }
                             case 'MemberExpression': {
-                                return variable.identifier.name;
+                                const baseName = expressionToString(variable.base);
+                                if (this.parent) {
+                                    if (this.parent.element) {
+                                        switch (this.parent.element.type) {
+                                            case 'ScopeFunction': {
+                                                if (this.parent.element.selfAlias === baseName) {
+                                                    return `${this.parent.parent!.name}.${variable.identifier.name}`;
+                                                }
+                                                break;
+                                            }
+                                            case 'ScopeConstructor': {
+                                                if (this.parent.element.selfAlias === baseName) {
+                                                    return `${this.parent.parent!.name}.${variable.identifier.name}`;
+                                                }
+                                                break;
+                                            }
+                                            default: {
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                                return `${baseName}${variable.indexer}${variable.identifier.name}`;
                             }
                         }
                     }
                     default: {
                         console.warn(e);
-                        throw new Error(`Unsupported statement for ScopeVariable name: ${e.init.type}`);
+                        throw new Error(`Unsupported statement for ScopeVariable name: ${e.init.type} `);
                     }
                 }
             }
@@ -222,7 +263,7 @@ export class Scope {
             case 'ScopeIfClauseBlock': return parent.nextIfClauseID();
             case 'ScopeTable': return e.name;
             case 'ScopeClass': return e.name;
-            case 'ScopeConstructor': return 'constructor';
+            case 'ScopeConstructor': return 'new';
         }
     }
 
@@ -251,10 +292,10 @@ export class Scope {
         if (expression.type === 'Identifier') return expression.name;
         switch (expression.type) {
             case 'IndexExpression': return this.getExpressionName(expression.base);
-            case 'MemberExpression': return `${this.getExpressionName(expression.base)}${expression.indexer}${expression.identifier.name}`;
+            case 'MemberExpression': return `${this.getExpressionName(expression.base)}${expression.indexer}${expression.identifier.name} `;
             default: {
                 console.log(expression);
-                throw new Error(`Unimplemented expression in 'Scope.getExpressionName(${expression.type}). (scope path: '${this.path}') Check the line above for more info on the expression.`);
+                throw new Error(`Unimplemented expression in 'Scope.getExpressionName(${expression.type}). (scope path: '${this.path} ') Check the line above for more info on the expression.`);
             }
         }
     }

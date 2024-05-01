@@ -12,7 +12,11 @@ export const knownMethodTypes: { [path: string]: string[] } = {
     'math.max': ['number'],
     'math.floor': ['number'],
     'math.ceil': ['number'],
-    'math.round': ['number']
+    'math.round': ['number'],
+
+    /* PZ Java API */
+    'getCore():getScreenWidth()': ['number'],
+    'getCore():getScreenHeight()': ['number'],
 };
 
 export type ScopeType = 'class' | 'table' | 'function' | 'field' | 'value' | 'block';
@@ -50,13 +54,18 @@ export interface ScopeVariable extends Base<'ScopeVariable'> {
     types: string[];
 
     /** The luaparse AST object. */
-    init: ast.Statement;
+    init: ast.Statement | ast.Expression;
+
+    /** For tuples. Otherwise, 0. */
+    index: number;
 
     /** Any references to this variable so when the types are discovered they'll be linked to the same type(s). */
     references: { [scopeRaw: string]: ScopeReference };
 
     /** Any assignments of this variable to a variable or table. */
     assignments: { [path: string]: ScopeReference };
+
+    defaultValue?: string;
 }
 
 export interface ScopeReturn extends Base<'ScopeReturn'> {
@@ -111,9 +120,11 @@ export interface ScopeFunction extends Base<'ScopeFunction'> {
 
     /** Any assignments of this function to a variable or table. */
     assignments: { [path: string]: ScopeReference };
+
+    selfAlias: string;
 };
 
-export interface ScopeConstructor extends ScopeBase<'ScopeConstructor'> {
+export interface ScopeConstructor extends Base<'ScopeConstructor'> {
     values: { [name: string]: ScopeVariable };
     params: ScopeVariable[];
 
