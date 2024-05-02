@@ -1,6 +1,6 @@
 import * as ast from 'luaparse';
 import { ScopeElement } from './LuaWizard';
-import { expressionToString, indexExpressionToString, localStatementToString } from './String';
+import { expressionToString, indexExpressionToString, localStatementToString, memberExpressionToString } from './String';
 
 /**
  * **Scope** is a class that stores scope-based information about Lua elements and their relationshop to other elements.
@@ -9,6 +9,18 @@ import { expressionToString, indexExpressionToString, localStatementToString } f
  * @author asledgehammer
  */
 export class Scope {
+
+    /**
+     * @returns the next available scope that has a body.
+     */
+    getBodyScope(): Scope | undefined {
+        if (this.hasBody) return this;
+        if (!this.parent) return undefined;
+        return this.parent.getBodyScope();
+    }
+
+    /** If true, the scope has a body that can return values. */
+    hasBody: boolean = false;
 
     /** The element container. */
     readonly element: ScopeElement | undefined;
@@ -39,9 +51,11 @@ export class Scope {
     // These are for children. //
     /////////////////////////////
 
+    private _nextAssignmentID: number = 0;
     private _nextMemberExpressionID: number = 0;
     private _nextBreakID: number = 0;
     private _nextGotoID: number = 0;
+    private _nextLabelID: number = 0;
     private _nextReturnID: number = 0;
     private _nextIfID: number = 0;
     private _nextIfClauseID: number = 0;
@@ -86,10 +100,28 @@ export class Scope {
             this.addToRootMap(this);
         }
 
-        // Forward any types.
-        if(element && (element as any).types) {
-            for(const type of (element as any).types) {
-                this.types.push(type);
+
+        if (element) {
+
+            // Let the scope tell code that it has a body.
+            switch (element.type) {
+                case 'ScopeFunction':
+                case 'ScopeForGenericBlock':
+                case 'ScopeForNumericBlock':
+                case 'ScopeDoBlock':
+                case 'ScopeWhileBlock':
+                case 'ScopeRepeatBlock':
+                case 'ScopeIfClauseBlock':
+                case 'ScopeConstructor': {
+                    this.hasBody = true;
+                }
+            }
+
+            // Forward any types.
+            if ((element as any).types) {
+                for (const type of (element as any).types) {
+                    this.types.push(type);
+                }
             }
         }
 
@@ -261,6 +293,11 @@ export class Scope {
             case 'ScopeRepeatBlock': return parent.nextRepeatID();
             case 'ScopeIfBlock': return parent.nextIfID();
             case 'ScopeIfClauseBlock': return parent.nextIfClauseID();
+            case 'ScopeReturn': return parent.nextReturnID();
+            case 'ScopeGoto': return parent.nextGotoID();
+            case 'ScopeBreak': return parent.nextBreakID();
+            case 'ScopeLabel': return parent.nextLabelID();
+            case 'ScopeAssignment': return parent.nextAssignmentID();
             case 'ScopeTable': return e.name;
             case 'ScopeClass': return e.name;
             case 'ScopeConstructor': return 'new';
@@ -294,17 +331,19 @@ export class Scope {
             case 'IndexExpression': return this.getExpressionName(expression.base);
             case 'MemberExpression': return `${this.getExpressionName(expression.base)}${expression.indexer}${expression.identifier.name} `;
             default: {
-                console.log(expression);
+                console.warn(expression);
                 throw new Error(`Unimplemented expression in 'Scope.getExpressionName(${expression.type}). (scope path: '${this.path} ') Check the line above for more info on the expression.`);
             }
         }
     }
 
     resetIDs() {
+        this._nextAssignmentID = 0;
         this._nextMemberExpressionID = 0;
         this._nextCallID = 0;
         this._nextBreakID = 0;
         this._nextGotoID = 0;
+        this._nextLabelID = 0;
         this._nextReturnID = 0;
         this._nextIfID = 0;
         this._nextIfClauseID = 0;
@@ -338,6 +377,11 @@ export class Scope {
     }
 
     /** NOTE: Must be called from sub-scope! */
+    nextAssignmentID(): string {
+        return `___assignment___${this._nextAssignmentID++}`;
+    }
+
+    /** NOTE: Must be called from sub-scope! */
     nextMemberExpressionID(): string {
         return `___member_expression___${this._nextMemberExpressionID++}`;
     }
@@ -350,6 +394,11 @@ export class Scope {
     /** NOTE: Must be called from sub-scope! */
     nextGotoID(): string {
         return `___goto___${this._nextGotoID++}`;
+    }
+
+    /** NOTE: Must be called from sub-scope! */
+    nextLabelID(): string {
+        return `___label___${this._nextLabelID++}`;
     }
 
     /** NOTE: Must be called from sub-scope! */

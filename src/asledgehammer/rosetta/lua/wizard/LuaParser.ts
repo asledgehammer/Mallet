@@ -19,63 +19,6 @@ export class LuaParser {
         this.app = app;
     }
 
-    // discover(statements: ast.Statement[], profiles: ClosureScope = {}): ClosureScope {
-
-    //     for (const statement of statements) {
-    //         switch (statement.type) {
-    //             case 'AssignmentStatement': {
-
-
-    //                 /* (Support tuple declarations) */
-    //                 for (const variable of statement.variables) {
-
-    //                     switch (variable.type) {
-    //                         case 'Identifier': {
-    //                             console.log("Please check this Identifier variable out: ");
-    //                             console.log(variable);
-    //                             break;
-    //                         }
-    //                         case 'IndexExpression': {
-    //                             console.log("Please check this IndexExpression variable out: ");
-    //                             console.log(variable);
-    //                             break;
-    //                         }
-    //                         case 'MemberExpression': {
-
-    //                             switch (variable.base.type) {
-    //                                 case 'Identifier': {
-    //                                     const baseName = variable.base.name;
-    //                                     const identifier = variable.identifier.name;
-
-    //                                     console.log('#####################');
-    //                                     console.log(statement);
-    //                                     console.log(`### ${baseName}${variable.indexer}${identifier}`);
-    //                                     console.log(' ');
-    //                                     break;
-    //                                 }
-    //                                 default: {
-    //                                     console.log("Please check this variable.base out: ");
-    //                                     console.log(variable);
-    //                                     break;
-    //                                 }
-    //                             }
-
-    //                             break;
-    //                         }
-    //                     }
-
-    //                 }
-
-
-    //                 console.log(statement);
-    //                 break;
-    //             }
-    //         }
-    //     }
-
-    //     return profiles;
-    // }
-
     getReturnTypes(clazz: RosettaLuaClass, statements: ast.Statement[], types: string[] = []): string[] {
 
         for (const statement of statements) {
@@ -96,7 +39,6 @@ export class LuaParser {
 
                     /* (If the return is a call to a variable or function) */
                     if (arg0.type === 'MemberExpression') {
-
                         break;
                     }
 
@@ -149,7 +91,6 @@ export class LuaParser {
         let conzstructor: ast.FunctionDeclaration | null = null;
 
         const handleClassDec = (statement: ast.AssignmentStatement): boolean => {
-            // console.log(statement);
             // Check for ISBaseObject (or subclass), and derive call signature.
             const init0 = statement.init[0];
             if (init0.type !== 'CallExpression') return false;
@@ -172,7 +113,6 @@ export class LuaParser {
             if (superClassName !== 'ISBaseObject') clazz.extendz = superClassName;
 
             // At this point we absolutely know that this is a pz-class declaration.
-            console.log(`Class found: ${className} extends ${superClassName}`);
             return true;
         };
 
@@ -201,7 +141,6 @@ export class LuaParser {
             }
 
             if (funcName === 'new') {
-                // console.log(statement);
                 conzstructor = statement;
             }
 
@@ -239,19 +178,6 @@ export class LuaParser {
                     func.returns.type = types.join(' | ');
                 }
             }
-
-            // let paramsLog = [];
-            // let { indexer } = statement.identifier;
-            // for (const param of params) {
-            //     paramsLog.push(`${param.name}: ${param.type}`);
-            // }
-            // if (funcName !== 'new') {
-            //     console.log(`Found ${type}: ${className}${indexer}${funcName}(${paramsLog.join(', ')}): any;`);
-            // } else {
-            //     console.log(`Found constructor: ${className}:new(${paramsLog.join(', ')}): ${className};`);
-            // }
-
-
         };
 
         const handleValueDec = (statement: ast.AssignmentStatement) => {
@@ -290,11 +216,7 @@ export class LuaParser {
                     break;
                 }
                 case 'VarargLiteral': {
-                    // console.log('#################');
-                    // console.log('THIS IS A VARARG.');
-                    // console.log(init0);
-                    // console.log('#################');
-                    varType = 'any';
+                    varType = 'vararg';
                     defaultValue = init0.value;
                     break;
                 }
@@ -313,9 +235,6 @@ export class LuaParser {
 
             const value = clazz!.createValue(varName);
             value.type = varType;
-
-            // console.log(`Found ${type}: ${className}.${varName}: ${varType};`);
-            // console.log(statement);
         };
 
         for (const statement of chunk.body) {
@@ -396,11 +315,7 @@ export class LuaParser {
                             break;
                         }
                         case 'VarargLiteral': {
-                            // console.log('#################');
-                            // console.log('THIS IS A VARARG.');
-                            // console.log(init0);
-                            // console.log('#################');
-                            varType = 'any';
+                            varType = 'vararg';
                             defaultValue = init0.value;
                             break;
                         }
@@ -419,11 +334,6 @@ export class LuaParser {
 
                     const field = clazz!.createField(varName);
                     field.type = varType;
-
-                    // console.log(`Found field: ${className}.${varName}: ${varType};`);
-                    // if (field.type === 'any') {
-                    //     console.log(statement);
-                    // }
                 }
             }
         };
@@ -431,12 +341,6 @@ export class LuaParser {
         if (conzstructor) {
             handleConstructor(conzstructor);
         }
-
-
-        // const locals = discover(chunk);
-        // console.log(locals);
-
-        // console.log(clazz);
 
         return clazz;
     }
@@ -475,6 +379,8 @@ export class LuaParser {
 
                     console.log("### LuaWizard ###");
                     console.log(globalInfo);
+                    console.log(globalInfo.scope.map);
+                    console.log(`__G.map.length = ${Object.keys(globalInfo.scope.map).length}`);
 
                     ////////////////////
 

@@ -2,6 +2,7 @@ import * as ast from 'luaparse';
 import { expressionToString, identifierToString, varargLiteralToString } from './String';
 import { Scope } from './Scope';
 import { ScopeClass, ScopeConstructor, ScopeFunction, ScopeReturn, ScopeVariable } from './LuaWizard';
+import { discoverBodyReturnTypes, discoverType } from './Discover';
 
 export type PZPropertyType = 'field' | 'value';
 export type PZExecutableType = 'function' | 'method' | 'constructor';
@@ -183,11 +184,6 @@ export function getPZExecutable(global: Scope, clazz: string, statement: ast.Fun
         }
     }
 
-    const returns: ScopeReturn = {
-        type: 'ScopeReturn',
-        types: []
-    };
-
     let scopeFunc: ScopeConstructor | ScopeFunction;
     if (type === 'constructor') {
         scopeFunc = {
@@ -207,7 +203,10 @@ export function getPZExecutable(global: Scope, clazz: string, statement: ast.Fun
             params: [],
             values: {},
             selfAlias,
-            returns,
+            returns: {
+                type: 'ScopeReturn',
+                types: discoverBodyReturnTypes(statement.body, global),
+            },
             references: {},
             assignments: {},
         };
@@ -244,7 +243,7 @@ export function getPZProperty(scopeParent: Scope, clazz: string, statement: ast.
     // Sanity-check
     if (!statement.init.length) {
         console.warn('no init length.');
-        console.warn(statement)
+        console.warn(statement);
         return undefined;
     }
 
@@ -288,11 +287,7 @@ export function getPZProperty(scopeParent: Scope, clazz: string, statement: ast.
             break;
         }
         case 'VarargLiteral': {
-            // TODO - Figure this out once we run into this case.
-            console.log('#################');
-            console.log('THIS IS A VARARG.');
-            console.log(init0);
-            console.log('#################');
+            types.push('vararg')
             defaultValue = init0.value;
             break;
         }
@@ -302,12 +297,10 @@ export function getPZProperty(scopeParent: Scope, clazz: string, statement: ast.
             break;
         }
         case 'MemberExpression': {
-            console.warn(init0);
+            // TODO - Implement.
             break;
         }
         default: {
-            // console.log('unhandled type / default value handle: ');
-            // console.log({ statement, init: init0 });
             break;
         }
     }
@@ -339,7 +332,6 @@ export function getPZProperty(scopeParent: Scope, clazz: string, statement: ast.
     }
 
     const scope = new Scope(property, scopeToAssign, 0, name);
-    // console.log(`property ${name}: `, scope);
 
     return { clazz, name, type, types, defaultValue, scope };
 }
