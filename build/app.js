@@ -3800,7 +3800,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                         for (const t of scope.types)
                             if (scope3.types.indexOf(t) === -1)
                                 scope3.types.push(t);
-                    console.warn(`discoverType(scope: ${scope.path}) => classScope: ${classScope.path} scope3: ${scope3.path}`);
+                    // console.warn(`discoverType(scope: ${scope.path}) => classScope: ${classScope.path} scope3: ${scope3.path}`);
                 }
                 else {
                     scope2 = scope.resolve(stripped);
@@ -3822,7 +3822,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                         for (const t of scope.types)
                             if (scope2.types.indexOf(t) === -1)
                                 scope2.types.push(t);
-                    console.warn(`discoverType() = (scope: ${scope.path}) => ${stripped}`);
+                    // console.warn(`discoverType() = (scope: ${scope.path}) => ${stripped}`);
                 }
                 break;
             }
@@ -3832,7 +3832,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                 break;
             }
             case 'StringCallExpression': {
-                //console.warn(`discoverType(${expression.type}) = (scope: ${scope.path}) => ${expressionToString(expression)}`);
+                // console.warn(`discoverType(${expression.type}) = (scope: ${scope.path}) => ${expressionToString(expression)}`);
                 // TODO - Build reference link.
                 break;
             }
@@ -3841,6 +3841,8 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                 break;
             }
             case 'TableConstructorExpression': {
+                // TODO - Look at each assignment, assign to a ScopeTable, and evaluate assignments or call statements 
+                //        and reference-map.
                 // let s: string[] = [];
                 // for (const field of init.fields) {
                 //     switch (field.type) {

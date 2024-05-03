@@ -17,7 +17,7 @@ export function extractReturnStatement(bag: Scope, statement: ast.ReturnStatemen
 export function extractIfStatement(bag: Scope, statement: ast.Statement): number {
     let changes = 0;
 
-
+    
 
     return changes;
 }
