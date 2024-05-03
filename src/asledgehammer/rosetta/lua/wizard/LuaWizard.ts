@@ -109,10 +109,10 @@ export interface ScopeVariable extends Base<'ScopeVariable'> {
     index: number;
 
     /** Any references to this variable so when the types are discovered they'll be linked to the same type(s). */
-    references: { [scopeRaw: string]: ScopeReference };
+    // references: { [scopeRaw: string]: ScopeReference };
 
     /** Any assignments of this variable to a variable or table. */
-    assignments: { [path: string]: ScopeReference };
+    // assignments: { [path: string]: ScopeReference };
 
     defaultValue?: string;
 }
@@ -200,10 +200,10 @@ export interface ScopeFunction extends Base<'ScopeFunction'> {
     init: ast.FunctionDeclaration;
 
     /** Any references to this function so when the types are discovered they'll be linked to the same type(s). */
-    references: { [scopeRaw: string]: ScopeReference };
+    // references: { [scopeRaw: string]: ScopeReference };
 
     /** Any assignments of this function to a variable or table. */
-    assignments: { [path: string]: ScopeReference };
+    // assignments: { [path: string]: ScopeReference };
 
     selfAlias: string;
 };
@@ -219,10 +219,10 @@ export interface ScopeConstructor extends Base<'ScopeConstructor'> {
     selfAlias: string;
 
     /** Any references to this constructor so when the types are discovered they'll be linked to the same type(s). */
-    references: { [scopeRaw: string]: ScopeReference };
+    // references: { [scopeRaw: string]: ScopeReference };
 
     /** Any assignments of this constructor to a variable or table. */
-    assignments: { [path: string]: ScopeReference };
+    // assignments: { [path: string]: ScopeReference };
 };
 
 export interface ScopeTable extends ScopeBase<'ScopeTable'> {
@@ -231,10 +231,10 @@ export interface ScopeTable extends ScopeBase<'ScopeTable'> {
     funcs: { [name: string]: ScopeFunction };
 
     /** Any references to this table so when the types are discovered they'll be linked to the same type(s). */
-    references: { [scopeRaw: string]: ScopeReference };
+    // references: { [scopeRaw: string]: ScopeReference };
 
     /** Any assignments of this table to a variable or table. */
-    assignments: { [path: string]: ScopeReference };
+    // assignments: { [path: string]: ScopeReference };
 };
 
 export interface ScopeClass extends Base<'ScopeClass'> {
@@ -247,10 +247,10 @@ export interface ScopeClass extends Base<'ScopeClass'> {
     methods: { [name: string]: ScopeFunction };
 
     /** Any references to this class so when the types are discovered they'll be linked to the same type(s). */
-    references: { [scopeRaw: string]: ScopeReference };
+    // references: { [scopeRaw: string]: ScopeReference };
 
     /** Any assignments of this class to a variable or table. */
-    assignments: { [path: string]: ScopeReference };
+    // assignments: { [path: string]: ScopeReference };
 };
 
 export type ScopeElement =

@@ -1,5 +1,5 @@
 import * as ast from 'luaparse';
-import { expressionToString, identifierToString, varargLiteralToString } from './String';
+import { expressionToString } from './String';
 import { Scope } from './Scope';
 import { ScopeClass, ScopeConstructor, ScopeFunction, ScopeVariable } from './LuaWizard';
 import { discoverBodyReturnTypes } from './Discover';
@@ -18,10 +18,8 @@ export interface PZGlobalInfo {
 
 export interface PZTableInfo {
     name?: string;
-
     values: { [name: string]: PZPropertyInfo<'value'> };
     funcs: { [name: string]: PZExecutableInfo<'function'> };
-
     scope: Scope;
 }
 
@@ -52,7 +50,7 @@ export interface PZExecutableInfo<TType extends PZExecutableType> {
     type: TType;
 
     /** The names of the parameters used for calling the executable. */
-    params: string[];
+    params: ScopeVariable[];
 
     /** The class 'self' alias. (This is the last `return var;` in constructors) */
     selfAlias: string;
@@ -105,8 +103,6 @@ export function getPZClass(global: Scope, statement: ast.AssignmentStatement): P
         fields: {},
         funcs: {},
         methods: {},
-        references: {},
-        assignments: {}
     };
 
     const scope = new Scope(scopeClass, global);
@@ -125,20 +121,20 @@ export function getPZClass(global: Scope, statement: ast.AssignmentStatement): P
 
 /**
  * @param clazz The name of the class.
- * @param statement The statement to process.
+ * @param expression The statement to process.
  *  
  * @returns 
  */
-export function getPZExecutable(global: Scope, clazz: string, statement: ast.FunctionDeclaration): PZExecutableInfo<'constructor' | 'function' | 'method'> | undefined {
+export function getPZExecutable(global: Scope, clazz: string, expression: ast.FunctionDeclaration): PZExecutableInfo<'constructor' | 'function' | 'method'> | undefined {
     // Check if assigned as a member declaration.
-    if (statement.identifier == null) return undefined;
-    if (statement.identifier.type !== 'MemberExpression') return undefined;
+    if (expression.identifier == null) return undefined;
+    if (expression.identifier.type !== 'MemberExpression') return undefined;
     // Verify that the base assignment table is the class.
-    if (statement.identifier.base.type !== 'Identifier') return undefined;
-    if (statement.identifier.base.name !== clazz) return undefined;
+    if (expression.identifier.base.type !== 'Identifier') return undefined;
+    if (expression.identifier.base.name !== clazz) return undefined;
     // Grab the function / method name.
-    if (statement.identifier.identifier.type !== 'Identifier') return undefined;
-    const name = statement.identifier.identifier.name;
+    if (expression.identifier.identifier.type !== 'Identifier') return undefined;
+    const name = expression.identifier.identifier.name;
     let selfAlias = 'self';
     // Get type.
     let type: PZExecutableType = 'function';
@@ -146,8 +142,8 @@ export function getPZExecutable(global: Scope, clazz: string, statement: ast.Fun
         type = 'constructor';
         // Grab the alias used to return in the constructor.
         selfAlias = '';
-        for (let index = statement.body.length - 1; index >= 0; index--) {
-            const next = statement.body[index];
+        for (let index = expression.body.length - 1; index >= 0; index--) {
+            const next = expression.body[index];
             if (next.type !== 'ReturnStatement') continue;
 
             // Sanity check for bad Lua code.
@@ -166,20 +162,31 @@ export function getPZExecutable(global: Scope, clazz: string, statement: ast.Fun
         if (!selfAlias.length) {
             throw new Error(`Class constructor ${clazz}:new() has no alias for 'self'.`);
         }
-    } else if (statement.identifier.indexer === ':') {
+    } else if (expression.identifier.indexer === ':') {
         type = 'method';
     }
 
-    // Build params.
-    const params: string[] = [];
-    for (const param of statement.parameters) {
+    const params: ScopeVariable[] = [];
+    for (const param of expression.parameters) {
         switch (param.type) {
             case 'Identifier': {
-                params.push(identifierToString(param));
+                params.push({
+                    type: 'ScopeVariable',
+                    name: param.name,
+                    types: [],
+                    init: param,
+                    index: 0,
+                });
                 break;
             }
             case 'VarargLiteral': {
-                params.push(varargLiteralToString(param));
+                params.push({
+                    type: 'ScopeVariable',
+                    name: param.raw,
+                    types: [],
+                    init: param,
+                    index: 0,
+                });
                 break;
             }
         }
@@ -189,31 +196,33 @@ export function getPZExecutable(global: Scope, clazz: string, statement: ast.Fun
     if (type === 'constructor') {
         scopeFunc = {
             type: 'ScopeConstructor',
-            init: statement,
-            params: [],
+            init: expression,
+            params,
             values: {},
             selfAlias,
-            references: {},
-            assignments: {},
         };
     } else {
         scopeFunc = {
             type: 'ScopeFunction',
-            init: statement,
+            init: expression,
             name,
-            params: [],
+            params,
             values: {},
             selfAlias,
             returns: {
                 type: 'ScopeReturn',
-                types: discoverBodyReturnTypes(statement.body, global),
+                types: discoverBodyReturnTypes(expression.body, global),
             },
-            references: {},
-            assignments: {},
         };
     }
 
     const scope = new Scope(scopeFunc, global);
+
+    // Add our params to the constructor's scope as variable children.
+    for (const param of params) {
+        new Scope(param, scope);
+        scopeFunc.values[param.name] = param;
+    }
 
     // Return result information.
     return { clazz, type, name, params, selfAlias, scope };
@@ -311,8 +320,6 @@ export function getPZProperty(scopeParent: Scope, clazz: string, statement: ast.
         name,
         types: [],
         init: statement,
-        references: {},
-        assignments: {},
         index: 0,
     };
 

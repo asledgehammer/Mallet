@@ -259,6 +259,7 @@ export class Scope {
                             }
                         }
                     }
+                    case 'Identifier': return e.name;
                     default: {
                         console.warn(e);
                         throw new Error(`Unsupported statement for ScopeVariable name: ${e.init.type} `);

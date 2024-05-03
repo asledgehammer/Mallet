@@ -47,19 +47,14 @@ export function discoverRelationships(expression: ast.Expression, scope: Scope):
             let stripped = stripCallParameters(path);
 
             if (stripped.indexOf(':') !== -1) {
-                while (stripped.indexOf(':') !== -1) {
-                    stripped = stripped.replace(':', '.');
-                }
+                while (stripped.indexOf(':') !== -1) stripped = stripped.replace(':', '.');
             }
 
             if (stripped.indexOf('()') !== -1) {
-                while (stripped.indexOf('()') !== -1) {
-                    stripped = stripped.replace('()', '');
-                }
+                while (stripped.indexOf('()') !== -1) stripped = stripped.replace('()', '');
             }
 
-            let scope2;
-            let scope3;
+            let scope2, scope3;
             if (stripped.indexOf('.') !== -1 && stripped.indexOf('self.') === 0) {
                 const classScope = scope.getClassScope();
                 if (!classScope) {
@@ -347,7 +342,7 @@ export function discoverFunctionDeclaration(globalInfo: PZGlobalInfo, expression
         console.warn(scope, expression);
         throw new Error('A function declaration here wouldn\'t make sense.');
     }
-
+    let func: ScopeConstructor | ScopeFunction;
     scopeFunc = scope.resolve(name);
     if (!scopeFunc) scopeFunc = scope.resolveAbsolute(name);
     if (!scopeFunc) {
@@ -362,8 +357,6 @@ export function discoverFunctionDeclaration(globalInfo: PZGlobalInfo, expression
                         types: [],
                         init: param,
                         index: 0,
-                        references: {},
-                        assignments: {},
                     });
                     break;
                 }
@@ -374,8 +367,6 @@ export function discoverFunctionDeclaration(globalInfo: PZGlobalInfo, expression
                         types: [],
                         init: param,
                         index: 0,
-                        references: {},
-                        assignments: {},
                     });
                     break;
                 }
@@ -391,16 +382,13 @@ export function discoverFunctionDeclaration(globalInfo: PZGlobalInfo, expression
             selfAlias = '';
         }
 
-        let func: ScopeConstructor | ScopeFunction;
         if (type === 'constructor') {
             func = {
                 type: 'ScopeConstructor',
                 init: expression,
-                params: [],
+                params,
                 values: {},
                 selfAlias,
-                references: {},
-                assignments: {},
             };
         } else {
             const returns: ScopeReturn = {
@@ -411,16 +399,20 @@ export function discoverFunctionDeclaration(globalInfo: PZGlobalInfo, expression
                 type: 'ScopeFunction',
                 init: expression,
                 name,
-                params: [],
+                params,
                 values: {},
                 selfAlias,
                 returns,
-                references: {},
-                assignments: {},
             };
         }
 
         scopeFunc = new Scope(func, scopeToAssign);
+
+        // Add our params to the constructor's scope as variable children.
+        for (const param of params) {
+            new Scope(param, scope);
+            func.values[param.name] = param;
+        }
     }
 
     // Handle body statements.
@@ -429,7 +421,7 @@ export function discoverFunctionDeclaration(globalInfo: PZGlobalInfo, expression
     }
 
     // Handle return statements.
-    const func = scopeFunc.element as ScopeFunction | ScopeConstructor;
+    func = scopeFunc.element as ScopeFunction | ScopeConstructor;
     if (func.type === 'ScopeFunction') {
         const returnTypes = func.returns.types;
         for (const child of Object.values(scopeFunc.children)) {
@@ -533,8 +525,6 @@ export function discoverLocalStatement(globalInfo: PZGlobalInfo, statement: ast.
             types,
             init: statement,
             index,
-            references: {},
-            assignments: {},
         };
 
         // (Self-assigning)

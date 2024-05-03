@@ -3439,6 +3439,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Scope", ["require", "exports", "src
                                 }
                             }
                         }
+                        case 'Identifier': return e.name;
                         default: {
                             console.warn(e);
                             throw new Error(`Unsupported statement for ScopeVariable name: ${e.init.type} `);
@@ -3763,17 +3764,14 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                 const path = (0, String_2.expressionToString)(expression);
                 let stripped = (0, LuaWizard_2.stripCallParameters)(path);
                 if (stripped.indexOf(':') !== -1) {
-                    while (stripped.indexOf(':') !== -1) {
+                    while (stripped.indexOf(':') !== -1)
                         stripped = stripped.replace(':', '.');
-                    }
                 }
                 if (stripped.indexOf('()') !== -1) {
-                    while (stripped.indexOf('()') !== -1) {
+                    while (stripped.indexOf('()') !== -1)
                         stripped = stripped.replace('()', '');
-                    }
                 }
-                let scope2;
-                let scope3;
+                let scope2, scope3;
                 if (stripped.indexOf('.') !== -1 && stripped.indexOf('self.') === 0) {
                     const classScope = scope.getClassScope();
                     if (!classScope) {
@@ -4044,6 +4042,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
             console.warn(scope, expression);
             throw new Error('A function declaration here wouldn\'t make sense.');
         }
+        let func;
         scopeFunc = scope.resolve(name);
         if (!scopeFunc)
             scopeFunc = scope.resolveAbsolute(name);
@@ -4058,8 +4057,6 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                             types: [],
                             init: param,
                             index: 0,
-                            references: {},
-                            assignments: {},
                         });
                         break;
                     }
@@ -4070,8 +4067,6 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                             types: [],
                             init: param,
                             index: 0,
-                            references: {},
-                            assignments: {},
                         });
                         break;
                     }
@@ -4084,16 +4079,13 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                 type = 'constructor';
                 selfAlias = '';
             }
-            let func;
             if (type === 'constructor') {
                 func = {
                     type: 'ScopeConstructor',
                     init: expression,
-                    params: [],
+                    params,
                     values: {},
                     selfAlias,
-                    references: {},
-                    assignments: {},
                 };
             }
             else {
@@ -4105,22 +4097,25 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                     type: 'ScopeFunction',
                     init: expression,
                     name,
-                    params: [],
+                    params,
                     values: {},
                     selfAlias,
                     returns,
-                    references: {},
-                    assignments: {},
                 };
             }
             scopeFunc = new Scope_2.Scope(func, scopeToAssign);
+            // Add our params to the constructor's scope as variable children.
+            for (const param of params) {
+                new Scope_2.Scope(param, scope);
+                func.values[param.name] = param;
+            }
         }
         // Handle body statements.
         for (const statement of expression.body) {
             discoverStatement(globalInfo, statement, scopeFunc);
         }
         // Handle return statements.
-        const func = scopeFunc.element;
+        func = scopeFunc.element;
         if (func.type === 'ScopeFunction') {
             const returnTypes = func.returns.types;
             for (const child of Object.values(scopeFunc.children)) {
@@ -4205,8 +4200,6 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                 types,
                 init: statement,
                 index,
-                references: {},
-                assignments: {},
             };
             // (Self-assigning)
             const lScope = new Scope_2.Scope(variable, scope);
@@ -4412,8 +4405,6 @@ define("src/asledgehammer/rosetta/lua/wizard/PZ", ["require", "exports", "src/as
             fields: {},
             funcs: {},
             methods: {},
-            references: {},
-            assignments: {}
         };
         const scope = new Scope_3.Scope(scopeClass, global);
         return {
@@ -4430,25 +4421,25 @@ define("src/asledgehammer/rosetta/lua/wizard/PZ", ["require", "exports", "src/as
     exports.getPZClass = getPZClass;
     /**
      * @param clazz The name of the class.
-     * @param statement The statement to process.
+     * @param expression The statement to process.
      *
      * @returns
      */
-    function getPZExecutable(global, clazz, statement) {
+    function getPZExecutable(global, clazz, expression) {
         // Check if assigned as a member declaration.
-        if (statement.identifier == null)
+        if (expression.identifier == null)
             return undefined;
-        if (statement.identifier.type !== 'MemberExpression')
+        if (expression.identifier.type !== 'MemberExpression')
             return undefined;
         // Verify that the base assignment table is the class.
-        if (statement.identifier.base.type !== 'Identifier')
+        if (expression.identifier.base.type !== 'Identifier')
             return undefined;
-        if (statement.identifier.base.name !== clazz)
+        if (expression.identifier.base.name !== clazz)
             return undefined;
         // Grab the function / method name.
-        if (statement.identifier.identifier.type !== 'Identifier')
+        if (expression.identifier.identifier.type !== 'Identifier')
             return undefined;
-        const name = statement.identifier.identifier.name;
+        const name = expression.identifier.identifier.name;
         let selfAlias = 'self';
         // Get type.
         let type = 'function';
@@ -4456,8 +4447,8 @@ define("src/asledgehammer/rosetta/lua/wizard/PZ", ["require", "exports", "src/as
             type = 'constructor';
             // Grab the alias used to return in the constructor.
             selfAlias = '';
-            for (let index = statement.body.length - 1; index >= 0; index--) {
-                const next = statement.body[index];
+            for (let index = expression.body.length - 1; index >= 0; index--) {
+                const next = expression.body[index];
                 if (next.type !== 'ReturnStatement')
                     continue;
                 // Sanity check for bad Lua code.
@@ -4474,19 +4465,30 @@ define("src/asledgehammer/rosetta/lua/wizard/PZ", ["require", "exports", "src/as
                 throw new Error(`Class constructor ${clazz}:new() has no alias for 'self'.`);
             }
         }
-        else if (statement.identifier.indexer === ':') {
+        else if (expression.identifier.indexer === ':') {
             type = 'method';
         }
-        // Build params.
         const params = [];
-        for (const param of statement.parameters) {
+        for (const param of expression.parameters) {
             switch (param.type) {
                 case 'Identifier': {
-                    params.push((0, String_3.identifierToString)(param));
+                    params.push({
+                        type: 'ScopeVariable',
+                        name: param.name,
+                        types: [],
+                        init: param,
+                        index: 0,
+                    });
                     break;
                 }
                 case 'VarargLiteral': {
-                    params.push((0, String_3.varargLiteralToString)(param));
+                    params.push({
+                        type: 'ScopeVariable',
+                        name: param.raw,
+                        types: [],
+                        init: param,
+                        index: 0,
+                    });
                     break;
                 }
             }
@@ -4495,31 +4497,32 @@ define("src/asledgehammer/rosetta/lua/wizard/PZ", ["require", "exports", "src/as
         if (type === 'constructor') {
             scopeFunc = {
                 type: 'ScopeConstructor',
-                init: statement,
-                params: [],
+                init: expression,
+                params,
                 values: {},
                 selfAlias,
-                references: {},
-                assignments: {},
             };
         }
         else {
             scopeFunc = {
                 type: 'ScopeFunction',
-                init: statement,
+                init: expression,
                 name,
-                params: [],
+                params,
                 values: {},
                 selfAlias,
                 returns: {
                     type: 'ScopeReturn',
-                    types: (0, Discover_1.discoverBodyReturnTypes)(statement.body, global),
+                    types: (0, Discover_1.discoverBodyReturnTypes)(expression.body, global),
                 },
-                references: {},
-                assignments: {},
             };
         }
         const scope = new Scope_3.Scope(scopeFunc, global);
+        // Add our params to the constructor's scope as variable children.
+        for (const param of params) {
+            new Scope_3.Scope(param, scope);
+            scopeFunc.values[param.name] = param;
+        }
         // Return result information.
         return { clazz, type, name, params, selfAlias, scope };
     }
@@ -4612,8 +4615,6 @@ define("src/asledgehammer/rosetta/lua/wizard/PZ", ["require", "exports", "src/as
             name,
             types: [],
             init: statement,
-            references: {},
-            assignments: {},
             index: 0,
         };
         // Find out if this is a class variable via selfAlias reference.
