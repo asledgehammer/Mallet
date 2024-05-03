@@ -1,13 +1,149 @@
 import * as ast from 'luaparse';
 import { Scope } from './Scope';
 import { PZGlobalInfo } from './PZ';
-import { ScopeIfClauseBlock, ScopeConstructor, ScopeFunction, ScopeReturn, ScopeVariable, ScopeWhileBlock, ScopeDoBlock, ScopeRepeatBlock, ScopeForNumericBlock, ScopeForGenericBlock, getKnownType, ScopeGoto, ScopeBreak, ScopeLabel, ScopeAssignment } from './LuaWizard';
+import { ScopeIfClauseBlock, ScopeConstructor, ScopeFunction, ScopeReturn, ScopeVariable, ScopeWhileBlock, ScopeDoBlock, ScopeRepeatBlock, ScopeForNumericBlock, ScopeForGenericBlock, ScopeGoto, ScopeBreak, ScopeLabel, ScopeAssignment, stripCallParameters } from './LuaWizard';
 import { expressionToString, memberExpressionToString } from './String';
+import { getKnownType } from './KnownTypes';
 
 export type DiscoveredType = {
     type: string | undefined;
     defaultValue: string | undefined;
 };
+
+export function discoverRelationships(expression: ast.Expression, scope: Scope): void {
+    switch (expression.type) {
+
+        case 'Identifier': {
+            break;
+        }
+
+        case 'BinaryExpression':
+        case 'UnaryExpression': {
+            switch (expression.operator) {
+                case '~':
+                case 'not': {
+                    break;
+                }
+                case '-':
+                case '#': {
+                    break;
+                }
+            }
+            break;
+        }
+        case 'MemberExpression': {
+            //console.warn(`discoverType(${expression.type}) = (scope: ${scope.path}) => ${expressionToString(expression)}`);
+            // TODO - Build reference link.
+            break;
+        }
+        case 'IndexExpression': {
+            //console.warn(`discoverType(${expression.type}) = (scope: ${scope.path}) => ${expressionToString(expression)}`);
+            // TODO - Build reference link.
+            break;
+        }
+        case 'CallExpression': {
+
+            const path = expressionToString(expression);
+            let stripped = stripCallParameters(path);
+
+            if (stripped.indexOf(':') !== -1) {
+                while (stripped.indexOf(':') !== -1) {
+                    stripped = stripped.replace(':', '.');
+                }
+            }
+
+            if (stripped.indexOf('()') !== -1) {
+                while (stripped.indexOf('()') !== -1) {
+                    stripped = stripped.replace('()', '');
+                }
+            }
+
+            let scope2;
+            let scope3;
+            if (stripped.indexOf('.') !== -1 && stripped.indexOf('self.') === 0) {
+                const classScope = scope.getClassScope();
+                if (!classScope) {
+                    console.error(`Cannot find class scope with self reference. (${stripped})`);
+                    return;
+                }
+
+                const stripped2 = stripped.replace('self.', '');
+                scope3 = classScope.resolve(stripped2);
+                if (!scope3) {
+                    console.error(`Cannot find class field or method with self reference. (${stripped2})`);
+                    return;
+                }
+
+                if (scope3.assignments.indexOf(scope) === -1) scope3.assignments.push(scope);
+                if (scope.references.indexOf(scope3) === -1) scope.references.push(scope3);
+
+                // Spread types from scope2 to scope.
+                if (scope3.types) for (const t of scope3.types) if (scope.types.indexOf(t) === -1) scope.types.push(t);
+                // Spread types from scope to scope2.
+                if (scope.types) for (const t of scope.types) if (scope3.types.indexOf(t) === -1) scope3.types.push(t);
+
+                console.warn(`discoverType(scope: ${scope.path}) => classScope: ${classScope.path} scope3: ${scope3.path}`);
+
+            } else {
+                scope2 = scope.resolve(stripped);
+                if (!scope2) {
+                    console.error(`Cannot find reference. (${stripped})`);
+                    return;
+                }
+
+                if (scope2.assignments.indexOf(scope) === -1) scope2.assignments.push(scope);
+                if (scope.references.indexOf(scope2) === -1) scope.references.push(scope2);
+
+                // Spread types from scope2 to scope.
+                if (scope2.types) for (const t of scope2.types) if (scope.types.indexOf(t) === -1) scope.types.push(t);
+                // Spread types from scope to scope2.
+                if (scope.types) for (const t of scope.types) if (scope2.types.indexOf(t) === -1) scope2.types.push(t);
+
+                console.warn(`discoverType() = (scope: ${scope.path}) => ${stripped}`);
+            }
+            break;
+        }
+        case 'TableCallExpression': {
+            //console.warn(`discoverType(${expression.type}) = (scope: ${scope.path}) => ${expressionToString(expression)}`);
+            // TODO - Build reference link.
+            break;
+        }
+        case 'StringCallExpression': {
+            //console.warn(`discoverType(${expression.type}) = (scope: ${scope.path}) => ${expressionToString(expression)}`);
+            // TODO - Build reference link.
+            break;
+        }
+
+        case 'FunctionDeclaration': {
+            // TODO - Implement.
+            break;
+        }
+
+        case 'TableConstructorExpression': {
+            // let s: string[] = [];
+            // for (const field of init.fields) {
+            //     switch (field.type) {
+            //         case 'TableKey': {
+            //             s.push(`${expressionToString(field.key)} = ${expressionToString(field.value)}`);
+            //             break;
+            //         }
+            //         case 'TableKeyString': {
+            //             s.push(`${expressionToString(field.key)} = ${expressionToString(field.value)}`);
+            //             break;
+            //         }
+            //         case 'TableValue': {
+            //             s.push(expressionToString(field.value));
+            //             break;
+            //         }
+            //     }
+            // }
+            // if(s.length) {
+            // } else {
+            // }
+            break;
+        }
+    }
+}
 
 export function discoverType(expression: ast.Expression, scope: Scope): DiscoveredType {
     let type: string | undefined = undefined;
@@ -17,10 +153,6 @@ export function discoverType(expression: ast.Expression, scope: Scope): Discover
 
         // Simple type-reference.
         case 'Identifier': {
-            
-            // const resolvedScope = scope.resolve(expression.name);
-
-            // NOTE: We don't assign a type here. The reference-type is handled in a future pass.
             break;
         }
 
@@ -51,7 +183,8 @@ export function discoverType(expression: ast.Expression, scope: Scope): Discover
 
         case 'VarargLiteral': {
             // TODO - Implement.
-            type = `<${expression.value}>`;
+            type = `vararg`;
+            defaultValue = expression.value;
             break;
         }
 
@@ -59,26 +192,7 @@ export function discoverType(expression: ast.Expression, scope: Scope): Discover
             // TODO - Implement.
             type = 'table';
 
-            // let s: string[] = [];
-            // for (const field of init.fields) {
-            //     switch (field.type) {
-            //         case 'TableKey': {
-            //             s.push(`${expressionToString(field.key)} = ${expressionToString(field.value)}`);
-            //             break;
-            //         }
-            //         case 'TableKeyString': {
-            //             s.push(`${expressionToString(field.key)} = ${expressionToString(field.value)}`);
-            //             break;
-            //         }
-            //         case 'TableValue': {
-            //             s.push(expressionToString(field.value));
-            //             break;
-            //         }
-            //     }
-            // }
-            // if(s.length) {
-            // } else {
-            // }
+
 
             break;
 
@@ -103,26 +217,6 @@ export function discoverType(expression: ast.Expression, scope: Scope): Discover
                     break;
                 }
             }
-        }
-        case 'MemberExpression': {
-            // TODO - Build reference link.
-            break;
-        }
-        case 'IndexExpression': {
-            // TODO - Build reference link.
-            break;
-        }
-        case 'CallExpression': {
-            // TODO - Build reference link.
-            break;
-        }
-        case 'TableCallExpression': {
-            // TODO - Build reference link.
-            break;
-        }
-        case 'StringCallExpression': {
-            // TODO - Build reference link.
-            break;
         }
     }
 
@@ -439,8 +533,14 @@ export function discoverLocalStatement(globalInfo: PZGlobalInfo, statement: ast.
             assignments: {},
         };
 
+        // (Self-assigning)
+        const lScope = new Scope(variable, scope);
+
+        // Identify & link scopes for any relationships.
+        discoverRelationships(init, lScope);
+
         // Attempt to get the type for the next initialized variable.
-        const initTypes = discoverType(init, scope);
+        const initTypes = discoverType(init, lScope);
         if (initTypes.type && types.indexOf(initTypes.type) === -1) {
             types.push(initTypes.type);
         }
@@ -452,8 +552,6 @@ export function discoverLocalStatement(globalInfo: PZGlobalInfo, statement: ast.
             if (kType) if (types.indexOf(kType) === -1) types.push(kType);
         }
 
-        // (Self-assigning)
-        const lScope = new Scope(variable, scope);
 
         changes++;
     }

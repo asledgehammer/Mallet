@@ -1,8 +1,9 @@
 import * as ast from 'luaparse';
 import { expressionToString, identifierToString, varargLiteralToString } from './String';
 import { Scope } from './Scope';
-import { ScopeClass, ScopeConstructor, ScopeFunction, ScopeReturn, ScopeVariable } from './LuaWizard';
-import { discoverBodyReturnTypes, discoverType } from './Discover';
+import { ScopeClass, ScopeConstructor, ScopeFunction, ScopeVariable } from './LuaWizard';
+import { discoverBodyReturnTypes } from './Discover';
+import { initKnownTypes } from './KnownTypes';
 
 export type PZPropertyType = 'field' | 'value';
 export type PZExecutableType = 'function' | 'method' | 'constructor';
@@ -437,5 +438,6 @@ export function getPZClasses(globalInfo: PZGlobalInfo, statements: ast.Statement
 }
 
 export function scanFile(global: PZGlobalInfo, statements: ast.Statement[]): void {
+    initKnownTypes(global.scope);
     getPZClasses(global, statements);
 }

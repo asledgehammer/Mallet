@@ -7,68 +7,55 @@ export type MethodReferenceType = 'void'
     | 'string'
     | 'table';
 
-export const knownTypes: { [path: string]: string } = {
-    'math.min()': 'number',
-    'math.max()': 'number',
-    'math.floor()': 'number',
-    'math.ceil()': 'number',
-    'math.round()': 'number',
+/**
+ * @param call The call to a function or class method.
+ * @returns 
+ */
+export function stripCallParameters(call: string): string {
 
-    /* PZ Java API */
-    'getCore():getScreenWidth()': 'number',
-    'getCore():getScreenHeight()': 'number',
-    'getNumActivePlayers()': 'number',
-    'getPlayerScreenLeft()': 'number',
-    'getPlayerScreenTop()': 'number',
-    'getPlayerScreenWidth()': 'number',
-    'getPlayerScreenHeight()': 'number',
-};
+    // Param Check
+    if (!call.length) return '';
+    else if (call.indexOf('(') === -1 && call.indexOf(')') === -1) return `${call}`;
 
-export function getKnownType(known: string): string | undefined {
-    if (!known.length) return undefined;
+    let strippedCall = '';
 
-    let strippedKnown = known;
+    ///////////////
+    // Sanity-check
+    ///////////////
 
-    // If this is a call-expression, strip every parameter out.
-    if (known.indexOf('(') !== -1) {
-
-        ///////////////
-        // Sanity-check
-        ///////////////
-
-        let openings = 0;
-        let closings = 0;
-        for (const c of known) {
-            if (c === '(') openings++;
-            else if (c === ')') closings++;
-        }
-        if (openings !== closings) {
-            throw new Error(`The known string has an uneven amount of '(' and ')'. (known: ${known})`);
-        }
-
-        ///////////////
-
-        // Remove any parameters from the top-level down to match the string name.
-        strippedKnown = '';
-        // Keeps track of the depth of parameters we're in.
-        let inParam = 0;
-        for (let index = 0; index < known.length; index++) {
-            let c0 = known[index + 0];
-            if (inParam > 0) {
-                if (c0 === ')') {
-                    inParam--;
-                    if (inParam === 0) strippedKnown += ')';
-                } else if (c0 === '(') inParam++;
-                continue;
-            } else if (c0 === '(') {
-                inParam++;
-                if (inParam === 1) strippedKnown += '(';
-            }
-            strippedKnown += c0;
-        }
+    let openings = 0;
+    let closings = 0;
+    for (const c of call) {
+        if (c === '(') openings++;
+        else if (c === ')') closings++;
+    }
+    if (openings !== closings) {
+        throw new Error(`The known string has an uneven amount of '(' and ')'. (call: ${call})`);
     }
 
-    return knownTypes[strippedKnown];
+    ///////////////
+
+    // Remove any parameters from the top-level down to match the string name.
+
+    /** @type number Keeps track of the depth of parameters we're in. */
+    let inParam = 0;
+    for (let index = 0; index < call.length; index++) {
+        let c0 = call[index + 0];
+        if (inParam > 0) {
+            if (c0 === ')') {
+                inParam--;
+                if (inParam === 0) strippedCall += ')';
+            } else if (c0 === '(') inParam++;
+            continue;
+        } else if (c0 === '(') {
+            inParam++;
+            if (inParam === 1) strippedCall += '(';
+            continue;
+        }
+        strippedCall += c0;
+    }
+
+    return strippedCall;
 }
 
 export type ScopeType = 'class' | 'table' | 'function' | 'field' | 'value' | 'block';
@@ -87,6 +74,16 @@ export interface Base<TType extends string> {
 
 export interface ScopeBase<TType extends string> extends Base<TType> {
     scope: ScopePath;
+}
+
+export interface ScopeKnownFunction extends Base<'ScopeKnownFunction'> {
+    name: string;
+    knownType?: string;
+}
+
+export interface ScopeKnownValue extends Base<'ScopeKnownValue'> {
+    name: string;
+    knownType?: string;
 }
 
 /**
@@ -274,6 +271,8 @@ export type ScopeElement =
     | ScopeLabel
     | ScopeBreak
     | ScopeAssignment
+    | ScopeKnownFunction
+    | ScopeKnownValue
     ;
 
 export type ScopeReferenceable = ScopeVariable

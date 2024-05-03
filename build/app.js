@@ -3160,70 +3160,59 @@ define("src/asledgehammer/rosetta/lua/wizard/String", ["require", "exports", "lu
 define("src/asledgehammer/rosetta/lua/wizard/LuaWizard", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.getKnownType = exports.knownTypes = void 0;
-    exports.knownTypes = {
-        'math.min()': 'number',
-        'math.max()': 'number',
-        'math.floor()': 'number',
-        'math.ceil()': 'number',
-        'math.round()': 'number',
-        /* PZ Java API */
-        'getCore():getScreenWidth()': 'number',
-        'getCore():getScreenHeight()': 'number',
-        'getNumActivePlayers()': 'number',
-        'getPlayerScreenLeft()': 'number',
-        'getPlayerScreenTop()': 'number',
-        'getPlayerScreenWidth()': 'number',
-        'getPlayerScreenHeight()': 'number',
-    };
-    function getKnownType(known) {
-        if (!known.length)
-            return undefined;
-        let strippedKnown = known;
-        // If this is a call-expression, strip every parameter out.
-        if (known.indexOf('(') !== -1) {
-            ///////////////
-            // Sanity-check
-            ///////////////
-            let openings = 0;
-            let closings = 0;
-            for (const c of known) {
-                if (c === '(')
-                    openings++;
-                else if (c === ')')
-                    closings++;
-            }
-            if (openings !== closings) {
-                throw new Error(`The known string has an uneven amount of '(' and ')'. (known: ${known})`);
-            }
-            ///////////////
-            // Remove any parameters from the top-level down to match the string name.
-            strippedKnown = '';
-            // Keeps track of the depth of parameters we're in.
-            let inParam = 0;
-            for (let index = 0; index < known.length; index++) {
-                let c0 = known[index + 0];
-                if (inParam > 0) {
-                    if (c0 === ')') {
-                        inParam--;
-                        if (inParam === 0)
-                            strippedKnown += ')';
-                    }
-                    else if (c0 === '(')
-                        inParam++;
-                    continue;
-                }
-                else if (c0 === '(') {
-                    inParam++;
-                    if (inParam === 1)
-                        strippedKnown += '(';
-                }
-                strippedKnown += c0;
-            }
+    exports.stripCallParameters = void 0;
+    /**
+     * @param call The call to a function or class method.
+     * @returns
+     */
+    function stripCallParameters(call) {
+        // Param Check
+        if (!call.length)
+            return '';
+        else if (call.indexOf('(') === -1 && call.indexOf(')') === -1)
+            return `${call}`;
+        let strippedCall = '';
+        ///////////////
+        // Sanity-check
+        ///////////////
+        let openings = 0;
+        let closings = 0;
+        for (const c of call) {
+            if (c === '(')
+                openings++;
+            else if (c === ')')
+                closings++;
         }
-        return exports.knownTypes[strippedKnown];
+        if (openings !== closings) {
+            throw new Error(`The known string has an uneven amount of '(' and ')'. (call: ${call})`);
+        }
+        ///////////////
+        // Remove any parameters from the top-level down to match the string name.
+        /** @type number Keeps track of the depth of parameters we're in. */
+        let inParam = 0;
+        for (let index = 0; index < call.length; index++) {
+            let c0 = call[index + 0];
+            if (inParam > 0) {
+                if (c0 === ')') {
+                    inParam--;
+                    if (inParam === 0)
+                        strippedCall += ')';
+                }
+                else if (c0 === '(')
+                    inParam++;
+                continue;
+            }
+            else if (c0 === '(') {
+                inParam++;
+                if (inParam === 1)
+                    strippedCall += '(';
+                continue;
+            }
+            strippedCall += c0;
+        }
+        return strippedCall;
     }
-    exports.getKnownType = getKnownType;
+    exports.stripCallParameters = stripCallParameters;
     ;
     ;
     ;
@@ -3240,16 +3229,6 @@ define("src/asledgehammer/rosetta/lua/wizard/Scope", ["require", "exports", "src
      * @author asledgehammer
      */
     class Scope {
-        /**
-         * @returns the next available scope that has a body.
-         */
-        getBodyScope() {
-            if (this.hasBody)
-                return this;
-            if (!this.parent)
-                return undefined;
-            return this.parent.getBodyScope();
-        }
         /////////////////////////////
         /**
          * @param element The element container.
@@ -3261,6 +3240,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Scope", ["require", "exports", "src
             this.hasBody = false;
             /** Any child scopes. This is helpful with {@link Scope.resolve resolving scopes}. */
             this.children = {};
+            this.assignments = [];
             /** All discovered scopes that directly call or assign this scope. */
             this.references = [];
             this.types = [];
@@ -3493,6 +3473,8 @@ define("src/asledgehammer/rosetta/lua/wizard/Scope", ["require", "exports", "src
                 case 'ScopeTable': return e.name;
                 case 'ScopeClass': return e.name;
                 case 'ScopeConstructor': return 'new';
+                case 'ScopeKnownValue': return e.name;
+                case 'ScopeKnownFunction': return e.name;
             }
         }
         getStatementName(statement) {
@@ -3556,6 +3538,26 @@ define("src/asledgehammer/rosetta/lua/wizard/Scope", ["require", "exports", "src
                 }
             }
             return changes;
+        }
+        /**
+         * @returns the next available scope that has a body.
+         */
+        getBodyScope() {
+            if (this.hasBody)
+                return this;
+            if (!this.parent)
+                return undefined;
+            return this.parent.getBodyScope();
+        }
+        /**
+         * @returns the next available scope that is a class.
+         */
+        getClassScope() {
+            if (this.element && this.element.type === 'ScopeClass')
+                return this;
+            if (!this.parent)
+                return undefined;
+            return this.parent.getClassScope();
         }
         sortTypes() {
             this.types.sort((a, b) => a.localeCompare(b));
@@ -3634,18 +3636,242 @@ define("src/asledgehammer/rosetta/lua/wizard/Scope", ["require", "exports", "src
     }
     exports.Scope = Scope;
 });
-define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "src/asledgehammer/rosetta/lua/wizard/Scope", "src/asledgehammer/rosetta/lua/wizard/LuaWizard", "src/asledgehammer/rosetta/lua/wizard/String"], function (require, exports, Scope_1, LuaWizard_1, String_2) {
+define("src/asledgehammer/rosetta/lua/wizard/KnownTypes", ["require", "exports", "src/asledgehammer/rosetta/lua/wizard/LuaWizard", "src/asledgehammer/rosetta/lua/wizard/Scope"], function (require, exports, LuaWizard_1, Scope_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.discoverFile = exports.discoverStatement = exports.discoverForGenericStatement = exports.discoverForNumericStatement = exports.discoverRepeatStatement = exports.discoverDoStatement = exports.discoverWhileStatement = exports.discoverIfStatement = exports.discoverCallStatement = exports.discoverAssignmentStatement = exports.discoverLocalStatement = exports.discoverReturnStatement = exports.discoverGotoStatement = exports.discoverBreakStatement = exports.discoverLabelStatement = exports.discoverFunctionDeclaration = exports.discoverReturnType = exports.discoverBodyReturnTypes = exports.discoverType = void 0;
+    exports.initKnownTypes = exports.isInitKnownTypes = exports.getKnownType = exports.knownTypes = void 0;
+    exports.knownTypes = {
+        'math.min()': 'number',
+        'math.max()': 'number',
+        'math.floor()': 'number',
+        'math.ceil()': 'number',
+        'math.round()': 'number',
+        /* PZ Java API */
+        'getCore()': 'Core',
+        'getCore():getScreenWidth()': 'number',
+        'getCore():getScreenHeight()': 'number',
+        'getNumActivePlayers()': 'number',
+        'getPlayerScreenLeft()': 'number',
+        'getPlayerScreenTop()': 'number',
+        'getPlayerScreenWidth()': 'number',
+        'getPlayerScreenHeight()': 'number',
+    };
+    function getKnownType(known) {
+        if (!known.length)
+            return undefined;
+        return exports.knownTypes[(0, LuaWizard_1.stripCallParameters)(known)];
+    }
+    exports.getKnownType = getKnownType;
+    exports.isInitKnownTypes = false;
+    function initKnownTypes(global) {
+        if (exports.isInitKnownTypes)
+            return;
+        for (let key of Object.keys(exports.knownTypes)) {
+            const val = exports.knownTypes[key];
+            if (key.indexOf(':') !== -1) {
+                while (key.indexOf(':') !== -1)
+                    key = key.replace(':', '.');
+            }
+            if (key.indexOf('.') !== -1) {
+                const split = key.split('.');
+                let scopeCurr = global;
+                for (let next of split) {
+                    let type = 'ScopeKnownValue';
+                    if (next.endsWith('()')) {
+                        type = 'ScopeKnownFunction';
+                        next = next.substring(0, next.length - 2);
+                    }
+                    let scopeNext = scopeCurr.resolve(next);
+                    // Only create a new scope if one doesn't exist yet for the next known type scope.
+                    if (!scopeNext) {
+                        const knownType = {
+                            type: type,
+                            name: next,
+                        };
+                        scopeNext = new Scope_1.Scope(knownType, scopeCurr);
+                    }
+                    scopeCurr = scopeNext;
+                }
+                // Add the type to the end.
+                scopeCurr.element.knownType = val;
+                if (scopeCurr.types.indexOf(val) === -1) {
+                    scopeCurr.types.push(val);
+                }
+            }
+            else {
+                let next = key;
+                let type = 'ScopeKnownValue';
+                if (next.endsWith('()')) {
+                    type = 'ScopeKnownFunction';
+                    next = next.substring(0, next.length - 2);
+                }
+                let scopeNext = global.resolve(next);
+                // Only create a new scope if one doesn't exist yet for the next known type scope.
+                if (!scopeNext) {
+                    const knownType = {
+                        type: type,
+                        name: next,
+                        knownType: val
+                    };
+                    scopeNext = new Scope_1.Scope(knownType, global);
+                }
+                // Add the type to the end.
+                scopeNext.element.knownType = val;
+                if (scopeNext.types.indexOf(val) === -1) {
+                    scopeNext.types.push(val);
+                }
+            }
+        }
+        exports.isInitKnownTypes = true;
+    }
+    exports.initKnownTypes = initKnownTypes;
+});
+define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "src/asledgehammer/rosetta/lua/wizard/Scope", "src/asledgehammer/rosetta/lua/wizard/LuaWizard", "src/asledgehammer/rosetta/lua/wizard/String", "src/asledgehammer/rosetta/lua/wizard/KnownTypes"], function (require, exports, Scope_2, LuaWizard_2, String_2, KnownTypes_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.discoverFile = exports.discoverStatement = exports.discoverForGenericStatement = exports.discoverForNumericStatement = exports.discoverRepeatStatement = exports.discoverDoStatement = exports.discoverWhileStatement = exports.discoverIfStatement = exports.discoverCallStatement = exports.discoverAssignmentStatement = exports.discoverLocalStatement = exports.discoverReturnStatement = exports.discoverGotoStatement = exports.discoverBreakStatement = exports.discoverLabelStatement = exports.discoverFunctionDeclaration = exports.discoverReturnType = exports.discoverBodyReturnTypes = exports.discoverType = exports.discoverRelationships = void 0;
+    function discoverRelationships(expression, scope) {
+        switch (expression.type) {
+            case 'Identifier': {
+                break;
+            }
+            case 'BinaryExpression':
+            case 'UnaryExpression': {
+                switch (expression.operator) {
+                    case '~':
+                    case 'not': {
+                        break;
+                    }
+                    case '-':
+                    case '#': {
+                        break;
+                    }
+                }
+                break;
+            }
+            case 'MemberExpression': {
+                //console.warn(`discoverType(${expression.type}) = (scope: ${scope.path}) => ${expressionToString(expression)}`);
+                // TODO - Build reference link.
+                break;
+            }
+            case 'IndexExpression': {
+                //console.warn(`discoverType(${expression.type}) = (scope: ${scope.path}) => ${expressionToString(expression)}`);
+                // TODO - Build reference link.
+                break;
+            }
+            case 'CallExpression': {
+                const path = (0, String_2.expressionToString)(expression);
+                let stripped = (0, LuaWizard_2.stripCallParameters)(path);
+                if (stripped.indexOf(':') !== -1) {
+                    while (stripped.indexOf(':') !== -1) {
+                        stripped = stripped.replace(':', '.');
+                    }
+                }
+                if (stripped.indexOf('()') !== -1) {
+                    while (stripped.indexOf('()') !== -1) {
+                        stripped = stripped.replace('()', '');
+                    }
+                }
+                let scope2;
+                let scope3;
+                if (stripped.indexOf('.') !== -1 && stripped.indexOf('self.') === 0) {
+                    const classScope = scope.getClassScope();
+                    if (!classScope) {
+                        console.error(`Cannot find class scope with self reference. (${stripped})`);
+                        return;
+                    }
+                    const stripped2 = stripped.replace('self.', '');
+                    scope3 = classScope.resolve(stripped2);
+                    if (!scope3) {
+                        console.error(`Cannot find class field or method with self reference. (${stripped2})`);
+                        return;
+                    }
+                    if (scope3.assignments.indexOf(scope) === -1)
+                        scope3.assignments.push(scope);
+                    if (scope.references.indexOf(scope3) === -1)
+                        scope.references.push(scope3);
+                    // Spread types from scope2 to scope.
+                    if (scope3.types)
+                        for (const t of scope3.types)
+                            if (scope.types.indexOf(t) === -1)
+                                scope.types.push(t);
+                    // Spread types from scope to scope2.
+                    if (scope.types)
+                        for (const t of scope.types)
+                            if (scope3.types.indexOf(t) === -1)
+                                scope3.types.push(t);
+                    console.warn(`discoverType(scope: ${scope.path}) => classScope: ${classScope.path} scope3: ${scope3.path}`);
+                }
+                else {
+                    scope2 = scope.resolve(stripped);
+                    if (!scope2) {
+                        console.error(`Cannot find reference. (${stripped})`);
+                        return;
+                    }
+                    if (scope2.assignments.indexOf(scope) === -1)
+                        scope2.assignments.push(scope);
+                    if (scope.references.indexOf(scope2) === -1)
+                        scope.references.push(scope2);
+                    // Spread types from scope2 to scope.
+                    if (scope2.types)
+                        for (const t of scope2.types)
+                            if (scope.types.indexOf(t) === -1)
+                                scope.types.push(t);
+                    // Spread types from scope to scope2.
+                    if (scope.types)
+                        for (const t of scope.types)
+                            if (scope2.types.indexOf(t) === -1)
+                                scope2.types.push(t);
+                    console.warn(`discoverType() = (scope: ${scope.path}) => ${stripped}`);
+                }
+                break;
+            }
+            case 'TableCallExpression': {
+                //console.warn(`discoverType(${expression.type}) = (scope: ${scope.path}) => ${expressionToString(expression)}`);
+                // TODO - Build reference link.
+                break;
+            }
+            case 'StringCallExpression': {
+                //console.warn(`discoverType(${expression.type}) = (scope: ${scope.path}) => ${expressionToString(expression)}`);
+                // TODO - Build reference link.
+                break;
+            }
+            case 'FunctionDeclaration': {
+                // TODO - Implement.
+                break;
+            }
+            case 'TableConstructorExpression': {
+                // let s: string[] = [];
+                // for (const field of init.fields) {
+                //     switch (field.type) {
+                //         case 'TableKey': {
+                //             s.push(`${expressionToString(field.key)} = ${expressionToString(field.value)}`);
+                //             break;
+                //         }
+                //         case 'TableKeyString': {
+                //             s.push(`${expressionToString(field.key)} = ${expressionToString(field.value)}`);
+                //             break;
+                //         }
+                //         case 'TableValue': {
+                //             s.push(expressionToString(field.value));
+                //             break;
+                //         }
+                //     }
+                // }
+                // if(s.length) {
+                // } else {
+                // }
+                break;
+            }
+        }
+    }
+    exports.discoverRelationships = discoverRelationships;
     function discoverType(expression, scope) {
         let type = undefined;
         let defaultValue = undefined;
         switch (expression.type) {
             // Simple type-reference.
             case 'Identifier': {
-                // const resolvedScope = scope.resolve(expression.name);
-                // NOTE: We don't assign a type here. The reference-type is handled in a future pass.
                 break;
             }
             case 'FunctionDeclaration':
@@ -3674,32 +3900,13 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
             }
             case 'VarargLiteral': {
                 // TODO - Implement.
-                type = `<${expression.value}>`;
+                type = `vararg`;
+                defaultValue = expression.value;
                 break;
             }
             case 'TableConstructorExpression':
                 // TODO - Implement.
                 type = 'table';
-                // let s: string[] = [];
-                // for (const field of init.fields) {
-                //     switch (field.type) {
-                //         case 'TableKey': {
-                //             s.push(`${expressionToString(field.key)} = ${expressionToString(field.value)}`);
-                //             break;
-                //         }
-                //         case 'TableKeyString': {
-                //             s.push(`${expressionToString(field.key)} = ${expressionToString(field.value)}`);
-                //             break;
-                //         }
-                //         case 'TableValue': {
-                //             s.push(expressionToString(field.value));
-                //             break;
-                //         }
-                //     }
-                // }
-                // if(s.length) {
-                // } else {
-                // }
                 break;
             case 'BinaryExpression': {
                 type = 'number';
@@ -3723,31 +3930,11 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                     }
                 }
             }
-            case 'MemberExpression': {
-                // TODO - Build reference link.
-                break;
-            }
-            case 'IndexExpression': {
-                // TODO - Build reference link.
-                break;
-            }
-            case 'CallExpression': {
-                // TODO - Build reference link.
-                break;
-            }
-            case 'TableCallExpression': {
-                // TODO - Build reference link.
-                break;
-            }
-            case 'StringCallExpression': {
-                // TODO - Build reference link.
-                break;
-            }
         }
         // Lastly check for known API for types.
         if (!type) {
             const str = (0, String_2.expressionToString)(expression);
-            type = (0, LuaWizard_1.getKnownType)(str);
+            type = (0, KnownTypes_1.getKnownType)(str);
         }
         return { type, defaultValue };
     }
@@ -3924,7 +4111,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                     assignments: {},
                 };
             }
-            scopeFunc = new Scope_1.Scope(func, scopeToAssign);
+            scopeFunc = new Scope_2.Scope(func, scopeToAssign);
         }
         // Handle body statements.
         for (const statement of expression.body) {
@@ -3956,7 +4143,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
             init: statement,
             name: statement.label.name,
         };
-        new Scope_1.Scope(labelBlock, scope);
+        new Scope_2.Scope(labelBlock, scope);
         return changes;
     }
     exports.discoverLabelStatement = discoverLabelStatement;
@@ -3967,7 +4154,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
             type: 'ScopeBreak',
             init: statement,
         };
-        new Scope_1.Scope(breakBlock, scope);
+        new Scope_2.Scope(breakBlock, scope);
         return changes;
     }
     exports.discoverBreakStatement = discoverBreakStatement;
@@ -3979,7 +4166,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
             init: statement,
             label: statement.label.name,
         };
-        new Scope_1.Scope(gotoBlock, scope);
+        new Scope_2.Scope(gotoBlock, scope);
         return changes;
     }
     exports.discoverGotoStatement = discoverGotoStatement;
@@ -3994,7 +4181,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
             init: statement,
             types: discoverReturnType(statement, bodyScope2),
         };
-        new Scope_1.Scope(returnBlock, scope);
+        new Scope_2.Scope(returnBlock, scope);
         return changes;
     }
     exports.discoverReturnStatement = discoverReturnStatement;
@@ -4019,21 +4206,23 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                 references: {},
                 assignments: {},
             };
+            // (Self-assigning)
+            const lScope = new Scope_2.Scope(variable, scope);
+            // Identify & link scopes for any relationships.
+            discoverRelationships(init, lScope);
             // Attempt to get the type for the next initialized variable.
-            const initTypes = discoverType(init, scope);
+            const initTypes = discoverType(init, lScope);
             if (initTypes.type && types.indexOf(initTypes.type) === -1) {
                 types.push(initTypes.type);
             }
             // Lastly check for known API for types.
             if (!types.length) {
                 const str = (0, String_2.expressionToString)(init);
-                const kType = (0, LuaWizard_1.getKnownType)((0, String_2.expressionToString)(init));
+                const kType = (0, KnownTypes_1.getKnownType)((0, String_2.expressionToString)(init));
                 if (kType)
                     if (types.indexOf(kType) === -1)
                         types.push(kType);
             }
-            // (Self-assigning)
-            const lScope = new Scope_1.Scope(variable, scope);
             changes++;
         }
         return changes;
@@ -4046,7 +4235,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
             type: 'ScopeAssignment',
             init: statement,
         };
-        new Scope_1.Scope(assignmentBlock, scope);
+        new Scope_2.Scope(assignmentBlock, scope);
         return changes;
     }
     exports.discoverAssignmentStatement = discoverAssignmentStatement;
@@ -4070,7 +4259,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                 init: clause,
                 values: {}
             };
-            const scopeIf = new Scope_1.Scope(ifClause, scope);
+            const scopeIf = new Scope_2.Scope(ifClause, scope);
             // Go through body of clause.
             for (const next of clause.body) {
                 discoverStatement(globalInfo, next, scopeIf);
@@ -4087,7 +4276,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
             init: statement,
             values: {}
         };
-        const scopeIf = new Scope_1.Scope(whileBlock, scope);
+        const scopeIf = new Scope_2.Scope(whileBlock, scope);
         // Go through body.
         for (const next of statement.body) {
             discoverStatement(globalInfo, next, scopeIf);
@@ -4103,7 +4292,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
             init: statement,
             values: {}
         };
-        const scopeIf = new Scope_1.Scope(doBlock, scope);
+        const scopeIf = new Scope_2.Scope(doBlock, scope);
         // Go through body.
         for (const next of statement.body) {
             discoverStatement(globalInfo, next, scopeIf);
@@ -4119,7 +4308,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
             init: statement,
             values: {}
         };
-        const scopeIf = new Scope_1.Scope(doBlock, scope);
+        const scopeIf = new Scope_2.Scope(doBlock, scope);
         // Go through body.
         for (const next of statement.body) {
             discoverStatement(globalInfo, next, scopeIf);
@@ -4135,7 +4324,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
             init: statement,
             values: {}
         };
-        const scopeIf = new Scope_1.Scope(doBlock, scope);
+        const scopeIf = new Scope_2.Scope(doBlock, scope);
         // Go through body.
         for (const next of statement.body) {
             discoverStatement(globalInfo, next, scopeIf);
@@ -4151,7 +4340,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
             init: statement,
             values: {}
         };
-        const scopeIf = new Scope_1.Scope(doBlock, scope);
+        const scopeIf = new Scope_2.Scope(doBlock, scope);
         // Go through body.
         for (const next of statement.body) {
             discoverStatement(globalInfo, next, scopeIf);
@@ -4185,7 +4374,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
     }
     exports.discoverFile = discoverFile;
 });
-define("src/asledgehammer/rosetta/lua/wizard/PZ", ["require", "exports", "src/asledgehammer/rosetta/lua/wizard/String", "src/asledgehammer/rosetta/lua/wizard/Scope", "src/asledgehammer/rosetta/lua/wizard/Discover"], function (require, exports, String_3, Scope_2, Discover_1) {
+define("src/asledgehammer/rosetta/lua/wizard/PZ", ["require", "exports", "src/asledgehammer/rosetta/lua/wizard/String", "src/asledgehammer/rosetta/lua/wizard/Scope", "src/asledgehammer/rosetta/lua/wizard/Discover", "src/asledgehammer/rosetta/lua/wizard/KnownTypes"], function (require, exports, String_3, Scope_3, Discover_1, KnownTypes_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.scanFile = exports.getPZClasses = exports.getPZProperty = exports.getPZExecutable = exports.getPZClass = void 0;
@@ -4224,7 +4413,7 @@ define("src/asledgehammer/rosetta/lua/wizard/PZ", ["require", "exports", "src/as
             references: {},
             assignments: {}
         };
-        const scope = new Scope_2.Scope(scopeClass, global);
+        const scope = new Scope_3.Scope(scopeClass, global);
         return {
             name: vars0.name,
             extendz: init0.base.base.name,
@@ -4328,7 +4517,7 @@ define("src/asledgehammer/rosetta/lua/wizard/PZ", ["require", "exports", "src/as
                 assignments: {},
             };
         }
-        const scope = new Scope_2.Scope(scopeFunc, global);
+        const scope = new Scope_3.Scope(scopeFunc, global);
         // Return result information.
         return { clazz, type, name, params, selfAlias, scope };
     }
@@ -4439,7 +4628,7 @@ define("src/asledgehammer/rosetta/lua/wizard/PZ", ["require", "exports", "src/as
                 scopeToAssign = scopeFound;
             }
         }
-        const scope = new Scope_2.Scope(property, scopeToAssign, 0, name);
+        const scope = new Scope_3.Scope(property, scopeToAssign, 0, name);
         return { clazz, name, type, types, defaultValue, scope };
     }
     exports.getPZProperty = getPZProperty;
@@ -4532,11 +4721,12 @@ define("src/asledgehammer/rosetta/lua/wizard/PZ", ["require", "exports", "src/as
     }
     exports.getPZClasses = getPZClasses;
     function scanFile(global, statements) {
+        (0, KnownTypes_2.initKnownTypes)(global.scope);
         getPZClasses(global, statements);
     }
     exports.scanFile = scanFile;
 });
-define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", "luaparse", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/lua/wizard/PZ", "src/asledgehammer/rosetta/lua/wizard/Scope", "src/asledgehammer/rosetta/lua/wizard/Discover"], function (require, exports, ast, RosettaLuaClass_1, RosettaLuaConstructor_2, PZ_1, Scope_3, Discover_2) {
+define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", "luaparse", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/lua/wizard/PZ", "src/asledgehammer/rosetta/lua/wizard/Scope", "src/asledgehammer/rosetta/lua/wizard/Discover"], function (require, exports, ast, RosettaLuaClass_1, RosettaLuaConstructor_2, PZ_1, Scope_4, Discover_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaParser = void 0;
@@ -4870,7 +5060,7 @@ define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", 
                         ////////////////////
                         // LuaWizard Code //
                         ////////////////////
-                        const globalScope = new Scope_3.Scope();
+                        const globalScope = new Scope_4.Scope();
                         const globalInfo = {
                             classes: {},
                             tables: {},

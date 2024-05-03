@@ -1,6 +1,6 @@
 import * as ast from 'luaparse';
 import { ScopeElement } from './LuaWizard';
-import { expressionToString, indexExpressionToString, localStatementToString, memberExpressionToString } from './String';
+import { expressionToString, indexExpressionToString } from './String';
 
 /**
  * **Scope** is a class that stores scope-based information about Lua elements and their relationshop to other elements.
@@ -9,15 +9,6 @@ import { expressionToString, indexExpressionToString, localStatementToString, me
  * @author asledgehammer
  */
 export class Scope {
-
-    /**
-     * @returns the next available scope that has a body.
-     */
-    getBodyScope(): Scope | undefined {
-        if (this.hasBody) return this;
-        if (!this.parent) return undefined;
-        return this.parent.getBodyScope();
-    }
 
     /** If true, the scope has a body that can return values. */
     hasBody: boolean = false;
@@ -31,6 +22,7 @@ export class Scope {
     /** Any child scopes. This is helpful with {@link Scope.resolve resolving scopes}. */
     readonly children: { [path: string]: Scope } = {};
 
+    readonly assignments: Scope[] = [];
     /** All discovered scopes that directly call or assign this scope. */
     readonly references: Scope[] = [];
 
@@ -301,6 +293,8 @@ export class Scope {
             case 'ScopeTable': return e.name;
             case 'ScopeClass': return e.name;
             case 'ScopeConstructor': return 'new';
+            case 'ScopeKnownValue': return e.name;
+            case 'ScopeKnownFunction': return e.name;
         }
     }
 
@@ -366,6 +360,24 @@ export class Scope {
             }
         }
         return changes;
+    }
+
+    /**
+     * @returns the next available scope that has a body.
+     */
+    getBodyScope(): Scope | undefined {
+        if (this.hasBody) return this;
+        if (!this.parent) return undefined;
+        return this.parent.getBodyScope();
+    }
+
+    /**
+     * @returns the next available scope that is a class.
+     */
+    getClassScope(): Scope | undefined {
+        if (this.element && this.element.type === 'ScopeClass') return this;
+        if (!this.parent) return undefined;
+        return this.parent.getClassScope();
     }
 
     sortTypes(): void {
