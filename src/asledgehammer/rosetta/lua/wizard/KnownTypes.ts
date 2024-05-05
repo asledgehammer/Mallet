@@ -2,6 +2,10 @@ import { ScopeKnownFunction, ScopeKnownValue, stripCallParameters } from "./LuaW
 import { Scope } from "./Scope";
 
 export const knownTypes: { [path: string]: string } = {
+
+    'print()': 'void',
+    'setmetatable()': 'table',
+
     'math.min()': 'number',
     'math.max()': 'number',
     'math.floor()': 'number',

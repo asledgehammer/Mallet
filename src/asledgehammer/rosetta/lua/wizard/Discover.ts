@@ -2,7 +2,7 @@ import * as ast from 'luaparse';
 import { Scope } from './Scope';
 import { PZGlobalInfo } from './PZ';
 import { ScopeIfClauseBlock, ScopeConstructor, ScopeFunction, ScopeReturn, ScopeVariable, ScopeWhileBlock, ScopeDoBlock, ScopeRepeatBlock, ScopeForNumericBlock, ScopeForGenericBlock, ScopeGoto, ScopeBreak, ScopeLabel, ScopeAssignment, stripCallParameters } from './LuaWizard';
-import { expressionToString, memberExpressionToString } from './String';
+import { callStatementToString, expressionToString, memberExpressionToString, statementToString } from './String';
 import { getKnownType } from './KnownTypes';
 
 export type DiscoveredType = {
@@ -10,10 +10,15 @@ export type DiscoveredType = {
     defaultValue: string | undefined;
 };
 
-export function discoverRelationships(expression: ast.Expression, scope: Scope): void {
+export function discoverRelationships(expression: ast.Expression, scope: Scope, index: number = 0): void {
     switch (expression.type) {
 
         case 'Identifier': {
+            // So if this is a direct reference, get the variable from the scope and
+            // reference with the parameter variable slot and assignment.
+
+            // console.log(`Identifier: ${expression.name}`);
+
             break;
         }
 
@@ -96,6 +101,12 @@ export function discoverRelationships(expression: ast.Expression, scope: Scope):
 
                 // console.warn(`discoverType() = (scope: ${scope.path}) => ${stripped}`);
             }
+
+            // Handle param(s).
+            for (const arg of expression.arguments) {
+                discoverRelationships(arg, scope);
+            }
+
             break;
         }
         case 'TableCallExpression': {
@@ -245,7 +256,9 @@ export function discoverBodyReturnTypes(body: ast.Statement[], scope: Scope): st
                 case 'BreakStatement':
                 case 'LocalStatement':
                 case 'AssignmentStatement':
-                case 'CallStatement':
+                case 'CallStatement': {
+                    break;
+                }
                 case 'GotoStatement': {
                     break;
                 }
@@ -410,7 +423,7 @@ export function discoverFunctionDeclaration(globalInfo: PZGlobalInfo, expression
 
         // Add our params to the constructor's scope as variable children.
         for (const param of params) {
-            new Scope(param, scope);
+            new Scope(param, scopeFunc);
             func.values[param.name] = param;
         }
     }
@@ -432,6 +445,11 @@ export function discoverFunctionDeclaration(globalInfo: PZGlobalInfo, expression
                     }
                 }
             }
+        }
+
+        // Forward types to Scope.
+        for (const type of returnTypes) {
+            if (scopeFunc.types.indexOf(type) === -1) scopeFunc.types.push(type);
         }
     }
 
@@ -528,10 +546,10 @@ export function discoverLocalStatement(globalInfo: PZGlobalInfo, statement: ast.
         };
 
         // (Self-assigning)
-        const lScope = new Scope(variable, scope);
+        const lScope = new Scope(variable, scope, index, name);
 
         // Identify & link scopes for any relationships.
-        discoverRelationships(init, lScope);
+        discoverRelationships(init, lScope, index);
 
         // Attempt to get the type for the next initialized variable.
         const initTypes = discoverType(init, lScope);
@@ -542,10 +560,14 @@ export function discoverLocalStatement(globalInfo: PZGlobalInfo, statement: ast.
         // Lastly check for known API for types.
         if (!types.length) {
             const str = expressionToString(init);
-            const kType = getKnownType(expressionToString(init));
+            const kType = getKnownType(str);
             if (kType) if (types.indexOf(kType) === -1) types.push(kType);
         }
 
+        // Push up to scope.
+        for (const type of types) {
+            if (lScope.types.indexOf(type) === -1) lScope.types.push(type);
+        }
 
         changes++;
     }
@@ -564,17 +586,38 @@ export function discoverAssignmentStatement(globalInfo: PZGlobalInfo, statement:
 
     new Scope(assignmentBlock, scope);
 
+    for (let index = 0; index < statement.variables.length; index++) {
+        const variable = statement.variables[index];
+        const init = statement.init[index];
+
+
+        console.log(`variable[${index}]: ${expressionToString(variable)} init: ${expressionToString(init)}`);
+
+    }
+
     return changes;
+}
+
+export function discoverCallExpression(globalInfo: PZGlobalInfo, expression: ast.CallExpression, scope: Scope) {
+    // This needs recursion.
+    // For all expressions, use order proper.
+    // If a sub-expression exists, use it. If unresolved type, discard it.
+    // If reference to something, add reference.
+
+    console.log(`Discovering relationships for CallExpression: ${expressionToString(expression)}`);
 }
 
 export function discoverCallStatement(globalInfo: PZGlobalInfo, statement: ast.CallStatement, scope: Scope): number {
     const { scope: __G } = globalInfo;
     const changes = 0;
 
-    // We do nothing here for now.
-    //
+
     // What we can do in the future is take the parameters and try to match up literals or operations using references 
     // to build references to spread types. Otherwise this call is useless for our needs.
+
+    console.log(`Discovering relationships for CallStatement: ${statementToString(statement)}`);
+
+    discoverRelationships(statement.expression, scope);
 
     return changes;
 }

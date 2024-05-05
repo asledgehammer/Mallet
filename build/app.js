@@ -3095,7 +3095,7 @@ define("src/asledgehammer/rosetta/lua/wizard/String", ["require", "exports", "lu
         }
     }
     exports.expressionToString = expressionToString;
-    function statementToString(statement, options) {
+    function statementToString(statement, options = { indent: 0 }) {
         switch (statement.type) {
             case 'LocalStatement': return localStatementToString(statement, options);
             case 'CallStatement': return callStatementToString(statement, options);
@@ -3642,6 +3642,8 @@ define("src/asledgehammer/rosetta/lua/wizard/KnownTypes", ["require", "exports",
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.initKnownTypes = exports.isInitKnownTypes = exports.getKnownType = exports.knownTypes = void 0;
     exports.knownTypes = {
+        'print()': 'void',
+        'setmetatable()': 'table',
         'math.min()': 'number',
         'math.max()': 'number',
         'math.floor()': 'number',
@@ -3730,10 +3732,13 @@ define("src/asledgehammer/rosetta/lua/wizard/KnownTypes", ["require", "exports",
 define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "src/asledgehammer/rosetta/lua/wizard/Scope", "src/asledgehammer/rosetta/lua/wizard/LuaWizard", "src/asledgehammer/rosetta/lua/wizard/String", "src/asledgehammer/rosetta/lua/wizard/KnownTypes"], function (require, exports, Scope_2, LuaWizard_2, String_2, KnownTypes_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.discoverFile = exports.discoverStatement = exports.discoverForGenericStatement = exports.discoverForNumericStatement = exports.discoverRepeatStatement = exports.discoverDoStatement = exports.discoverWhileStatement = exports.discoverIfStatement = exports.discoverCallStatement = exports.discoverAssignmentStatement = exports.discoverLocalStatement = exports.discoverReturnStatement = exports.discoverGotoStatement = exports.discoverBreakStatement = exports.discoverLabelStatement = exports.discoverFunctionDeclaration = exports.discoverReturnType = exports.discoverBodyReturnTypes = exports.discoverType = exports.discoverRelationships = void 0;
-    function discoverRelationships(expression, scope) {
+    exports.discoverFile = exports.discoverStatement = exports.discoverForGenericStatement = exports.discoverForNumericStatement = exports.discoverRepeatStatement = exports.discoverDoStatement = exports.discoverWhileStatement = exports.discoverIfStatement = exports.discoverCallStatement = exports.discoverCallExpression = exports.discoverAssignmentStatement = exports.discoverLocalStatement = exports.discoverReturnStatement = exports.discoverGotoStatement = exports.discoverBreakStatement = exports.discoverLabelStatement = exports.discoverFunctionDeclaration = exports.discoverReturnType = exports.discoverBodyReturnTypes = exports.discoverType = exports.discoverRelationships = void 0;
+    function discoverRelationships(expression, scope, index = 0) {
         switch (expression.type) {
             case 'Identifier': {
+                // So if this is a direct reference, get the variable from the scope and
+                // reference with the parameter variable slot and assignment.
+                // console.log(`Identifier: ${expression.name}`);
                 break;
             }
             case 'BinaryExpression':
@@ -3821,6 +3826,10 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                             if (scope2.types.indexOf(t) === -1)
                                 scope2.types.push(t);
                     // console.warn(`discoverType() = (scope: ${scope.path}) => ${stripped}`);
+                }
+                // Handle param(s).
+                for (const arg of expression.arguments) {
+                    discoverRelationships(arg, scope);
                 }
                 break;
             }
@@ -3953,7 +3962,9 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                     case 'BreakStatement':
                     case 'LocalStatement':
                     case 'AssignmentStatement':
-                    case 'CallStatement':
+                    case 'CallStatement': {
+                        break;
+                    }
                     case 'GotoStatement': {
                         break;
                     }
@@ -4106,7 +4117,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
             scopeFunc = new Scope_2.Scope(func, scopeToAssign);
             // Add our params to the constructor's scope as variable children.
             for (const param of params) {
-                new Scope_2.Scope(param, scope);
+                new Scope_2.Scope(param, scopeFunc);
                 func.values[param.name] = param;
             }
         }
@@ -4127,6 +4138,11 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                         }
                     }
                 }
+            }
+            // Forward types to Scope.
+            for (const type of returnTypes) {
+                if (scopeFunc.types.indexOf(type) === -1)
+                    scopeFunc.types.push(type);
             }
         }
         return 0;
@@ -4202,9 +4218,9 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                 index,
             };
             // (Self-assigning)
-            const lScope = new Scope_2.Scope(variable, scope);
+            const lScope = new Scope_2.Scope(variable, scope, index, name);
             // Identify & link scopes for any relationships.
-            discoverRelationships(init, lScope);
+            discoverRelationships(init, lScope, index);
             // Attempt to get the type for the next initialized variable.
             const initTypes = discoverType(init, lScope);
             if (initTypes.type && types.indexOf(initTypes.type) === -1) {
@@ -4213,10 +4229,15 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
             // Lastly check for known API for types.
             if (!types.length) {
                 const str = (0, String_2.expressionToString)(init);
-                const kType = (0, KnownTypes_1.getKnownType)((0, String_2.expressionToString)(init));
+                const kType = (0, KnownTypes_1.getKnownType)(str);
                 if (kType)
                     if (types.indexOf(kType) === -1)
                         types.push(kType);
+            }
+            // Push up to scope.
+            for (const type of types) {
+                if (lScope.types.indexOf(type) === -1)
+                    lScope.types.push(type);
             }
             changes++;
         }
@@ -4231,16 +4252,29 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
             init: statement,
         };
         new Scope_2.Scope(assignmentBlock, scope);
+        for (let index = 0; index < statement.variables.length; index++) {
+            const variable = statement.variables[index];
+            const init = statement.init[index];
+            console.log(`variable[${index}]: ${(0, String_2.expressionToString)(variable)} init: ${(0, String_2.expressionToString)(init)}`);
+        }
         return changes;
     }
     exports.discoverAssignmentStatement = discoverAssignmentStatement;
+    function discoverCallExpression(globalInfo, expression, scope) {
+        // This needs recursion.
+        // For all expressions, use order proper.
+        // If a sub-expression exists, use it. If unresolved type, discard it.
+        // If reference to something, add reference.
+        console.log(`Discovering relationships for CallExpression: ${(0, String_2.expressionToString)(expression)}`);
+    }
+    exports.discoverCallExpression = discoverCallExpression;
     function discoverCallStatement(globalInfo, statement, scope) {
         const { scope: __G } = globalInfo;
         const changes = 0;
-        // We do nothing here for now.
-        //
         // What we can do in the future is take the parameters and try to match up literals or operations using references 
         // to build references to spread types. Otherwise this call is useless for our needs.
+        console.log(`Discovering relationships for CallStatement: ${(0, String_2.statementToString)(statement)}`);
+        discoverRelationships(statement.expression, scope);
         return changes;
     }
     exports.discoverCallStatement = discoverCallStatement;

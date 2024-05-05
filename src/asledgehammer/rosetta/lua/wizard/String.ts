@@ -420,7 +420,7 @@ export function expressionToString(arg: ast.Expression, options: RenderOptions =
     }
 }
 
-export function statementToString(statement: ast.Statement, options: RenderOptions): string {
+export function statementToString(statement: ast.Statement, options: RenderOptions = { indent: 0 }): string {
     switch (statement.type) {
         case 'LocalStatement': return localStatementToString(statement, options);
         case 'CallStatement': return callStatementToString(statement, options);
