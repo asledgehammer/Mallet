@@ -48,7 +48,7 @@ export class Scope {
     private _nextBreakID: number = 0;
     private _nextGotoID: number = 0;
     private _nextLabelID: number = 0;
-    private _nextReturnID: number = 0;
+    _nextReturnID: number = 0;
     private _nextIfID: number = 0;
     private _nextIfClauseID: number = 0;
     private _nextElseIfClauseID: number = 0;

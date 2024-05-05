@@ -6,6 +6,8 @@ import { RosettaLuaFunction } from '../RosettaLuaFunction';
 import { PZGlobalInfo, scanFile } from './PZ';
 import { Scope } from './Scope';
 import { discoverFile } from './Discover';
+import { scopeChunkToString } from './ScopeString';
+import { chunkToString } from './String';
 // import { discover } from './Old';
 
 // @ts-ignore
@@ -377,10 +379,15 @@ export class LuaParser {
                     scanFile(globalInfo, chunk.body);
                     discoverFile(globalInfo, chunk.body);
 
+                    console.log({ lua: scopeChunkToString(chunk, { indent: 0, scope: globalScope }) });
+                    // console.log({ lua: chunkToString(chunk) });
+
                     console.log("### LuaWizard ###");
                     console.log(globalInfo);
                     console.log(globalInfo.scope.map);
                     console.log(`__G.map.length = ${Object.keys(globalInfo.scope.map).length}`);
+
+
 
                     ////////////////////
 

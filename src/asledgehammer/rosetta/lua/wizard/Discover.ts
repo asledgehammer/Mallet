@@ -2,7 +2,7 @@ import * as ast from 'luaparse';
 import { Scope } from './Scope';
 import { PZGlobalInfo } from './PZ';
 import { ScopeIfClauseBlock, ScopeConstructor, ScopeFunction, ScopeReturn, ScopeVariable, ScopeWhileBlock, ScopeDoBlock, ScopeRepeatBlock, ScopeForNumericBlock, ScopeForGenericBlock, ScopeGoto, ScopeBreak, ScopeLabel, ScopeAssignment, stripCallParameters } from './LuaWizard';
-import { callStatementToString, expressionToString, memberExpressionToString, statementToString } from './String';
+import { expressionToString, memberExpressionToString, statementToString } from './String';
 import { getKnownType } from './KnownTypes';
 
 export type DiscoveredType = {
@@ -17,13 +17,70 @@ export function discoverRelationships(expression: ast.Expression, scope: Scope, 
             // So if this is a direct reference, get the variable from the scope and
             // reference with the parameter variable slot and assignment.
 
-            // console.log(`Identifier: ${expression.name}`);
+            const scopeReference = scope.resolve(expression.name);
+            if (!scopeReference) {
+                console.error(`Cannot find reference Scope for Identifier: ${expression.name} (Scope: ${scope.path})`);
+                break;
+            }
+
+            scope.references.push(scopeReference);
+            scopeReference.assignments.push(scope);
+
+            for (const type of scopeReference.types) {
+                if (scope.types.indexOf(type) === -1) scope.types.push(type);
+            }
 
             break;
         }
 
-        case 'BinaryExpression':
+        case 'BinaryExpression': {
+            let type: string;
+            switch (expression.operator) {
+                // Arethmatic operators
+                case '+':
+                case '-':
+                case '*':
+                case '%':
+                case '^':
+                case '/': // Division
+                case '//': // Floor division
+
+                // Bitwise operators (>= Lua 5.3)
+                case '&':
+                case '|':
+                case '~':
+                case '<<':
+                case '>>': {
+                    type = 'number';
+                    break;
+                }
+
+                case '..': {
+                    type = 'string';
+                    break;
+                }
+
+                // Logical operators
+                case '~=':
+                case '==':
+                case '<':
+                case '<=':
+                case '>':
+                case '>=': {
+                    type = 'boolean';
+                }
+            }
+
+            // console.warn(`${expressionToString(expression)} = ${type}`);
+            
+            // Try to establish types with relationships in embedded expressions for the parameter value(s). 
+            discoverRelationships(expression.left, scope);
+            discoverRelationships(expression.right, scope);
+
+            break;
+        }
         case 'UnaryExpression': {
+            console.log(`UnaryExpression: ${expressionToString(expression)}`);
             switch (expression.operator) {
                 case '~':
                 case 'not': {
@@ -37,7 +94,7 @@ export function discoverRelationships(expression: ast.Expression, scope: Scope, 
             break;
         }
         case 'MemberExpression': {
-            //console.warn(`discoverType(${expression.type}) = (scope: ${scope.path}) => ${expressionToString(expression)}`);
+            console.warn(`discoverType(${expression.type}) = (scope: ${scope.path}) => ${expressionToString(expression)}`);
             // TODO - Build reference link.
             break;
         }
@@ -84,7 +141,50 @@ export function discoverRelationships(expression: ast.Expression, scope: Scope, 
 
                 // console.warn(`discoverType(scope: ${scope.path}) => classScope: ${classScope.path} scope3: ${scope3.path}`);
 
+                const funcDec: ast.FunctionDeclaration = (scope3.element as any).init;
+
+                if(!funcDec) {
+                    console.error(`Function scope doesn't have assigned element of FunctionDeclaration: ${scope3.path}`);
+                    break;
+                }
+
+                // Handle param(s).
+                for (let index = 0; index < funcDec.parameters.length; index++) {
+                    const param = funcDec.parameters[index];
+                    const arg = expression.arguments[index];
+
+                    // Grab param name.
+                    let paramName: string = '';
+                    switch (param.type) {
+                        case 'Identifier': {
+                            paramName = param.name;
+                            break;
+                        }
+                        case 'VarargLiteral': {
+                            paramName = param.value;
+                            break;
+                        }
+                    }
+
+                    const scopeParam = scope3.resolve(paramName);
+                    if (!scopeParam) {
+                        console.error(`Cannot find Scope for parameter: ${paramName} (Scope: ${scope3.path})`);
+                        break;
+                    }
+
+                    // console.warn(scopeParam);
+
+                    // console.log(expressionToString(expression), expressionToString(arg), discoverType(arg, scopeParam));
+                    discoverRelationships(arg, scopeParam);
+                }
+
             } else {
+
+                // We don't assign to global.
+                if (scope.name === '__G') {
+                    return;
+                }
+
                 scope2 = scope.resolve(stripped);
                 if (!scope2) {
                     console.error(`Cannot find reference. (${stripped})`);
@@ -100,11 +200,42 @@ export function discoverRelationships(expression: ast.Expression, scope: Scope, 
                 if (scope.types) for (const t of scope.types) if (scope2.types.indexOf(t) === -1) scope2.types.push(t);
 
                 // console.warn(`discoverType() = (scope: ${scope.path}) => ${stripped}`);
-            }
 
-            // Handle param(s).
-            for (const arg of expression.arguments) {
-                discoverRelationships(arg, scope);
+                const funcDec: ast.FunctionDeclaration = (scope2.element as any).init;
+                if(!funcDec) {
+                    console.error(`Function scope doesn't have assigned element of FunctionDeclaration: ${scope2.path}`);
+                    break;
+                }
+
+                // Handle param(s).
+                for (let index = 0; index < funcDec.parameters.length; index++) {
+                    const param = funcDec.parameters[index];
+                    const arg = expression.arguments[index];
+
+                    // Grab param name.
+                    let paramName: string = '';
+                    switch (param.type) {
+                        case 'Identifier': {
+                            paramName = param.name;
+                            break;
+                        }
+                        case 'VarargLiteral': {
+                            paramName = param.value;
+                            break;
+                        }
+                    }
+
+                    const scopeParam = scope2.resolve(paramName);
+                    if (!scopeParam) {
+                        console.error(`Cannot find Scope for parameter: ${paramName} (Scope: ${scope2.path})`);
+                        break;
+                    }
+
+                    // console.warn(scopeParam);
+
+                    // console.log(expressionToString(expression), expressionToString(arg), discoverType(arg, scopeParam));
+                    discoverRelationships(arg, scopeParam);
+                }
             }
 
             break;
@@ -586,6 +717,7 @@ export function discoverAssignmentStatement(globalInfo: PZGlobalInfo, statement:
 
     new Scope(assignmentBlock, scope);
 
+    // (Tuple support)
     for (let index = 0; index < statement.variables.length; index++) {
         const variable = statement.variables[index];
         const init = statement.init[index];
@@ -759,6 +891,7 @@ export function discoverStatement(globalInfo: PZGlobalInfo, statement: ast.State
 }
 
 export function discoverFile(globalInfo: PZGlobalInfo, statements: ast.Statement[]) {
+    console.log(statements);
     for (const statement of statements) {
         discoverStatement(globalInfo, statement, globalInfo.scope);
     }

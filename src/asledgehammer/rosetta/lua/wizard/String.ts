@@ -124,7 +124,11 @@ export function localStatementToString(statement: ast.LocalStatement, options: R
     const inits: string[] = [];
     for (const i of statement.init) inits.push(expressionToString(i));
 
-    return `${i}local ${vars.join(', ')} = ${inits.join(', ')}`;
+    let s = '';
+
+    // Main line.
+    s += `${i}local ${vars.join(', ')} = ${inits.join(', ')}`;
+    return s;
 }
 
 export function varargLiteralToString(param: ast.VarargLiteral, options: RenderOptions = { indent: 0 }): string {
@@ -465,7 +469,10 @@ export function chunkToString(chunk: ast.Chunk, options: RenderOptions = { inden
             case 'WhileStatement':
             case 'DoStatement':
             case 'RepeatStatement':
-            case 'LocalStatement':
+            case 'LocalStatement': {
+                s += `${statementToString(currStatement, options)}\n`;
+                break;
+            }
 
             case 'CallStatement': {
                 const callStatement = currStatement as ast.CallStatement;

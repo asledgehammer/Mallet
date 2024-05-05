@@ -2800,7 +2800,10 @@ define("src/asledgehammer/rosetta/lua/wizard/String", ["require", "exports", "lu
         const inits = [];
         for (const i of statement.init)
             inits.push(expressionToString(i));
-        return `${i}local ${vars.join(', ')} = ${inits.join(', ')}`;
+        let s = '';
+        // Main line.
+        s += `${i}local ${vars.join(', ')} = ${inits.join(', ')}`;
+        return s;
     }
     exports.localStatementToString = localStatementToString;
     function varargLiteralToString(param, options = { indent: 0 }) {
@@ -3137,7 +3140,10 @@ define("src/asledgehammer/rosetta/lua/wizard/String", ["require", "exports", "lu
                 case 'WhileStatement':
                 case 'DoStatement':
                 case 'RepeatStatement':
-                case 'LocalStatement':
+                case 'LocalStatement': {
+                    s += `${statementToString(currStatement, options)}\n`;
+                    break;
+                }
                 case 'CallStatement': {
                     const callStatement = currStatement;
                     s += `${callStatementToString(callStatement, options)};\n`;
@@ -3643,6 +3649,7 @@ define("src/asledgehammer/rosetta/lua/wizard/KnownTypes", ["require", "exports",
     exports.initKnownTypes = exports.isInitKnownTypes = exports.getKnownType = exports.knownTypes = void 0;
     exports.knownTypes = {
         'print()': 'void',
+        'tostring()': 'string',
         'setmetatable()': 'table',
         'math.min()': 'number',
         'math.max()': 'number',
@@ -3738,11 +3745,61 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
             case 'Identifier': {
                 // So if this is a direct reference, get the variable from the scope and
                 // reference with the parameter variable slot and assignment.
-                // console.log(`Identifier: ${expression.name}`);
+                const scopeReference = scope.resolve(expression.name);
+                if (!scopeReference) {
+                    console.error(`Cannot find reference Scope for Identifier: ${expression.name} (Scope: ${scope.path})`);
+                    break;
+                }
+                scope.references.push(scopeReference);
+                scopeReference.assignments.push(scope);
+                for (const type of scopeReference.types) {
+                    if (scope.types.indexOf(type) === -1)
+                        scope.types.push(type);
+                }
                 break;
             }
-            case 'BinaryExpression':
+            case 'BinaryExpression': {
+                let type;
+                switch (expression.operator) {
+                    // Arethmatic operators
+                    case '+':
+                    case '-':
+                    case '*':
+                    case '%':
+                    case '^':
+                    case '/': // Division
+                    case '//': // Floor division
+                    // Bitwise operators (>= Lua 5.3)
+                    case '&':
+                    case '|':
+                    case '~':
+                    case '<<':
+                    case '>>': {
+                        type = 'number';
+                        break;
+                    }
+                    case '..': {
+                        type = 'string';
+                        break;
+                    }
+                    // Logical operators
+                    case '~=':
+                    case '==':
+                    case '<':
+                    case '<=':
+                    case '>':
+                    case '>=': {
+                        type = 'boolean';
+                    }
+                }
+                // console.warn(`${expressionToString(expression)} = ${type}`);
+                // Try to establish types with relationships in embedded expressions for the parameter value(s). 
+                discoverRelationships(expression.left, scope);
+                discoverRelationships(expression.right, scope);
+                break;
+            }
             case 'UnaryExpression': {
+                console.log(`UnaryExpression: ${(0, String_2.expressionToString)(expression)}`);
                 switch (expression.operator) {
                     case '~':
                     case 'not': {
@@ -3756,7 +3813,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                 break;
             }
             case 'MemberExpression': {
-                //console.warn(`discoverType(${expression.type}) = (scope: ${scope.path}) => ${expressionToString(expression)}`);
+                console.warn(`discoverType(${expression.type}) = (scope: ${scope.path}) => ${(0, String_2.expressionToString)(expression)}`);
                 // TODO - Build reference link.
                 break;
             }
@@ -3804,8 +3861,42 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                             if (scope3.types.indexOf(t) === -1)
                                 scope3.types.push(t);
                     // console.warn(`discoverType(scope: ${scope.path}) => classScope: ${classScope.path} scope3: ${scope3.path}`);
+                    const funcDec = scope3.element.init;
+                    if (!funcDec) {
+                        console.error(`Function scope doesn't have assigned element of FunctionDeclaration: ${scope3.path}`);
+                        break;
+                    }
+                    // Handle param(s).
+                    for (let index = 0; index < funcDec.parameters.length; index++) {
+                        const param = funcDec.parameters[index];
+                        const arg = expression.arguments[index];
+                        // Grab param name.
+                        let paramName = '';
+                        switch (param.type) {
+                            case 'Identifier': {
+                                paramName = param.name;
+                                break;
+                            }
+                            case 'VarargLiteral': {
+                                paramName = param.value;
+                                break;
+                            }
+                        }
+                        const scopeParam = scope3.resolve(paramName);
+                        if (!scopeParam) {
+                            console.error(`Cannot find Scope for parameter: ${paramName} (Scope: ${scope3.path})`);
+                            break;
+                        }
+                        // console.warn(scopeParam);
+                        // console.log(expressionToString(expression), expressionToString(arg), discoverType(arg, scopeParam));
+                        discoverRelationships(arg, scopeParam);
+                    }
                 }
                 else {
+                    // We don't assign to global.
+                    if (scope.name === '__G') {
+                        return;
+                    }
                     scope2 = scope.resolve(stripped);
                     if (!scope2) {
                         console.error(`Cannot find reference. (${stripped})`);
@@ -3826,10 +3917,36 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                             if (scope2.types.indexOf(t) === -1)
                                 scope2.types.push(t);
                     // console.warn(`discoverType() = (scope: ${scope.path}) => ${stripped}`);
-                }
-                // Handle param(s).
-                for (const arg of expression.arguments) {
-                    discoverRelationships(arg, scope);
+                    const funcDec = scope2.element.init;
+                    if (!funcDec) {
+                        console.error(`Function scope doesn't have assigned element of FunctionDeclaration: ${scope2.path}`);
+                        break;
+                    }
+                    // Handle param(s).
+                    for (let index = 0; index < funcDec.parameters.length; index++) {
+                        const param = funcDec.parameters[index];
+                        const arg = expression.arguments[index];
+                        // Grab param name.
+                        let paramName = '';
+                        switch (param.type) {
+                            case 'Identifier': {
+                                paramName = param.name;
+                                break;
+                            }
+                            case 'VarargLiteral': {
+                                paramName = param.value;
+                                break;
+                            }
+                        }
+                        const scopeParam = scope2.resolve(paramName);
+                        if (!scopeParam) {
+                            console.error(`Cannot find Scope for parameter: ${paramName} (Scope: ${scope2.path})`);
+                            break;
+                        }
+                        // console.warn(scopeParam);
+                        // console.log(expressionToString(expression), expressionToString(arg), discoverType(arg, scopeParam));
+                        discoverRelationships(arg, scopeParam);
+                    }
                 }
                 break;
             }
@@ -4252,6 +4369,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
             init: statement,
         };
         new Scope_2.Scope(assignmentBlock, scope);
+        // (Tuple support)
         for (let index = 0; index < statement.variables.length; index++) {
             const variable = statement.variables[index];
             const init = statement.init[index];
@@ -4397,6 +4515,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
     }
     exports.discoverStatement = discoverStatement;
     function discoverFile(globalInfo, statements) {
+        console.log(statements);
         for (const statement of statements) {
             discoverStatement(globalInfo, statement, globalInfo.scope);
         }
@@ -4763,7 +4882,563 @@ define("src/asledgehammer/rosetta/lua/wizard/PZ", ["require", "exports", "src/as
     }
     exports.scanFile = scanFile;
 });
-define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", "luaparse", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/lua/wizard/PZ", "src/asledgehammer/rosetta/lua/wizard/Scope", "src/asledgehammer/rosetta/lua/wizard/Discover"], function (require, exports, ast, RosettaLuaClass_1, RosettaLuaConstructor_2, PZ_1, Scope_4, Discover_2) {
+define("src/asledgehammer/rosetta/lua/wizard/ScopeString", ["require", "exports", "luaparse", "src/asledgehammer/rosetta/lua/wizard/String"], function (require, exports, ast, String_4) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.scopeChunkToString = exports.scopeStatementToString = exports.scopeExpressionToString = exports.scopeCallStatementToString = exports.scopeAssignmentStatementToString = exports.scopeTableConstructorExpressionToString = exports.scopeIfStatementToString = exports.scopeElseClauseToString = exports.scopeElseIfClauseToString = exports.scopeIfClauseToString = exports.scopeForGenericStatementToString = exports.scopeForNumericStatementToString = exports.scopeRepeatStatementToString = exports.scopeDoStatementToString = exports.scopeWhileStatementToString = exports.scopeFunctionDeclarationToString = exports.scopeBodyToString = exports.scopeParametersToString = exports.scopeVarargLiteralToString = exports.scopeLocalStatementToString = exports.scopeBreakStatementToString = exports.scopeLabelStatementToString = exports.scopeGotoStatementToString = exports.scopeReturnStatementToString = exports.scopeCallExpressionToString = exports.scopeMemberExpressionToString = exports.scopeArgsToString = exports.scopeBinaryExpressionToString = exports.scopeTableCallExpressionToString = exports.scopeStringCallExpressionToString = exports.scopeUnaryExpressionToString = exports.scopeLogicalExpressionToString = exports.scopeIndexExpressionToString = exports.scopeIdentifierToString = exports.scopeLiteralToString = exports.indent0 = exports.indent = void 0;
+    // @ts-ignore
+    const luaparse = ast.default;
+    ;
+    function indent(options) {
+        return Object.assign(Object.assign({}, options), { indent: options.indent + 1 });
+    }
+    exports.indent = indent;
+    function indent0(options) {
+        return Object.assign(Object.assign({}, options), { indent: 0 });
+    }
+    exports.indent0 = indent0;
+    function scopeLiteralToString(literal, options) {
+        const i = ' '.repeat(options.indent * 4);
+        switch (literal.type) {
+            // Simple raw-calls.
+            case 'BooleanLiteral':
+            case 'NumericLiteral':
+            case 'NilLiteral': return `${i}${literal.raw}`;
+            case 'StringLiteral': return (options.raw) ? `${i}${literal.value}` : `${i}${literal.raw}`;
+            case 'VarargLiteral': {
+                // TODO: Check validity.
+                console.warn('VarargLiteral: ', literal);
+                return `${i}${literal.raw}`;
+            }
+        }
+    }
+    exports.scopeLiteralToString = scopeLiteralToString;
+    function scopeIdentifierToString(identifier, options) {
+        const i = ' '.repeat(options.indent * 4);
+        return `${i}${identifier.name}`;
+    }
+    exports.scopeIdentifierToString = scopeIdentifierToString;
+    function scopeIndexExpressionToString(expression, options) {
+        return `${scopeExpressionToString(expression.base, indent0(options))}[${scopeExpressionToString(expression.index, indent0(options))}]`;
+    }
+    exports.scopeIndexExpressionToString = scopeIndexExpressionToString;
+    function scopeLogicalExpressionToString(expression, options) {
+        const i = ' '.repeat(options.indent * 4);
+        return `${i}${scopeExpressionToString(expression.left, indent0(options))} ${expression.operator} ${scopeExpressionToString(expression.right, indent0(options))}`;
+    }
+    exports.scopeLogicalExpressionToString = scopeLogicalExpressionToString;
+    function scopeUnaryExpressionToString(expression, options) {
+        const i = ' '.repeat(options.indent * 4);
+        return `${i}${expression.operator} ${scopeExpressionToString(expression.argument, indent0(options))}`;
+    }
+    exports.scopeUnaryExpressionToString = scopeUnaryExpressionToString;
+    function scopeStringCallExpressionToString(expression, options) {
+        const i = ' '.repeat(options.indent * 4);
+        const base = scopeExpressionToString(expression.base, indent0(options));
+        const arg = scopeExpressionToString(expression.argument, indent0(options));
+        console.log(expression);
+        return `${i}${base} ${arg}`;
+    }
+    exports.scopeStringCallExpressionToString = scopeStringCallExpressionToString;
+    function scopeTableCallExpressionToString(expression, options) {
+        const i = ' '.repeat(options.indent * 4);
+        console.log(expression);
+        throw new Error('Not implemented.');
+    }
+    exports.scopeTableCallExpressionToString = scopeTableCallExpressionToString;
+    function scopeBinaryExpressionToString(expression, options) {
+        const i = ' '.repeat(options.indent * 4);
+        return `${i}${scopeExpressionToString(expression.left, indent0(options))} ${expression.operator} ${scopeExpressionToString(expression.right, indent0(options))}`;
+    }
+    exports.scopeBinaryExpressionToString = scopeBinaryExpressionToString;
+    function scopeArgsToString(args2, options) {
+        const i = ' '.repeat(options.indent * 4);
+        const args = [];
+        for (const arg of args2)
+            args.push(scopeExpressionToString(arg, indent0(options)));
+        return `${i}${args.join(', ')}`;
+    }
+    exports.scopeArgsToString = scopeArgsToString;
+    function scopeMemberExpressionToString(expression, options) {
+        const i = ' '.repeat(options.indent * 4);
+        return `${i}${scopeExpressionToString(expression.base, indent0(options))}${expression.indexer}${expression.identifier.name}`;
+    }
+    exports.scopeMemberExpressionToString = scopeMemberExpressionToString;
+    function scopeCallExpressionToString(expression, options) {
+        const i = ' '.repeat(options.indent * 4);
+        return `${i}${scopeExpressionToString(expression.base, indent0(options))}(${scopeArgsToString(expression.arguments, indent0(options))})`;
+    }
+    exports.scopeCallExpressionToString = scopeCallExpressionToString;
+    function scopeReturnStatementToString(statement, options) {
+        const i = ' '.repeat(options.indent * 4);
+        const args = [];
+        for (const arg of statement.arguments)
+            args.push(scopeExpressionToString(arg, indent0(options)));
+        return `${i}return${args.length ? ` ${args.join(', ')}` : ''}`;
+    }
+    exports.scopeReturnStatementToString = scopeReturnStatementToString;
+    function scopeGotoStatementToString(statement, options) {
+        const i = ' '.repeat(options.indent * 4);
+        return `${i}goto $${statement.label}`;
+    }
+    exports.scopeGotoStatementToString = scopeGotoStatementToString;
+    function scopeLabelStatementToString(statement, options) {
+        const i = ' '.repeat(options.indent * 4);
+        return `${i}::${statement.label}::`;
+    }
+    exports.scopeLabelStatementToString = scopeLabelStatementToString;
+    function scopeBreakStatementToString(statement, options) {
+        const i = ' '.repeat(options.indent * 4);
+        return `${i}break`;
+    }
+    exports.scopeBreakStatementToString = scopeBreakStatementToString;
+    function scopeLocalStatementToString(statement, options) {
+        const i = ' '.repeat(options.indent * 4);
+        // The local name(s).
+        const vars = [];
+        for (const _var_ of statement.variables)
+            vars.push(_var_.name);
+        // The value(s) to set.
+        const inits = [];
+        for (const i of statement.init)
+            inits.push((0, String_4.expressionToString)(i));
+        let s = '';
+        // Grab scopes.
+        const scopes = [];
+        for (let index = 0; index < vars.length; index++) {
+            const varName = vars[index];
+            const scopeVar = options.scope.resolve(varName);
+            scopes.push(scopeVar);
+        }
+        s += '--- @type ';
+        for (const scopeVar of scopes) {
+            if (scopeVar) {
+                if (scopeVar.types.length) {
+                    s += `${scopeVar.types.join('|')}, `;
+                }
+                else {
+                    s += 'any, ';
+                }
+            }
+            else {
+                s += 'any, ';
+            }
+        }
+        if (s[s.length - 2] === ',' && s[s.length - 1] === ' ')
+            s = s.substring(0, s.length - 2);
+        s += '\n';
+        // Main line.
+        s += `${i}local ${vars.join(', ')} = ${inits.join(', ')}`;
+        console.warn(s);
+        return s;
+    }
+    exports.scopeLocalStatementToString = scopeLocalStatementToString;
+    function scopeVarargLiteralToString(param, options) {
+        const i = ' '.repeat(options.indent * 4);
+        return `${i}${param.raw}`;
+    }
+    exports.scopeVarargLiteralToString = scopeVarargLiteralToString;
+    function scopeParametersToString(params, options) {
+        const ps = [];
+        for (const param of params) {
+            switch (param.type) {
+                case 'Identifier': {
+                    ps.push(scopeIdentifierToString(param, options));
+                    break;
+                }
+                case 'VarargLiteral': {
+                    ps.push(scopeVarargLiteralToString(param, options));
+                    break;
+                }
+            }
+        }
+        return ps.join(', ');
+    }
+    exports.scopeParametersToString = scopeParametersToString;
+    function scopeBodyToString(body, options) {
+        let s = '';
+        for (let index = 0; index < body.length; index++) {
+            const prevStatement = body[index - 1];
+            const currStatement = body[index];
+            const nextStatement = body[index + 1];
+            // For cleaner separation of code.
+            let endingSemicolon = true;
+            let leadingNewline = false;
+            let endingNewline = false;
+            switch (currStatement.type) {
+                case 'FunctionDeclaration': {
+                    endingSemicolon = false;
+                    // No blank spaces for the first line of a body.
+                    if (prevStatement)
+                        leadingNewline = true;
+                    // No blank spaces at the end of a body.
+                    if (nextStatement)
+                        endingNewline = true;
+                }
+                case 'IfStatement':
+                case 'ForGenericStatement':
+                case 'ForNumericStatement':
+                case 'WhileStatement':
+                case 'DoStatement':
+                case 'RepeatStatement': {
+                    endingSemicolon = false;
+                    // No blank spaces at the end of a body.
+                    if (nextStatement)
+                        endingNewline = true;
+                    break;
+                }
+                case 'BreakStatement':
+                case 'LabelStatement': {
+                    endingSemicolon = false;
+                    break;
+                }
+            }
+            s += `${leadingNewline ? '\n' : ''}${scopeStatementToString(currStatement, options)}${endingSemicolon ? ';' : ''}\n${endingNewline ? '\n' : ''}`;
+        }
+        // Remove the last newline. (If present)
+        if (s.length)
+            s = s.substring(0, s.length - 1);
+        return s;
+    }
+    exports.scopeBodyToString = scopeBodyToString;
+    /**
+     * Renders a Lua function declaration as a string.
+     *
+     * @param func The function to render.
+     * @param options Passed options on indenting the code.
+     * @returns The function rendered as a string.
+     */
+    function scopeFunctionDeclarationToString(func, options) {
+        const i = ' '.repeat(options.indent * 4);
+        const options2 = indent(options);
+        /* (If exists, generate the name of the function) */
+        let name = '';
+        if (func.identifier) {
+            switch (func.identifier.type) {
+                case 'Identifier': {
+                    name = func.identifier.name;
+                    break;
+                }
+                case 'MemberExpression': {
+                    name = scopeMemberExpressionToString(func.identifier, indent0(options));
+                    break;
+                }
+            }
+        }
+        const scopeFunc = options.scope.resolve(name);
+        let s = '';
+        if (scopeFunc) {
+            const elemFunc = scopeFunc.element;
+            if (elemFunc) {
+                s += '--- (Auto-Generated)\n';
+                // Generate params documentation.
+                if (func.parameters.length) {
+                    s += '---\n';
+                    for (const param of func.parameters) {
+                        let paramName = '';
+                        switch (param.type) {
+                            case 'Identifier': {
+                                paramName = param.name;
+                                break;
+                            }
+                            case 'VarargLiteral': {
+                                paramName = param.value;
+                                break;
+                            }
+                        }
+                        const scopeParam = scopeFunc.resolve(paramName);
+                        if (scopeParam) {
+                            s += `--- @param ${paramName} ${scopeParam.types.length ? scopeParam.types.join('|') : 'any'}\n`;
+                        }
+                        else {
+                            s += `--- @param ${paramName} any\n`;
+                        }
+                    }
+                }
+                // Generate returns documentation.
+                if (scopeFunc.types.length) {
+                    s += `---\n--- @returns ${scopeFunc.types.join('|')}\n`;
+                }
+                else if (scopeFunc._nextReturnID === 0) {
+                    s += '---\n--- @returns void\n';
+                }
+                else {
+                    s += '---\n--- @returns any\n';
+                }
+            }
+        }
+        /* (Build the function's declaration) */
+        s += `${i}${func.isLocal ? 'local ' : ''}function${name && name.length ? ` ${name}` : ''}(${scopeParametersToString(func.parameters, indent0(options))})`;
+        // Only render multi-line functions if its body is populated.
+        if (func.body.length) {
+            s += '\n';
+            s += `${scopeBodyToString(func.body, options2)}\n`;
+            s += `${i}end`;
+        }
+        else {
+            s += ' end';
+        }
+        return s;
+    }
+    exports.scopeFunctionDeclarationToString = scopeFunctionDeclarationToString;
+    function scopeWhileStatementToString(statement, options) {
+        const i = ' '.repeat(options.indent * 4);
+        const options2 = indent(options);
+        let s = `${i}while ${scopeExpressionToString(statement.condition, indent0(options))} do\n`;
+        s += `${scopeBodyToString(statement.body, options2)}\n`;
+        s += `${i}end`;
+        return s;
+    }
+    exports.scopeWhileStatementToString = scopeWhileStatementToString;
+    function scopeDoStatementToString(statement, options) {
+        const i = ' '.repeat(options.indent * 4);
+        const options2 = indent(options);
+        let s = `${i}do\n`;
+        s += `${scopeBodyToString(statement.body, indent0(options)), options2}\n`;
+        s += `${i}end`;
+        return s;
+    }
+    exports.scopeDoStatementToString = scopeDoStatementToString;
+    function scopeRepeatStatementToString(statement, options) {
+        const i = ' '.repeat(options.indent * 4);
+        const options2 = indent(options);
+        let s = `${i}repeat\n`;
+        s += `${scopeBodyToString(statement.body, options2)}\n`;
+        s += `${i}until ${statement.condition};`;
+        return s;
+    }
+    exports.scopeRepeatStatementToString = scopeRepeatStatementToString;
+    function scopeForNumericStatementToString(statement, options) {
+        const i = ' '.repeat(options.indent * 4);
+        const options2 = indent(options);
+        let s = `${i}for ${scopeExpressionToString(statement.start, indent0(options))}, ${scopeExpressionToString(statement.end, indent0(options))}`;
+        if (statement.step)
+            s += `, ${scopeExpressionToString(statement.step, indent0(options))}`; // (Optional 3rd step argument)
+        s += `\n${scopeBodyToString(statement.body, options2)}\n`;
+        s += `${i}end`;
+        return s;
+    }
+    exports.scopeForNumericStatementToString = scopeForNumericStatementToString;
+    function scopeForGenericStatementToString(statement, options) {
+        const i = ' '.repeat(options.indent * 4);
+        const options2 = indent(options);
+        const vars = [];
+        for (const variable of statement.variables)
+            vars.push(variable.name);
+        const iterate = [];
+        for (const iterator of statement.iterators)
+            iterate.push(scopeExpressionToString(iterator, indent0(options)));
+        let s = `${i}for ${vars.join(', ')} in ${iterate.join(', ')} do\n`;
+        s += `${scopeBodyToString(statement.body, options2)}\n`;
+        s += 'end';
+        return s;
+    }
+    exports.scopeForGenericStatementToString = scopeForGenericStatementToString;
+    function scopeIfClauseToString(clause, isLastClause, options) {
+        const i = ' '.repeat(options.indent * 4);
+        const options2 = indent(options);
+        let s = `${i}if ${scopeExpressionToString(clause.condition, indent0(options))} then\n`;
+        s += `${scopeBodyToString(clause.body, options2)}\n`;
+        if (isLastClause)
+            s += `${i}end`;
+        return s;
+    }
+    exports.scopeIfClauseToString = scopeIfClauseToString;
+    function scopeElseIfClauseToString(clause, isLastClause, options) {
+        const i = ' '.repeat(options.indent * 4);
+        const options2 = indent(options);
+        let s = `${i}elseif ${scopeExpressionToString(clause.condition, indent0(options))} then\n`;
+        s += `${scopeBodyToString(clause.body, options2)}\n`;
+        if (isLastClause)
+            s += `${i}end`;
+        return s;
+    }
+    exports.scopeElseIfClauseToString = scopeElseIfClauseToString;
+    function scopeElseClauseToString(clause, options) {
+        const i = ' '.repeat(options.indent * 4);
+        const options2 = indent(options);
+        let s = `${i}else\n`;
+        s += `${scopeBodyToString(clause.body, options2)}\n`;
+        s += `${i}end`;
+        return s;
+    }
+    exports.scopeElseClauseToString = scopeElseClauseToString;
+    function scopeIfStatementToString(statement, options) {
+        let s = '';
+        for (let index = 0; index < statement.clauses.length; index++) {
+            const isLastClause = index === statement.clauses.length - 1;
+            const clause = statement.clauses[index];
+            switch (clause.type) {
+                case 'IfClause': {
+                    s += `${scopeIfClauseToString(clause, isLastClause, options)}`;
+                    break;
+                }
+                case 'ElseifClause': {
+                    s += `${scopeElseIfClauseToString(clause, isLastClause, options)}`;
+                    break;
+                }
+                case 'ElseClause': {
+                    s += `${scopeElseClauseToString(clause, options)}`;
+                    break;
+                }
+            }
+        }
+        return s;
+    }
+    exports.scopeIfStatementToString = scopeIfStatementToString;
+    function scopeTableConstructorExpressionToString(expression, options) {
+        const i = ' '.repeat(options.indent * 4);
+        // Empty table.
+        if (!expression.fields.length)
+            return `${i}{}`;
+        const entries = [];
+        for (const field of expression.fields) {
+            switch (field.type) {
+                case 'TableKey': {
+                    entries.push(`${scopeExpressionToString(field.key, indent0(options))} = ${scopeExpressionToString(field.value, indent0(options))}`);
+                    break;
+                }
+                case 'TableKeyString': {
+                    entries.push(`${field.key.name} = ${scopeExpressionToString(field.value, indent0(options))}`);
+                    break;
+                }
+                case 'TableValue': {
+                    entries.push(scopeExpressionToString(field.value, indent0(options)));
+                    break;
+                }
+            }
+        }
+        return `${i}{ ${entries.join(', ')} }`;
+    }
+    exports.scopeTableConstructorExpressionToString = scopeTableConstructorExpressionToString;
+    function scopeAssignmentStatementToString(statement, options) {
+        const i = ' '.repeat(options.indent * 4);
+        // The local name(s).
+        const vars = [];
+        for (const _var_ of statement.variables) {
+            switch (_var_.type) {
+                case 'Identifier': {
+                    vars.push(scopeIdentifierToString(_var_, indent0(options)));
+                    break;
+                }
+                case 'IndexExpression': {
+                    vars.push(scopeIndexExpressionToString(_var_, indent0(options)));
+                    break;
+                }
+                case 'MemberExpression': {
+                    vars.push(scopeMemberExpressionToString(_var_, indent0(options)));
+                    break;
+                }
+            }
+        }
+        // The value(s) to set.
+        const inits = [];
+        for (const init of statement.init)
+            inits.push(scopeExpressionToString(init, indent0(options)));
+        return `${i}${vars.join(', ')} = ${inits.join(', ')}`;
+    }
+    exports.scopeAssignmentStatementToString = scopeAssignmentStatementToString;
+    function scopeCallStatementToString(statement, options) {
+        console.log(statement);
+        switch (statement.expression.type) {
+            case 'CallExpression': return scopeCallExpressionToString(statement.expression, options);
+            case 'StringCallExpression': return scopeStringCallExpressionToString(statement.expression, options);
+            case 'TableCallExpression': return scopeTableCallExpressionToString(statement.expression, options);
+        }
+    }
+    exports.scopeCallStatementToString = scopeCallStatementToString;
+    function scopeExpressionToString(arg, options) {
+        switch (arg.type) {
+            case 'BooleanLiteral': return scopeLiteralToString(arg, options);
+            case 'NumericLiteral': return scopeLiteralToString(arg, options);
+            case 'NilLiteral': return scopeLiteralToString(arg, options);
+            case 'StringLiteral': return scopeLiteralToString(arg, options);
+            case 'VarargLiteral': return scopeLiteralToString(arg, options);
+            case 'Identifier': return scopeIdentifierToString(arg, options);
+            case 'BinaryExpression': return scopeBinaryExpressionToString(arg, options);
+            case 'CallExpression': return scopeCallExpressionToString(arg, options);
+            case 'FunctionDeclaration': return scopeFunctionDeclarationToString(arg, options);
+            // We.. might need to push 'options' instead. Not sure yet..
+            case 'MemberExpression': return scopeMemberExpressionToString(arg, indent0(options));
+            case 'IndexExpression': return scopeIndexExpressionToString(arg, indent0(options));
+            case 'TableConstructorExpression': return scopeTableConstructorExpressionToString(arg, indent0(options));
+            case 'LogicalExpression': return scopeLogicalExpressionToString(arg, indent0(options));
+            case 'UnaryExpression': return scopeUnaryExpressionToString(arg, indent0(options));
+            case 'StringCallExpression': return scopeStringCallExpressionToString(arg, indent0(options));
+            case 'TableCallExpression': return scopeTableCallExpressionToString(arg, indent0(options));
+        }
+    }
+    exports.scopeExpressionToString = scopeExpressionToString;
+    function scopeStatementToString(statement, options) {
+        switch (statement.type) {
+            case 'LocalStatement': return scopeLocalStatementToString(statement, options);
+            case 'CallStatement': return scopeCallStatementToString(statement, options);
+            case 'AssignmentStatement': return scopeAssignmentStatementToString(statement, options);
+            case 'FunctionDeclaration': return scopeFunctionDeclarationToString(statement, options);
+            case 'ReturnStatement': return scopeReturnStatementToString(statement, options);
+            case 'IfStatement': return scopeIfStatementToString(statement, options);
+            case 'ForNumericStatement': return scopeForNumericStatementToString(statement, options);
+            case 'ForGenericStatement': return scopeForGenericStatementToString(statement, options);
+            case 'BreakStatement': return scopeBreakStatementToString(statement, options);
+            case 'WhileStatement': return scopeWhileStatementToString(statement, options);
+            case 'RepeatStatement': return scopeRepeatStatementToString(statement, options);
+            case 'DoStatement': return scopeDoStatementToString(statement, options);
+            case 'LabelStatement': return scopeLabelStatementToString(statement, options);
+            case 'GotoStatement': return scopeGotoStatementToString(statement, options);
+        }
+    }
+    exports.scopeStatementToString = scopeStatementToString;
+    function scopeChunkToString(chunk, options) {
+        let s = '';
+        console.log({ chunk });
+        for (let index = 0; index < chunk.body.length; index++) {
+            const currStatement = chunk.body[index + 0];
+            const nextStatement = chunk.body[index + 1];
+            switch (currStatement.type) {
+                case 'LocalStatement': {
+                    s += `${scopeLocalStatementToString(currStatement, options)};\n`;
+                    break;
+                }
+                case 'FunctionDeclaration': {
+                    s += `\n${scopeStatementToString(currStatement, options)}\n\n`;
+                    break;
+                }
+                case 'AssignmentStatement': {
+                    s += `${scopeAssignmentStatementToString(currStatement, options)};\n`;
+                    break;
+                }
+                case 'LabelStatement':
+                case 'BreakStatement':
+                case 'GotoStatement':
+                case 'ReturnStatement': {
+                    s += `${scopeStatementToString(currStatement, options)};\n`;
+                    break;
+                }
+                case 'IfStatement':
+                case 'WhileStatement':
+                case 'DoStatement':
+                case 'ForNumericStatement':
+                case 'ForGenericStatement':
+                case 'RepeatStatement': {
+                    s += `${scopeStatementToString(currStatement, options)};\n\n`;
+                    break;
+                }
+                case 'CallStatement': {
+                    const callStatement = currStatement;
+                    s += `${scopeStatementToString(callStatement, options)};\n`;
+                    break;
+                }
+                default: {
+                    s += `${(0, String_4.statementToString)(currStatement, options)};\n`;
+                    break;
+                }
+            }
+        }
+        return s;
+    }
+    exports.scopeChunkToString = scopeChunkToString;
+});
+define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", "luaparse", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/lua/wizard/PZ", "src/asledgehammer/rosetta/lua/wizard/Scope", "src/asledgehammer/rosetta/lua/wizard/Discover", "src/asledgehammer/rosetta/lua/wizard/ScopeString"], function (require, exports, ast, RosettaLuaClass_1, RosettaLuaConstructor_2, PZ_1, Scope_4, Discover_2, ScopeString_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaParser = void 0;
@@ -5107,6 +5782,8 @@ define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", 
                         };
                         (0, PZ_1.scanFile)(globalInfo, chunk.body);
                         (0, Discover_2.discoverFile)(globalInfo, chunk.body);
+                        console.log({ lua: (0, ScopeString_1.scopeChunkToString)(chunk, { indent: 0, scope: globalScope }) });
+                        // console.log({ lua: chunkToString(chunk) });
                         console.log("### LuaWizard ###");
                         console.log(globalInfo);
                         console.log(globalInfo.scope.map);
