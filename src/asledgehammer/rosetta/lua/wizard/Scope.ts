@@ -39,6 +39,8 @@ export class Scope {
 
     readonly map: { [path: string]: Scope };
 
+    readonly comments: string[] = [];
+
     /////////////////////////////
     // These are for children. //
     /////////////////////////////
@@ -154,7 +156,8 @@ export class Scope {
     }
 
     resolve(path: string): Scope | undefined {
-        if (!path.length) return undefined;
+        // console.log(`resolve(path: ${path})`);
+        if (!path || !path.length) return undefined;
 
         const { parent } = this;
 
@@ -194,11 +197,11 @@ export class Scope {
             // We grab the first node here and produce the sub-path following that node.
             let split: string[] = path.split('.');
             split = split.reverse();
-            firstScope = split.pop()!;
+            firstScope = split.pop()!.replace('()', '');
             pathSub = split.reverse().join();
         } else {
             // We have one scope. The path is the scope.
-            return children[path];
+            return children[path.replace('()', '')];
         }
 
         const child = children[firstScope];

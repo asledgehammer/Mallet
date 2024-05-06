@@ -72,7 +72,7 @@ export function discoverRelationships(expression: ast.Expression, scope: Scope, 
             }
 
             // console.warn(`${expressionToString(expression)} = ${type}`);
-            
+
             // Try to establish types with relationships in embedded expressions for the parameter value(s). 
             discoverRelationships(expression.left, scope);
             discoverRelationships(expression.right, scope);
@@ -117,7 +117,7 @@ export function discoverRelationships(expression: ast.Expression, scope: Scope, 
             }
 
             let scope2, scope3;
-            if (stripped.indexOf('.') !== -1 && stripped.indexOf('self.') === 0) {
+            if (stripped.indexOf('self.') === 0) {
                 const classScope = scope.getClassScope();
                 if (!classScope) {
                     console.error(`Cannot find class scope with self reference. (${stripped})`);
@@ -143,7 +143,7 @@ export function discoverRelationships(expression: ast.Expression, scope: Scope, 
 
                 const funcDec: ast.FunctionDeclaration = (scope3.element as any).init;
 
-                if(!funcDec) {
+                if (!funcDec) {
                     console.error(`Function scope doesn't have assigned element of FunctionDeclaration: ${scope3.path}`);
                     break;
                 }
@@ -175,7 +175,9 @@ export function discoverRelationships(expression: ast.Expression, scope: Scope, 
                     // console.warn(scopeParam);
 
                     // console.log(expressionToString(expression), expressionToString(arg), discoverType(arg, scopeParam));
-                    discoverRelationships(arg, scopeParam);
+                    if (arg) {
+                        discoverRelationships(arg, scopeParam);
+                    }
                 }
 
             } else {
@@ -185,11 +187,32 @@ export function discoverRelationships(expression: ast.Expression, scope: Scope, 
                     return;
                 }
 
-                scope2 = scope.resolve(stripped);
-                if (!scope2) {
-                    console.error(`Cannot find reference. (${stripped})`);
-                    return;
+                if (stripped.indexOf('.') !== -1) {
+                    let scopeCurr = scope;
+                    for (const next of stripped.split('.')) {
+                        let scopeNow = scopeCurr.resolve(next);
+                        console.log(`scopeCurr: ${next}`, scopeNow);
+                        if (!scopeNow) {
+                            console.error(`Cannot resolve scope-chain reference: ${stripped}`);
+                            return;
+                        }
+
+                        const scopeInto = scope.resolve(scopeNow.types[0]);
+                        if (scopeInto) {
+                            scopeCurr = scopeInto;
+                        } else {
+                            scopeCurr = scopeNow;
+                        }
+                    }
+                    scope2 = scopeCurr;
+                } else {
+                    scope2 = scope.resolve(stripped);
+                    if (!scope2) {
+                        console.error(`Cannot find reference. (${stripped})`);
+                        return;
+                    }
                 }
+
 
                 if (scope2.assignments.indexOf(scope) === -1) scope2.assignments.push(scope);
                 if (scope.references.indexOf(scope2) === -1) scope.references.push(scope2);
@@ -202,39 +225,45 @@ export function discoverRelationships(expression: ast.Expression, scope: Scope, 
                 // console.warn(`discoverType() = (scope: ${scope.path}) => ${stripped}`);
 
                 const funcDec: ast.FunctionDeclaration = (scope2.element as any).init;
-                if(!funcDec) {
-                    console.error(`Function scope doesn't have assigned element of FunctionDeclaration: ${scope2.path}`);
-                    break;
-                }
+                // if (!funcDec) {
+                //     console.error(`Function scope doesn't have assigned element of FunctionDeclaration: ${scope2.path}`);
+                //     break;
+                // }
 
-                // Handle param(s).
-                for (let index = 0; index < funcDec.parameters.length; index++) {
-                    const param = funcDec.parameters[index];
-                    const arg = expression.arguments[index];
-
-                    // Grab param name.
-                    let paramName: string = '';
-                    switch (param.type) {
-                        case 'Identifier': {
-                            paramName = param.name;
+                if(funcDec) {
+                    // Handle param(s).
+                    for (let index = 0; index < funcDec.parameters.length; index++) {
+                        const param = funcDec.parameters[index];
+                        const arg = expression.arguments[index];
+    
+                        // Grab param name.
+                        let paramName: string = '';
+                        switch (param.type) {
+                            case 'Identifier': {
+                                paramName = param.name;
+                                break;
+                            }
+                            case 'VarargLiteral': {
+                                paramName = param.value;
+                                break;
+                            }
+                        }
+    
+                        const scopeParam = scope2.resolve(paramName);
+                        if (!scopeParam) {
+                            console.error(`Cannot find Scope for parameter: ${paramName} (Scope: ${scope2.path})`);
                             break;
                         }
-                        case 'VarargLiteral': {
-                            paramName = param.value;
-                            break;
-                        }
+    
+                        // console.warn(scopeParam);
+    
+                        // console.log(expressionToString(expression), expressionToString(arg), discoverType(arg, scopeParam));
+                        discoverRelationships(arg, scopeParam);
                     }
-
-                    const scopeParam = scope2.resolve(paramName);
-                    if (!scopeParam) {
-                        console.error(`Cannot find Scope for parameter: ${paramName} (Scope: ${scope2.path})`);
-                        break;
+                } else {
+                    for(const arg of expression.arguments) {
+                        discoverRelationships(arg, scope2);
                     }
-
-                    // console.warn(scopeParam);
-
-                    // console.log(expressionToString(expression), expressionToString(arg), discoverType(arg, scopeParam));
-                    discoverRelationships(arg, scopeParam);
                 }
             }
 

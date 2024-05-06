@@ -136,17 +136,18 @@ export function scopeLocalStatementToString(statement: ast.LocalStatement, optio
 
     // Grab scopes.
     const scopes: (Scope | undefined)[] = [];
-    for (let index = 0; index < vars.length; index++) {
+    for (let index = 0; index < inits.length; index++) {
         const varName = vars[index];
         const scopeVar = options.scope.resolve(varName);
         scopes.push(scopeVar);
     }
 
-    s += '--- @type '
-    for (const scopeVar of scopes) {
-        if (scopeVar) {
-            if (scopeVar.types.length) {
-                s += `${scopeVar.types.join('|')}, `;
+    s += `${i}--- @type `;
+    for (const scopeInit of scopes) {
+        console.log(scopeInit);
+        if (scopeInit) {
+            if (scopeInit.types.length) {
+                s += `${scopeInit.types.join('|')}, `;
             } else {
                 s += 'any, ';
             }
@@ -259,15 +260,16 @@ export function scopeFunctionDeclarationToString(func: ast.FunctionDeclaration, 
 
     const scopeFunc = options.scope.resolve(name);
     let s = '';
-
+    
     if (scopeFunc) {
+        options2.scope = scopeFunc;
         const elemFunc: ast.FunctionDeclaration = scopeFunc.element as any;
         if (elemFunc) {
-            s += '--- (Auto-Generated)\n';
+            s += `${i}--- (Auto-Generated)\n`;
 
             // Generate params documentation.
             if (func.parameters.length) {
-                s += '---\n';
+                s += `${i}---\n`;
 
                 for (const param of func.parameters) {
                     let paramName: string = '';
@@ -284,20 +286,20 @@ export function scopeFunctionDeclarationToString(func: ast.FunctionDeclaration, 
 
                     const scopeParam = scopeFunc.resolve(paramName);
                     if (scopeParam) {
-                        s += `--- @param ${paramName} ${scopeParam.types.length ? scopeParam.types.join('|') : 'any'}\n`;
+                        s += `${i}--- @param ${paramName} ${scopeParam.types.length ? scopeParam.types.join('|') : 'any'}\n`;
                     } else {
-                        s += `--- @param ${paramName} any\n`;
+                        s += `${i}--- @param ${paramName} any\n`;
                     }
                 }
             }
 
             // Generate returns documentation.
             if (scopeFunc.types.length) {
-                s += `---\n--- @returns ${scopeFunc.types.join('|')}\n`;
+                s += `${i}---\n${i}--- @return ${scopeFunc.types.join('|')}\n`;
             } else if (scopeFunc._nextReturnID === 0) {
-                s += '---\n--- @returns void\n';
+                s += `${i}---\n${i}--- @return void\n`;
             } else {
-                s += '---\n--- @returns any\n';
+                s += `${i}---\n${i}--- @return any\n`;
             }
         }
     }

@@ -3254,6 +3254,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Scope", ["require", "exports", "src
             this.index = 0;
             /** Generated or identified when constructing Scopes. */
             this.name = '';
+            this.comments = [];
             /////////////////////////////
             // These are for children. //
             /////////////////////////////
@@ -3345,7 +3346,8 @@ define("src/asledgehammer/rosetta/lua/wizard/Scope", ["require", "exports", "src
             return currScope.resolveInto(path);
         }
         resolve(path) {
-            if (!path.length)
+            // console.log(`resolve(path: ${path})`);
+            if (!path || !path.length)
                 return undefined;
             const { parent } = this;
             // If __G is the start of the path, immediately go to the top and search down.
@@ -3380,12 +3382,12 @@ define("src/asledgehammer/rosetta/lua/wizard/Scope", ["require", "exports", "src
                 // We grab the first node here and produce the sub-path following that node.
                 let split = path.split('.');
                 split = split.reverse();
-                firstScope = split.pop();
+                firstScope = split.pop().replace('()', '');
                 pathSub = split.reverse().join();
             }
             else {
                 // We have one scope. The path is the scope.
-                return children[path];
+                return children[path.replace('()', '')];
             }
             const child = children[firstScope];
             // The child doesn't exist.
@@ -3657,14 +3659,14 @@ define("src/asledgehammer/rosetta/lua/wizard/KnownTypes", ["require", "exports",
         'math.ceil()': 'number',
         'math.round()': 'number',
         /* PZ Java API */
-        'getCore()': 'Core',
-        'getCore():getScreenWidth()': 'number',
-        'getCore():getScreenHeight()': 'number',
-        'getNumActivePlayers()': 'number',
-        'getPlayerScreenLeft()': 'number',
-        'getPlayerScreenTop()': 'number',
-        'getPlayerScreenWidth()': 'number',
-        'getPlayerScreenHeight()': 'number',
+        // 'getCore()': 'Core',
+        // 'getCore().getScreenWidth()': 'number',
+        // 'getCore().getScreenHeight()': 'number',
+        // 'getNumActivePlayers()': 'number',
+        // 'getPlayerScreenLeft()': 'number',
+        // 'getPlayerScreenTop()': 'number',
+        // 'getPlayerScreenWidth()': 'number',
+        // 'getPlayerScreenHeight()': 'number',
     };
     function getKnownType(known) {
         if (!known.length)
@@ -3674,64 +3676,64 @@ define("src/asledgehammer/rosetta/lua/wizard/KnownTypes", ["require", "exports",
     exports.getKnownType = getKnownType;
     exports.isInitKnownTypes = false;
     function initKnownTypes(global) {
+        console.log('init known types');
         if (exports.isInitKnownTypes)
             return;
-        for (let key of Object.keys(exports.knownTypes)) {
-            const val = exports.knownTypes[key];
-            if (key.indexOf(':') !== -1) {
-                while (key.indexOf(':') !== -1)
-                    key = key.replace(':', '.');
-            }
-            if (key.indexOf('.') !== -1) {
-                const split = key.split('.');
-                let scopeCurr = global;
-                for (let next of split) {
+        const javaAPI = window.known_types;
+        const func = (types) => {
+            console.log(`known types count: ${Object.keys(types).length}`);
+            for (let key of Object.keys(types)) {
+                const val = types[key];
+                if (key.indexOf(':') !== -1) {
+                    while (key.indexOf(':') !== -1)
+                        key = key.replace(':', '.');
+                }
+                if (key.indexOf('.') !== -1) {
+                    const split = key.split('.');
+                    let scopeCurr = global;
+                    for (let next of split) {
+                        let type = 'ScopeKnownValue';
+                        if (next.endsWith('()')) {
+                            type = 'ScopeKnownFunction';
+                            next = next.substring(0, next.length - 2);
+                        }
+                        let scopeNext = scopeCurr.resolve(next);
+                        // Only create a new scope if one doesn't exist yet for the next known type scope.
+                        if (!scopeNext) {
+                            const knownType = {
+                                type: type,
+                                name: next,
+                                knownType: val
+                            };
+                            scopeNext = new Scope_1.Scope(knownType, scopeCurr);
+                            scopeNext.types.push(val);
+                        }
+                        scopeCurr = scopeNext;
+                    }
+                }
+                else {
+                    let next = key;
                     let type = 'ScopeKnownValue';
                     if (next.endsWith('()')) {
                         type = 'ScopeKnownFunction';
                         next = next.substring(0, next.length - 2);
                     }
-                    let scopeNext = scopeCurr.resolve(next);
+                    let scopeNext = global.resolve(next);
                     // Only create a new scope if one doesn't exist yet for the next known type scope.
                     if (!scopeNext) {
                         const knownType = {
                             type: type,
                             name: next,
+                            knownType: val
                         };
-                        scopeNext = new Scope_1.Scope(knownType, scopeCurr);
+                        scopeNext = new Scope_1.Scope(knownType, global);
+                        scopeNext.types.push(val);
                     }
-                    scopeCurr = scopeNext;
-                }
-                // Add the type to the end.
-                scopeCurr.element.knownType = val;
-                if (scopeCurr.types.indexOf(val) === -1) {
-                    scopeCurr.types.push(val);
                 }
             }
-            else {
-                let next = key;
-                let type = 'ScopeKnownValue';
-                if (next.endsWith('()')) {
-                    type = 'ScopeKnownFunction';
-                    next = next.substring(0, next.length - 2);
-                }
-                let scopeNext = global.resolve(next);
-                // Only create a new scope if one doesn't exist yet for the next known type scope.
-                if (!scopeNext) {
-                    const knownType = {
-                        type: type,
-                        name: next,
-                        knownType: val
-                    };
-                    scopeNext = new Scope_1.Scope(knownType, global);
-                }
-                // Add the type to the end.
-                scopeNext.element.knownType = val;
-                if (scopeNext.types.indexOf(val) === -1) {
-                    scopeNext.types.push(val);
-                }
-            }
-        }
+        };
+        func(exports.knownTypes);
+        func(javaAPI);
         exports.isInitKnownTypes = true;
     }
     exports.initKnownTypes = initKnownTypes;
@@ -3834,7 +3836,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                         stripped = stripped.replace('()', '');
                 }
                 let scope2, scope3;
-                if (stripped.indexOf('.') !== -1 && stripped.indexOf('self.') === 0) {
+                if (stripped.indexOf('self.') === 0) {
                     const classScope = scope.getClassScope();
                     if (!classScope) {
                         console.error(`Cannot find class scope with self reference. (${stripped})`);
@@ -3889,7 +3891,9 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                         }
                         // console.warn(scopeParam);
                         // console.log(expressionToString(expression), expressionToString(arg), discoverType(arg, scopeParam));
-                        discoverRelationships(arg, scopeParam);
+                        if (arg) {
+                            discoverRelationships(arg, scopeParam);
+                        }
                     }
                 }
                 else {
@@ -3897,10 +3901,31 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                     if (scope.name === '__G') {
                         return;
                     }
-                    scope2 = scope.resolve(stripped);
-                    if (!scope2) {
-                        console.error(`Cannot find reference. (${stripped})`);
-                        return;
+                    if (stripped.indexOf('.') !== -1) {
+                        let scopeCurr = scope;
+                        for (const next of stripped.split('.')) {
+                            let scopeNow = scopeCurr.resolve(next);
+                            console.log(`scopeCurr: ${next}`, scopeNow);
+                            if (!scopeNow) {
+                                console.error(`Cannot resolve scope-chain reference: ${stripped}`);
+                                return;
+                            }
+                            const scopeInto = scope.resolve(scopeNow.types[0]);
+                            if (scopeInto) {
+                                scopeCurr = scopeInto;
+                            }
+                            else {
+                                scopeCurr = scopeNow;
+                            }
+                        }
+                        scope2 = scopeCurr;
+                    }
+                    else {
+                        scope2 = scope.resolve(stripped);
+                        if (!scope2) {
+                            console.error(`Cannot find reference. (${stripped})`);
+                            return;
+                        }
                     }
                     if (scope2.assignments.indexOf(scope) === -1)
                         scope2.assignments.push(scope);
@@ -3918,34 +3943,41 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                                 scope2.types.push(t);
                     // console.warn(`discoverType() = (scope: ${scope.path}) => ${stripped}`);
                     const funcDec = scope2.element.init;
-                    if (!funcDec) {
-                        console.error(`Function scope doesn't have assigned element of FunctionDeclaration: ${scope2.path}`);
-                        break;
+                    // if (!funcDec) {
+                    //     console.error(`Function scope doesn't have assigned element of FunctionDeclaration: ${scope2.path}`);
+                    //     break;
+                    // }
+                    if (funcDec) {
+                        // Handle param(s).
+                        for (let index = 0; index < funcDec.parameters.length; index++) {
+                            const param = funcDec.parameters[index];
+                            const arg = expression.arguments[index];
+                            // Grab param name.
+                            let paramName = '';
+                            switch (param.type) {
+                                case 'Identifier': {
+                                    paramName = param.name;
+                                    break;
+                                }
+                                case 'VarargLiteral': {
+                                    paramName = param.value;
+                                    break;
+                                }
+                            }
+                            const scopeParam = scope2.resolve(paramName);
+                            if (!scopeParam) {
+                                console.error(`Cannot find Scope for parameter: ${paramName} (Scope: ${scope2.path})`);
+                                break;
+                            }
+                            // console.warn(scopeParam);
+                            // console.log(expressionToString(expression), expressionToString(arg), discoverType(arg, scopeParam));
+                            discoverRelationships(arg, scopeParam);
+                        }
                     }
-                    // Handle param(s).
-                    for (let index = 0; index < funcDec.parameters.length; index++) {
-                        const param = funcDec.parameters[index];
-                        const arg = expression.arguments[index];
-                        // Grab param name.
-                        let paramName = '';
-                        switch (param.type) {
-                            case 'Identifier': {
-                                paramName = param.name;
-                                break;
-                            }
-                            case 'VarargLiteral': {
-                                paramName = param.value;
-                                break;
-                            }
+                    else {
+                        for (const arg of expression.arguments) {
+                            discoverRelationships(arg, scope2);
                         }
-                        const scopeParam = scope2.resolve(paramName);
-                        if (!scopeParam) {
-                            console.error(`Cannot find Scope for parameter: ${paramName} (Scope: ${scope2.path})`);
-                            break;
-                        }
-                        // console.warn(scopeParam);
-                        // console.log(expressionToString(expression), expressionToString(arg), discoverType(arg, scopeParam));
-                        discoverRelationships(arg, scopeParam);
                     }
                 }
                 break;
@@ -5005,16 +5037,17 @@ define("src/asledgehammer/rosetta/lua/wizard/ScopeString", ["require", "exports"
         let s = '';
         // Grab scopes.
         const scopes = [];
-        for (let index = 0; index < vars.length; index++) {
+        for (let index = 0; index < inits.length; index++) {
             const varName = vars[index];
             const scopeVar = options.scope.resolve(varName);
             scopes.push(scopeVar);
         }
-        s += '--- @type ';
-        for (const scopeVar of scopes) {
-            if (scopeVar) {
-                if (scopeVar.types.length) {
-                    s += `${scopeVar.types.join('|')}, `;
+        s += `${i}--- @type `;
+        for (const scopeInit of scopes) {
+            console.log(scopeInit);
+            if (scopeInit) {
+                if (scopeInit.types.length) {
+                    s += `${scopeInit.types.join('|')}, `;
                 }
                 else {
                     s += 'any, ';
@@ -5128,12 +5161,13 @@ define("src/asledgehammer/rosetta/lua/wizard/ScopeString", ["require", "exports"
         const scopeFunc = options.scope.resolve(name);
         let s = '';
         if (scopeFunc) {
+            options2.scope = scopeFunc;
             const elemFunc = scopeFunc.element;
             if (elemFunc) {
-                s += '--- (Auto-Generated)\n';
+                s += `${i}--- (Auto-Generated)\n`;
                 // Generate params documentation.
                 if (func.parameters.length) {
-                    s += '---\n';
+                    s += `${i}---\n`;
                     for (const param of func.parameters) {
                         let paramName = '';
                         switch (param.type) {
@@ -5148,22 +5182,22 @@ define("src/asledgehammer/rosetta/lua/wizard/ScopeString", ["require", "exports"
                         }
                         const scopeParam = scopeFunc.resolve(paramName);
                         if (scopeParam) {
-                            s += `--- @param ${paramName} ${scopeParam.types.length ? scopeParam.types.join('|') : 'any'}\n`;
+                            s += `${i}--- @param ${paramName} ${scopeParam.types.length ? scopeParam.types.join('|') : 'any'}\n`;
                         }
                         else {
-                            s += `--- @param ${paramName} any\n`;
+                            s += `${i}--- @param ${paramName} any\n`;
                         }
                     }
                 }
                 // Generate returns documentation.
                 if (scopeFunc.types.length) {
-                    s += `---\n--- @returns ${scopeFunc.types.join('|')}\n`;
+                    s += `${i}---\n${i}--- @return ${scopeFunc.types.join('|')}\n`;
                 }
                 else if (scopeFunc._nextReturnID === 0) {
-                    s += '---\n--- @returns void\n';
+                    s += `${i}---\n${i}--- @return void\n`;
                 }
                 else {
-                    s += '---\n--- @returns any\n';
+                    s += `${i}---\n${i}--- @return any\n`;
                 }
             }
         }
@@ -5438,7 +5472,7 @@ define("src/asledgehammer/rosetta/lua/wizard/ScopeString", ["require", "exports"
     }
     exports.scopeChunkToString = scopeChunkToString;
 });
-define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", "luaparse", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/lua/wizard/PZ", "src/asledgehammer/rosetta/lua/wizard/Scope", "src/asledgehammer/rosetta/lua/wizard/Discover", "src/asledgehammer/rosetta/lua/wizard/ScopeString"], function (require, exports, ast, RosettaLuaClass_1, RosettaLuaConstructor_2, PZ_1, Scope_4, Discover_2, ScopeString_1) {
+define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", "luaparse", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/lua/wizard/PZ", "src/asledgehammer/rosetta/lua/wizard/Scope", "src/asledgehammer/rosetta/lua/wizard/Discover", "src/asledgehammer/rosetta/lua/wizard/ScopeString", "src/asledgehammer/rosetta/lua/wizard/KnownTypes"], function (require, exports, ast, RosettaLuaClass_1, RosettaLuaConstructor_2, PZ_1, Scope_4, Discover_2, ScopeString_1, KnownTypes_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaParser = void 0;
@@ -5773,6 +5807,7 @@ define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", 
                         // LuaWizard Code //
                         ////////////////////
                         const globalScope = new Scope_4.Scope();
+                        window.__G = globalScope;
                         const globalInfo = {
                             classes: {},
                             tables: {},
@@ -5780,14 +5815,16 @@ define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", 
                             funcs: {},
                             scope: globalScope
                         };
+                        (0, KnownTypes_3.initKnownTypes)(globalScope);
                         (0, PZ_1.scanFile)(globalInfo, chunk.body);
                         (0, Discover_2.discoverFile)(globalInfo, chunk.body);
-                        console.log({ lua: (0, ScopeString_1.scopeChunkToString)(chunk, { indent: 0, scope: globalScope }) });
-                        // console.log({ lua: chunkToString(chunk) });
+                        const outLua = (0, ScopeString_1.scopeChunkToString)(chunk, { indent: 0, scope: globalScope });
+                        navigator.clipboard.writeText(outLua);
                         console.log("### LuaWizard ###");
                         console.log(globalInfo);
                         console.log(globalInfo.scope.map);
                         console.log(`__G.map.length = ${Object.keys(globalInfo.scope.map).length}`);
+                        console.log({ lua: outLua });
                         ////////////////////
                         const clazz = _this.parse(chunk);
                         if (clazz) {

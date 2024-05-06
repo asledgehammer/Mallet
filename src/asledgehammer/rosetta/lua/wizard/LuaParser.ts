@@ -7,7 +7,7 @@ import { PZGlobalInfo, scanFile } from './PZ';
 import { Scope } from './Scope';
 import { discoverFile } from './Discover';
 import { scopeChunkToString } from './ScopeString';
-import { chunkToString } from './String';
+import { initKnownTypes } from './KnownTypes';
 // import { discover } from './Old';
 
 // @ts-ignore
@@ -368,6 +368,7 @@ export class LuaParser {
                     ////////////////////
 
                     const globalScope = new Scope();
+                    (window as any).__G = globalScope;
                     const globalInfo: PZGlobalInfo = {
                         classes: {},
                         tables: {},
@@ -376,16 +377,18 @@ export class LuaParser {
                         scope: globalScope
                     };
 
+                    initKnownTypes(globalScope);
                     scanFile(globalInfo, chunk.body);
                     discoverFile(globalInfo, chunk.body);
 
-                    console.log({ lua: scopeChunkToString(chunk, { indent: 0, scope: globalScope }) });
-                    // console.log({ lua: chunkToString(chunk) });
-
+                    const outLua = scopeChunkToString(chunk, { indent: 0, scope: globalScope });
+                    navigator.clipboard.writeText(outLua);
+                    
                     console.log("### LuaWizard ###");
                     console.log(globalInfo);
                     console.log(globalInfo.scope.map);
                     console.log(`__G.map.length = ${Object.keys(globalInfo.scope.map).length}`);
+                    console.log({ lua: outLua });
 
 
 
