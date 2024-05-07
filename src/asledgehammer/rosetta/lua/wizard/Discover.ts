@@ -950,10 +950,6 @@ export function discoverForGenericStatement(globalInfo: PZGlobalInfo, statement:
             };
             scopeVariable = new Scope(element, scope, 0, name);
         }
-
-        // Try to discover conditions like we do call-expression parameters.
-        const iterator = statement.iterators[index];
-        discoverRelationships(iterator, scope);
     }
 
     // Go through body.

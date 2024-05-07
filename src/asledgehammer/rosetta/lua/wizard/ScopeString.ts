@@ -2,6 +2,7 @@
 import * as ast from 'luaparse';
 import { Scope } from './Scope';
 import { expressionToString, statementToString } from './String';
+import { discoverType } from './Discover';
 // @ts-ignore
 const luaparse: luaparse = ast.default;
 
@@ -20,6 +21,49 @@ export function indent(options: ScopeRenderOptions): ScopeRenderOptions {
 
 export function indent0(options: ScopeRenderOptions): ScopeRenderOptions {
     return { ...options, indent: 0 };
+}
+
+/**
+ * TODO - Implement key -> value table type(s).
+ * 
+ * @param ex 
+ * @param options 
+ * 
+ * @returns The proper lua annotation type for the table constructor. 
+ */
+export function getTableConstructorType(ex: ast.TableConstructorExpression, options: ScopeRenderOptions): string {
+    console.warn(ex);
+
+    // Empty table constructor.
+    if (!ex.fields.length) return 'table';
+
+
+    let isArray = true;
+
+    // Check to see if all fields are TableValue entries. If so, this is an array.
+    for (const field of ex.fields) {
+        if (field.type !== 'TableValue') {
+            isArray = false;
+            break;
+        }
+    }
+
+    if (isArray) {
+        // Discover & compile any discovered types in the array.
+        const types: string[] = [];
+        for (const field of ex.fields) {
+            let type = discoverType(field.value, options.scope)?.type;
+            if (!type) type = 'any';
+            if (types.indexOf(type) === -1) types.push(type);
+        }
+        if (types.length > 1) { // E.G: (string|number)[]
+            return `(${types.join('|')})[]`;
+        } else {                // E.G: string[]
+            return `${types[0]}[]`;
+        }
+    }
+
+    return 'table';
 }
 
 export function scopeLiteralToString(literal: ast.BooleanLiteral | ast.NumericLiteral | ast.NilLiteral | ast.StringLiteral | ast.VarargLiteral, options: ScopeRenderOptions): string {
@@ -143,11 +187,18 @@ export function scopeLocalStatementToString(statement: ast.LocalStatement, optio
     }
 
     s += `${i}--- @type `;
-    for (const scopeInit of scopes) {
+    for (let index = 0; index < scopes.length; index++) {
+        const scopeInit = scopes[index];
         console.log(scopeInit);
         if (scopeInit) {
             if (scopeInit.types.length) {
-                s += `${scopeInit.types.join('|')}, `;
+
+                if (scopeInit.types.length === 1 && scopeInit.types[index] === 'table' && statement.init[index].type === 'TableConstructorExpression') {
+                    s += `${getTableConstructorType(statement.init[index] as ast.TableConstructorExpression, indent0(options))}, `;
+                } else {
+                    s += `${scopeInit.types.join('|')}, `;
+                }
+
             } else {
                 s += 'any, ';
             }
@@ -269,7 +320,7 @@ export function scopeFunctionDeclarationToString(func: ast.FunctionDeclaration, 
 
             // Generate params documentation.
             if (func.parameters.length) {
-                if(s.length) s += `${i}---\n`;
+                if (s.length) s += `${i}---\n`;
 
                 for (const param of func.parameters) {
                     let paramName: string = '';
@@ -295,7 +346,7 @@ export function scopeFunctionDeclarationToString(func: ast.FunctionDeclaration, 
 
             // Generate returns documentation.
             if (scopeFunc.types.length) {
-                if(s.length) s += `${i}---\n`;
+                if (s.length) s += `${i}---\n`;
                 s += `${i}--- @return ${scopeFunc.types.join('|')}\n`;
             }
         }

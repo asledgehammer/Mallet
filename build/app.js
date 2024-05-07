@@ -4570,9 +4570,6 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                 };
                 scopeVariable = new Scope_2.Scope(element, scope, 0, name);
             }
-            // Try to discover conditions like we do call-expression parameters.
-            const iterator = statement.iterators[index];
-            discoverRelationships(iterator, scope);
         }
         // Go through body.
         for (const next of statement.body) {
@@ -4968,10 +4965,10 @@ define("src/asledgehammer/rosetta/lua/wizard/PZ", ["require", "exports", "src/as
     }
     exports.scanFile = scanFile;
 });
-define("src/asledgehammer/rosetta/lua/wizard/ScopeString", ["require", "exports", "luaparse", "src/asledgehammer/rosetta/lua/wizard/String"], function (require, exports, ast, String_4) {
+define("src/asledgehammer/rosetta/lua/wizard/ScopeString", ["require", "exports", "luaparse", "src/asledgehammer/rosetta/lua/wizard/String", "src/asledgehammer/rosetta/lua/wizard/Discover"], function (require, exports, ast, String_4, Discover_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.scopeChunkToString = exports.scopeStatementToString = exports.scopeExpressionToString = exports.scopeCallStatementToString = exports.scopeAssignmentStatementToString = exports.scopeTableConstructorExpressionToString = exports.scopeIfStatementToString = exports.scopeElseClauseToString = exports.scopeElseIfClauseToString = exports.scopeIfClauseToString = exports.scopeForGenericStatementToString = exports.scopeForNumericStatementToString = exports.scopeRepeatStatementToString = exports.scopeDoStatementToString = exports.scopeWhileStatementToString = exports.scopeFunctionDeclarationToString = exports.scopeBodyToString = exports.scopeParametersToString = exports.scopeVarargLiteralToString = exports.scopeLocalStatementToString = exports.scopeBreakStatementToString = exports.scopeLabelStatementToString = exports.scopeGotoStatementToString = exports.scopeReturnStatementToString = exports.scopeCallExpressionToString = exports.scopeMemberExpressionToString = exports.scopeArgsToString = exports.scopeBinaryExpressionToString = exports.scopeTableCallExpressionToString = exports.scopeStringCallExpressionToString = exports.scopeUnaryExpressionToString = exports.scopeLogicalExpressionToString = exports.scopeIndexExpressionToString = exports.scopeIdentifierToString = exports.scopeLiteralToString = exports.indent0 = exports.indent = void 0;
+    exports.scopeChunkToString = exports.scopeStatementToString = exports.scopeExpressionToString = exports.scopeCallStatementToString = exports.scopeAssignmentStatementToString = exports.scopeTableConstructorExpressionToString = exports.scopeIfStatementToString = exports.scopeElseClauseToString = exports.scopeElseIfClauseToString = exports.scopeIfClauseToString = exports.scopeForGenericStatementToString = exports.scopeForNumericStatementToString = exports.scopeRepeatStatementToString = exports.scopeDoStatementToString = exports.scopeWhileStatementToString = exports.scopeFunctionDeclarationToString = exports.scopeBodyToString = exports.scopeParametersToString = exports.scopeVarargLiteralToString = exports.scopeLocalStatementToString = exports.scopeBreakStatementToString = exports.scopeLabelStatementToString = exports.scopeGotoStatementToString = exports.scopeReturnStatementToString = exports.scopeCallExpressionToString = exports.scopeMemberExpressionToString = exports.scopeArgsToString = exports.scopeBinaryExpressionToString = exports.scopeTableCallExpressionToString = exports.scopeStringCallExpressionToString = exports.scopeUnaryExpressionToString = exports.scopeLogicalExpressionToString = exports.scopeIndexExpressionToString = exports.scopeIdentifierToString = exports.scopeLiteralToString = exports.getTableConstructorType = exports.indent0 = exports.indent = void 0;
     // @ts-ignore
     const luaparse = ast.default;
     ;
@@ -4983,6 +4980,48 @@ define("src/asledgehammer/rosetta/lua/wizard/ScopeString", ["require", "exports"
         return Object.assign(Object.assign({}, options), { indent: 0 });
     }
     exports.indent0 = indent0;
+    /**
+     * TODO - Implement key -> value table type(s).
+     *
+     * @param ex
+     * @param options
+     *
+     * @returns The proper lua annotation type for the table constructor.
+     */
+    function getTableConstructorType(ex, options) {
+        var _a;
+        console.warn(ex);
+        // Empty table constructor.
+        if (!ex.fields.length)
+            return 'table';
+        let isArray = true;
+        // Check to see if all fields are TableValue entries. If so, this is an array.
+        for (const field of ex.fields) {
+            if (field.type !== 'TableValue') {
+                isArray = false;
+                break;
+            }
+        }
+        if (isArray) {
+            // Discover & compile any discovered types in the array.
+            const types = [];
+            for (const field of ex.fields) {
+                let type = (_a = (0, Discover_2.discoverType)(field.value, options.scope)) === null || _a === void 0 ? void 0 : _a.type;
+                if (!type)
+                    type = 'any';
+                if (types.indexOf(type) === -1)
+                    types.push(type);
+            }
+            if (types.length > 1) { // E.G: (string|number)[]
+                return `(${types.join('|')})[]`;
+            }
+            else { // E.G: string[]
+                return `${types[0]}[]`;
+            }
+        }
+        return 'table';
+    }
+    exports.getTableConstructorType = getTableConstructorType;
     function scopeLiteralToString(literal, options) {
         const i = ' '.repeat(options.indent * 4);
         switch (literal.type) {
@@ -5097,11 +5136,17 @@ define("src/asledgehammer/rosetta/lua/wizard/ScopeString", ["require", "exports"
             scopes.push(scopeVar);
         }
         s += `${i}--- @type `;
-        for (const scopeInit of scopes) {
+        for (let index = 0; index < scopes.length; index++) {
+            const scopeInit = scopes[index];
             console.log(scopeInit);
             if (scopeInit) {
                 if (scopeInit.types.length) {
-                    s += `${scopeInit.types.join('|')}, `;
+                    if (scopeInit.types.length === 1 && scopeInit.types[index] === 'table' && statement.init[index].type === 'TableConstructorExpression') {
+                        s += `${getTableConstructorType(statement.init[index], indent0(options))}, `;
+                    }
+                    else {
+                        s += `${scopeInit.types.join('|')}, `;
+                    }
                 }
                 else {
                     s += 'any, ';
@@ -5524,7 +5569,7 @@ define("src/asledgehammer/rosetta/lua/wizard/ScopeString", ["require", "exports"
     }
     exports.scopeChunkToString = scopeChunkToString;
 });
-define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", "luaparse", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/lua/wizard/PZ", "src/asledgehammer/rosetta/lua/wizard/Scope", "src/asledgehammer/rosetta/lua/wizard/Discover", "src/asledgehammer/rosetta/lua/wizard/ScopeString", "src/asledgehammer/rosetta/lua/wizard/KnownTypes"], function (require, exports, ast, RosettaLuaClass_1, RosettaLuaConstructor_2, PZ_1, Scope_4, Discover_2, ScopeString_1, KnownTypes_3) {
+define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", "luaparse", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/lua/wizard/PZ", "src/asledgehammer/rosetta/lua/wizard/Scope", "src/asledgehammer/rosetta/lua/wizard/Discover", "src/asledgehammer/rosetta/lua/wizard/ScopeString", "src/asledgehammer/rosetta/lua/wizard/KnownTypes"], function (require, exports, ast, RosettaLuaClass_1, RosettaLuaConstructor_2, PZ_1, Scope_4, Discover_3, ScopeString_1, KnownTypes_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaParser = void 0;
@@ -5869,7 +5914,7 @@ define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", 
                         };
                         (0, KnownTypes_3.initKnownTypes)(globalScope);
                         (0, PZ_1.scanFile)(globalInfo, chunk.body);
-                        (0, Discover_2.discoverFile)(globalInfo, chunk.body);
+                        (0, Discover_3.discoverFile)(globalInfo, chunk.body);
                         const outLua = (0, ScopeString_1.scopeChunkToString)(chunk, { indent: 0, scope: globalScope });
                         navigator.clipboard.writeText(outLua);
                         console.log("### LuaWizard ###");
