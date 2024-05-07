@@ -3250,6 +3250,10 @@ define("src/asledgehammer/rosetta/lua/wizard/Scope", ["require", "exports", "src
             /** All discovered scopes that directly call or assign this scope. */
             this.references = [];
             this.types = [];
+            /** (For table-type discovery) */
+            this.keyTypes = [];
+            /** (For table-type discovery) */
+            this.valueType = [];
             /** For statements with multiple variables, this index helps with the initialization of Scopes. */
             this.index = 0;
             /** Generated or identified when constructing Scopes. */
@@ -3284,8 +3288,8 @@ define("src/asledgehammer/rosetta/lua/wizard/Scope", ["require", "exports", "src
                 this.name = this.generateName();
             }
             this.path = `${parent ? `${parent.path}.` : ''}${this.name}`;
-            if (this.path === '__G.addChild') {
-                // throw new Error();
+            if (element && element.init) {
+                element.init.scope = this;
             }
             this.index = index;
             // Assign the parent this new child.
@@ -3650,6 +3654,7 @@ define("src/asledgehammer/rosetta/lua/wizard/KnownTypes", ["require", "exports",
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.initKnownTypes = exports.isInitKnownTypes = exports.getKnownType = exports.knownTypes = void 0;
     exports.knownTypes = {
+        'ipairs()': '*',
         'print()': 'void',
         'tostring()': 'string',
         'setmetatable()': 'table',
@@ -3741,7 +3746,49 @@ define("src/asledgehammer/rosetta/lua/wizard/KnownTypes", ["require", "exports",
 define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "src/asledgehammer/rosetta/lua/wizard/Scope", "src/asledgehammer/rosetta/lua/wizard/LuaWizard", "src/asledgehammer/rosetta/lua/wizard/String", "src/asledgehammer/rosetta/lua/wizard/KnownTypes"], function (require, exports, Scope_2, LuaWizard_2, String_2, KnownTypes_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.discoverFile = exports.discoverStatement = exports.discoverForGenericStatement = exports.discoverForNumericStatement = exports.discoverRepeatStatement = exports.discoverDoStatement = exports.discoverWhileStatement = exports.discoverIfStatement = exports.discoverCallStatement = exports.discoverCallExpression = exports.discoverAssignmentStatement = exports.discoverLocalStatement = exports.discoverReturnStatement = exports.discoverGotoStatement = exports.discoverBreakStatement = exports.discoverLabelStatement = exports.discoverFunctionDeclaration = exports.discoverReturnType = exports.discoverBodyReturnTypes = exports.discoverType = exports.discoverRelationships = void 0;
+    exports.discoverFile = exports.discoverStatement = exports.discoverForGenericStatement = exports.discoverForNumericStatement = exports.discoverRepeatStatement = exports.discoverDoStatement = exports.discoverWhileStatement = exports.discoverIfStatement = exports.discoverCallStatement = exports.discoverCallExpression = exports.discoverAssignmentStatement = exports.discoverLocalStatement = exports.discoverReturnStatement = exports.discoverGotoStatement = exports.discoverBreakStatement = exports.discoverLabelStatement = exports.discoverFunctionDeclaration = exports.discoverReturnType = exports.discoverBodyReturnTypes = exports.discoverType = exports.discoverRelationships = exports.discoverTableConstructorType = void 0;
+    /**
+     * TODO - Implement key -> value table type(s).
+     *
+     * @param ex
+     * @param options
+     *
+     * @returns The proper lua annotation type for the table constructor.
+     */
+    function discoverTableConstructorType(ex, scope) {
+        var _a;
+        console.warn(ex);
+        // Empty table constructor.
+        if (!ex.fields.length)
+            return 'table';
+        let isArray = true;
+        // Check to see if all fields are TableValue entries. If so, this is an array.
+        for (const field of ex.fields) {
+            if (field.type !== 'TableValue') {
+                isArray = false;
+                break;
+            }
+        }
+        if (isArray) {
+            // Discover & compile any discovered types in the array.
+            const types = [];
+            for (const field of ex.fields) {
+                let type = (_a = discoverType(field.value, scope)) === null || _a === void 0 ? void 0 : _a.type;
+                if (!type)
+                    type = 'any';
+                if (types.indexOf(type) === -1)
+                    types.push(type);
+            }
+            if (types.length > 1) { // E.G: (string|number)[]
+                return `(${types.join('|')})[]`;
+            }
+            else { // E.G: string[]
+                return `${types[0]}[]`;
+            }
+        }
+        return 'table';
+    }
+    exports.discoverTableConstructorType = discoverTableConstructorType;
     function discoverRelationships(expression, scope, index = 0) {
         switch (expression.type) {
             case 'Identifier': {
@@ -3909,7 +3956,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                         let scopeCurr = scope;
                         for (const next of stripped.split('.')) {
                             let scopeNow = scopeCurr.resolve(next);
-                            console.log(`scopeCurr: ${next}`, scopeNow);
+                            // console.log(`scopeCurr: ${next}`, scopeNow);
                             if (!scopeNow) {
                                 console.error(`Cannot resolve scope-chain reference: ${stripped}`);
                                 return;
@@ -4034,6 +4081,17 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
         switch (expression.type) {
             // Simple type-reference.
             case 'Identifier': {
+                // So if this is a direct reference, get the variable from the scope and
+                // reference with the parameter variable slot and assignment.
+                // Ignore prints.
+                if (scope.path === '__G.print')
+                    break;
+                const scopeReference = scope.resolve(expression.name);
+                if (!scopeReference) {
+                    console.error(`Cannot find Scope for Identifier: ${expression.name} (Scope: ${scope.path})`);
+                    break;
+                }
+                type = scopeReference.types.join('|');
                 break;
             }
             case 'FunctionDeclaration':
@@ -4067,8 +4125,7 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                 break;
             }
             case 'TableConstructorExpression':
-                // TODO - Implement.
-                type = 'table';
+                type = discoverTableConstructorType(expression, scope);
                 break;
             case 'BinaryExpression': {
                 type = 'number';
@@ -4404,11 +4461,52 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
             type: 'ScopeAssignment',
             init: statement,
         };
-        new Scope_2.Scope(assignmentBlock, scope);
+        const scopeAssignment = new Scope_2.Scope(assignmentBlock, scope);
         // (Tuple support)
         for (let index = 0; index < statement.variables.length; index++) {
             const variable = statement.variables[index];
             const init = statement.init[index];
+            console.log(variable);
+            switch (variable.type) {
+                case 'IndexExpression': {
+                    const varIndex = variable.index;
+                    const scopeBase = scope.resolve((0, String_2.expressionToString)(variable.base));
+                    if (!scopeBase) {
+                        console.warn(`Unresolved assignment IndexExpression.base: ${(0, String_2.expressionToString)(variable.base)} (Scope: ${scopeAssignment.path})`);
+                        return 0;
+                    }
+                    const scopeIndex = scope.resolve((0, String_2.expressionToString)(varIndex));
+                    if (!scopeIndex) {
+                        console.warn(`Unresolved assignment IndexExpression.index: ${(0, String_2.expressionToString)(variable.index)} (Scope: ${scopeAssignment.path})`);
+                        return 0;
+                    }
+                    const varType = discoverType(init, scope).type;
+                    // console.log('##', scopeBase, scopeIndex, varType);
+                    // At this point the resolved base scope MUST be a table.
+                    if (scopeBase.types.indexOf('table') === -1)
+                        scopeBase.types.push('table');
+                    // If the indexer has a known type, add this to the key-types 
+                    // for the base table.
+                    if (scopeIndex.types.length) {
+                        for (const type of scopeIndex.types) {
+                            if (scopeBase.keyTypes.indexOf(type) === -1) {
+                                scopeBase.keyTypes.push(type);
+                            }
+                        }
+                    }
+                    // Add the value-type to the table-scope.
+                    if (varType && varType.length && scopeBase.valueType.indexOf(varType) === -1) {
+                        scopeBase.valueType.push(varType);
+                    }
+                    break;
+                }
+                case 'MemberExpression': {
+                    break;
+                }
+                case 'Identifier': {
+                    break;
+                }
+            }
             console.log(`variable[${index}]: ${(0, String_2.expressionToString)(variable)} init: ${(0, String_2.expressionToString)(init)}`);
         }
         return changes;
@@ -4547,14 +4645,16 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
     }
     exports.discoverForNumericStatement = discoverForNumericStatement;
     function discoverForGenericStatement(globalInfo, statement, scope) {
+        var _a, _b;
         const { scope: __G } = globalInfo;
         const changes = 0;
-        const doBlock = {
+        const blockForGeneric = {
             type: 'ScopeForGenericBlock',
             init: statement,
             values: {}
         };
-        const scopeIf = new Scope_2.Scope(doBlock, scope);
+        const scopeForGeneric = new Scope_2.Scope(blockForGeneric, scope);
+        const scopeVars = [];
         // Recognize any variables in the loop.
         for (let index = 0; index < statement.variables.length; index++) {
             const variable = statement.variables[index];
@@ -4568,12 +4668,76 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                     types: [],
                     index
                 };
-                scopeVariable = new Scope_2.Scope(element, scope, 0, name);
+                scopeVars.push(new Scope_2.Scope(element, scopeForGeneric, index, name));
             }
+        }
+        // Hack: for key in pairs(table) do end
+        if (statement.variables.length === 1 && statement.iterators.length === 1
+            && statement.iterators[0].type === 'CallExpression'
+            && statement.iterators[0].base.type === 'Identifier'
+            && statement.iterators[0].base.name === 'pairs') {
+            let type = (_a = discoverType(statement.iterators[0].arguments[0], scope).type) === null || _a === void 0 ? void 0 : _a.replace('[]', '');
+            if (!type) {
+                // if (type === 'table') {
+                console.warn(`Unresolved table key-type for pairs(): ${(0, String_2.expressionToString)(statement.iterators[0].arguments[0])} (using 'any')`);
+                // }
+            }
+            else {
+                if (type === 'table') {
+                    switch (statement.iterators[0].arguments[0].type) {
+                        case 'Identifier': {
+                            const scopeTable = scope.resolve(statement.iterators[0].arguments[0].name);
+                            if (!scopeTable) {
+                                console.error(`Table not found: ${statement.iterators[0].arguments[0].name} (Using value-type 'any')`);
+                                type = 'any';
+                                break;
+                            }
+                            type = scopeTable.valueType.join('|');
+                            break;
+                        }
+                        default: {
+                            console.error(`Unimplemented expression type for for-generic pairs() table arg: ${statement.iterators[0].arguments[0].type} (Using value-type 'any')`);
+                            type = 'any';
+                            break;
+                        }
+                    }
+                }
+                if (scopeVars[0].types.indexOf(type) === -1)
+                    scopeVars[0].types.push(type);
+                const element = scopeVars[0].element;
+                if (element.types.indexOf(type) === -1)
+                    element.types.push(type);
+            }
+        }
+        // Hack: for index, value in ipairs(table) do end
+        else if (statement.variables.length === 2 && statement.iterators.length === 1
+            && statement.iterators[0].type === 'CallExpression'
+            && statement.iterators[0].base.type === 'Identifier'
+            && statement.iterators[0].base.name === 'ipairs') {
+            // First argument-type is always 'integer'.
+            if (scopeVars[0].types.indexOf('integer') === -1)
+                scopeVars[0].types.push('integer');
+            let type = (_b = discoverType(statement.iterators[0].arguments[0], scope).type) === null || _b === void 0 ? void 0 : _b.replace('[]', '');
+            if (!type) {
+                // if (type === 'table') {
+                console.warn(`Unresolved table value-type for ipairs(): ${(0, String_2.expressionToString)(statement.iterators[0].arguments[0])} (using 'any')`);
+                // }
+            }
+            else {
+                if (scopeVars[1].types.indexOf(type) === -1)
+                    scopeVars[1].types.push(type);
+                const element = scopeVars[1].element;
+                if (element.types.indexOf(type) === -1)
+                    element.types.push(type);
+            }
+        }
+        // Misc generic returns. Look for tuple returns and if so assign the types.
+        else {
+            // TODO: Implement.
         }
         // Go through body.
         for (const next of statement.body) {
-            discoverStatement(globalInfo, next, scopeIf);
+            discoverStatement(globalInfo, next, scopeForGeneric);
         }
         return changes;
     }
@@ -4599,8 +4763,10 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
     exports.discoverStatement = discoverStatement;
     function discoverFile(globalInfo, statements) {
         console.log(statements);
-        for (const statement of statements) {
-            discoverStatement(globalInfo, statement, globalInfo.scope);
+        for (let pass = 0; pass < 2; pass++) {
+            for (const statement of statements) {
+                discoverStatement(globalInfo, statement, globalInfo.scope);
+            }
         }
     }
     exports.discoverFile = discoverFile;
@@ -4965,10 +5131,10 @@ define("src/asledgehammer/rosetta/lua/wizard/PZ", ["require", "exports", "src/as
     }
     exports.scanFile = scanFile;
 });
-define("src/asledgehammer/rosetta/lua/wizard/ScopeString", ["require", "exports", "luaparse", "src/asledgehammer/rosetta/lua/wizard/String", "src/asledgehammer/rosetta/lua/wizard/Discover"], function (require, exports, ast, String_4, Discover_2) {
+define("src/asledgehammer/rosetta/lua/wizard/ScopeString", ["require", "exports", "luaparse", "src/asledgehammer/rosetta/lua/wizard/String"], function (require, exports, ast, String_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.scopeChunkToString = exports.scopeStatementToString = exports.scopeExpressionToString = exports.scopeCallStatementToString = exports.scopeAssignmentStatementToString = exports.scopeTableConstructorExpressionToString = exports.scopeIfStatementToString = exports.scopeElseClauseToString = exports.scopeElseIfClauseToString = exports.scopeIfClauseToString = exports.scopeForGenericStatementToString = exports.scopeForNumericStatementToString = exports.scopeRepeatStatementToString = exports.scopeDoStatementToString = exports.scopeWhileStatementToString = exports.scopeFunctionDeclarationToString = exports.scopeBodyToString = exports.scopeParametersToString = exports.scopeVarargLiteralToString = exports.scopeLocalStatementToString = exports.scopeBreakStatementToString = exports.scopeLabelStatementToString = exports.scopeGotoStatementToString = exports.scopeReturnStatementToString = exports.scopeCallExpressionToString = exports.scopeMemberExpressionToString = exports.scopeArgsToString = exports.scopeBinaryExpressionToString = exports.scopeTableCallExpressionToString = exports.scopeStringCallExpressionToString = exports.scopeUnaryExpressionToString = exports.scopeLogicalExpressionToString = exports.scopeIndexExpressionToString = exports.scopeIdentifierToString = exports.scopeLiteralToString = exports.getTableConstructorType = exports.indent0 = exports.indent = void 0;
+    exports.scopeChunkToString = exports.scopeStatementToString = exports.scopeExpressionToString = exports.scopeCallStatementToString = exports.scopeAssignmentStatementToString = exports.scopeTableConstructorExpressionToString = exports.scopeIfStatementToString = exports.scopeElseClauseToString = exports.scopeElseIfClauseToString = exports.scopeIfClauseToString = exports.scopeForGenericStatementToString = exports.scopeForNumericStatementToString = exports.scopeRepeatStatementToString = exports.scopeDoStatementToString = exports.scopeWhileStatementToString = exports.scopeFunctionDeclarationToString = exports.scopeBodyToString = exports.scopeParametersToString = exports.scopeVarargLiteralToString = exports.scopeLocalStatementToString = exports.scopeBreakStatementToString = exports.scopeLabelStatementToString = exports.scopeGotoStatementToString = exports.scopeReturnStatementToString = exports.scopeCallExpressionToString = exports.scopeMemberExpressionToString = exports.scopeArgsToString = exports.scopeBinaryExpressionToString = exports.scopeTableCallExpressionToString = exports.scopeStringCallExpressionToString = exports.scopeUnaryExpressionToString = exports.scopeLogicalExpressionToString = exports.scopeIndexExpressionToString = exports.scopeIdentifierToString = exports.scopeLiteralToString = exports.indent0 = exports.indent = void 0;
     // @ts-ignore
     const luaparse = ast.default;
     ;
@@ -4980,48 +5146,6 @@ define("src/asledgehammer/rosetta/lua/wizard/ScopeString", ["require", "exports"
         return Object.assign(Object.assign({}, options), { indent: 0 });
     }
     exports.indent0 = indent0;
-    /**
-     * TODO - Implement key -> value table type(s).
-     *
-     * @param ex
-     * @param options
-     *
-     * @returns The proper lua annotation type for the table constructor.
-     */
-    function getTableConstructorType(ex, options) {
-        var _a;
-        console.warn(ex);
-        // Empty table constructor.
-        if (!ex.fields.length)
-            return 'table';
-        let isArray = true;
-        // Check to see if all fields are TableValue entries. If so, this is an array.
-        for (const field of ex.fields) {
-            if (field.type !== 'TableValue') {
-                isArray = false;
-                break;
-            }
-        }
-        if (isArray) {
-            // Discover & compile any discovered types in the array.
-            const types = [];
-            for (const field of ex.fields) {
-                let type = (_a = (0, Discover_2.discoverType)(field.value, options.scope)) === null || _a === void 0 ? void 0 : _a.type;
-                if (!type)
-                    type = 'any';
-                if (types.indexOf(type) === -1)
-                    types.push(type);
-            }
-            if (types.length > 1) { // E.G: (string|number)[]
-                return `(${types.join('|')})[]`;
-            }
-            else { // E.G: string[]
-                return `${types[0]}[]`;
-            }
-        }
-        return 'table';
-    }
-    exports.getTableConstructorType = getTableConstructorType;
     function scopeLiteralToString(literal, options) {
         const i = ' '.repeat(options.indent * 4);
         switch (literal.type) {
@@ -5138,15 +5262,18 @@ define("src/asledgehammer/rosetta/lua/wizard/ScopeString", ["require", "exports"
         s += `${i}--- @type `;
         for (let index = 0; index < scopes.length; index++) {
             const scopeInit = scopes[index];
-            console.log(scopeInit);
             if (scopeInit) {
                 if (scopeInit.types.length) {
-                    if (scopeInit.types.length === 1 && scopeInit.types[index] === 'table' && statement.init[index].type === 'TableConstructorExpression') {
-                        s += `${getTableConstructorType(statement.init[index], indent0(options))}, `;
+                    for (let next of scopeInit.types) {
+                        // If the table also has registered key-value 
+                        // types, add them to the annotated type.
+                        if (next === 'table' && scopeInit.keyTypes.length && scopeInit.valueType.length) {
+                            next += `<${scopeInit.keyTypes.join('|')}, ${scopeInit.valueType.join('|')}>`;
+                        }
+                        s += `${next}|`;
                     }
-                    else {
-                        s += `${scopeInit.types.join('|')}, `;
-                    }
+                    s = s.substring(0, s.length - 1);
+                    s += ', ';
                 }
                 else {
                     s += 'any, ';
@@ -5161,7 +5288,6 @@ define("src/asledgehammer/rosetta/lua/wizard/ScopeString", ["require", "exports"
         s += '\n';
         // Main line.
         s += `${i}local ${vars.join(', ')} = ${inits.join(', ')}`;
-        console.warn(s);
         return s;
     }
     exports.scopeLocalStatementToString = scopeLocalStatementToString;
@@ -5351,15 +5477,27 @@ define("src/asledgehammer/rosetta/lua/wizard/ScopeString", ["require", "exports"
     }
     exports.scopeForNumericStatementToString = scopeForNumericStatementToString;
     function scopeForGenericStatementToString(statement, options) {
+        const scopeForGeneric = statement.scope;
         const i = ' '.repeat(options.indent * 4);
         const options2 = indent(options);
         const vars = [];
         for (const variable of statement.variables)
             vars.push(variable.name);
         const iterate = [];
-        for (const iterator of statement.iterators)
+        for (const iterator of statement.iterators) {
             iterate.push(scopeExpressionToString(iterator, indent0(options)));
-        let s = `${i}for ${vars.join(', ')} in ${iterate.join(', ')} do\n`;
+        }
+        let s = '';
+        // Render parameter type-annotations. 
+        for (const varName of vars) {
+            const scopeVar = scopeForGeneric.resolve(varName);
+            console.warn(scopeVar);
+            let type = 'any';
+            if (scopeVar && scopeVar.types.length)
+                type = scopeVar.types.join('|');
+            s += `${i}--- @param ${varName} ${type}\n`;
+        }
+        s += `${i}for ${vars.join(', ')} in ${iterate.join(', ')} do\n`;
         s += `${scopeBodyToString(statement.body, options2)}\n`;
         s += 'end';
         return s;
@@ -5569,7 +5707,7 @@ define("src/asledgehammer/rosetta/lua/wizard/ScopeString", ["require", "exports"
     }
     exports.scopeChunkToString = scopeChunkToString;
 });
-define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", "luaparse", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/lua/wizard/PZ", "src/asledgehammer/rosetta/lua/wizard/Scope", "src/asledgehammer/rosetta/lua/wizard/Discover", "src/asledgehammer/rosetta/lua/wizard/ScopeString", "src/asledgehammer/rosetta/lua/wizard/KnownTypes"], function (require, exports, ast, RosettaLuaClass_1, RosettaLuaConstructor_2, PZ_1, Scope_4, Discover_3, ScopeString_1, KnownTypes_3) {
+define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", "luaparse", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/lua/wizard/PZ", "src/asledgehammer/rosetta/lua/wizard/Scope", "src/asledgehammer/rosetta/lua/wizard/Discover", "src/asledgehammer/rosetta/lua/wizard/ScopeString", "src/asledgehammer/rosetta/lua/wizard/KnownTypes"], function (require, exports, ast, RosettaLuaClass_1, RosettaLuaConstructor_2, PZ_1, Scope_4, Discover_2, ScopeString_1, KnownTypes_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaParser = void 0;
@@ -5914,7 +6052,7 @@ define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", 
                         };
                         (0, KnownTypes_3.initKnownTypes)(globalScope);
                         (0, PZ_1.scanFile)(globalInfo, chunk.body);
-                        (0, Discover_3.discoverFile)(globalInfo, chunk.body);
+                        (0, Discover_2.discoverFile)(globalInfo, chunk.body);
                         const outLua = (0, ScopeString_1.scopeChunkToString)(chunk, { indent: 0, scope: globalScope });
                         navigator.clipboard.writeText(outLua);
                         console.log("### LuaWizard ###");

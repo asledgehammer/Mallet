@@ -2,7 +2,7 @@
 import * as ast from 'luaparse';
 import { Scope } from './Scope';
 import { expressionToString, statementToString } from './String';
-import { discoverType } from './Discover';
+import { discoverType, discoverTableConstructorType } from './Discover';
 // @ts-ignore
 const luaparse: luaparse = ast.default;
 
@@ -21,49 +21,6 @@ export function indent(options: ScopeRenderOptions): ScopeRenderOptions {
 
 export function indent0(options: ScopeRenderOptions): ScopeRenderOptions {
     return { ...options, indent: 0 };
-}
-
-/**
- * TODO - Implement key -> value table type(s).
- * 
- * @param ex 
- * @param options 
- * 
- * @returns The proper lua annotation type for the table constructor. 
- */
-export function getTableConstructorType(ex: ast.TableConstructorExpression, options: ScopeRenderOptions): string {
-    console.warn(ex);
-
-    // Empty table constructor.
-    if (!ex.fields.length) return 'table';
-
-
-    let isArray = true;
-
-    // Check to see if all fields are TableValue entries. If so, this is an array.
-    for (const field of ex.fields) {
-        if (field.type !== 'TableValue') {
-            isArray = false;
-            break;
-        }
-    }
-
-    if (isArray) {
-        // Discover & compile any discovered types in the array.
-        const types: string[] = [];
-        for (const field of ex.fields) {
-            let type = discoverType(field.value, options.scope)?.type;
-            if (!type) type = 'any';
-            if (types.indexOf(type) === -1) types.push(type);
-        }
-        if (types.length > 1) { // E.G: (string|number)[]
-            return `(${types.join('|')})[]`;
-        } else {                // E.G: string[]
-            return `${types[0]}[]`;
-        }
-    }
-
-    return 'table';
 }
 
 export function scopeLiteralToString(literal: ast.BooleanLiteral | ast.NumericLiteral | ast.NilLiteral | ast.StringLiteral | ast.VarargLiteral, options: ScopeRenderOptions): string {
@@ -189,16 +146,22 @@ export function scopeLocalStatementToString(statement: ast.LocalStatement, optio
     s += `${i}--- @type `;
     for (let index = 0; index < scopes.length; index++) {
         const scopeInit = scopes[index];
-        console.log(scopeInit);
         if (scopeInit) {
             if (scopeInit.types.length) {
 
-                if (scopeInit.types.length === 1 && scopeInit.types[index] === 'table' && statement.init[index].type === 'TableConstructorExpression') {
-                    s += `${getTableConstructorType(statement.init[index] as ast.TableConstructorExpression, indent0(options))}, `;
-                } else {
-                    s += `${scopeInit.types.join('|')}, `;
+                for (let next of scopeInit.types) {
+
+                    // If the table also has registered key-value 
+                    // types, add them to the annotated type.
+                    if (next === 'table' && scopeInit.keyTypes.length && scopeInit.valueType.length) {
+                        next += `<${scopeInit.keyTypes.join('|')}, ${scopeInit.valueType.join('|')}>`;
+                    }
+
+                    s += `${next}|`;
                 }
 
+                s = s.substring(0, s.length - 1);
+                s += ', ';
             } else {
                 s += 'any, ';
             }
@@ -211,7 +174,6 @@ export function scopeLocalStatementToString(statement: ast.LocalStatement, optio
 
     // Main line.
     s += `${i}local ${vars.join(', ')} = ${inits.join(', ')}`;
-    console.warn(s);
     return s;
 }
 
@@ -407,13 +369,29 @@ export function scopeForNumericStatementToString(statement: ast.ForNumericStatem
 }
 
 export function scopeForGenericStatementToString(statement: ast.ForGenericStatement, options: ScopeRenderOptions): string {
+    const scopeForGeneric = (statement as any).scope;
+
     const i = ' '.repeat(options.indent * 4);
     const options2 = indent(options);
     const vars: string[] = [];
     for (const variable of statement.variables) vars.push(variable.name);
     const iterate: string[] = [];
-    for (const iterator of statement.iterators) iterate.push(scopeExpressionToString(iterator, indent0(options)));
-    let s = `${i}for ${vars.join(', ')} in ${iterate.join(', ')} do\n`;
+    for (const iterator of statement.iterators) {
+        iterate.push(scopeExpressionToString(iterator, indent0(options)));
+    }
+
+    let s = '';
+
+    // Render parameter type-annotations. 
+    for (const varName of vars) {
+        const scopeVar = scopeForGeneric.resolve(varName);
+        console.warn(scopeVar);
+        let type: string = 'any';
+        if (scopeVar && scopeVar.types.length) type = scopeVar.types.join('|');
+        s += `${i}--- @param ${varName} ${type}\n`;
+    }
+
+    s += `${i}for ${vars.join(', ')} in ${iterate.join(', ')} do\n`;
     s += `${scopeBodyToString(statement.body, options2)}\n`;
     s += 'end';
     return s;

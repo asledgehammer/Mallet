@@ -10,16 +10,59 @@ export type DiscoveredType = {
     defaultValue: string | undefined;
 };
 
+/**
+ * TODO - Implement key -> value table type(s).
+ * 
+ * @param ex 
+ * @param options 
+ * 
+ * @returns The proper lua annotation type for the table constructor. 
+ */
+export function discoverTableConstructorType(ex: ast.TableConstructorExpression, scope: Scope): string {
+    console.warn(ex);
+
+    // Empty table constructor.
+    if (!ex.fields.length) return 'table';
+
+
+    let isArray = true;
+
+    // Check to see if all fields are TableValue entries. If so, this is an array.
+    for (const field of ex.fields) {
+        if (field.type !== 'TableValue') {
+            isArray = false;
+            break;
+        }
+    }
+
+    if (isArray) {
+        // Discover & compile any discovered types in the array.
+        const types: string[] = [];
+        for (const field of ex.fields) {
+            let type = discoverType(field.value, scope)?.type;
+            if (!type) type = 'any';
+            if (types.indexOf(type) === -1) types.push(type);
+        }
+        if (types.length > 1) { // E.G: (string|number)[]
+            return `(${types.join('|')})[]`;
+        } else {                // E.G: string[]
+            return `${types[0]}[]`;
+        }
+    }
+
+    return 'table';
+}
+
 export function discoverRelationships(expression: ast.Expression, scope: Scope, index: number = 0): void {
     switch (expression.type) {
 
         case 'Identifier': {
-            
+
             // So if this is a direct reference, get the variable from the scope and
             // reference with the parameter variable slot and assignment.
 
             // Ignore prints.
-            if(scope.path === '__G.print') {
+            if (scope.path === '__G.print') {
                 break;
             }
 
@@ -197,7 +240,7 @@ export function discoverRelationships(expression: ast.Expression, scope: Scope, 
                     let scopeCurr = scope;
                     for (const next of stripped.split('.')) {
                         let scopeNow = scopeCurr.resolve(next);
-                        console.log(`scopeCurr: ${next}`, scopeNow);
+                        // console.log(`scopeCurr: ${next}`, scopeNow);
                         if (!scopeNow) {
                             console.error(`Cannot resolve scope-chain reference: ${stripped}`);
                             return;
@@ -329,6 +372,20 @@ export function discoverType(expression: ast.Expression, scope: Scope): Discover
 
         // Simple type-reference.
         case 'Identifier': {
+
+            // So if this is a direct reference, get the variable from the scope and
+            // reference with the parameter variable slot and assignment.
+
+            // Ignore prints.
+            if (scope.path === '__G.print') break;
+
+            const scopeReference = scope.resolve(expression.name);
+            if (!scopeReference) {
+                console.error(`Cannot find Scope for Identifier: ${expression.name} (Scope: ${scope.path})`);
+                break;
+            }
+            type = scopeReference.types.join('|');
+
             break;
         }
 
@@ -365,11 +422,7 @@ export function discoverType(expression: ast.Expression, scope: Scope): Discover
         }
 
         case 'TableConstructorExpression':
-            // TODO - Implement.
-            type = 'table';
-
-
-
+            type = discoverTableConstructorType(expression, scope);
             break;
 
         case 'BinaryExpression': {
@@ -750,13 +803,61 @@ export function discoverAssignmentStatement(globalInfo: PZGlobalInfo, statement:
         init: statement,
     }
 
-    new Scope(assignmentBlock, scope);
+    const scopeAssignment = new Scope(assignmentBlock, scope);
 
     // (Tuple support)
     for (let index = 0; index < statement.variables.length; index++) {
         const variable = statement.variables[index];
         const init = statement.init[index];
 
+        console.log(variable);
+
+        switch (variable.type) {
+            case 'IndexExpression': {
+                const varIndex = variable.index;
+                const scopeBase = scope.resolve(expressionToString(variable.base));
+                if (!scopeBase) {
+                    console.warn(`Unresolved assignment IndexExpression.base: ${expressionToString(variable.base)} (Scope: ${scopeAssignment.path})`);
+                    return 0;
+                }
+
+                const scopeIndex = scope.resolve(expressionToString(varIndex));
+                if (!scopeIndex) {
+                    console.warn(`Unresolved assignment IndexExpression.index: ${expressionToString(variable.index)} (Scope: ${scopeAssignment.path})`);
+                    return 0;
+                }
+
+                const varType = discoverType(init, scope).type;
+
+                // console.log('##', scopeBase, scopeIndex, varType);
+
+                // At this point the resolved base scope MUST be a table.
+                if (scopeBase.types.indexOf('table') === -1) scopeBase.types.push('table');
+
+                // If the indexer has a known type, add this to the key-types 
+                // for the base table.
+                if (scopeIndex.types.length) {
+                    for (const type of scopeIndex.types) {
+                        if (scopeBase.keyTypes.indexOf(type) === -1) {
+                            scopeBase.keyTypes.push(type);
+                        }
+                    }
+                }
+
+                // Add the value-type to the table-scope.
+                if (varType && varType.length && scopeBase.valueType.indexOf(varType) === -1) {
+                    scopeBase.valueType.push(varType);
+                }
+
+                break;
+            }
+            case 'MemberExpression': {
+                break;
+            }
+            case 'Identifier': {
+                break;
+            }
+        }
 
         console.log(`variable[${index}]: ${expressionToString(variable)} init: ${expressionToString(init)}`);
 
@@ -928,13 +1029,14 @@ export function discoverForGenericStatement(globalInfo: PZGlobalInfo, statement:
     const { scope: __G } = globalInfo;
     const changes = 0;
 
-    const doBlock: ScopeForGenericBlock = {
+    const blockForGeneric: ScopeForGenericBlock = {
         type: 'ScopeForGenericBlock',
         init: statement,
         values: {}
     }
-    const scopeIf = new Scope(doBlock, scope);
+    const scopeForGeneric = new Scope(blockForGeneric, scope);
 
+    const scopeVars: Scope[] = [];
     // Recognize any variables in the loop.
     for (let index = 0; index < statement.variables.length; index++) {
         const variable = statement.variables[index];
@@ -948,13 +1050,76 @@ export function discoverForGenericStatement(globalInfo: PZGlobalInfo, statement:
                 types: [],
                 index
             };
-            scopeVariable = new Scope(element, scope, 0, name);
+            scopeVars.push(new Scope(element, scopeForGeneric, index, name));
         }
+    }
+
+    // Hack: for key in pairs(table) do end
+    if (statement.variables.length === 1 && statement.iterators.length === 1
+        && statement.iterators[0].type === 'CallExpression'
+        && statement.iterators[0].base.type === 'Identifier'
+        && statement.iterators[0].base.name === 'pairs') {
+        let type = discoverType(statement.iterators[0].arguments[0], scope).type?.replace('[]', '');
+        if (!type) {
+            // if (type === 'table') {
+            console.warn(`Unresolved table key-type for pairs(): ${expressionToString(statement.iterators[0].arguments[0])} (using 'any')`);
+            // }
+        } else {
+
+            if (type === 'table') {
+                switch (statement.iterators[0].arguments[0].type) {
+                    case 'Identifier': {
+                        const scopeTable = scope.resolve(statement.iterators[0].arguments[0].name);
+                        if (!scopeTable) {
+                            console.error(`Table not found: ${statement.iterators[0].arguments[0].name} (Using value-type 'any')`);
+                            type = 'any';
+                            break;
+                        }
+                        type = scopeTable.valueType.join('|');
+                        break;
+                    }
+                    default: {
+                        console.error(`Unimplemented expression type for for-generic pairs() table arg: ${statement.iterators[0].arguments[0].type} (Using value-type 'any')`);
+                        type = 'any';
+                        break;
+                    }
+                }
+            }
+
+            if (scopeVars[0].types.indexOf(type) === -1) scopeVars[0].types.push(type);
+            const element = scopeVars[0].element! as ScopeVariable;
+            if (element.types.indexOf(type) === -1) element.types.push(type);
+        }
+    }
+    // Hack: for index, value in ipairs(table) do end
+    else if (statement.variables.length === 2 && statement.iterators.length === 1
+        && statement.iterators[0].type === 'CallExpression'
+        && statement.iterators[0].base.type === 'Identifier'
+        && statement.iterators[0].base.name === 'ipairs') {
+
+        // First argument-type is always 'integer'.
+        if (scopeVars[0].types.indexOf('integer') === -1) scopeVars[0].types.push('integer');
+
+        let type = discoverType(statement.iterators[0].arguments[0], scope).type?.replace('[]', '');
+        if (!type) {
+            // if (type === 'table') {
+            console.warn(`Unresolved table value-type for ipairs(): ${expressionToString(statement.iterators[0].arguments[0])} (using 'any')`);
+            // }
+        } else {
+
+            if (scopeVars[1].types.indexOf(type) === -1) scopeVars[1].types.push(type);
+            const element = scopeVars[1].element! as ScopeVariable;
+            if (element.types.indexOf(type) === -1) element.types.push(type);
+        }
+    }
+    // Misc generic returns. Look for tuple returns and if so assign the types.
+    else {
+        // TODO: Implement.
     }
 
     // Go through body.
     for (const next of statement.body) {
-        discoverStatement(globalInfo, next, scopeIf);
+        discoverStatement(globalInfo, next, scopeForGeneric);
     }
 
     return changes;
@@ -981,7 +1146,10 @@ export function discoverStatement(globalInfo: PZGlobalInfo, statement: ast.State
 
 export function discoverFile(globalInfo: PZGlobalInfo, statements: ast.Statement[]) {
     console.log(statements);
-    for (const statement of statements) {
-        discoverStatement(globalInfo, statement, globalInfo.scope);
+
+    for (let pass = 0; pass < 2; pass++) {
+        for (const statement of statements) {
+            discoverStatement(globalInfo, statement, globalInfo.scope);
+        }
     }
 }

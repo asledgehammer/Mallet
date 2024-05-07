@@ -28,6 +28,11 @@ export class Scope {
 
     readonly types: string[] = [];
 
+    /** (For table-type discovery) */
+    readonly keyTypes: string[] = [];
+    /** (For table-type discovery) */
+    readonly valueType: string[] = [];
+
     /** For statements with multiple variables, this index helps with the initialization of Scopes. */
     readonly index: number = 0;
 
@@ -82,8 +87,8 @@ export class Scope {
 
         this.path = `${parent ? `${parent.path}.` : ''}${this.name}`;
 
-        if (this.path === '__G.addChild') {
-            // throw new Error();
+        if(element && (element as any).init) {
+            (element as any).init.scope = this;
         }
 
         this.index = index;
@@ -93,7 +98,6 @@ export class Scope {
             parent.addChild(this);
             this.addToRootMap(this);
         }
-
 
         if (element) {
 

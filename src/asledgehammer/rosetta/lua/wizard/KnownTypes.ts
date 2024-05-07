@@ -3,6 +3,7 @@ import { Scope } from "./Scope";
 
 export const knownTypes: { [path: string]: string } = {
 
+    'ipairs()': '*',
     'print()': 'void',
     'tostring()': 'string',
     'setmetatable()': 'table',
