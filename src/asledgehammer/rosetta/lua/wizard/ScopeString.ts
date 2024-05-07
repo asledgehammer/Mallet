@@ -260,16 +260,16 @@ export function scopeFunctionDeclarationToString(func: ast.FunctionDeclaration, 
 
     const scopeFunc = options.scope.resolve(name);
     let s = '';
-    
+
     if (scopeFunc) {
         options2.scope = scopeFunc;
         const elemFunc: ast.FunctionDeclaration = scopeFunc.element as any;
         if (elemFunc) {
-            s += `${i}--- (Auto-Generated)\n`;
+            s += '';
 
             // Generate params documentation.
             if (func.parameters.length) {
-                s += `${i}---\n`;
+                if(s.length) s += `${i}---\n`;
 
                 for (const param of func.parameters) {
                     let paramName: string = '';
@@ -295,11 +295,8 @@ export function scopeFunctionDeclarationToString(func: ast.FunctionDeclaration, 
 
             // Generate returns documentation.
             if (scopeFunc.types.length) {
-                s += `${i}---\n${i}--- @return ${scopeFunc.types.join('|')}\n`;
-            } else if (scopeFunc._nextReturnID === 0) {
-                s += `${i}---\n${i}--- @return void\n`;
-            } else {
-                s += `${i}---\n${i}--- @return any\n`;
+                if(s.length) s += `${i}---\n`;
+                s += `${i}--- @return ${scopeFunc.types.join('|')}\n`;
             }
         }
     }
@@ -349,9 +346,11 @@ export function scopeRepeatStatementToString(statement: ast.RepeatStatement, opt
 export function scopeForNumericStatementToString(statement: ast.ForNumericStatement, options: ScopeRenderOptions): string {
     const i = ' '.repeat(options.indent * 4);
     const options2 = indent(options);
-    let s = `${i}for ${scopeExpressionToString(statement.start, indent0(options))}, ${scopeExpressionToString(statement.end, indent0(options))}`;
+
+    // the numeric value can be a integer or float value, so use the type 'number'. 
+    let s = `${i}--- @type number\n${i}for ${scopeIdentifierToString(statement.variable, indent0(options))} = ${scopeExpressionToString(statement.start, indent0(options))}, ${scopeExpressionToString(statement.end, indent0(options))}`;
     if (statement.step) s += `, ${scopeExpressionToString(statement.step, indent0(options))}`; // (Optional 3rd step argument)
-    s += `\n${scopeBodyToString(statement.body, options2)}\n`;
+    s += ` do\n${scopeBodyToString(statement.body, options2)}\n`;
     s += `${i}end`;
     return s;
 }

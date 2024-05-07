@@ -14,8 +14,14 @@ export function discoverRelationships(expression: ast.Expression, scope: Scope, 
     switch (expression.type) {
 
         case 'Identifier': {
+            
             // So if this is a direct reference, get the variable from the scope and
             // reference with the parameter variable slot and assignment.
+
+            // Ignore prints.
+            if(scope.path === '__G.print') {
+                break;
+            }
 
             const scopeReference = scope.resolve(expression.name);
             if (!scopeReference) {
@@ -230,12 +236,12 @@ export function discoverRelationships(expression: ast.Expression, scope: Scope, 
                 //     break;
                 // }
 
-                if(funcDec) {
+                if (funcDec) {
                     // Handle param(s).
                     for (let index = 0; index < funcDec.parameters.length; index++) {
                         const param = funcDec.parameters[index];
                         const arg = expression.arguments[index];
-    
+
                         // Grab param name.
                         let paramName: string = '';
                         switch (param.type) {
@@ -248,20 +254,20 @@ export function discoverRelationships(expression: ast.Expression, scope: Scope, 
                                 break;
                             }
                         }
-    
+
                         const scopeParam = scope2.resolve(paramName);
                         if (!scopeParam) {
                             console.error(`Cannot find Scope for parameter: ${paramName} (Scope: ${scope2.path})`);
                             break;
                         }
-    
+
                         // console.warn(scopeParam);
-    
+
                         // console.log(expressionToString(expression), expressionToString(arg), discoverType(arg, scopeParam));
                         discoverRelationships(arg, scopeParam);
                     }
                 } else {
-                    for(const arg of expression.arguments) {
+                    for (const arg of expression.arguments) {
                         discoverRelationships(arg, scope2);
                     }
                 }
@@ -794,11 +800,16 @@ export function discoverIfStatement(globalInfo: PZGlobalInfo, statement: ast.IfS
             init: clause,
             values: {}
         }
-        const scopeIf = new Scope(ifClause, scope);
+        const scopeClause = new Scope(ifClause, scope);
+
+        // Try to discover any clause conditions like we do call-expression parameters.
+        if (clause.type === 'IfClause' || clause.type === 'ElseifClause') {
+            discoverRelationships(clause.condition, scope);
+        }
 
         // Go through body of clause.
         for (const next of clause.body) {
-            discoverStatement(globalInfo, next, scopeIf);
+            discoverStatement(globalInfo, next, scopeClause);
         }
     }
 
@@ -815,6 +826,9 @@ export function discoverWhileStatement(globalInfo: PZGlobalInfo, statement: ast.
         values: {}
     }
     const scopeIf = new Scope(whileBlock, scope);
+
+    // Try to discover conditions like we do call-expression parameters.
+    discoverRelationships(statement.condition, scope);
 
     // Go through body.
     for (const next of statement.body) {
@@ -854,6 +868,9 @@ export function discoverRepeatStatement(globalInfo: PZGlobalInfo, statement: ast
     }
     const scopeIf = new Scope(doBlock, scope);
 
+    // Try to discover conditions like we do call-expression parameters.
+    discoverRelationships(statement.condition, scope);
+
     // Go through body.
     for (const next of statement.body) {
         discoverStatement(globalInfo, next, scopeIf);
@@ -866,16 +883,42 @@ export function discoverForNumericStatement(globalInfo: PZGlobalInfo, statement:
     const { scope: __G } = globalInfo;
     const changes = 0;
 
-    const doBlock: ScopeForNumericBlock = {
+    const forNumericBlock: ScopeForNumericBlock = {
         type: 'ScopeForNumericBlock',
         init: statement,
         values: {}
     }
-    const scopeIf = new Scope(doBlock, scope);
+    const scopeForNumeric = new Scope(forNumericBlock, scope);
+
+    let scopeVariable: Scope | undefined;
+    const { variable } = statement;
+    if (variable) {
+
+        const { name } = variable;
+
+        let scopeVariable = scope.resolve(name);
+        if (!scopeVariable) {
+            const forVariable: ScopeVariable = {
+                type: 'ScopeVariable',
+                name,
+                init: variable,
+                index: 0,
+                types: ['number'],
+            }
+            scopeVariable = new Scope(forVariable, scopeForNumeric, 0, name);
+        }
+    }
+
+    // Try to discover any relationships like we do call-expression parameters.
+    if (scopeVariable) {
+        discoverRelationships(statement.start, scope);
+        discoverRelationships(statement.end, scope);
+        if (statement.step) discoverRelationships(statement.step, scope);
+    }
 
     // Go through body.
     for (const next of statement.body) {
-        discoverStatement(globalInfo, next, scopeIf);
+        discoverStatement(globalInfo, next, scopeForNumeric);
     }
 
     return changes;
@@ -891,6 +934,27 @@ export function discoverForGenericStatement(globalInfo: PZGlobalInfo, statement:
         values: {}
     }
     const scopeIf = new Scope(doBlock, scope);
+
+    // Recognize any variables in the loop.
+    for (let index = 0; index < statement.variables.length; index++) {
+        const variable = statement.variables[index];
+        const { name } = variable;
+        let scopeVariable = scope.resolve(name);
+        if (!scopeVariable) {
+            const element: ScopeVariable = {
+                type: 'ScopeVariable',
+                name,
+                init: variable,
+                types: [],
+                index
+            };
+            scopeVariable = new Scope(element, scope, 0, name);
+        }
+
+        // Try to discover conditions like we do call-expression parameters.
+        const iterator = statement.iterators[index];
+        discoverRelationships(iterator, scope);
+    }
 
     // Go through body.
     for (const next of statement.body) {

@@ -3733,7 +3733,7 @@ define("src/asledgehammer/rosetta/lua/wizard/KnownTypes", ["require", "exports",
             }
         };
         func(exports.knownTypes);
-        func(javaAPI);
+        //func(javaAPI);
         exports.isInitKnownTypes = true;
     }
     exports.initKnownTypes = initKnownTypes;
@@ -3747,6 +3747,10 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
             case 'Identifier': {
                 // So if this is a direct reference, get the variable from the scope and
                 // reference with the parameter variable slot and assignment.
+                // Ignore prints.
+                if (scope.path === '__G.print') {
+                    break;
+                }
                 const scopeReference = scope.resolve(expression.name);
                 if (!scopeReference) {
                     console.error(`Cannot find reference Scope for Identifier: ${expression.name} (Scope: ${scope.path})`);
@@ -4438,10 +4442,14 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                 init: clause,
                 values: {}
             };
-            const scopeIf = new Scope_2.Scope(ifClause, scope);
+            const scopeClause = new Scope_2.Scope(ifClause, scope);
+            // Try to discover any clause conditions like we do call-expression parameters.
+            if (clause.type === 'IfClause' || clause.type === 'ElseifClause') {
+                discoverRelationships(clause.condition, scope);
+            }
             // Go through body of clause.
             for (const next of clause.body) {
-                discoverStatement(globalInfo, next, scopeIf);
+                discoverStatement(globalInfo, next, scopeClause);
             }
         }
         return changes;
@@ -4456,6 +4464,8 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
             values: {}
         };
         const scopeIf = new Scope_2.Scope(whileBlock, scope);
+        // Try to discover conditions like we do call-expression parameters.
+        discoverRelationships(statement.condition, scope);
         // Go through body.
         for (const next of statement.body) {
             discoverStatement(globalInfo, next, scopeIf);
@@ -4488,6 +4498,8 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
             values: {}
         };
         const scopeIf = new Scope_2.Scope(doBlock, scope);
+        // Try to discover conditions like we do call-expression parameters.
+        discoverRelationships(statement.condition, scope);
         // Go through body.
         for (const next of statement.body) {
             discoverStatement(globalInfo, next, scopeIf);
@@ -4498,15 +4510,38 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
     function discoverForNumericStatement(globalInfo, statement, scope) {
         const { scope: __G } = globalInfo;
         const changes = 0;
-        const doBlock = {
+        const forNumericBlock = {
             type: 'ScopeForNumericBlock',
             init: statement,
             values: {}
         };
-        const scopeIf = new Scope_2.Scope(doBlock, scope);
+        const scopeForNumeric = new Scope_2.Scope(forNumericBlock, scope);
+        let scopeVariable;
+        const { variable } = statement;
+        if (variable) {
+            const { name } = variable;
+            let scopeVariable = scope.resolve(name);
+            if (!scopeVariable) {
+                const forVariable = {
+                    type: 'ScopeVariable',
+                    name,
+                    init: variable,
+                    index: 0,
+                    types: ['number'],
+                };
+                scopeVariable = new Scope_2.Scope(forVariable, scopeForNumeric, 0, name);
+            }
+        }
+        // Try to discover any relationships like we do call-expression parameters.
+        if (scopeVariable) {
+            discoverRelationships(statement.start, scope);
+            discoverRelationships(statement.end, scope);
+            if (statement.step)
+                discoverRelationships(statement.step, scope);
+        }
         // Go through body.
         for (const next of statement.body) {
-            discoverStatement(globalInfo, next, scopeIf);
+            discoverStatement(globalInfo, next, scopeForNumeric);
         }
         return changes;
     }
@@ -4520,6 +4555,25 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
             values: {}
         };
         const scopeIf = new Scope_2.Scope(doBlock, scope);
+        // Recognize any variables in the loop.
+        for (let index = 0; index < statement.variables.length; index++) {
+            const variable = statement.variables[index];
+            const { name } = variable;
+            let scopeVariable = scope.resolve(name);
+            if (!scopeVariable) {
+                const element = {
+                    type: 'ScopeVariable',
+                    name,
+                    init: variable,
+                    types: [],
+                    index
+                };
+                scopeVariable = new Scope_2.Scope(element, scope, 0, name);
+            }
+            // Try to discover conditions like we do call-expression parameters.
+            const iterator = statement.iterators[index];
+            discoverRelationships(iterator, scope);
+        }
         // Go through body.
         for (const next of statement.body) {
             discoverStatement(globalInfo, next, scopeIf);
@@ -5164,10 +5218,11 @@ define("src/asledgehammer/rosetta/lua/wizard/ScopeString", ["require", "exports"
             options2.scope = scopeFunc;
             const elemFunc = scopeFunc.element;
             if (elemFunc) {
-                s += `${i}--- (Auto-Generated)\n`;
+                s += '';
                 // Generate params documentation.
                 if (func.parameters.length) {
-                    s += `${i}---\n`;
+                    if (s.length)
+                        s += `${i}---\n`;
                     for (const param of func.parameters) {
                         let paramName = '';
                         switch (param.type) {
@@ -5191,13 +5246,9 @@ define("src/asledgehammer/rosetta/lua/wizard/ScopeString", ["require", "exports"
                 }
                 // Generate returns documentation.
                 if (scopeFunc.types.length) {
-                    s += `${i}---\n${i}--- @return ${scopeFunc.types.join('|')}\n`;
-                }
-                else if (scopeFunc._nextReturnID === 0) {
-                    s += `${i}---\n${i}--- @return void\n`;
-                }
-                else {
-                    s += `${i}---\n${i}--- @return any\n`;
+                    if (s.length)
+                        s += `${i}---\n`;
+                    s += `${i}--- @return ${scopeFunc.types.join('|')}\n`;
                 }
             }
         }
@@ -5245,10 +5296,11 @@ define("src/asledgehammer/rosetta/lua/wizard/ScopeString", ["require", "exports"
     function scopeForNumericStatementToString(statement, options) {
         const i = ' '.repeat(options.indent * 4);
         const options2 = indent(options);
-        let s = `${i}for ${scopeExpressionToString(statement.start, indent0(options))}, ${scopeExpressionToString(statement.end, indent0(options))}`;
+        // the numeric value can be a integer or float value, so use the type 'number'. 
+        let s = `${i}--- @type number\n${i}for ${scopeIdentifierToString(statement.variable, indent0(options))} = ${scopeExpressionToString(statement.start, indent0(options))}, ${scopeExpressionToString(statement.end, indent0(options))}`;
         if (statement.step)
             s += `, ${scopeExpressionToString(statement.step, indent0(options))}`; // (Optional 3rd step argument)
-        s += `\n${scopeBodyToString(statement.body, options2)}\n`;
+        s += ` do\n${scopeBodyToString(statement.body, options2)}\n`;
         s += `${i}end`;
         return s;
     }

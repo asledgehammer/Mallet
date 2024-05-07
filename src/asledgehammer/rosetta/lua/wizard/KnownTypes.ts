@@ -97,7 +97,7 @@ export function initKnownTypes(global: Scope): void {
     };
 
     func(knownTypes);
-    func(javaAPI);
+    //func(javaAPI);
 
     isInitKnownTypes = true;
 }
