@@ -810,8 +810,6 @@ export function discoverAssignmentStatement(globalInfo: PZGlobalInfo, statement:
         const variable = statement.variables[index];
         const init = statement.init[index];
 
-        console.log(variable);
-
         switch (variable.type) {
             case 'IndexExpression': {
                 const varIndex = variable.index;
@@ -828,8 +826,6 @@ export function discoverAssignmentStatement(globalInfo: PZGlobalInfo, statement:
                 }
 
                 const varType = discoverType(init, scope).type;
-
-                // console.log('##', scopeBase, scopeIndex, varType);
 
                 // At this point the resolved base scope MUST be a table.
                 if (scopeBase.types.indexOf('table') === -1) scopeBase.types.push('table');
@@ -852,15 +848,30 @@ export function discoverAssignmentStatement(globalInfo: PZGlobalInfo, statement:
                 break;
             }
             case 'MemberExpression': {
+
+                // Ignore PZ class declarations.
+                // if(variable.identifier.name === 'derive') {
+                // break;
+                // }
+                // throw new Error('Not implemented.');
                 break;
             }
             case 'Identifier': {
+
+                // Ignore PZ class declarations.
+                // if (init.type === 'CallExpression'
+                //     && init.base.type === 'MemberExpression'
+                //     && init.base.identifier.name === 'derive'
+                // ) {
+                //     break;
+                // }
+
+                // console.warn(variable);
+                // console.warn(statement);
+                // throw new Error('Not implemented.');
                 break;
             }
         }
-
-        console.log(`variable[${index}]: ${expressionToString(variable)} init: ${expressionToString(init)}`);
-
     }
 
     return changes;

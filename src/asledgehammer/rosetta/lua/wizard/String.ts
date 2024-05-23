@@ -57,7 +57,7 @@ export function stringCallExpressionToString(expression: ast.StringCallExpressio
     const i = ' '.repeat(options.indent * 4);
     const base = expressionToString(expression.base);
     const arg = expressionToString(expression.argument);
-    console.log(expression);
+    // console.log(expression);
     return `${i}${base} ${arg}`;
 }
 

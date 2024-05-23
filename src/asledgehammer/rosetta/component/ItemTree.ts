@@ -1,6 +1,6 @@
 import { App } from "../../../app";
 import { $get, html } from "../util";
-import { LuaCard } from "./LuaCard";
+import { LuaCard } from "./lua/LuaCard";
 
 export class ItemTree {
 

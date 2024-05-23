@@ -1,9 +1,9 @@
 // import bootstrap = require('bootstrap');
 import hljs = require('highlight.js');
-import { LuaClassCard } from './asledgehammer/rosetta/component/LuaClassCard';
-import { LuaConstructorCard } from './asledgehammer/rosetta/component/LuaConstructorCard';
-import { LuaFieldCard } from './asledgehammer/rosetta/component/LuaFieldCard';
-import { LuaFunctionCard } from './asledgehammer/rosetta/component/LuaFunctionCard';
+import { LuaClassCard } from './asledgehammer/rosetta/component/lua/LuaClassCard';
+import { LuaConstructorCard } from './asledgehammer/rosetta/component/lua/LuaConstructorCard';
+import { LuaFieldCard } from './asledgehammer/rosetta/component/lua/LuaFieldCard';
+import { LuaFunctionCard } from './asledgehammer/rosetta/component/lua/LuaFunctionCard';
 import { NameModeType } from './asledgehammer/rosetta/component/NameModeType';
 import { Sidebar } from './asledgehammer/rosetta/component/Sidebar';
 import { generateLuaClass } from './asledgehammer/rosetta/lua/LuaGenerator';

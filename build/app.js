@@ -1391,7 +1391,7 @@ define("src/asledgehammer/Delta", ["require", "exports"], function (require, exp
     };
     exports.createDeltaEditor = createDeltaEditor;
 });
-define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/CardComponent", "src/asledgehammer/Delta"], function (require, exports, hljs, util_3, CardComponent_1, Delta_1) {
+define("src/asledgehammer/rosetta/component/lua/LuaCard", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/CardComponent", "src/asledgehammer/Delta"], function (require, exports, hljs, util_3, CardComponent_1, Delta_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaCard = void 0;
@@ -1875,7 +1875,7 @@ define("src/asledgehammer/rosetta/component/LuaCard", ["require", "exports", "hi
     }
     exports.LuaCard = LuaCard;
 });
-define("src/asledgehammer/rosetta/component/LuaClassCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/LuaCard"], function (require, exports, LuaGenerator_1, util_4, LuaCard_1) {
+define("src/asledgehammer/rosetta/component/lua/LuaClassCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/lua/LuaCard"], function (require, exports, LuaGenerator_1, util_4, LuaCard_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaClassCard = void 0;
@@ -1954,7 +1954,7 @@ define("src/asledgehammer/rosetta/component/LuaClassCard", ["require", "exports"
     }
     exports.LuaClassCard = LuaClassCard;
 });
-define("src/asledgehammer/rosetta/component/LuaConstructorCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/LuaCard"], function (require, exports, LuaGenerator_2, util_5, LuaCard_2) {
+define("src/asledgehammer/rosetta/component/lua/LuaConstructorCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/lua/LuaCard"], function (require, exports, LuaGenerator_2, util_5, LuaCard_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaConstructorCard = void 0;
@@ -2022,7 +2022,7 @@ define("src/asledgehammer/rosetta/component/LuaConstructorCard", ["require", "ex
     }
     exports.LuaConstructorCard = LuaConstructorCard;
 });
-define("src/asledgehammer/rosetta/component/LuaFieldCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/LuaCard"], function (require, exports, LuaGenerator_3, util_6, LuaCard_3) {
+define("src/asledgehammer/rosetta/component/lua/LuaFieldCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/lua/LuaCard"], function (require, exports, LuaGenerator_3, util_6, LuaCard_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaFieldCard = void 0;
@@ -2131,7 +2131,7 @@ define("src/asledgehammer/rosetta/component/LuaFieldCard", ["require", "exports"
     }
     exports.LuaFieldCard = LuaFieldCard;
 });
-define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/LuaCard"], function (require, exports, LuaGenerator_4, util_7, LuaCard_4) {
+define("src/asledgehammer/rosetta/component/lua/LuaFunctionCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/lua/LuaCard"], function (require, exports, LuaGenerator_4, util_7, LuaCard_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaFunctionCard = void 0;
@@ -2242,7 +2242,7 @@ define("src/asledgehammer/rosetta/component/LuaFunctionCard", ["require", "expor
     }
     exports.LuaFunctionCard = LuaFunctionCard;
 });
-define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/LuaCard"], function (require, exports, util_8, LuaCard_5) {
+define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/lua/LuaCard"], function (require, exports, util_8, LuaCard_5) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ItemTree = void 0;
@@ -2734,7 +2734,7 @@ define("src/asledgehammer/rosetta/lua/wizard/String", ["require", "exports", "lu
         const i = ' '.repeat(options.indent * 4);
         const base = expressionToString(expression.base);
         const arg = expressionToString(expression.argument);
-        console.log(expression);
+        // console.log(expression);
         return `${i}${base} ${arg}`;
     }
     exports.stringCallExpressionToString = stringCallExpressionToString;
@@ -4466,7 +4466,6 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
         for (let index = 0; index < statement.variables.length; index++) {
             const variable = statement.variables[index];
             const init = statement.init[index];
-            console.log(variable);
             switch (variable.type) {
                 case 'IndexExpression': {
                     const varIndex = variable.index;
@@ -4481,7 +4480,6 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                         return 0;
                     }
                     const varType = discoverType(init, scope).type;
-                    // console.log('##', scopeBase, scopeIndex, varType);
                     // At this point the resolved base scope MUST be a table.
                     if (scopeBase.types.indexOf('table') === -1)
                         scopeBase.types.push('table');
@@ -4501,13 +4499,27 @@ define("src/asledgehammer/rosetta/lua/wizard/Discover", ["require", "exports", "
                     break;
                 }
                 case 'MemberExpression': {
+                    // Ignore PZ class declarations.
+                    // if(variable.identifier.name === 'derive') {
+                    // break;
+                    // }
+                    // throw new Error('Not implemented.');
                     break;
                 }
                 case 'Identifier': {
+                    // Ignore PZ class declarations.
+                    // if (init.type === 'CallExpression'
+                    //     && init.base.type === 'MemberExpression'
+                    //     && init.base.identifier.name === 'derive'
+                    // ) {
+                    //     break;
+                    // }
+                    // console.warn(variable);
+                    // console.warn(statement);
+                    // throw new Error('Not implemented.');
                     break;
                 }
             }
-            console.log(`variable[${index}]: ${(0, String_2.expressionToString)(variable)} init: ${(0, String_2.expressionToString)(init)}`);
         }
         return changes;
     }
@@ -5499,7 +5511,7 @@ define("src/asledgehammer/rosetta/lua/wizard/ScopeString", ["require", "exports"
         }
         s += `${i}for ${vars.join(', ')} in ${iterate.join(', ')} do\n`;
         s += `${scopeBodyToString(statement.body, options2)}\n`;
-        s += 'end';
+        s += `${i}end`;
         return s;
     }
     exports.scopeForGenericStatementToString = scopeForGenericStatementToString;
@@ -6083,7 +6095,7 @@ define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", 
     }
     exports.LuaParser = LuaParser;
 });
-define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/component/LuaClassCard", "src/asledgehammer/rosetta/component/LuaConstructorCard", "src/asledgehammer/rosetta/component/LuaFieldCard", "src/asledgehammer/rosetta/component/LuaFunctionCard", "src/asledgehammer/rosetta/component/Sidebar", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/lua/wizard/LuaParser"], function (require, exports, hljs, LuaClassCard_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, Sidebar_1, LuaGenerator_5, RosettaLuaClass_2, RosettaLuaConstructor_3, util_10, LuaParser_1) {
+define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/component/lua/LuaClassCard", "src/asledgehammer/rosetta/component/lua/LuaConstructorCard", "src/asledgehammer/rosetta/component/lua/LuaFieldCard", "src/asledgehammer/rosetta/component/lua/LuaFunctionCard", "src/asledgehammer/rosetta/component/Sidebar", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/lua/wizard/LuaParser"], function (require, exports, hljs, LuaClassCard_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, Sidebar_1, LuaGenerator_5, RosettaLuaClass_2, RosettaLuaConstructor_3, util_10, LuaParser_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.App = exports.Toast = void 0;

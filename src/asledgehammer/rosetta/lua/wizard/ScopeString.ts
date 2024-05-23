@@ -2,7 +2,7 @@
 import * as ast from 'luaparse';
 import { Scope } from './Scope';
 import { expressionToString, statementToString } from './String';
-import { discoverType, discoverTableConstructorType } from './Discover';
+
 // @ts-ignore
 const luaparse: luaparse = ast.default;
 
@@ -393,7 +393,7 @@ export function scopeForGenericStatementToString(statement: ast.ForGenericStatem
 
     s += `${i}for ${vars.join(', ')} in ${iterate.join(', ')} do\n`;
     s += `${scopeBodyToString(statement.body, options2)}\n`;
-    s += 'end';
+    s += `${i}end`;
     return s;
 }
 

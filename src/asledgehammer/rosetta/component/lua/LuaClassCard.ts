@@ -1,8 +1,8 @@
-import { App } from '../../../app';
-import { generateLuaClass } from '../lua/LuaGenerator';
-import { RosettaLuaClass } from '../lua/RosettaLuaClass';
-import { $get, html } from '../util';
-import { CardOptions } from './CardComponent';
+import { App } from '../../../../app';
+import { generateLuaClass } from '../../lua/LuaGenerator';
+import { RosettaLuaClass } from '../../lua/RosettaLuaClass';
+import { $get, html } from '../../util';
+import { CardOptions } from '../CardComponent';
 import { LuaCard } from './LuaCard';
 
 export class LuaClassCard extends LuaCard<LuaClassCardOptions> {
