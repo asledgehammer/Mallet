@@ -399,7 +399,7 @@ export class LuaParser {
                     if (clazz) {
                         const card = app.showClass(clazz);
                         app.renderCode();
-                        app.sidebar.itemTree.populate();
+                        app.sidebar.populateTrees();
                         card.update();
                     }
 

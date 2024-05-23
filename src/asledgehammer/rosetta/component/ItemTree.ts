@@ -1,24 +1,26 @@
 import { App } from "../../../app";
 import { $get, html } from "../util";
+import { Sidebar } from "./Sidebar";
 import { LuaCard } from "./lua/LuaCard";
 
 export class ItemTree {
 
     readonly app: App;
+    readonly sidebar: Sidebar;
     readonly idItemClass: string;
     readonly idFolderField: string;
     readonly idFolderValue: string;
     readonly idFolderFunction: string;
     readonly idFolderMethod: string;
-    
-    selectedItemID: string | undefined;
+
     folderFieldOpen: boolean = false;
     folderValueOpen: boolean = false;
     folderFunctionOpen: boolean = false;
     folderMethodOpen: boolean = false;
 
-    constructor(app: App) {
+    constructor(app: App, sidebar: Sidebar) {
         this.app = app;
+        this.sidebar = sidebar;
 
         this.idItemClass = `item-tree-item-class`;
         this.idFolderField = `item-tree-folder-field`;
@@ -95,25 +97,16 @@ export class ItemTree {
             });
         }
 
-        let $tree = $get('tree');
-        $tree.remove();
+        let $treeLower = $get('tree-lower');
+        $treeLower.remove();
 
-        $get('sidebar-content').append('<div id="tree" class="rounded-0 bg-dark text-white"></div>');
-        $tree = $get('tree');
-
-        // If something isn't selected then the properties must be.
-        const classClasses = ['item-tree-item', 'lua-class-item'];
-        if (!_this.selectedItemID) classClasses.push('selected');
+        const $sidebarContentLower = $get('sidebar-content-lower');
+        $sidebarContentLower.append('<div id="tree-lower" class="rounded-0 bg-dark text-white"></div>');
+        $treeLower = $get('tree-lower');
 
         // @ts-ignore
-        $tree.bstreeview({
+        $treeLower.bstreeview({
             data: [
-                {
-                    id: _this.idItemClass,
-                    text: "Class Properties",
-                    icon: LuaCard.getTypeIcon('class'),
-                    class: classClasses
-                },
                 {
                     text: "Constructor",
                     icon: LuaCard.getTypeIcon('constructor'),
@@ -155,14 +148,6 @@ export class ItemTree {
         });
 
         // Apply jQuery listeners next.
-
-        $('.lua-class-item').on('click', function () {
-            // Prevent wasteful selection code executions here.
-            if (_this.app.selected === 'class') return;
-            _this.app.showClass(entity);
-            // Let the editor know we last selected the class.
-            _this.app.selected = 'class';
-        });
 
         $('.lua-constructor-item').on('click', function () {
             // Prevent wasteful selection code executions here.
@@ -216,23 +201,10 @@ export class ItemTree {
             _this.app.selected = functionName;
         });
 
-        $('.item-tree-item').on('click', function () {
-            const $this = $(this);
-
-            $('.selected').removeClass('selected');
-            $this.addClass('selected');
-            _this.selectedItemID = this.id;
-        });
-
         // Preserve the state of folders.
         $get(this.idFolderField).on('click', () => this.folderFieldOpen = !this.folderFieldOpen);
         $get(this.idFolderValue).on('click', () => this.folderValueOpen = !this.folderValueOpen);
         $get(this.idFolderMethod).on('click', () => this.folderMethodOpen = !this.folderMethodOpen);
         $get(this.idFolderFunction).on('click', () => this.folderFunctionOpen = !this.folderFunctionOpen);
-
-        // Re-apply selection for re-population.
-        const $selectedItem = this.selectedItemID ? $(this.selectedItemID) : $(this.idItemClass);
-        console.log($selectedItem);
-        $selectedItem.addClass('selected');
     }
 }

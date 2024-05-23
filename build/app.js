@@ -2123,8 +2123,8 @@ define("src/asledgehammer/rosetta/component/lua/LuaFieldCard", ["require", "expo
                         delete clazz.fields[entity.name];
                     }
                     app.showClass(clazz);
-                    app.sidebar.itemTree.selectedItemID = undefined;
-                    app.sidebar.itemTree.populate();
+                    app.sidebar.selectedItemID = undefined;
+                    app.sidebar.populateTrees();
                 }, `Delete ${isStatic ? 'Value' : 'Field'} ${entity.name}`);
             });
         }
@@ -2226,8 +2226,8 @@ define("src/asledgehammer/rosetta/component/lua/LuaFunctionCard", ["require", "e
                         delete clazz.methods[entity.name];
                     }
                     app.showClass(clazz);
-                    app.sidebar.itemTree.selectedItemID = undefined;
-                    app.sidebar.itemTree.populate();
+                    app.sidebar.selectedItemID = undefined;
+                    app.sidebar.populateTrees();
                 }, `Delete ${isStatic ? 'Function' : 'Method'} ${entity.name}`);
             });
         }
@@ -2247,12 +2247,13 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ItemTree = void 0;
     class ItemTree {
-        constructor(app) {
+        constructor(app, sidebar) {
             this.folderFieldOpen = false;
             this.folderValueOpen = false;
             this.folderFunctionOpen = false;
             this.folderMethodOpen = false;
             this.app = app;
+            this.sidebar = sidebar;
             this.idItemClass = `item-tree-item-class`;
             this.idFolderField = `item-tree-folder-field`;
             this.idFolderValue = `item-tree-folder-value`;
@@ -2320,23 +2321,14 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                     class: ['item-tree-item', 'lua-function-item'],
                 });
             }
-            let $tree = (0, util_8.$get)('tree');
-            $tree.remove();
-            (0, util_8.$get)('sidebar-content').append('<div id="tree" class="rounded-0 bg-dark text-white"></div>');
-            $tree = (0, util_8.$get)('tree');
-            // If something isn't selected then the properties must be.
-            const classClasses = ['item-tree-item', 'lua-class-item'];
-            if (!_this.selectedItemID)
-                classClasses.push('selected');
+            let $treeLower = (0, util_8.$get)('tree-lower');
+            $treeLower.remove();
+            const $sidebarContentLower = (0, util_8.$get)('sidebar-content-lower');
+            $sidebarContentLower.append('<div id="tree-lower" class="rounded-0 bg-dark text-white"></div>');
+            $treeLower = (0, util_8.$get)('tree-lower');
             // @ts-ignore
-            $tree.bstreeview({
+            $treeLower.bstreeview({
                 data: [
-                    {
-                        id: _this.idItemClass,
-                        text: "Class Properties",
-                        icon: LuaCard_5.LuaCard.getTypeIcon('class'),
-                        class: classClasses
-                    },
                     {
                         text: "Constructor",
                         icon: LuaCard_5.LuaCard.getTypeIcon('constructor'),
@@ -2377,14 +2369,6 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                 ]
             });
             // Apply jQuery listeners next.
-            $('.lua-class-item').on('click', function () {
-                // Prevent wasteful selection code executions here.
-                if (_this.app.selected === 'class')
-                    return;
-                _this.app.showClass(entity);
-                // Let the editor know we last selected the class.
-                _this.app.selected = 'class';
-            });
             $('.lua-constructor-item').on('click', function () {
                 // Prevent wasteful selection code executions here.
                 if (_this.app.selected === 'constructor')
@@ -2441,26 +2425,99 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                 // Let the editor know we last selected the function.
                 _this.app.selected = functionName;
             });
-            $('.item-tree-item').on('click', function () {
-                const $this = $(this);
-                $('.selected').removeClass('selected');
-                $this.addClass('selected');
-                _this.selectedItemID = this.id;
-            });
             // Preserve the state of folders.
             (0, util_8.$get)(this.idFolderField).on('click', () => this.folderFieldOpen = !this.folderFieldOpen);
             (0, util_8.$get)(this.idFolderValue).on('click', () => this.folderValueOpen = !this.folderValueOpen);
             (0, util_8.$get)(this.idFolderMethod).on('click', () => this.folderMethodOpen = !this.folderMethodOpen);
             (0, util_8.$get)(this.idFolderFunction).on('click', () => this.folderFunctionOpen = !this.folderFunctionOpen);
-            // Re-apply selection for re-population.
-            const $selectedItem = this.selectedItemID ? $(this.selectedItemID) : $(this.idItemClass);
-            console.log($selectedItem);
-            $selectedItem.addClass('selected');
         }
     }
     exports.ItemTree = ItemTree;
 });
-define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/Component", "src/asledgehammer/rosetta/component/ItemTree"], function (require, exports, util_9, Component_2, ItemTree_1) {
+define("src/asledgehammer/rosetta/component/ObjectTree", ["require", "exports", "src/asledgehammer/rosetta/component/lua/LuaCard", "src/asledgehammer/rosetta/util"], function (require, exports, LuaCard_6, util_9) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.ObjectTree = void 0;
+    const CLASS_HEADER = 'obj-tree';
+    class ObjectTree {
+        constructor(app, sidebar) {
+            this.idFolderLuaClass = `${CLASS_HEADER}-folder-lua-class`;
+            this.idFolderLuaTable = `${CLASS_HEADER}-folder-value`;
+            this.idFolderJavaClass = `${CLASS_HEADER}-folder-function`;
+            this.folderLuaClassOpen = false;
+            this.folderLuaTableOpen = false;
+            this.folderJavaClassOpen = false;
+            this.app = app;
+            this.sidebar = sidebar;
+        }
+        populate() {
+            const _this = this;
+            const { card: luaClass } = this.app;
+            if (!luaClass)
+                return;
+            const entity = luaClass.options.entity;
+            if (!entity)
+                return;
+            let $treeUpper = (0, util_9.$get)('tree-upper');
+            $treeUpper.remove();
+            const $sidebarContentUpper = (0, util_9.$get)('sidebar-content-upper');
+            $sidebarContentUpper.append('<div id="tree-upper" class="rounded-0 bg-dark text-white"></div>');
+            $treeUpper = (0, util_9.$get)('tree-upper');
+            const luaClasses = [
+                {
+                    id: `object-lua-class-${entity.name}`,
+                    text: entity.name,
+                    icon: LuaCard_6.LuaCard.getTypeIcon('class'),
+                    class: ['item-tree-item', 'object-tree-lua-class'],
+                }
+            ];
+            // @ts-ignore
+            $treeUpper.bstreeview({
+                data: [
+                    {
+                        text: "Lua Classes",
+                        icon: "fa-solid fa-folder text-light mx-2",
+                        class: ['item-tree-folder', 'bg-secondary'],
+                        id: _this.idFolderLuaClass,
+                        expanded: _this.folderLuaClassOpen,
+                        nodes: luaClasses
+                    },
+                    {
+                        text: "Lua Tables",
+                        icon: "fa-solid fa-folder text-light mx-2",
+                        class: ['item-tree-folder', 'bg-secondary'],
+                        id: _this.idFolderLuaTable,
+                        expanded: _this.folderLuaTableOpen,
+                        nodes: []
+                    },
+                    {
+                        text: "Java Classes",
+                        icon: "fa-solid fa-folder text-light mx-2",
+                        class: ['item-tree-folder', 'bg-secondary'],
+                        id: _this.idFolderJavaClass,
+                        expanded: _this.folderJavaClassOpen,
+                        nodes: []
+                    },
+                ]
+            });
+            // Apply jQuery listeners next.
+            $('.object-tree-lua-class').on('click', function () {
+                // Prevent wasteful selection code executions here.
+                if (_this.app.selected === 'class')
+                    return;
+                _this.app.showClass(entity);
+                // Let the editor know we last selected the class.
+                _this.app.selected = 'class';
+            });
+            // Preserve the state of folders.
+            (0, util_9.$get)(this.idFolderLuaClass).on('click', () => this.folderLuaClassOpen = !this.folderLuaClassOpen);
+            (0, util_9.$get)(this.idFolderLuaTable).on('click', () => this.folderLuaTableOpen = !this.folderLuaTableOpen);
+            (0, util_9.$get)(this.idFolderJavaClass).on('click', () => this.folderJavaClassOpen = !this.folderJavaClassOpen);
+        }
+    }
+    exports.ObjectTree = ObjectTree;
+});
+define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/Component", "src/asledgehammer/rosetta/component/ItemTree", "src/asledgehammer/rosetta/component/ObjectTree"], function (require, exports, util_10, Component_2, ItemTree_1, ObjectTree_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Sidebar = void 0;
@@ -2477,71 +2534,103 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
             const result = document.getElementById('result');
             const reader = new FileReader();
             reader.addEventListener('load', () => (result.innerHTML = reader.result));
-            this.itemTree = new ItemTree_1.ItemTree(app);
+            this.objTree = new ObjectTree_1.ObjectTree(app, this);
+            this.itemTree = new ItemTree_1.ItemTree(app, this);
         }
         onRender() {
-            return (0, util_9.html) `
-            <div class="bg-dark p-1 border-bottom border-bottom-2 border-black shadow">
-                <!-- New Class -->
-                <button id="new-lua-class" class="btn btn-sm responsive-btn responsive-btn-success" title="New Class">
-                    <div class="btn-pane">    
-                        <i class="fa fa-file"></i>
-                    </div>
-                </button>
-                
-                <!-- Open Class -->
-                <button id="open-lua-class" class="btn btn-sm responsive-btn responsive-btn-info" title="Open Class">
-                    <div class="btn-pane">
-                        <i class="fa-solid fa-folder-open"></i>
-                    </div>
-                </button>
-
-                <!-- Save Class -->
-                <button id="save-lua-class" class="btn btn-sm responsive-btn responsive-btn-info" title="Save Class">
-                    <div class="btn-pane">
-                        <i class="fa fa-save"></i>
-                    </div>
-                </button>
-
-                <!-- Lua Wizard -->
-                <button id="lua-wizard" class="btn btn-sm responsive-btn responsive-btn-info" title="Lua Wizard">
-                    <div class="btn-pane">    
-                        <i class="fa-solid fa-wand-sparkles"></i>
-                    </div>
-                </button>
-
-                <!-- New Properties -->
-                <div class="dropdown" style="position: absolute; top: 5px; right: 5px;">
-                    <button class="btn btn-sm responsive-btn responsive-btn-success float-end" style="width: 32px; height: 32px" data-bs-toggle="dropdown" aria-expanded="false" title="Add Element">
-                    <div class="btn-pane">     
-                            <i class="fa-solid fa-plus"></i>
+            return (0, util_10.html) `
+        <div class="bg-dark" style="position: relative; top: 0; left: 0; width: 100%; height: 100%;">
+            <div style="position: relative; top: 0; left: 0; width: 100%; height: 30%;">
+                <div class="p-1 border-bottom border-bottom-2 border-black shadow">
+                    
+                    <!-- New Class -->
+                    <button id="new-lua-class" class="btn btn-sm responsive-btn responsive-btn-success" title="New Class">
+                        <div class="btn-pane">    
+                            <i class="fa fa-file"></i>
                         </div>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-dark">
-                        <li><a id="btn-new-lua-value" class="dropdown-item" href="#">New Value</a></li>
-                        <li><a id="btn-new-lua-field" class="dropdown-item" href="#">New Field</a></li>
-                        <li><a id="btn-new-lua-function" class="dropdown-item" href="#">New Function</a></li>
-                        <li><a id="btn-new-lua-method" class="dropdown-item" href="#">New Method</a></li>
-                    </ul>
+
+                    <!-- Open -->
+                    <button id="open-lua-class" class="btn btn-sm responsive-btn responsive-btn-info" title="Open Class">
+                        <div class="btn-pane">
+                            <i class="fa-solid fa-folder-open"></i>
+                        </div>
+                    </button>
+
+                    <!-- Save -->
+                    <button id="save-lua-class" class="btn btn-sm responsive-btn responsive-btn-info" title="Save Class">
+                        <div class="btn-pane">
+                            <i class="fa fa-save"></i>
+                        </div>
+                    </button>    
+                    
+                    <!-- New Properties -->
+                    <div class="dropdown" style="position: absolute; top: 5px; right: 5px;">
+                        <button class="btn btn-sm responsive-btn responsive-btn-success float-end" style="width: 32px; height: 32px" data-bs-toggle="dropdown" aria-expanded="false" title="Add Element">
+                        <div class="btn-pane">     
+                                <i class="fa-solid fa-plus"></i>
+                            </div>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a id="2btn-new-lua-value" class="dropdown-item" href="#">New Value</a></li>
+                            <li><a id="2btn-new-lua-field" class="dropdown-item" href="#">New Field</a></li>
+                            <li><a id="2btn-new-lua-function" class="dropdown-item" href="#">New Function</a></li>
+                            <li><a id="2btn-new-lua-method" class="dropdown-item" href="#">New Method</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="bg-dark" style="height: 100%; overflow-y: auto;">
+                    <div id="sidebar-content-upper" style="position: absolute; bottom: 0; left: calc(-2.5rem + 2px); width: calc(100% + 2.5rem - 3px); height: calc(100% - 44px); overflow-y: auto;">
+                        <div id="tree-upper" class="rounded-0 bg-dark text-white"></div>
+                    </div>
                 </div>
             </div>
+            <div style="position: absolute; top: 30%; left: 0; width: 100%; height: 70%;">
+                <div class="p-1 border-top border-top-2 border-bottom border-bottom-2 border-black shadow">
 
-            <div class="bg-dark" style="height: 100%; overflow-y: auto;">
-                <div id="sidebar-content" style="position: absolute; bottom: 0; left: calc(-2.5rem + 2px); width: calc(100% + 2.5rem - 3px); height: calc(100% - 44px); overflow-y: auto;">
-                    <div id="tree" class="rounded-0 bg-dark text-white"></div>
+                    <!-- Lua Wizard -->
+                    <button id="lua-wizard" class="btn btn-sm responsive-btn responsive-btn-info" title="Lua Wizard">
+                        <div class="btn-pane">    
+                            <i class="fa-solid fa-wand-sparkles"></i>
+                        </div>
+                    </button>
+
+                    <!-- New Properties -->
+                    <div class="dropdown" style="position: absolute; top: 5px; right: 5px;">
+                        <button class="btn btn-sm responsive-btn responsive-btn-success float-end" style="width: 32px; height: 32px" data-bs-toggle="dropdown" aria-expanded="false" title="Add Element">
+                        <div class="btn-pane">     
+                                <i class="fa-solid fa-plus"></i>
+                            </div>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a id="btn-new-lua-value" class="dropdown-item" href="#">New Value</a></li>
+                            <li><a id="btn-new-lua-field" class="dropdown-item" href="#">New Field</a></li>
+                            <li><a id="btn-new-lua-function" class="dropdown-item" href="#">New Function</a></li>
+                            <li><a id="btn-new-lua-method" class="dropdown-item" href="#">New Method</a></li>
+                        </ul>
+                    </div>
                 </div>
+                
+                <div class="bg-dark" style="height: 100%; overflow-y: auto;">
+                    <div id="sidebar-content-lower" style="position: absolute; bottom: 0; left: calc(-2.5rem + 2px); width: calc(100% + 2.5rem - 3px); height: calc(100% - 44px); overflow-y: auto;">
+                        <div id="tree-lower" class="rounded-0 bg-dark text-white"></div>
+                    </div>
+                </div>
+
             </div>
 
             <!-- Fancy border to sit above everything -->
             <div class="border border-1 border-black" style="pointer-events: none; position: absolute; background-color: transparent; top: 0; left: 0; width: 100%; height: 100%;"></div>
+        </div>
         `;
         }
         listen() {
-            this.itemTree.populate();
+            this.populateTrees();
             const { app } = this;
             const _this = this;
             const { $titleName, $btnName, $inputName, modalName } = app;
-            (0, util_9.$get)('new-lua-class').on('click', () => {
+            (0, util_10.$get)('new-lua-class').on('click', () => {
                 try {
                     $titleName.html('New Lua Class');
                     $btnName.html('Create');
@@ -2556,7 +2645,7 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                     console.error(e);
                 }
             });
-            (0, util_9.$get)('open-lua-class').on('click', () => {
+            (0, util_10.$get)('open-lua-class').on('click', () => {
                 const dFileLoad = document.getElementById('load-file');
                 const onchange = () => {
                     try {
@@ -2568,7 +2657,7 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                                 const json = JSON.parse(reader.result);
                                 app.loadLuaClass(json);
                                 app.renderCode();
-                                _this.itemTree.populate();
+                                _this.populateTrees();
                             };
                             reader.readAsText(file);
                         }
@@ -2582,7 +2671,7 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                 dFileLoad.onchange = onchange;
                 dFileLoad.click();
             });
-            (0, util_9.$get)('save-lua-class').on('click', async () => {
+            (0, util_10.$get)('save-lua-class').on('click', async () => {
                 try {
                     // @ts-ignore
                     const result = await showSaveFilePicker();
@@ -2604,7 +2693,7 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                 }
                 return;
             });
-            (0, util_9.$get)('btn-new-lua-value').on('click', () => {
+            (0, util_10.$get)('btn-new-lua-value').on('click', () => {
                 try {
                     const { card } = app;
                     if (!card)
@@ -2622,7 +2711,7 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                     console.error(e);
                 }
             });
-            (0, util_9.$get)('btn-new-lua-field').on('click', () => {
+            (0, util_10.$get)('btn-new-lua-field').on('click', () => {
                 try {
                     const { card } = app;
                     if (!card)
@@ -2640,7 +2729,7 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                     console.error(e);
                 }
             });
-            (0, util_9.$get)('btn-new-lua-function').on('click', () => {
+            (0, util_10.$get)('btn-new-lua-function').on('click', () => {
                 try {
                     const { card } = app;
                     if (!card)
@@ -2658,7 +2747,7 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                     console.error(e);
                 }
             });
-            (0, util_9.$get)('btn-new-lua-method').on('click', () => {
+            (0, util_10.$get)('btn-new-lua-method').on('click', () => {
                 try {
                     const { card } = app;
                     if (!card)
@@ -2678,6 +2767,17 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
             });
             $('#lua-wizard').on('click', () => {
                 app.luaParser.parseFilePicker();
+            });
+        }
+        populateTrees() {
+            this.objTree.populate();
+            this.itemTree.populate();
+            const _this = this;
+            $('.item-tree-item').on('click', function () {
+                const $this = $(this);
+                $('.selected').removeClass('selected');
+                $this.addClass('selected');
+                _this.selectedItemID = this.id;
             });
         }
     }
@@ -6077,7 +6177,7 @@ define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", 
                         if (clazz) {
                             const card = app.showClass(clazz);
                             app.renderCode();
-                            app.sidebar.itemTree.populate();
+                            app.sidebar.populateTrees();
                             card.update();
                         }
                     };
@@ -6095,7 +6195,7 @@ define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", 
     }
     exports.LuaParser = LuaParser;
 });
-define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/component/lua/LuaClassCard", "src/asledgehammer/rosetta/component/lua/LuaConstructorCard", "src/asledgehammer/rosetta/component/lua/LuaFieldCard", "src/asledgehammer/rosetta/component/lua/LuaFunctionCard", "src/asledgehammer/rosetta/component/Sidebar", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/lua/wizard/LuaParser"], function (require, exports, hljs, LuaClassCard_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, Sidebar_1, LuaGenerator_5, RosettaLuaClass_2, RosettaLuaConstructor_3, util_10, LuaParser_1) {
+define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/component/lua/LuaClassCard", "src/asledgehammer/rosetta/component/lua/LuaConstructorCard", "src/asledgehammer/rosetta/component/lua/LuaFieldCard", "src/asledgehammer/rosetta/component/lua/LuaFunctionCard", "src/asledgehammer/rosetta/component/Sidebar", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/lua/wizard/LuaParser"], function (require, exports, hljs, LuaClassCard_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, Sidebar_1, LuaGenerator_5, RosettaLuaClass_2, RosettaLuaConstructor_3, util_11, LuaParser_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.App = exports.Toast = void 0;
@@ -6109,7 +6209,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
         }
         alert(text, color = undefined) {
             const { idSimpleBody, idToastSimple } = this;
-            const $toast = (0, util_10.$get)(idToastSimple);
+            const $toast = (0, util_11.$get)(idToastSimple);
             // Set the background color.
             $toast.removeClass('bg-success');
             $toast.removeClass('bg-danger');
@@ -6137,14 +6237,14 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             this.$screenContent = $('#screen-content-end-container');
             // @ts-ignore This modal is for new items and editing their names.
             this.modalName = new bootstrap.Modal('#modal-name', {});
-            this.$titleName = (0, util_10.$get)('title-name');
-            this.$inputName = (0, util_10.$get)('input-name');
-            this.$btnName = (0, util_10.$get)('btn-name-create');
+            this.$titleName = (0, util_11.$get)('title-name');
+            this.$inputName = (0, util_11.$get)('input-name');
+            this.$btnName = (0, util_11.$get)('btn-name-create');
             // @ts-ignore This modal is for confirming actions.
             this.modalConfirm = new bootstrap.Modal('#modal-confirm', {});
-            this.$titleConfirm = (0, util_10.$get)('title-confirm');
-            this.$bodyConfirm = (0, util_10.$get)('body-confirm');
-            this.$btnConfirm = (0, util_10.$get)('btn-confirm');
+            this.$titleConfirm = (0, util_11.$get)('title-confirm');
+            this.$bodyConfirm = (0, util_11.$get)('body-confirm');
+            this.$btnConfirm = (0, util_11.$get)('btn-confirm');
             this.confirmSuccess = undefined;
             this.nameMode = null;
         }
@@ -6161,7 +6261,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             this.card.listen();
             this.card.update();
             this.renderCode();
-            this.sidebar.itemTree.populate();
+            this.sidebar.populateTrees();
             return this.card;
         }
         showClass(entity) {
@@ -6219,7 +6319,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             return card;
         }
         renderCode() {
-            const $renderPane = (0, util_10.$get)('code-preview');
+            const $renderPane = (0, util_11.$get)('code-preview');
             $renderPane.empty();
             if (!this.card)
                 return;
@@ -6241,19 +6341,19 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                 }
             });
             this.$inputName.on('input', () => {
-                setTimeout(() => this.$inputName.val((0, util_10.validateLuaVariableName)(this.$inputName.val())), 1);
+                setTimeout(() => this.$inputName.val((0, util_11.validateLuaVariableName)(this.$inputName.val())), 1);
             });
             this.$btnName.on('click', () => {
                 var _a;
                 const clazz = (_a = this.card) === null || _a === void 0 ? void 0 : _a.options.entity;
-                const name = (0, util_10.validateLuaVariableName)(this.$inputName.val()).trim();
+                const name = (0, util_11.validateLuaVariableName)(this.$inputName.val()).trim();
                 const nameOld = this.nameSelected;
                 switch (this.nameMode) {
                     case 'new_class': {
                         try {
-                            const entity = new RosettaLuaClass_2.RosettaLuaClass((0, util_10.validateLuaVariableName)(this.$inputName.val()).trim());
+                            const entity = new RosettaLuaClass_2.RosettaLuaClass((0, util_11.validateLuaVariableName)(this.$inputName.val()).trim());
                             this.showClass(entity);
-                            this.sidebar.itemTree.populate();
+                            this.sidebar.populateTrees();
                             this.toast.alert('Created Lua Class.', 'success');
                         }
                         catch (e) {
@@ -6278,7 +6378,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                         try {
                             const field = clazz.createField(name);
                             this.showField(field);
-                            this.sidebar.itemTree.populate();
+                            this.sidebar.populateTrees();
                             this.toast.alert('Created Lua Field.', 'success');
                         }
                         catch (e) {
@@ -6294,7 +6394,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                             clazz.fields[name] = field;
                             delete clazz.fields[nameOld];
                             this.showField(field);
-                            this.sidebar.itemTree.populate();
+                            this.sidebar.populateTrees();
                             this.toast.alert('Edited Lua Field.');
                         }
                         catch (e) {
@@ -6307,7 +6407,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                         try {
                             const value = clazz.createValue(name);
                             this.showValue(value);
-                            this.sidebar.itemTree.populate();
+                            this.sidebar.populateTrees();
                             this.toast.alert('Created Lua Value.', 'success');
                         }
                         catch (e) {
@@ -6323,7 +6423,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                             clazz.values[name] = value;
                             delete clazz.values[nameOld];
                             this.showValue(value);
-                            this.sidebar.itemTree.populate();
+                            this.sidebar.populateTrees();
                             this.toast.alert('Edited Lua value.');
                         }
                         catch (e) {
@@ -6336,7 +6436,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                         try {
                             const func = clazz.createFunction(name);
                             this.showFunction(func);
-                            this.sidebar.itemTree.populate();
+                            this.sidebar.populateTrees();
                             this.toast.alert('Created Lua Function.', 'success');
                         }
                         catch (e) {
@@ -6352,7 +6452,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                             clazz.functions[name] = func;
                             delete clazz.functions[nameOld];
                             this.showFunction(func);
-                            this.sidebar.itemTree.populate();
+                            this.sidebar.populateTrees();
                             this.toast.alert('Edited Lua Function.');
                         }
                         catch (e) {
@@ -6365,7 +6465,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                         try {
                             const method = clazz.createMethod(name);
                             this.showMethod(method);
-                            this.sidebar.itemTree.populate();
+                            this.sidebar.populateTrees();
                             this.toast.alert('Created Lua Method.', 'success');
                         }
                         catch (e) {
@@ -6381,7 +6481,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                             clazz.methods[name] = method;
                             delete clazz.methods[nameOld];
                             this.showMethod(method);
-                            this.sidebar.itemTree.populate();
+                            this.sidebar.populateTrees();
                             this.toast.alert('Edited Lua Method.');
                         }
                         catch (e) {
@@ -6482,7 +6582,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                                 this.showMethod(func);
                             }
                             this.renderCode();
-                            this.sidebar.itemTree.populate();
+                            this.sidebar.populateTrees();
                             this.toast.alert('Edited Lua Parameter.');
                         }
                         catch (e) {
@@ -6495,13 +6595,13 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                 this.nameSelected = undefined;
                 this.modalName.hide();
             });
-            const $btnCopy = (0, util_10.$get)('btn-code-preview-copy');
-            const $container = (0, util_10.$get)('screen-content-container');
-            const $cardPreview = (0, util_10.$get)('screen-content-end-container');
-            const $codePreview = (0, util_10.$get)('code-preview');
-            const $btnCardCode = (0, util_10.$get)('btn-card-code');
-            const $iconCard = (0, util_10.$get)('icon-card');
-            const $iconCode = (0, util_10.$get)('icon-code');
+            const $btnCopy = (0, util_11.$get)('btn-code-preview-copy');
+            const $container = (0, util_11.$get)('screen-content-container');
+            const $cardPreview = (0, util_11.$get)('screen-content-end-container');
+            const $codePreview = (0, util_11.$get)('code-preview');
+            const $btnCardCode = (0, util_11.$get)('btn-card-code');
+            const $iconCard = (0, util_11.$get)('icon-card');
+            const $iconCode = (0, util_11.$get)('icon-code');
             let mode = 'card';
             $btnCardCode.on('click', () => {
                 if (mode === 'card') {
@@ -6990,7 +7090,7 @@ define("src/asledgehammer/rosetta/SerializableComponent", ["require", "exports"]
     }
     exports.SerializableComponent = SerializableComponent;
 });
-define("src/asledgehammer/rosetta/component/LabelComponent", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/Component"], function (require, exports, util_11, Component_3) {
+define("src/asledgehammer/rosetta/component/LabelComponent", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/Component"], function (require, exports, util_12, Component_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LabelComponent = void 0;
@@ -6999,12 +7099,12 @@ define("src/asledgehammer/rosetta/component/LabelComponent", ["require", "export
             super(options);
         }
         onRender() {
-            return (0, util_11.html) ``;
+            return (0, util_12.html) ``;
         }
     }
     exports.LabelComponent = LabelComponent;
 });
-define("src/asledgehammer/rosetta/component/SidebarPanelButton", ["require", "exports", "src/asledgehammer/rosetta/component/Component", "src/asledgehammer/rosetta/util"], function (require, exports, Component_4, util_12) {
+define("src/asledgehammer/rosetta/component/SidebarPanelButton", ["require", "exports", "src/asledgehammer/rosetta/component/Component", "src/asledgehammer/rosetta/util"], function (require, exports, Component_4, util_13) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.SidebarPanelButton = void 0;
@@ -7013,7 +7113,7 @@ define("src/asledgehammer/rosetta/component/SidebarPanelButton", ["require", "ex
             super(options);
         }
         listen() {
-            (0, util_12.$get)(this.id).on('click', () => {
+            (0, util_13.$get)(this.id).on('click', () => {
                 if (this.options && this.options.onclick) {
                     this.options.onclick();
                 }
@@ -7021,7 +7121,7 @@ define("src/asledgehammer/rosetta/component/SidebarPanelButton", ["require", "ex
         }
         onRender() {
             const { label } = this.options;
-            return (0, util_12.html) `
+            return (0, util_13.html) `
             <button class="btn btn-primary col-12 rounded-0">${label}</button>
         `;
         }

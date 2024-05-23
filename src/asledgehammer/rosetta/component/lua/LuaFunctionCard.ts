@@ -116,8 +116,8 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
                     delete clazz.methods[entity.name];
                 }
                 app.showClass(clazz);
-                app.sidebar.itemTree.selectedItemID = undefined;
-                app.sidebar.itemTree.populate();
+                app.sidebar.selectedItemID = undefined;
+                app.sidebar.populateTrees();
             }, `Delete ${isStatic ? 'Function' : 'Method'} ${entity.name}`);
         });
     }

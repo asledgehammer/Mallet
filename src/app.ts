@@ -115,7 +115,7 @@ export class App {
         this.card.listen();
         this.card.update();
         this.renderCode();
-        this.sidebar.itemTree.populate();
+        this.sidebar.populateTrees();
         return this.card;
     }
 
@@ -217,7 +217,7 @@ export class App {
                     try {
                         const entity = new RosettaLuaClass(validateLuaVariableName(this.$inputName.val()!).trim());
                         this.showClass(entity);
-                        this.sidebar.itemTree.populate();
+                        this.sidebar.populateTrees();
                         this.toast.alert('Created Lua Class.', 'success');
                     } catch (e) {
                         this.toast.alert(`Failed to create Lua Class.`, 'error');
@@ -241,7 +241,7 @@ export class App {
                     try {
                         const field = clazz.createField(name);
                         this.showField(field);
-                        this.sidebar.itemTree.populate();
+                        this.sidebar.populateTrees();
                         this.toast.alert('Created Lua Field.', 'success');
                     } catch (e) {
                         this.toast.alert(`Failed to create Lua Field.`, 'error');
@@ -257,7 +257,7 @@ export class App {
                         clazz.fields[name] = field;
                         delete clazz.fields[nameOld];
                         this.showField(field);
-                        this.sidebar.itemTree.populate();
+                        this.sidebar.populateTrees();
                         this.toast.alert('Edited Lua Field.');
                     } catch (e) {
                         this.toast.alert(`Failed to edit Lua Field.`, 'error');
@@ -270,7 +270,7 @@ export class App {
                     try {
                         const value = clazz.createValue(name);
                         this.showValue(value);
-                        this.sidebar.itemTree.populate();
+                        this.sidebar.populateTrees();
                         this.toast.alert('Created Lua Value.', 'success');
                     } catch (e) {
                         this.toast.alert(`Failed to create Lua Value.`, 'error');
@@ -285,7 +285,7 @@ export class App {
                         clazz.values[name] = value;
                         delete clazz.values[nameOld];
                         this.showValue(value);
-                        this.sidebar.itemTree.populate();
+                        this.sidebar.populateTrees();
                         this.toast.alert('Edited Lua value.');
                     } catch (e) {
                         this.toast.alert(`Failed to edit Lua Value.`, 'error');
@@ -297,7 +297,7 @@ export class App {
                     try {
                         const func = clazz.createFunction(name);
                         this.showFunction(func);
-                        this.sidebar.itemTree.populate();
+                        this.sidebar.populateTrees();
                         this.toast.alert('Created Lua Function.', 'success');
                     } catch (e) {
                         this.toast.alert(`Failed to create Lua Function.`, 'error');
@@ -312,7 +312,7 @@ export class App {
                         clazz.functions[name] = func;
                         delete clazz.functions[nameOld];
                         this.showFunction(func);
-                        this.sidebar.itemTree.populate();
+                        this.sidebar.populateTrees();
                         this.toast.alert('Edited Lua Function.');
                     } catch (e) {
                         this.toast.alert(`Failed to edit Lua Function.`, 'error');
@@ -324,7 +324,7 @@ export class App {
                     try {
                         const method = clazz.createMethod(name);
                         this.showMethod(method);
-                        this.sidebar.itemTree.populate();
+                        this.sidebar.populateTrees();
                         this.toast.alert('Created Lua Method.', 'success');
                     } catch (e) {
                         this.toast.alert(`Failed to create Lua Method.`, 'error');
@@ -339,7 +339,7 @@ export class App {
                         clazz.methods[name] = method;
                         delete clazz.methods[nameOld];
                         this.showMethod(method);
-                        this.sidebar.itemTree.populate();
+                        this.sidebar.populateTrees();
                         this.toast.alert('Edited Lua Method.');
                     } catch (e) {
                         this.toast.alert(`Failed to edit Lua Method.`, 'error');
@@ -434,7 +434,7 @@ export class App {
                             this.showMethod(func as RosettaLuaFunction);
                         }
                         this.renderCode();
-                        this.sidebar.itemTree.populate();
+                        this.sidebar.populateTrees();
                         this.toast.alert('Edited Lua Parameter.');
                     } catch (e) {
                         this.toast.alert(`Failed to edit Lua Parameter.`, 'error');
