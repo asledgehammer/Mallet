@@ -2,6 +2,7 @@ import { App } from "../../../app";
 import { $get, html } from "../util";
 import { Sidebar } from "./Sidebar";
 import { LuaCard } from "./lua/LuaCard";
+import { LuaClassCard } from "./lua/LuaClassCard";
 
 export class ItemTree {
 
@@ -33,13 +34,24 @@ export class ItemTree {
 
         const _this = this;
 
-        const { selectedCard: luaClass } = this.app.active;
-        if (!luaClass) return;
+        const { selectedCard } = this.app.active;
+        if (!selectedCard) return;
 
+        if (selectedCard instanceof LuaClassCard) {
+            this.populateLuaClass(selectedCard);
+        } 
+        // else if(selectedCard instanceof LuaTableCard) {
+        //     this.populateLuaTable(selectedCard);
+        // } else if(selectedCard instanceof JavaClassCard) {
+        //     this.populateJavaClass(selectedCard);
+        // }
+    }
+
+    populateLuaClass(luaClass: LuaClassCard) {
+
+        const _this = this;
         const entity = luaClass.options!.entity!;
         if (!entity) return;
-
-        // Generate nodes first.
 
         const fieldNames = Object.keys(entity.fields);
         fieldNames.sort((a, b) => a.localeCompare(b));

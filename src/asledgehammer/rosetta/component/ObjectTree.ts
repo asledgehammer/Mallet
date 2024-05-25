@@ -13,9 +13,9 @@ export class ObjectTree {
     readonly idFolderLuaTable = `${CLASS_HEADER}-folder-value`;
     readonly idFolderJavaClass = `${CLASS_HEADER}-folder-function`;
 
-    folderLuaClassOpen: boolean = false;
-    folderLuaTableOpen: boolean = false;
-    folderJavaClassOpen: boolean = false;
+    folderLuaClassOpen: boolean = true;
+    folderLuaTableOpen: boolean = true;
+    folderJavaClassOpen: boolean = true;
 
     constructor(app: App, sidebar: Sidebar) {
         this.app = app;
@@ -44,6 +44,30 @@ export class ObjectTree {
             );
         }
 
+        const luaTables = [];
+        for (const name of Object.keys(this.app.active.luaTables)) {
+            luaTables.push(
+                {
+                    id: `object-lua-table-${name}`,
+                    text: name,
+                    icon: LuaCard.getTypeIcon('class'),
+                    class: ['item-tree-item', 'object-tree-lua-table'],
+                }
+            );
+        }
+        
+        const javaClasses = [];
+        for (const name of Object.keys(this.app.active.javaClasses)) {
+            javaClasses.push(
+                {
+                    id: `object-java-class-${name}`,
+                    text: name,
+                    icon: LuaCard.getTypeIcon('class'),
+                    class: ['item-tree-item', 'object-tree-java-class'],
+                }
+            );
+        }
+
         // @ts-ignore
         $treeUpper.bstreeview({
             data: [
@@ -61,7 +85,7 @@ export class ObjectTree {
                     class: ['item-tree-folder', 'bg-secondary'],
                     id: _this.idFolderLuaTable,
                     expanded: _this.folderLuaTableOpen,
-                    nodes: []
+                    nodes: luaTables
                 },
                 {
                     text: "Java Classes",
@@ -69,7 +93,7 @@ export class ObjectTree {
                     class: ['item-tree-folder', 'bg-secondary'],
                     id: _this.idFolderJavaClass,
                     expanded: _this.folderJavaClassOpen,
-                    nodes: []
+                    nodes: javaClasses
                 },
             ]
         });
