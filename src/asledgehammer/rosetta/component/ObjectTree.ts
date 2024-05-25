@@ -25,11 +25,6 @@ export class ObjectTree {
     populate() {
         const _this = this;
 
-        const { selectedCard: luaClass } = this.app.active;
-        if (!luaClass) return;
-        const entity = luaClass.options!.entity!;
-        if (!entity) return;
-
         let $treeUpper = $get('tree-upper');
         $treeUpper.remove();
 
@@ -37,14 +32,17 @@ export class ObjectTree {
         $sidebarContentUpper.append('<div id="tree-upper" class="rounded-0 bg-dark text-white"></div>');
         $treeUpper = $get('tree-upper');
 
-        const luaClasses = [
-            {
-                id: `object-lua-class-${entity.name}`,
-                text: entity.name,
-                icon: LuaCard.getTypeIcon('class'),
-                class: ['item-tree-item', 'object-tree-lua-class'],
-            }
-        ];
+        const luaClasses = [];
+        for (const name of Object.keys(this.app.active.luaClasses)) {
+            luaClasses.push(
+                {
+                    id: `object-lua-class-${name}`,
+                    text: name,
+                    icon: LuaCard.getTypeIcon('class'),
+                    class: ['item-tree-item', 'object-tree-lua-class'],
+                }
+            );
+        }
 
         // @ts-ignore
         $treeUpper.bstreeview({
@@ -78,11 +76,18 @@ export class ObjectTree {
 
         // Apply jQuery listeners next.
         $('.object-tree-lua-class').on('click', function () {
+            const name = this.id.substring('object-lua-class-'.length);
+
             // Prevent wasteful selection code executions here.
-            if (_this.app.selected === 'class') return;
-            _this.app.showClass(entity);
+            if (_this.app.selected === name) return;
+
+            _this.app.showClass(_this.app.active.luaClasses[name]);
+            
             // Let the editor know we last selected the class.
-            _this.app.selected = 'class';
+            _this.app.selected = name;
+
+            // Update the class properties tree.
+            _this.sidebar.itemTree.populate();
         });
 
         // Preserve the state of folders.

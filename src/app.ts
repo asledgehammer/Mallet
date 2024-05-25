@@ -19,15 +19,36 @@ export class Active {
 
     readonly app: App;
 
-    readonly luaClasses: RosettaLuaClass[] = [];
-    readonly luaTables: RosettaLuaTable[] = [];
-    readonly javaClasses: any[] = [];
+    readonly luaClasses: { [name: string]: RosettaLuaClass } = {};
+    readonly luaTables: { [name: string]: RosettaLuaTable } = {};
+    readonly javaClasses: { [name: string]: any } = {};
 
     selected: RosettaLuaClass | RosettaLuaTable | any;
     selectedCard: LuaClassCard | any;
 
     constructor(app: App) {
         this.app = app;
+    }
+
+    reset() {
+
+        // Wipe all content from the dictionaries.
+        for (const name of Object.keys(this.luaClasses)) {
+            delete this.luaClasses[name];
+        }
+        for (const name of Object.keys(this.luaTables)) {
+            delete this.luaTables[name];
+        }
+        for (const name of Object.keys(this.javaClasses)) {
+            delete this.javaClasses[name];
+        }
+
+        // Wipe active selections.
+        this.selected = undefined;
+        this.selectedCard = undefined;
+
+        // Clear the screen container.
+        this.app.$screenContent.empty();
     }
 }
 
@@ -124,20 +145,17 @@ export class App {
         this.createSidebar();
     }
 
-    public loadLuaClass(json: any): LuaClassCard {
+    public loadJson(json: any): void {
+        this.active.reset();
 
-        this.$screenContent.empty();
+        if (json.luaClasses) {
+            for (const name of Object.keys(json.luaClasses)) {
+                const entity = new RosettaLuaClass(name, json.luaClasses[name]);
+                this.active.luaClasses[name] = entity;
+            }
+        }
 
-        // Always get first class
-        const name = Object.keys(json.luaClasses)[0];
-        const entity = new RosettaLuaClass(name, json.luaClasses[name]);
-        this.active.selectedCard = new LuaClassCard(this, { entity: entity });
-        this.$screenContent.append(this.active.selectedCard.render());
-        this.active.selectedCard.listen();
-        this.active.selectedCard.update();
-        this.renderCode();
         this.sidebar.populateTrees();
-        return this.active.selectedCard;
     }
 
     public showClass(entity: RosettaLuaClass): LuaClassCard {
@@ -483,7 +501,7 @@ export class App {
                 $container.removeClass('p-4');
                 $container.addClass('p-0');
                 $cardPreview.hide();
-                $codePreview.css({'overflow': 'scroll'});
+                $codePreview.css({ 'overflow': 'scroll' });
                 $codePreview.show(150);
                 $iconCode.hide();
                 $iconCard.show();
@@ -496,7 +514,7 @@ export class App {
                 $codePreview.hide(150, () => {
                     $container.removeClass('pt-4');
                     $container.addClass('p-4');
-                    $codePreview.css({'overflow': 'none'});
+                    $codePreview.css({ 'overflow': 'none' });
                 });
                 $cardPreview.slideDown(150);
                 $iconCard.hide();

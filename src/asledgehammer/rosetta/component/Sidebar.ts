@@ -151,7 +151,7 @@ export class Sidebar extends Component<SidebarOptions> {
                         var reader = new FileReader();
                         reader.onload = function (e) {
                             const json = JSON.parse(reader.result as string);
-                            app.loadLuaClass(json);
+                            app.loadJson(json);
                             app.renderCode();
                             _this.populateTrees();
                         }
@@ -172,12 +172,43 @@ export class Sidebar extends Component<SidebarOptions> {
                 // @ts-ignore
                 const result = await showSaveFilePicker();
 
-                const entity = this.app.active.selectedCard!.options!.entity!;
-                const luaClasses: any = {};
-                luaClasses[entity.name] = entity.toJSON();
+                let keys: string[];
+
+                // Lua Classes
+                let luaClasses: any = undefined;
+                keys = Object.keys(this.app.active.luaClasses);
+                if (keys.length) {
+                    luaClasses = {};
+                    for (const name of keys) {
+                        luaClasses[name] = this.app.active.luaClasses[name].toJSON();
+                    }
+                }
+
+                // Lua Tables
+                let luaTables: any = undefined;
+                keys = Object.keys(this.app.active.luaTables);
+                if (keys.length) {
+                    luaTables = {};
+                    for (const name of keys) {
+                        luaTables[name] = this.app.active.luaTables[name].toJSON();
+                    }
+                }
+
+                // Java Classes
+                let javaClasses: any = undefined;
+                keys = Object.keys(this.app.active.javaClasses);
+                if (keys.length) {
+                    javaClasses = {};
+                    for (const name of keys) {
+                        javaClasses[name] = this.app.active.javaClasses[name].toJSON();
+                    }
+                }
+
                 const contents = {
                     $schema: 'https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-schema.json',
-                    luaClasses
+                    luaClasses,
+                    luaTables,
+                    javaClasses
                 };
 
                 const writable = await result.createWritable();

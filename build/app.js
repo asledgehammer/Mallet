@@ -2452,25 +2452,20 @@ define("src/asledgehammer/rosetta/component/ObjectTree", ["require", "exports", 
         }
         populate() {
             const _this = this;
-            const { selectedCard: luaClass } = this.app.active;
-            if (!luaClass)
-                return;
-            const entity = luaClass.options.entity;
-            if (!entity)
-                return;
             let $treeUpper = (0, util_9.$get)('tree-upper');
             $treeUpper.remove();
             const $sidebarContentUpper = (0, util_9.$get)('sidebar-content-upper');
             $sidebarContentUpper.append('<div id="tree-upper" class="rounded-0 bg-dark text-white"></div>');
             $treeUpper = (0, util_9.$get)('tree-upper');
-            const luaClasses = [
-                {
-                    id: `object-lua-class-${entity.name}`,
-                    text: entity.name,
+            const luaClasses = [];
+            for (const name of Object.keys(this.app.active.luaClasses)) {
+                luaClasses.push({
+                    id: `object-lua-class-${name}`,
+                    text: name,
                     icon: LuaCard_6.LuaCard.getTypeIcon('class'),
                     class: ['item-tree-item', 'object-tree-lua-class'],
-                }
-            ];
+                });
+            }
             // @ts-ignore
             $treeUpper.bstreeview({
                 data: [
@@ -2502,12 +2497,15 @@ define("src/asledgehammer/rosetta/component/ObjectTree", ["require", "exports", 
             });
             // Apply jQuery listeners next.
             $('.object-tree-lua-class').on('click', function () {
+                const name = this.id.substring('object-lua-class-'.length);
                 // Prevent wasteful selection code executions here.
-                if (_this.app.selected === 'class')
+                if (_this.app.selected === name)
                     return;
-                _this.app.showClass(entity);
+                _this.app.showClass(_this.app.active.luaClasses[name]);
                 // Let the editor know we last selected the class.
-                _this.app.selected = 'class';
+                _this.app.selected = name;
+                // Update the class properties tree.
+                _this.sidebar.itemTree.populate();
             });
             // Preserve the state of folders.
             (0, util_9.$get)(this.idFolderLuaClass).on('click', () => this.folderLuaClassOpen = !this.folderLuaClassOpen);
@@ -2655,7 +2653,7 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                             var reader = new FileReader();
                             reader.onload = function (e) {
                                 const json = JSON.parse(reader.result);
-                                app.loadLuaClass(json);
+                                app.loadJson(json);
                                 app.renderCode();
                                 _this.populateTrees();
                             };
@@ -2675,12 +2673,39 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                 try {
                     // @ts-ignore
                     const result = await showSaveFilePicker();
-                    const entity = this.app.active.selectedCard.options.entity;
-                    const luaClasses = {};
-                    luaClasses[entity.name] = entity.toJSON();
+                    let keys;
+                    // Lua Classes
+                    let luaClasses = undefined;
+                    keys = Object.keys(this.app.active.luaClasses);
+                    if (keys.length) {
+                        luaClasses = {};
+                        for (const name of keys) {
+                            luaClasses[name] = this.app.active.luaClasses[name].toJSON();
+                        }
+                    }
+                    // Lua Tables
+                    let luaTables = undefined;
+                    keys = Object.keys(this.app.active.luaTables);
+                    if (keys.length) {
+                        luaTables = {};
+                        for (const name of keys) {
+                            luaTables[name] = this.app.active.luaTables[name].toJSON();
+                        }
+                    }
+                    // Java Classes
+                    let javaClasses = undefined;
+                    keys = Object.keys(this.app.active.javaClasses);
+                    if (keys.length) {
+                        javaClasses = {};
+                        for (const name of keys) {
+                            javaClasses[name] = this.app.active.javaClasses[name].toJSON();
+                        }
+                    }
                     const contents = {
                         $schema: 'https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-schema.json',
-                        luaClasses
+                        luaClasses,
+                        luaTables,
+                        javaClasses
                     };
                     const writable = await result.createWritable();
                     await writable.write(JSON.stringify(contents, null, 2));
@@ -6377,10 +6402,27 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
     exports.App = exports.Toast = exports.Active = void 0;
     class Active {
         constructor(app) {
-            this.luaClasses = [];
-            this.luaTables = [];
-            this.javaClasses = [];
+            this.luaClasses = {};
+            this.luaTables = {};
+            this.javaClasses = {};
             this.app = app;
+        }
+        reset() {
+            // Wipe all content from the dictionaries.
+            for (const name of Object.keys(this.luaClasses)) {
+                delete this.luaClasses[name];
+            }
+            for (const name of Object.keys(this.luaTables)) {
+                delete this.luaTables[name];
+            }
+            for (const name of Object.keys(this.javaClasses)) {
+                delete this.javaClasses[name];
+            }
+            // Wipe active selections.
+            this.selected = undefined;
+            this.selectedCard = undefined;
+            // Clear the screen container.
+            this.app.$screenContent.empty();
         }
     }
     exports.Active = Active;
@@ -6436,18 +6478,15 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
         async init() {
             this.createSidebar();
         }
-        loadLuaClass(json) {
-            this.$screenContent.empty();
-            // Always get first class
-            const name = Object.keys(json.luaClasses)[0];
-            const entity = new RosettaLuaClass_2.RosettaLuaClass(name, json.luaClasses[name]);
-            this.active.selectedCard = new LuaClassCard_1.LuaClassCard(this, { entity: entity });
-            this.$screenContent.append(this.active.selectedCard.render());
-            this.active.selectedCard.listen();
-            this.active.selectedCard.update();
-            this.renderCode();
+        loadJson(json) {
+            this.active.reset();
+            if (json.luaClasses) {
+                for (const name of Object.keys(json.luaClasses)) {
+                    const entity = new RosettaLuaClass_2.RosettaLuaClass(name, json.luaClasses[name]);
+                    this.active.luaClasses[name] = entity;
+                }
+            }
             this.sidebar.populateTrees();
-            return this.active.selectedCard;
         }
         showClass(entity) {
             this.$screenContent.empty();
