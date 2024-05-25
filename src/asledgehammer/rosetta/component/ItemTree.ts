@@ -1,4 +1,7 @@
 import { App } from "../../../app";
+import { RosettaJavaClass } from "../java/RosettaJavaClass";
+import { RosettaLuaClass } from "../lua/RosettaLuaClass";
+import { RosettaLuaTable } from "../lua/RosettaLuaTable";
 import { $get, html } from "../util";
 import { Sidebar } from "./Sidebar";
 import { LuaCard } from "./lua/LuaCard";
@@ -34,24 +37,24 @@ export class ItemTree {
 
         const _this = this;
 
-        const { selectedCard } = this.app.active;
-        if (!selectedCard) return;
+        const { selected } = this.app.active;
+        if (!selected) return;
 
-        if (selectedCard instanceof LuaClassCard) {
-            this.populateLuaClass(selectedCard);
-        } 
-        // else if(selectedCard instanceof LuaTableCard) {
-        //     this.populateLuaTable(selectedCard);
-        // } else if(selectedCard instanceof JavaClassCard) {
-        //     this.populateJavaClass(selectedCard);
-        // }
+        if (selected instanceof RosettaLuaClass) {
+            this.populateLuaClass(selected);
+        }
+        else if (selected instanceof RosettaLuaTable) {
+            this.populateLuaTable(selected);
+        } else if (selected instanceof RosettaJavaClass) {
+            this.populateJavaClass(selected);
+        }
     }
 
-    populateLuaClass(luaClass: LuaClassCard) {
+    populateLuaClass(entity: RosettaLuaClass) {
+
+        if (!entity) return;
 
         const _this = this;
-        const entity = luaClass.options!.entity!;
-        if (!entity) return;
 
         const fieldNames = Object.keys(entity.fields);
         fieldNames.sort((a, b) => a.localeCompare(b));
@@ -218,5 +221,17 @@ export class ItemTree {
         $get(this.idFolderValue).on('click', () => this.folderValueOpen = !this.folderValueOpen);
         $get(this.idFolderMethod).on('click', () => this.folderMethodOpen = !this.folderMethodOpen);
         $get(this.idFolderFunction).on('click', () => this.folderFunctionOpen = !this.folderFunctionOpen);
+    }
+
+    populateLuaTable(entity: RosettaLuaTable) {
+        if (!entity) return;
+
+        const _this = this;
+    }
+
+    populateJavaClass(entity: RosettaJavaClass) {
+        if (!entity) return;
+
+        const _this = this;
     }
 }

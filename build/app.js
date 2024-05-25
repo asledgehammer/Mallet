@@ -2242,7 +2242,772 @@ define("src/asledgehammer/rosetta/component/lua/LuaFunctionCard", ["require", "e
     }
     exports.LuaFunctionCard = LuaFunctionCard;
 });
-define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/lua/LuaCard", "src/asledgehammer/rosetta/component/lua/LuaClassCard"], function (require, exports, util_8, LuaCard_5, LuaClassCard_1) {
+define("src/asledgehammer/rosetta/java/RosettaJavaType", ["require", "exports", "src/asledgehammer/rosetta/RosettaEntity"], function (require, exports, RosettaEntity_7) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaJavaType = void 0;
+    /**
+     * **RosettaJavaType**
+     *
+     * @author Jab
+     */
+    class RosettaJavaType extends RosettaEntity_7.RosettaEntity {
+        constructor(raw) {
+            super(raw);
+            const basic = this.readRequiredString('basic');
+            this.rawBasic = basic;
+            if (basic.indexOf('.') !== -1) {
+                const split = basic.split('.');
+                this.basic = split[split.length - 1];
+            }
+            else {
+                this.basic = basic;
+            }
+            this.full = this.readString('full');
+        }
+        toJSON(patch = false) {
+            const { rawBasic: basic, full } = this;
+            const json = {};
+            if (!patch) {
+                json.basic = basic;
+                json.full = full;
+            }
+            return json;
+        }
+    }
+    exports.RosettaJavaType = RosettaJavaType;
+});
+define("src/asledgehammer/rosetta/java/RosettaJavaParameter", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaType", "src/asledgehammer/rosetta/RosettaUtils"], function (require, exports, Assert, RosettaEntity_8, RosettaJavaType_1, RosettaUtils_4) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaJavaParameter = void 0;
+    /**
+     * **RosettaJavaParameter**
+     *
+     * @author Jab
+     */
+    class RosettaJavaParameter extends RosettaEntity_8.RosettaEntity {
+        constructor(raw) {
+            super(raw);
+            Assert.assertNonNull(raw.type, 'raw.type');
+            this.name = (0, RosettaUtils_4.formatName)(this.readRequiredString('name'));
+            this.type = new RosettaJavaType_1.RosettaJavaType(raw.type);
+            this.parse(raw);
+        }
+        parse(raw) {
+            this.notes = this.readNotes(raw);
+        }
+        toJSON(patch = false) {
+            const { name, notes, type } = this;
+            const json = {};
+            /* (Properties) */
+            if (!patch)
+                json.type = type.toJSON(patch);
+            json.name = name;
+            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            return json;
+        }
+    }
+    exports.RosettaJavaParameter = RosettaJavaParameter;
+});
+define("src/asledgehammer/rosetta/java/RosettaJavaConstructor", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaParameter"], function (require, exports, Assert, RosettaEntity_9, RosettaJavaParameter_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaJavaConstructor = void 0;
+    /**
+     * **RosettaJavaConstructor**
+     *
+     * @author Jab
+     */
+    class RosettaJavaConstructor extends RosettaEntity_9.RosettaEntity {
+        constructor(clazz, raw) {
+            super(raw);
+            this.parameters = [];
+            Assert.assertNonNull(clazz, 'clazz');
+            this.clazz = clazz;
+            /* (Properties) */
+            this.deprecated = this.readBoolean('deprecated') != null;
+            this.modifiers = this.readModifiers();
+            this.notes = this.readNotes(raw);
+            /* (Parameters) */
+            if (raw.parameters !== undefined) {
+                const rawParameters = raw.parameters;
+                for (const rawParameter of rawParameters) {
+                    const parameter = new RosettaJavaParameter_1.RosettaJavaParameter(rawParameter);
+                    this.parameters.push(parameter);
+                }
+            }
+        }
+        parse(raw) {
+            /* (Properties) */
+            this.notes = this.readNotes(raw);
+            /* (Parameters) */
+            if (raw.parameters !== undefined) {
+                const rawParameters = raw.parameters;
+                /*
+                 * (To prevent deep-logic issues, check to see if Rosetta's parameters match the length of
+                 *  the overriding parameters. If not, this is the fault of the patch, not Rosetta)
+                 */
+                if (this.parameters.length !== rawParameters.length) {
+                    throw new Error(`The class ${this.clazz.name}'s constructor's parameters does not match the parameters to override. (method: ${this.parameters.length}, given: ${rawParameters.length})`);
+                }
+                for (let index = 0; index < rawParameters.length; index++) {
+                    this.parameters[index].parse(rawParameters[index]);
+                }
+            }
+        }
+        toJSON(patch = false) {
+            const { notes, deprecated, modifiers, parameters } = this;
+            const json = {};
+            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            /* (Properties) */
+            if (!patch) {
+                json.deprecated = deprecated;
+                if (modifiers.length)
+                    json.modifiers = modifiers;
+            }
+            /* (Properties) */
+            if (parameters.length) {
+                json.parameters = [];
+                for (const parameter of parameters)
+                    json.parameters.push(parameter.toJSON(patch));
+            }
+            return json;
+        }
+    }
+    exports.RosettaJavaConstructor = RosettaJavaConstructor;
+});
+define("src/asledgehammer/rosetta/java/RosettaJavaReturns", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaType"], function (require, exports, Assert, RosettaEntity_10, RosettaJavaType_2) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaJavaReturns = void 0;
+    /**
+     * **RosettaJavaReturns**
+     *
+     * @author Jab
+     */
+    class RosettaJavaReturns extends RosettaEntity_10.RosettaEntity {
+        constructor(raw) {
+            super(raw);
+            Assert.assertNonNull(raw.type, 'raw.type');
+            this.type = new RosettaJavaType_2.RosettaJavaType(raw.type);
+            this.parse(raw);
+        }
+        parse(raw) {
+            this.notes = this.readNotes(raw);
+        }
+        toJSON(patch = false) {
+            const { type, notes } = this;
+            const json = {};
+            /* (Properties) */
+            if (!patch)
+                json.type = type;
+            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            return json;
+        }
+    }
+    exports.RosettaJavaReturns = RosettaJavaReturns;
+});
+define("src/asledgehammer/rosetta/java/RosettaJavaMethod", ["require", "exports", "src/asledgehammer/rosetta/RosettaUtils", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaParameter", "src/asledgehammer/rosetta/java/RosettaJavaReturns"], function (require, exports, RosettaUtils_5, RosettaEntity_11, RosettaJavaParameter_2, RosettaJavaReturns_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaJavaMethod = void 0;
+    /**
+     * **RosettaJavaMethod**
+     *
+     * @author Jab
+     */
+    class RosettaJavaMethod extends RosettaEntity_11.RosettaEntity {
+        constructor(raw) {
+            super(raw);
+            this.parameters = [];
+            /* PROPERTIES */
+            this.name = (0, RosettaUtils_5.formatName)(this.readRequiredString('name'));
+            this.deprecated = this.readBoolean('deprecated') != null;
+            this.modifiers = this.readModifiers();
+            /* PARAMETERS */
+            if (raw.parameters !== undefined) {
+                const rawParameters = raw.parameters;
+                for (const rawParameter of rawParameters) {
+                    this.parameters.push(new RosettaJavaParameter_2.RosettaJavaParameter(rawParameter));
+                }
+            }
+            /* RETURNS */
+            if (raw.returns === undefined) {
+                throw new Error(`Method does not have returns definition: ${this.name}`);
+            }
+            this.returns = new RosettaJavaReturns_1.RosettaJavaReturns(raw.returns);
+            this.notes = this.readNotes();
+        }
+        parse(raw) {
+            this.notes = this.readNotes(raw);
+            /* PARAMETERS */
+            if (raw.parameters !== undefined) {
+                const rawParameters = raw.parameters;
+                /*
+                 * (To prevent deep-logic issues, check to see if Rosetta's parameters match the length of
+                 *  the overriding parameters. If not, this is the fault of the patch, not Rosetta)
+                 */
+                if (this.parameters.length !== rawParameters.length) {
+                    throw new Error(`The method ${this.name}'s parameters does not match the parameters to override. (method: ${this.parameters.length}, given: ${rawParameters.length})`);
+                }
+                for (let index = 0; index < rawParameters.length; index++) {
+                    this.parameters[index].parse(rawParameters[index]);
+                }
+            }
+            /* RETURNS */
+            if (raw.returns !== undefined) {
+                this.returns.parse(raw.returns);
+            }
+        }
+        toJSON(patch = false) {
+            const { name, deprecated, modifiers, notes, parameters, returns } = this;
+            const json = {};
+            /* (Properties) */
+            if (!patch) {
+                json.deprecated = deprecated;
+                if (modifiers.length)
+                    json.modifiers = modifiers;
+            }
+            json.name = name;
+            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            /* (Parameters) */
+            if (parameters.length) {
+                json.parameters = [];
+                for (const parameter of parameters)
+                    json.parameters.push(parameter.toJSON(patch));
+            }
+            /* (Returns) */
+            json.returns = returns.toJSON(patch);
+            return json;
+        }
+    }
+    exports.RosettaJavaMethod = RosettaJavaMethod;
+});
+define("src/asledgehammer/rosetta/java/RosettaJavaMethodCluster", ["require", "exports", "src/asledgehammer/Assert"], function (require, exports, Assert) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaJavaMethodCluster = void 0;
+    /**
+     * **RosettaJavaMethodCluster**
+     *
+     * @author Jab
+     */
+    class RosettaJavaMethodCluster {
+        constructor(name) {
+            this.methods = [];
+            Assert.assertNonEmptyString(name, 'name');
+            this.name = name;
+        }
+        add(method) {
+            const indexOf = this.methods.indexOf(method);
+            if (indexOf !== -1) {
+                this.methods[indexOf].parse(method.raw);
+                return;
+            }
+            this.methods.push(method);
+        }
+        getWithParameters(...parameterNames) {
+            for (const method of this.methods) {
+                const parameters = method.parameters;
+                if (parameterNames.length === parameters.length) {
+                    if (parameterNames.length === 0)
+                        return method;
+                    let invalid = false;
+                    for (let i = 0; i < parameters.length; i++) {
+                        if (parameters[i].type.basic !== parameterNames[i]) {
+                            invalid = true;
+                            break;
+                        }
+                    }
+                    if (invalid)
+                        continue;
+                    return method;
+                }
+            }
+            return;
+        }
+    }
+    exports.RosettaJavaMethodCluster = RosettaJavaMethodCluster;
+});
+define("src/asledgehammer/rosetta/java/RosettaJavaField", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaType"], function (require, exports, Assert, RosettaEntity_12, RosettaJavaType_3) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaJavaField = void 0;
+    /**
+     * **RosettaJavaField**
+     *
+     * @author Jab
+     */
+    class RosettaJavaField extends RosettaEntity_12.RosettaEntity {
+        constructor(name, raw) {
+            super(raw);
+            Assert.assertNonEmptyString(name, 'name');
+            Assert.assertNonNull(raw.type, 'raw.type');
+            this.name = name;
+            this.modifiers = this.readModifiers();
+            this.type = new RosettaJavaType_3.RosettaJavaType(raw.type);
+            this.deprecated = this.readBoolean('deprecated') != null;
+            this.notes = this.readNotes();
+        }
+        parse(raw) {
+            this.notes = this.readNotes(raw);
+        }
+        toJSON(patch = false) {
+            const { name, notes, modifiers, type, deprecated } = this;
+            const json = {};
+            /* (Properties) */
+            json.name = name;
+            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            if (!patch) {
+                if (modifiers.length)
+                    json.modifiers = modifiers;
+                json.deprecated = deprecated;
+                json.type = type.toJSON(patch);
+            }
+            return json;
+        }
+    }
+    exports.RosettaJavaField = RosettaJavaField;
+});
+define("src/asledgehammer/rosetta/java/RosettaJavaNamespace", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaClass"], function (require, exports, Assert, RosettaEntity_13, RosettaJavaClass_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaJavaNamespace = void 0;
+    /**
+     * **RosettaJavaNamespace**
+     *
+     * @author Jab
+     */
+    class RosettaJavaNamespace extends RosettaEntity_13.RosettaEntity {
+        constructor(name, raw = {}) {
+            super(raw);
+            this.classes = {};
+            Assert.assertNonEmptyString(name, 'name');
+            this.name = name;
+            /* (Classes) */
+            if (Object.keys(raw).length) {
+                for (const clazzName of Object.keys(raw)) {
+                    const rawClazz = raw[clazzName];
+                    let clazz = this.classes[clazzName];
+                    if (clazz === undefined) {
+                        clazz = new RosettaJavaClass_1.RosettaJavaClass(clazzName, this, rawClazz);
+                    }
+                    else {
+                        clazz.parse(rawClazz);
+                    }
+                    /* (Formatted Class Name) */
+                    this.classes[clazz.name] = this.classes[clazzName] = clazz;
+                }
+            }
+        }
+        parse(raw) {
+            /* (Classes) */
+            for (const clazzName of Object.keys(raw)) {
+                const rawClazz = raw[clazzName];
+                let clazz = this.classes[clazzName];
+                if (clazz === undefined) {
+                    clazz = new RosettaJavaClass_1.RosettaJavaClass(clazzName, this, rawClazz);
+                }
+                else {
+                    clazz.parse(rawClazz);
+                }
+                /* (If the class exists, parse the additional data as a patch) */
+                if (this.classes[clazzName] !== undefined) {
+                    this.classes[clazzName].parse(rawClazz);
+                    continue;
+                }
+                /* (Formatted Class Name) */
+                this.classes[clazz.name] = this.classes[clazzName] = clazz;
+            }
+        }
+        toJSON(patch = false) {
+            const { name, classes } = this;
+            const json = {};
+            /* (Properties) */
+            json.name = name;
+            /* (Classes) */
+            const keys = Object.keys(classes);
+            if (keys.length) {
+                keys.sort((a, b) => a.localeCompare(b));
+                for (const key of keys)
+                    json[key] = classes[key].toJSON(patch);
+            }
+            return json;
+        }
+    }
+    exports.RosettaJavaNamespace = RosettaJavaNamespace;
+});
+define("src/asledgehammer/rosetta/java/RosettaJavaClass", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaUtils", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaConstructor", "src/asledgehammer/rosetta/java/RosettaJavaMethodCluster", "src/asledgehammer/rosetta/java/RosettaJavaMethod", "src/asledgehammer/rosetta/java/RosettaJavaField"], function (require, exports, Assert, RosettaUtils_6, RosettaEntity_14, RosettaJavaConstructor_1, RosettaJavaMethodCluster_1, RosettaJavaMethod_1, RosettaJavaField_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaJavaClass = void 0;
+    /**
+     * **RosettaJavaClass**
+     *
+     * @author Jab
+     */
+    class RosettaJavaClass extends RosettaEntity_14.RosettaEntity {
+        constructor(name, namespace, raw) {
+            super(raw);
+            this.fields = {};
+            this.methods = {};
+            this.constructors = [];
+            Assert.assertNonEmptyString(name, 'name');
+            Assert.assertNonNull(namespace, 'namsepace');
+            this.namespace = namespace;
+            this.name = (0, RosettaUtils_6.formatName)(name);
+            this.extendz = this.readString('extends');
+            this.modifiers = this.readModifiers();
+            this.deprecated = this.readBoolean('deprecated') != null;
+            this.javaType = this.readRequiredString('javaType');
+            this.notes = this.readNotes();
+            /* FIELDS */
+            if (raw.fields !== undefined) {
+                const rawFields = raw.fields;
+                for (const fieldName of Object.keys(rawFields)) {
+                    const rawField = rawFields[fieldName];
+                    const field = new RosettaJavaField_1.RosettaJavaField(fieldName, rawField);
+                    this.fields[field.name] = this.fields[fieldName] = field;
+                }
+            }
+            /* METHODS */
+            if (raw.methods !== undefined) {
+                const rawMethods = raw.methods;
+                for (const rawMethod of rawMethods) {
+                    const method = new RosettaJavaMethod_1.RosettaJavaMethod(rawMethod);
+                    const { name: methodName } = method;
+                    let cluster;
+                    if (this.methods[methodName] === undefined) {
+                        cluster = new RosettaJavaMethodCluster_1.RosettaJavaMethodCluster(methodName);
+                        this.methods[methodName] = cluster;
+                    }
+                    else {
+                        cluster = this.methods[methodName];
+                    }
+                    cluster.add(method);
+                }
+            }
+            /* CONSTRUCTORS */
+            if (raw.constructors !== undefined) {
+                const rawConstructors = raw.constructors;
+                for (const rawConstructor of rawConstructors) {
+                    this.constructors.push(new RosettaJavaConstructor_1.RosettaJavaConstructor(this, rawConstructor));
+                }
+            }
+        }
+        parse(raw) {
+            /* (Properties) */
+            this.notes = this.readNotes(raw);
+            /* (Fields) */
+            if (raw.fields !== undefined) {
+                const rawFields = raw.fields;
+                for (const fieldName of Object.keys(rawFields)) {
+                    const rawField = rawFields[fieldName];
+                    const field = this.fields[fieldName];
+                    if (field === undefined) {
+                        throw new Error(`Cannot find field in class: ${this.name}.${fieldName}`);
+                    }
+                    field.parse(rawField);
+                }
+            }
+            /* (Methods) */
+            if (raw.methods !== undefined) {
+                const rawMethods = raw.methods;
+                for (const rawMethod of rawMethods) {
+                    const method = new RosettaJavaMethod_1.RosettaJavaMethod(rawMethod);
+                    const { name: methodName } = method;
+                    const cluster = this.methods[methodName];
+                    if (this.methods[methodName] === undefined) {
+                        throw new Error(`Cannot find method in class: ${this.name}.${methodName}`);
+                    }
+                    cluster.add(method);
+                }
+            }
+            /* (Constructors) */
+            if (raw.constructors !== undefined) {
+                const rawConstructors = raw.constructors;
+                for (const rawConstructor of rawConstructors) {
+                    const rawParameterCount = rawConstructor.parameters !== undefined ? rawConstructor.parameters.length : 0;
+                    let foundConstructor;
+                    for (const nextConstructor of this.constructors) {
+                        const nextParameterCount = nextConstructor.parameters.length;
+                        if (rawParameterCount === nextParameterCount) {
+                            foundConstructor = nextConstructor;
+                            break;
+                        }
+                    }
+                    if (foundConstructor === undefined) {
+                        throw new Error(`Class Constructor ${this.name} not found with param count: ${rawParameterCount}`);
+                    }
+                    foundConstructor.parse(rawConstructor);
+                }
+            }
+        }
+        getField(id) {
+            return this.fields[id];
+        }
+        getConstructor(...parameterTypes) {
+            if (!this.constructors.length)
+                return undefined;
+            for (const conztructor of this.constructors) {
+                if (conztructor.parameters.length === parameterTypes.length) {
+                    let invalid = false;
+                    for (let index = 0; index < parameterTypes.length; index++) {
+                        if (parameterTypes[index] !== conztructor.parameters[index].type.basic) {
+                            invalid = true;
+                            break;
+                        }
+                    }
+                    if (invalid)
+                        continue;
+                    return conztructor;
+                }
+            }
+            return;
+        }
+        getMethod(...parameterTypes) {
+            if (!this.methods.length)
+                return undefined;
+            for (const cluster of Object.values(this.methods)) {
+                for (const method of cluster.methods) {
+                    if (method.parameters.length === parameterTypes.length) {
+                        let invalid = false;
+                        for (let index = 0; index < parameterTypes.length; index++) {
+                            if (parameterTypes[index] !== method.parameters[index].type.basic) {
+                                invalid = true;
+                                break;
+                            }
+                        }
+                        if (invalid)
+                            continue;
+                        return method;
+                    }
+                }
+            }
+            return;
+        }
+        toJSON(patch = false) {
+            const { extendz, modifiers, deprecated, javaType, notes, fields, constructors, methods } = this;
+            const json = {};
+            /* (Properties) */
+            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            if (!patch) {
+                if (extendz !== undefined)
+                    json.extends = extendz;
+                if (modifiers !== undefined)
+                    json.modifiers = modifiers;
+                json.deprecated = deprecated;
+                json.javaType = javaType;
+            }
+            /* (Fields) */
+            let keys = Object.keys(fields);
+            keys.sort((a, b) => a.localeCompare(b));
+            if (keys.length) {
+                json.fields = {};
+                for (const key of keys) {
+                    json.fields[key] = fields[key].toJSON(patch);
+                }
+            }
+            /* (Constructors) */
+            if (constructors.length) {
+                json.constructors = [];
+                for (const conztructor of constructors)
+                    json.constructors.push(conztructor.toJSON(patch));
+            }
+            /* (Methods) */
+            keys = Object.keys(methods);
+            keys.sort((a, b) => a.localeCompare(b));
+            if (keys.length) {
+                json.methods = [];
+                /* (Flatten MethodClusters into JSON method bodies) */
+                for (const key of keys) {
+                    for (const method of methods[key].methods)
+                        json.methods.push(method.toJSON(patch));
+                }
+            }
+            return json;
+        }
+    }
+    exports.RosettaJavaClass = RosettaJavaClass;
+});
+define("src/asledgehammer/rosetta/lua/RosettaLuaTableField", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/RosettaUtils"], function (require, exports, Assert, RosettaEntity_15, RosettaUtils_7) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaLuaTableField = void 0;
+    /**
+     * **RosettaLuaTableField**
+     *
+     * @author Jab
+     */
+    class RosettaLuaTableField extends RosettaEntity_15.RosettaEntity {
+        constructor(name, raw = {}) {
+            super(raw);
+            Assert.assertNonEmptyString(name, 'name');
+            this.name = (0, RosettaUtils_7.formatName)(name);
+            if (raw.type !== undefined) {
+                let type = this.readString('type');
+                if (type === undefined)
+                    type = 'any';
+                this.type = type;
+            }
+            else {
+                this.type = 'any';
+            }
+            this.notes = this.readNotes();
+        }
+        parse(raw) {
+            /* (Properties) */
+            this.notes = this.readNotes(raw);
+            if (raw.type !== undefined) {
+                this.type = this.readRequiredString('type', raw);
+            }
+        }
+        /**
+         * @param patch If true, the exported JSON object will only contain Patch-specific information.
+         *
+         * @returns The JSON of the Rosetta entity.
+         */
+        toJSON(patch = false) {
+            const { name, type, notes } = this;
+            const json = {};
+            /* (Properties) */
+            json.type = type;
+            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            return json;
+        }
+    }
+    exports.RosettaLuaTableField = RosettaLuaTableField;
+});
+define("src/asledgehammer/rosetta/lua/RosettaLuaTable", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaTableField"], function (require, exports, Assert, RosettaEntity_16, RosettaLuaFunction_2, RosettaLuaTableField_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaLuaTable = void 0;
+    /**
+     * **RosettaLuaTable**
+     *
+     * @author Jab
+     */
+    class RosettaLuaTable extends RosettaEntity_16.RosettaEntity {
+        constructor(name, raw = {}) {
+            super(raw);
+            this.fields = {};
+            this.tables = {};
+            this.functions = {};
+            Assert.assertNonEmptyString(name, 'name');
+            this.name = name;
+            this.notes = this.readNotes();
+            /* (Tables) */
+            if (raw.tables !== undefined) {
+                const rawTables = raw.tables;
+                for (const name2 of Object.keys(rawTables)) {
+                    const rawTable = rawTables[name2];
+                    const table = new RosettaLuaTable(name2, rawTable);
+                    this.tables[table.name] = this.tables[name2] = table;
+                }
+            }
+            /* (Functions) */
+            if (raw.functions !== undefined) {
+                const rawFunctions = raw.functions;
+                for (const name2 of Object.keys(rawFunctions)) {
+                    const rawFunction = rawFunctions[name2];
+                    const func = new RosettaLuaFunction_2.RosettaLuaFunction(name2, rawFunction);
+                    this.functions[func.name] = this.functions[name2] = func;
+                }
+            }
+            /* (Values) */
+            if (raw.values !== undefined) {
+                const rawValues = raw.values;
+                for (const name2 of Object.keys(rawValues)) {
+                    const rawValue = rawValues[name2];
+                    const value = new RosettaLuaTableField_1.RosettaLuaTableField(name2, rawValue);
+                    this.fields[value.name] = this.fields[name2] = value;
+                }
+            }
+        }
+        parse(raw) {
+            this.notes = this.readNotes(raw);
+            /* (Tables) */
+            if (raw.tables !== undefined) {
+                const rawTables = raw.tables;
+                for (const name of Object.keys(rawTables)) {
+                    const rawTable = rawTables[name];
+                    let table = this.tables[name];
+                    if (table === undefined) {
+                        table = new RosettaLuaTable(name, rawTable);
+                    }
+                    else {
+                        table.parse(rawTable);
+                    }
+                    this.tables[table.name] = this.tables[name] = table;
+                }
+            }
+            /* (Functions) */
+            if (raw.functions !== undefined) {
+                const rawFunctions = raw.functions;
+                for (const name of Object.keys(rawFunctions)) {
+                    const rawFunction = rawFunctions[name];
+                    let func = this.functions[name];
+                    if (func === undefined) {
+                        func = new RosettaLuaFunction_2.RosettaLuaFunction(name, rawFunction);
+                    }
+                    else {
+                        func.parse(rawFunction);
+                    }
+                    this.functions[func.name] = this.functions[name] = func;
+                }
+            }
+            /* (Values) */
+            if (raw.values !== undefined) {
+                const rawValues = raw.values;
+                for (const name of Object.keys(rawValues)) {
+                    const rawValue = rawValues[name];
+                    let value = this.fields[name];
+                    if (value === undefined) {
+                        value = new RosettaLuaTableField_1.RosettaLuaTableField(name, rawValue);
+                    }
+                    else {
+                        value.parse(rawValue);
+                    }
+                    this.fields[value.name] = this.fields[name] = value;
+                }
+            }
+        }
+        toJSON(patch = false) {
+            const { fields, tables, functions, name, notes } = this;
+            const json = {};
+            /* (Properties) */
+            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            /* (Fields) */
+            let keys = Object.keys(fields);
+            if (keys.length) {
+                json.fields = {};
+                keys.sort((a, b) => a.localeCompare(b));
+                for (const key of keys)
+                    json.fields[key] = fields[key].toJSON(patch);
+            }
+            /* (Functions) */
+            keys = Object.keys(functions);
+            if (keys.length) {
+                json.functions = {};
+                keys.sort((a, b) => a.localeCompare(b));
+                for (const key of keys)
+                    json.functions[key] = functions[key].toJSON(patch);
+            }
+            /* (Tables) */
+            keys = Object.keys(tables);
+            if (keys.length) {
+                json.tables = {};
+                keys.sort((a, b) => a.localeCompare(b));
+                for (const key of keys)
+                    json.tables[key] = tables[key].toJSON(patch);
+            }
+            return json;
+        }
+    }
+    exports.RosettaLuaTable = RosettaLuaTable;
+});
+define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/lua/LuaCard"], function (require, exports, RosettaJavaClass_2, RosettaLuaClass_1, RosettaLuaTable_1, util_8, LuaCard_5) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ItemTree = void 0;
@@ -2262,23 +3027,23 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
         }
         populate() {
             const _this = this;
-            const { selectedCard } = this.app.active;
-            if (!selectedCard)
+            const { selected } = this.app.active;
+            if (!selected)
                 return;
-            if (selectedCard instanceof LuaClassCard_1.LuaClassCard) {
-                this.populateLuaClass(selectedCard);
+            if (selected instanceof RosettaLuaClass_1.RosettaLuaClass) {
+                this.populateLuaClass(selected);
             }
-            // else if(selectedCard instanceof LuaTableCard) {
-            //     this.populateLuaTable(selectedCard);
-            // } else if(selectedCard instanceof JavaClassCard) {
-            //     this.populateJavaClass(selectedCard);
-            // }
+            else if (selected instanceof RosettaLuaTable_1.RosettaLuaTable) {
+                this.populateLuaTable(selected);
+            }
+            else if (selected instanceof RosettaJavaClass_2.RosettaJavaClass) {
+                this.populateJavaClass(selected);
+            }
         }
-        populateLuaClass(luaClass) {
-            const _this = this;
-            const entity = luaClass.options.entity;
+        populateLuaClass(entity) {
             if (!entity)
                 return;
+            const _this = this;
             const fieldNames = Object.keys(entity.fields);
             fieldNames.sort((a, b) => a.localeCompare(b));
             const fields = [];
@@ -2440,6 +3205,16 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
             (0, util_8.$get)(this.idFolderValue).on('click', () => this.folderValueOpen = !this.folderValueOpen);
             (0, util_8.$get)(this.idFolderMethod).on('click', () => this.folderMethodOpen = !this.folderMethodOpen);
             (0, util_8.$get)(this.idFolderFunction).on('click', () => this.folderFunctionOpen = !this.folderFunctionOpen);
+        }
+        populateLuaTable(entity) {
+            if (!entity)
+                return;
+            const _this = this;
+        }
+        populateJavaClass(entity) {
+            if (!entity)
+                return;
+            const _this = this;
         }
     }
     exports.ItemTree = ItemTree;
@@ -5839,7 +6614,7 @@ define("src/asledgehammer/rosetta/lua/wizard/ScopeString", ["require", "exports"
     }
     exports.scopeChunkToString = scopeChunkToString;
 });
-define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", "luaparse", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/lua/wizard/PZ", "src/asledgehammer/rosetta/lua/wizard/Scope", "src/asledgehammer/rosetta/lua/wizard/Discover", "src/asledgehammer/rosetta/lua/wizard/ScopeString", "src/asledgehammer/rosetta/lua/wizard/KnownTypes"], function (require, exports, ast, RosettaLuaClass_1, RosettaLuaConstructor_2, PZ_1, Scope_4, Discover_2, ScopeString_1, KnownTypes_3) {
+define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", "luaparse", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/lua/wizard/PZ", "src/asledgehammer/rosetta/lua/wizard/Scope", "src/asledgehammer/rosetta/lua/wizard/Discover", "src/asledgehammer/rosetta/lua/wizard/ScopeString", "src/asledgehammer/rosetta/lua/wizard/KnownTypes"], function (require, exports, ast, RosettaLuaClass_2, RosettaLuaConstructor_2, PZ_1, Scope_4, Discover_2, ScopeString_1, KnownTypes_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaParser = void 0;
@@ -5932,7 +6707,7 @@ define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", 
                     return false;
                 className = vars0.name;
                 const superClassName = init0.base.base.name;
-                clazz = new RosettaLuaClass_1.RosettaLuaClass(className);
+                clazz = new RosettaLuaClass_2.RosettaLuaClass(className);
                 clazz.extendz = superClassName;
                 if (superClassName !== 'ISBaseObject')
                     clazz.extendz = superClassName;
@@ -6215,772 +6990,7 @@ define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", 
     }
     exports.LuaParser = LuaParser;
 });
-define("src/asledgehammer/rosetta/lua/RosettaLuaTableField", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/RosettaUtils"], function (require, exports, Assert, RosettaEntity_7, RosettaUtils_4) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.RosettaLuaTableField = void 0;
-    /**
-     * **RosettaLuaTableField**
-     *
-     * @author Jab
-     */
-    class RosettaLuaTableField extends RosettaEntity_7.RosettaEntity {
-        constructor(name, raw = {}) {
-            super(raw);
-            Assert.assertNonEmptyString(name, 'name');
-            this.name = (0, RosettaUtils_4.formatName)(name);
-            if (raw.type !== undefined) {
-                let type = this.readString('type');
-                if (type === undefined)
-                    type = 'any';
-                this.type = type;
-            }
-            else {
-                this.type = 'any';
-            }
-            this.notes = this.readNotes();
-        }
-        parse(raw) {
-            /* (Properties) */
-            this.notes = this.readNotes(raw);
-            if (raw.type !== undefined) {
-                this.type = this.readRequiredString('type', raw);
-            }
-        }
-        /**
-         * @param patch If true, the exported JSON object will only contain Patch-specific information.
-         *
-         * @returns The JSON of the Rosetta entity.
-         */
-        toJSON(patch = false) {
-            const { name, type, notes } = this;
-            const json = {};
-            /* (Properties) */
-            json.type = type;
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
-            return json;
-        }
-    }
-    exports.RosettaLuaTableField = RosettaLuaTableField;
-});
-define("src/asledgehammer/rosetta/lua/RosettaLuaTable", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaTableField"], function (require, exports, Assert, RosettaEntity_8, RosettaLuaFunction_2, RosettaLuaTableField_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.RosettaLuaTable = void 0;
-    /**
-     * **RosettaLuaTable**
-     *
-     * @author Jab
-     */
-    class RosettaLuaTable extends RosettaEntity_8.RosettaEntity {
-        constructor(name, raw = {}) {
-            super(raw);
-            this.fields = {};
-            this.tables = {};
-            this.functions = {};
-            Assert.assertNonEmptyString(name, 'name');
-            this.name = name;
-            this.notes = this.readNotes();
-            /* (Tables) */
-            if (raw.tables !== undefined) {
-                const rawTables = raw.tables;
-                for (const name2 of Object.keys(rawTables)) {
-                    const rawTable = rawTables[name2];
-                    const table = new RosettaLuaTable(name2, rawTable);
-                    this.tables[table.name] = this.tables[name2] = table;
-                }
-            }
-            /* (Functions) */
-            if (raw.functions !== undefined) {
-                const rawFunctions = raw.functions;
-                for (const name2 of Object.keys(rawFunctions)) {
-                    const rawFunction = rawFunctions[name2];
-                    const func = new RosettaLuaFunction_2.RosettaLuaFunction(name2, rawFunction);
-                    this.functions[func.name] = this.functions[name2] = func;
-                }
-            }
-            /* (Values) */
-            if (raw.values !== undefined) {
-                const rawValues = raw.values;
-                for (const name2 of Object.keys(rawValues)) {
-                    const rawValue = rawValues[name2];
-                    const value = new RosettaLuaTableField_1.RosettaLuaTableField(name2, rawValue);
-                    this.fields[value.name] = this.fields[name2] = value;
-                }
-            }
-        }
-        parse(raw) {
-            this.notes = this.readNotes(raw);
-            /* (Tables) */
-            if (raw.tables !== undefined) {
-                const rawTables = raw.tables;
-                for (const name of Object.keys(rawTables)) {
-                    const rawTable = rawTables[name];
-                    let table = this.tables[name];
-                    if (table === undefined) {
-                        table = new RosettaLuaTable(name, rawTable);
-                    }
-                    else {
-                        table.parse(rawTable);
-                    }
-                    this.tables[table.name] = this.tables[name] = table;
-                }
-            }
-            /* (Functions) */
-            if (raw.functions !== undefined) {
-                const rawFunctions = raw.functions;
-                for (const name of Object.keys(rawFunctions)) {
-                    const rawFunction = rawFunctions[name];
-                    let func = this.functions[name];
-                    if (func === undefined) {
-                        func = new RosettaLuaFunction_2.RosettaLuaFunction(name, rawFunction);
-                    }
-                    else {
-                        func.parse(rawFunction);
-                    }
-                    this.functions[func.name] = this.functions[name] = func;
-                }
-            }
-            /* (Values) */
-            if (raw.values !== undefined) {
-                const rawValues = raw.values;
-                for (const name of Object.keys(rawValues)) {
-                    const rawValue = rawValues[name];
-                    let value = this.fields[name];
-                    if (value === undefined) {
-                        value = new RosettaLuaTableField_1.RosettaLuaTableField(name, rawValue);
-                    }
-                    else {
-                        value.parse(rawValue);
-                    }
-                    this.fields[value.name] = this.fields[name] = value;
-                }
-            }
-        }
-        toJSON(patch = false) {
-            const { fields, tables, functions, name, notes } = this;
-            const json = {};
-            /* (Properties) */
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
-            /* (Fields) */
-            let keys = Object.keys(fields);
-            if (keys.length) {
-                json.fields = {};
-                keys.sort((a, b) => a.localeCompare(b));
-                for (const key of keys)
-                    json.fields[key] = fields[key].toJSON(patch);
-            }
-            /* (Functions) */
-            keys = Object.keys(functions);
-            if (keys.length) {
-                json.functions = {};
-                keys.sort((a, b) => a.localeCompare(b));
-                for (const key of keys)
-                    json.functions[key] = functions[key].toJSON(patch);
-            }
-            /* (Tables) */
-            keys = Object.keys(tables);
-            if (keys.length) {
-                json.tables = {};
-                keys.sort((a, b) => a.localeCompare(b));
-                for (const key of keys)
-                    json.tables[key] = tables[key].toJSON(patch);
-            }
-            return json;
-        }
-    }
-    exports.RosettaLuaTable = RosettaLuaTable;
-});
-define("src/asledgehammer/rosetta/java/RosettaJavaType", ["require", "exports", "src/asledgehammer/rosetta/RosettaEntity"], function (require, exports, RosettaEntity_9) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.RosettaJavaType = void 0;
-    /**
-     * **RosettaJavaType**
-     *
-     * @author Jab
-     */
-    class RosettaJavaType extends RosettaEntity_9.RosettaEntity {
-        constructor(raw) {
-            super(raw);
-            const basic = this.readRequiredString('basic');
-            this.rawBasic = basic;
-            if (basic.indexOf('.') !== -1) {
-                const split = basic.split('.');
-                this.basic = split[split.length - 1];
-            }
-            else {
-                this.basic = basic;
-            }
-            this.full = this.readString('full');
-        }
-        toJSON(patch = false) {
-            const { rawBasic: basic, full } = this;
-            const json = {};
-            if (!patch) {
-                json.basic = basic;
-                json.full = full;
-            }
-            return json;
-        }
-    }
-    exports.RosettaJavaType = RosettaJavaType;
-});
-define("src/asledgehammer/rosetta/java/RosettaJavaParameter", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaType", "src/asledgehammer/rosetta/RosettaUtils"], function (require, exports, Assert, RosettaEntity_10, RosettaJavaType_1, RosettaUtils_5) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.RosettaJavaParameter = void 0;
-    /**
-     * **RosettaJavaParameter**
-     *
-     * @author Jab
-     */
-    class RosettaJavaParameter extends RosettaEntity_10.RosettaEntity {
-        constructor(raw) {
-            super(raw);
-            Assert.assertNonNull(raw.type, 'raw.type');
-            this.name = (0, RosettaUtils_5.formatName)(this.readRequiredString('name'));
-            this.type = new RosettaJavaType_1.RosettaJavaType(raw.type);
-            this.parse(raw);
-        }
-        parse(raw) {
-            this.notes = this.readNotes(raw);
-        }
-        toJSON(patch = false) {
-            const { name, notes, type } = this;
-            const json = {};
-            /* (Properties) */
-            if (!patch)
-                json.type = type.toJSON(patch);
-            json.name = name;
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
-            return json;
-        }
-    }
-    exports.RosettaJavaParameter = RosettaJavaParameter;
-});
-define("src/asledgehammer/rosetta/java/RosettaJavaConstructor", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaParameter"], function (require, exports, Assert, RosettaEntity_11, RosettaJavaParameter_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.RosettaJavaConstructor = void 0;
-    /**
-     * **RosettaJavaConstructor**
-     *
-     * @author Jab
-     */
-    class RosettaJavaConstructor extends RosettaEntity_11.RosettaEntity {
-        constructor(clazz, raw) {
-            super(raw);
-            this.parameters = [];
-            Assert.assertNonNull(clazz, 'clazz');
-            this.clazz = clazz;
-            /* (Properties) */
-            this.deprecated = this.readBoolean('deprecated') != null;
-            this.modifiers = this.readModifiers();
-            this.notes = this.readNotes(raw);
-            /* (Parameters) */
-            if (raw.parameters !== undefined) {
-                const rawParameters = raw.parameters;
-                for (const rawParameter of rawParameters) {
-                    const parameter = new RosettaJavaParameter_1.RosettaJavaParameter(rawParameter);
-                    this.parameters.push(parameter);
-                }
-            }
-        }
-        parse(raw) {
-            /* (Properties) */
-            this.notes = this.readNotes(raw);
-            /* (Parameters) */
-            if (raw.parameters !== undefined) {
-                const rawParameters = raw.parameters;
-                /*
-                 * (To prevent deep-logic issues, check to see if Rosetta's parameters match the length of
-                 *  the overriding parameters. If not, this is the fault of the patch, not Rosetta)
-                 */
-                if (this.parameters.length !== rawParameters.length) {
-                    throw new Error(`The class ${this.clazz.name}'s constructor's parameters does not match the parameters to override. (method: ${this.parameters.length}, given: ${rawParameters.length})`);
-                }
-                for (let index = 0; index < rawParameters.length; index++) {
-                    this.parameters[index].parse(rawParameters[index]);
-                }
-            }
-        }
-        toJSON(patch = false) {
-            const { notes, deprecated, modifiers, parameters } = this;
-            const json = {};
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
-            /* (Properties) */
-            if (!patch) {
-                json.deprecated = deprecated;
-                if (modifiers.length)
-                    json.modifiers = modifiers;
-            }
-            /* (Properties) */
-            if (parameters.length) {
-                json.parameters = [];
-                for (const parameter of parameters)
-                    json.parameters.push(parameter.toJSON(patch));
-            }
-            return json;
-        }
-    }
-    exports.RosettaJavaConstructor = RosettaJavaConstructor;
-});
-define("src/asledgehammer/rosetta/java/RosettaJavaReturns", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaType"], function (require, exports, Assert, RosettaEntity_12, RosettaJavaType_2) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.RosettaJavaReturns = void 0;
-    /**
-     * **RosettaJavaReturns**
-     *
-     * @author Jab
-     */
-    class RosettaJavaReturns extends RosettaEntity_12.RosettaEntity {
-        constructor(raw) {
-            super(raw);
-            Assert.assertNonNull(raw.type, 'raw.type');
-            this.type = new RosettaJavaType_2.RosettaJavaType(raw.type);
-            this.parse(raw);
-        }
-        parse(raw) {
-            this.notes = this.readNotes(raw);
-        }
-        toJSON(patch = false) {
-            const { type, notes } = this;
-            const json = {};
-            /* (Properties) */
-            if (!patch)
-                json.type = type;
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
-            return json;
-        }
-    }
-    exports.RosettaJavaReturns = RosettaJavaReturns;
-});
-define("src/asledgehammer/rosetta/java/RosettaJavaMethod", ["require", "exports", "src/asledgehammer/rosetta/RosettaUtils", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaParameter", "src/asledgehammer/rosetta/java/RosettaJavaReturns"], function (require, exports, RosettaUtils_6, RosettaEntity_13, RosettaJavaParameter_2, RosettaJavaReturns_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.RosettaJavaMethod = void 0;
-    /**
-     * **RosettaJavaMethod**
-     *
-     * @author Jab
-     */
-    class RosettaJavaMethod extends RosettaEntity_13.RosettaEntity {
-        constructor(raw) {
-            super(raw);
-            this.parameters = [];
-            /* PROPERTIES */
-            this.name = (0, RosettaUtils_6.formatName)(this.readRequiredString('name'));
-            this.deprecated = this.readBoolean('deprecated') != null;
-            this.modifiers = this.readModifiers();
-            /* PARAMETERS */
-            if (raw.parameters !== undefined) {
-                const rawParameters = raw.parameters;
-                for (const rawParameter of rawParameters) {
-                    this.parameters.push(new RosettaJavaParameter_2.RosettaJavaParameter(rawParameter));
-                }
-            }
-            /* RETURNS */
-            if (raw.returns === undefined) {
-                throw new Error(`Method does not have returns definition: ${this.name}`);
-            }
-            this.returns = new RosettaJavaReturns_1.RosettaJavaReturns(raw.returns);
-            this.notes = this.readNotes();
-        }
-        parse(raw) {
-            this.notes = this.readNotes(raw);
-            /* PARAMETERS */
-            if (raw.parameters !== undefined) {
-                const rawParameters = raw.parameters;
-                /*
-                 * (To prevent deep-logic issues, check to see if Rosetta's parameters match the length of
-                 *  the overriding parameters. If not, this is the fault of the patch, not Rosetta)
-                 */
-                if (this.parameters.length !== rawParameters.length) {
-                    throw new Error(`The method ${this.name}'s parameters does not match the parameters to override. (method: ${this.parameters.length}, given: ${rawParameters.length})`);
-                }
-                for (let index = 0; index < rawParameters.length; index++) {
-                    this.parameters[index].parse(rawParameters[index]);
-                }
-            }
-            /* RETURNS */
-            if (raw.returns !== undefined) {
-                this.returns.parse(raw.returns);
-            }
-        }
-        toJSON(patch = false) {
-            const { name, deprecated, modifiers, notes, parameters, returns } = this;
-            const json = {};
-            /* (Properties) */
-            if (!patch) {
-                json.deprecated = deprecated;
-                if (modifiers.length)
-                    json.modifiers = modifiers;
-            }
-            json.name = name;
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
-            /* (Parameters) */
-            if (parameters.length) {
-                json.parameters = [];
-                for (const parameter of parameters)
-                    json.parameters.push(parameter.toJSON(patch));
-            }
-            /* (Returns) */
-            json.returns = returns.toJSON(patch);
-            return json;
-        }
-    }
-    exports.RosettaJavaMethod = RosettaJavaMethod;
-});
-define("src/asledgehammer/rosetta/java/RosettaJavaMethodCluster", ["require", "exports", "src/asledgehammer/Assert"], function (require, exports, Assert) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.RosettaJavaMethodCluster = void 0;
-    /**
-     * **RosettaJavaMethodCluster**
-     *
-     * @author Jab
-     */
-    class RosettaJavaMethodCluster {
-        constructor(name) {
-            this.methods = [];
-            Assert.assertNonEmptyString(name, 'name');
-            this.name = name;
-        }
-        add(method) {
-            const indexOf = this.methods.indexOf(method);
-            if (indexOf !== -1) {
-                this.methods[indexOf].parse(method.raw);
-                return;
-            }
-            this.methods.push(method);
-        }
-        getWithParameters(...parameterNames) {
-            for (const method of this.methods) {
-                const parameters = method.parameters;
-                if (parameterNames.length === parameters.length) {
-                    if (parameterNames.length === 0)
-                        return method;
-                    let invalid = false;
-                    for (let i = 0; i < parameters.length; i++) {
-                        if (parameters[i].type.basic !== parameterNames[i]) {
-                            invalid = true;
-                            break;
-                        }
-                    }
-                    if (invalid)
-                        continue;
-                    return method;
-                }
-            }
-            return;
-        }
-    }
-    exports.RosettaJavaMethodCluster = RosettaJavaMethodCluster;
-});
-define("src/asledgehammer/rosetta/java/RosettaJavaField", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaType"], function (require, exports, Assert, RosettaEntity_14, RosettaJavaType_3) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.RosettaJavaField = void 0;
-    /**
-     * **RosettaJavaField**
-     *
-     * @author Jab
-     */
-    class RosettaJavaField extends RosettaEntity_14.RosettaEntity {
-        constructor(name, raw) {
-            super(raw);
-            Assert.assertNonEmptyString(name, 'name');
-            Assert.assertNonNull(raw.type, 'raw.type');
-            this.name = name;
-            this.modifiers = this.readModifiers();
-            this.type = new RosettaJavaType_3.RosettaJavaType(raw.type);
-            this.deprecated = this.readBoolean('deprecated') != null;
-            this.notes = this.readNotes();
-        }
-        parse(raw) {
-            this.notes = this.readNotes(raw);
-        }
-        toJSON(patch = false) {
-            const { name, notes, modifiers, type, deprecated } = this;
-            const json = {};
-            /* (Properties) */
-            json.name = name;
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
-            if (!patch) {
-                if (modifiers.length)
-                    json.modifiers = modifiers;
-                json.deprecated = deprecated;
-                json.type = type.toJSON(patch);
-            }
-            return json;
-        }
-    }
-    exports.RosettaJavaField = RosettaJavaField;
-});
-define("src/asledgehammer/rosetta/java/RosettaJavaClass", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaUtils", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaConstructor", "src/asledgehammer/rosetta/java/RosettaJavaMethodCluster", "src/asledgehammer/rosetta/java/RosettaJavaMethod", "src/asledgehammer/rosetta/java/RosettaJavaField"], function (require, exports, Assert, RosettaUtils_7, RosettaEntity_15, RosettaJavaConstructor_1, RosettaJavaMethodCluster_1, RosettaJavaMethod_1, RosettaJavaField_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.RosettaJavaClass = void 0;
-    /**
-     * **RosettaJavaClass**
-     *
-     * @author Jab
-     */
-    class RosettaJavaClass extends RosettaEntity_15.RosettaEntity {
-        constructor(name, namespace, raw) {
-            super(raw);
-            this.fields = {};
-            this.methods = {};
-            this.constructors = [];
-            Assert.assertNonEmptyString(name, 'name');
-            Assert.assertNonNull(namespace, 'namsepace');
-            this.namespace = namespace;
-            this.name = (0, RosettaUtils_7.formatName)(name);
-            this.extendz = this.readString('extends');
-            this.modifiers = this.readModifiers();
-            this.deprecated = this.readBoolean('deprecated') != null;
-            this.javaType = this.readRequiredString('javaType');
-            this.notes = this.readNotes();
-            /* FIELDS */
-            if (raw.fields !== undefined) {
-                const rawFields = raw.fields;
-                for (const fieldName of Object.keys(rawFields)) {
-                    const rawField = rawFields[fieldName];
-                    const field = new RosettaJavaField_1.RosettaJavaField(fieldName, rawField);
-                    this.fields[field.name] = this.fields[fieldName] = field;
-                }
-            }
-            /* METHODS */
-            if (raw.methods !== undefined) {
-                const rawMethods = raw.methods;
-                for (const rawMethod of rawMethods) {
-                    const method = new RosettaJavaMethod_1.RosettaJavaMethod(rawMethod);
-                    const { name: methodName } = method;
-                    let cluster;
-                    if (this.methods[methodName] === undefined) {
-                        cluster = new RosettaJavaMethodCluster_1.RosettaJavaMethodCluster(methodName);
-                        this.methods[methodName] = cluster;
-                    }
-                    else {
-                        cluster = this.methods[methodName];
-                    }
-                    cluster.add(method);
-                }
-            }
-            /* CONSTRUCTORS */
-            if (raw.constructors !== undefined) {
-                const rawConstructors = raw.constructors;
-                for (const rawConstructor of rawConstructors) {
-                    this.constructors.push(new RosettaJavaConstructor_1.RosettaJavaConstructor(this, rawConstructor));
-                }
-            }
-        }
-        parse(raw) {
-            /* (Properties) */
-            this.notes = this.readNotes(raw);
-            /* (Fields) */
-            if (raw.fields !== undefined) {
-                const rawFields = raw.fields;
-                for (const fieldName of Object.keys(rawFields)) {
-                    const rawField = rawFields[fieldName];
-                    const field = this.fields[fieldName];
-                    if (field === undefined) {
-                        throw new Error(`Cannot find field in class: ${this.name}.${fieldName}`);
-                    }
-                    field.parse(rawField);
-                }
-            }
-            /* (Methods) */
-            if (raw.methods !== undefined) {
-                const rawMethods = raw.methods;
-                for (const rawMethod of rawMethods) {
-                    const method = new RosettaJavaMethod_1.RosettaJavaMethod(rawMethod);
-                    const { name: methodName } = method;
-                    const cluster = this.methods[methodName];
-                    if (this.methods[methodName] === undefined) {
-                        throw new Error(`Cannot find method in class: ${this.name}.${methodName}`);
-                    }
-                    cluster.add(method);
-                }
-            }
-            /* (Constructors) */
-            if (raw.constructors !== undefined) {
-                const rawConstructors = raw.constructors;
-                for (const rawConstructor of rawConstructors) {
-                    const rawParameterCount = rawConstructor.parameters !== undefined ? rawConstructor.parameters.length : 0;
-                    let foundConstructor;
-                    for (const nextConstructor of this.constructors) {
-                        const nextParameterCount = nextConstructor.parameters.length;
-                        if (rawParameterCount === nextParameterCount) {
-                            foundConstructor = nextConstructor;
-                            break;
-                        }
-                    }
-                    if (foundConstructor === undefined) {
-                        throw new Error(`Class Constructor ${this.name} not found with param count: ${rawParameterCount}`);
-                    }
-                    foundConstructor.parse(rawConstructor);
-                }
-            }
-        }
-        getField(id) {
-            return this.fields[id];
-        }
-        getConstructor(...parameterTypes) {
-            if (!this.constructors.length)
-                return undefined;
-            for (const conztructor of this.constructors) {
-                if (conztructor.parameters.length === parameterTypes.length) {
-                    let invalid = false;
-                    for (let index = 0; index < parameterTypes.length; index++) {
-                        if (parameterTypes[index] !== conztructor.parameters[index].type.basic) {
-                            invalid = true;
-                            break;
-                        }
-                    }
-                    if (invalid)
-                        continue;
-                    return conztructor;
-                }
-            }
-            return;
-        }
-        getMethod(...parameterTypes) {
-            if (!this.methods.length)
-                return undefined;
-            for (const cluster of Object.values(this.methods)) {
-                for (const method of cluster.methods) {
-                    if (method.parameters.length === parameterTypes.length) {
-                        let invalid = false;
-                        for (let index = 0; index < parameterTypes.length; index++) {
-                            if (parameterTypes[index] !== method.parameters[index].type.basic) {
-                                invalid = true;
-                                break;
-                            }
-                        }
-                        if (invalid)
-                            continue;
-                        return method;
-                    }
-                }
-            }
-            return;
-        }
-        toJSON(patch = false) {
-            const { extendz, modifiers, deprecated, javaType, notes, fields, constructors, methods } = this;
-            const json = {};
-            /* (Properties) */
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
-            if (!patch) {
-                if (extendz !== undefined)
-                    json.extends = extendz;
-                if (modifiers !== undefined)
-                    json.modifiers = modifiers;
-                json.deprecated = deprecated;
-                json.javaType = javaType;
-            }
-            /* (Fields) */
-            let keys = Object.keys(fields);
-            keys.sort((a, b) => a.localeCompare(b));
-            if (keys.length) {
-                json.fields = {};
-                for (const key of keys) {
-                    json.fields[key] = fields[key].toJSON(patch);
-                }
-            }
-            /* (Constructors) */
-            if (constructors.length) {
-                json.constructors = [];
-                for (const conztructor of constructors)
-                    json.constructors.push(conztructor.toJSON(patch));
-            }
-            /* (Methods) */
-            keys = Object.keys(methods);
-            keys.sort((a, b) => a.localeCompare(b));
-            if (keys.length) {
-                json.methods = [];
-                /* (Flatten MethodClusters into JSON method bodies) */
-                for (const key of keys) {
-                    for (const method of methods[key].methods)
-                        json.methods.push(method.toJSON(patch));
-                }
-            }
-            return json;
-        }
-    }
-    exports.RosettaJavaClass = RosettaJavaClass;
-});
-define("src/asledgehammer/rosetta/java/RosettaJavaNamespace", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaClass"], function (require, exports, Assert, RosettaEntity_16, RosettaJavaClass_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.RosettaJavaNamespace = void 0;
-    /**
-     * **RosettaJavaNamespace**
-     *
-     * @author Jab
-     */
-    class RosettaJavaNamespace extends RosettaEntity_16.RosettaEntity {
-        constructor(name, raw = {}) {
-            super(raw);
-            this.classes = {};
-            Assert.assertNonEmptyString(name, 'name');
-            this.name = name;
-            /* (Classes) */
-            if (Object.keys(raw).length) {
-                for (const clazzName of Object.keys(raw)) {
-                    const rawClazz = raw[clazzName];
-                    let clazz = this.classes[clazzName];
-                    if (clazz === undefined) {
-                        clazz = new RosettaJavaClass_1.RosettaJavaClass(clazzName, this, rawClazz);
-                    }
-                    else {
-                        clazz.parse(rawClazz);
-                    }
-                    /* (Formatted Class Name) */
-                    this.classes[clazz.name] = this.classes[clazzName] = clazz;
-                }
-            }
-        }
-        parse(raw) {
-            /* (Classes) */
-            for (const clazzName of Object.keys(raw)) {
-                const rawClazz = raw[clazzName];
-                let clazz = this.classes[clazzName];
-                if (clazz === undefined) {
-                    clazz = new RosettaJavaClass_1.RosettaJavaClass(clazzName, this, rawClazz);
-                }
-                else {
-                    clazz.parse(rawClazz);
-                }
-                /* (If the class exists, parse the additional data as a patch) */
-                if (this.classes[clazzName] !== undefined) {
-                    this.classes[clazzName].parse(rawClazz);
-                    continue;
-                }
-                /* (Formatted Class Name) */
-                this.classes[clazz.name] = this.classes[clazzName] = clazz;
-            }
-        }
-        toJSON(patch = false) {
-            const { name, classes } = this;
-            const json = {};
-            /* (Properties) */
-            json.name = name;
-            /* (Classes) */
-            const keys = Object.keys(classes);
-            if (keys.length) {
-                keys.sort((a, b) => a.localeCompare(b));
-                for (const key of keys)
-                    json[key] = classes[key].toJSON(patch);
-            }
-            return json;
-        }
-    }
-    exports.RosettaJavaNamespace = RosettaJavaNamespace;
-});
-define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/component/lua/LuaClassCard", "src/asledgehammer/rosetta/component/lua/LuaConstructorCard", "src/asledgehammer/rosetta/component/lua/LuaFieldCard", "src/asledgehammer/rosetta/component/lua/LuaFunctionCard", "src/asledgehammer/rosetta/component/Sidebar", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/lua/wizard/LuaParser", "src/asledgehammer/rosetta/java/RosettaJavaNamespace"], function (require, exports, hljs, LuaClassCard_2, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, Sidebar_1, LuaGenerator_5, RosettaLuaClass_2, RosettaLuaConstructor_3, util_11, LuaParser_1, RosettaJavaNamespace_1) {
+define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/component/lua/LuaClassCard", "src/asledgehammer/rosetta/component/lua/LuaConstructorCard", "src/asledgehammer/rosetta/component/lua/LuaFieldCard", "src/asledgehammer/rosetta/component/lua/LuaFunctionCard", "src/asledgehammer/rosetta/component/Sidebar", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/lua/wizard/LuaParser", "src/asledgehammer/rosetta/java/RosettaJavaNamespace"], function (require, exports, hljs, LuaClassCard_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, Sidebar_1, LuaGenerator_5, RosettaLuaClass_3, RosettaLuaConstructor_3, util_11, LuaParser_1, RosettaJavaNamespace_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.App = exports.Toast = exports.Active = void 0;
@@ -7067,7 +7077,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             this.active.reset();
             if (json.luaClasses) {
                 for (const name of Object.keys(json.luaClasses)) {
-                    const entity = new RosettaLuaClass_2.RosettaLuaClass(name, json.luaClasses[name]);
+                    const entity = new RosettaLuaClass_3.RosettaLuaClass(name, json.luaClasses[name]);
                     this.active.luaClasses[name] = entity;
                 }
             }
@@ -7124,7 +7134,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
         }
         showClass(entity) {
             this.$screenContent.empty();
-            this.active.selectedCard = new LuaClassCard_2.LuaClassCard(this, { entity });
+            this.active.selectedCard = new LuaClassCard_1.LuaClassCard(this, { entity });
             this.$screenContent.append(this.active.selectedCard.render());
             this.active.selectedCard.listen();
             this.active.selectedCard.update();
@@ -7209,7 +7219,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                 switch (this.nameMode) {
                     case 'new_class': {
                         try {
-                            const entity = new RosettaLuaClass_2.RosettaLuaClass((0, util_11.validateLuaVariableName)(this.$inputName.val()).trim());
+                            const entity = new RosettaLuaClass_3.RosettaLuaClass((0, util_11.validateLuaVariableName)(this.$inputName.val()).trim());
                             this.showClass(entity);
                             this.sidebar.populateTrees();
                             this.toast.alert('Created Lua Class.', 'success');
@@ -7534,7 +7544,7 @@ define("src/asledgehammer/rosetta/RosettaFileInfo", ["require", "exports"], func
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
 });
-define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asledgehammer/rosetta/Rosetta", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/lua/RosettaLuaTableField", "src/asledgehammer/rosetta/lua/RosettaLuaClass"], function (require, exports, Rosetta_1, RosettaEntity_17, RosettaLuaFunction_3, RosettaLuaTable_1, RosettaLuaTableField_2, RosettaLuaClass_3) {
+define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asledgehammer/rosetta/Rosetta", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/lua/RosettaLuaTableField", "src/asledgehammer/rosetta/lua/RosettaLuaClass"], function (require, exports, Rosetta_1, RosettaEntity_17, RosettaLuaFunction_3, RosettaLuaTable_2, RosettaLuaTableField_2, RosettaLuaClass_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RosettaFile = void 0;
@@ -7558,7 +7568,7 @@ define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asle
                 const rawTables = raw.tables;
                 for (const name of Object.keys(rawTables)) {
                     const rawTable = rawTables[name];
-                    const table = new RosettaLuaTable_1.RosettaLuaTable(name, rawTable);
+                    const table = new RosettaLuaTable_2.RosettaLuaTable(name, rawTable);
                     this.tables[table.name] = this.tables[name] = table;
                 }
             }
@@ -7585,7 +7595,7 @@ define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asle
                 const rawLuaClasses = raw.luaClasses;
                 for (const name of Object.keys(rawLuaClasses)) {
                     const rawLuaClass = rawLuaClasses[name];
-                    const luaClass = new RosettaLuaClass_3.RosettaLuaClass(name, rawLuaClass);
+                    const luaClass = new RosettaLuaClass_4.RosettaLuaClass(name, rawLuaClass);
                     this.luaClasses[luaClass.name] = this.luaClasses[name] = luaClass;
                 }
             }
@@ -7603,7 +7613,7 @@ define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asle
         createLuaClass(name) {
             /* (Make sure the object can be modified) */
             this.checkReadOnly();
-            const luaClass = new RosettaLuaClass_3.RosettaLuaClass(name);
+            const luaClass = new RosettaLuaClass_4.RosettaLuaClass(name);
             // (Only check for the file instance)
             if (this.luaClasses[luaClass.name]) {
                 throw new Error(`A global Lua Class already exists: ${luaClass.name}`);
@@ -7624,7 +7634,7 @@ define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asle
         createGlobalLuaTable(name) {
             /* (Make sure the object can be modified) */
             this.checkReadOnly();
-            const luaTable = new RosettaLuaTable_1.RosettaLuaTable(name);
+            const luaTable = new RosettaLuaTable_2.RosettaLuaTable(name);
             // (Only check for the file instance)
             if (this.tables[luaTable.name]) {
                 throw new Error(`A global Lua Table already exists: ${luaTable.name}`);
