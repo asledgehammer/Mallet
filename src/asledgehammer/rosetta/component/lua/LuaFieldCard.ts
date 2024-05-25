@@ -1,5 +1,6 @@
 import { App } from '../../../../app';
 import { generateLuaField, generateLuaValue } from '../../lua/LuaGenerator';
+import { RosettaLuaClass } from '../../lua/RosettaLuaClass';
 import { RosettaLuaField } from '../../lua/RosettaLuaField';
 import { $get, html } from '../../util';
 import { CardOptions } from '../CardComponent';
@@ -109,13 +110,13 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
 
         $get(idBtnDelete).on('click', () => {
             app.askConfirm(() => {
-                const clazz = app.active.selectedCard?.options!.entity!;
+                const clazz = app.active.selectedCard?.options!.entity! as RosettaLuaClass;
                 if (isStatic) {
                     delete clazz.values[entity.name];
                 } else {
                     delete clazz.fields[entity.name];
                 }
-                app.showClass(clazz);
+                app.showLuaClass(clazz);
                 app.sidebar.selectedItemID = undefined;
                 app.sidebar.populateTrees();
             }, `Delete ${isStatic ? 'Value' : 'Field'} ${entity.name}`);

@@ -397,7 +397,7 @@ export class LuaParser {
 
                     const clazz = _this.parse(chunk);
                     if (clazz) {
-                        const card = app.showClass(clazz);
+                        const card = app.showLuaClass(clazz);
                         app.renderCode();
                         app.sidebar.populateTrees();
                         card.update();

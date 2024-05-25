@@ -2122,7 +2122,7 @@ define("src/asledgehammer/rosetta/component/lua/LuaFieldCard", ["require", "expo
                     else {
                         delete clazz.fields[entity.name];
                     }
-                    app.showClass(clazz);
+                    app.showLuaClass(clazz);
                     app.sidebar.selectedItemID = undefined;
                     app.sidebar.populateTrees();
                 }, `Delete ${isStatic ? 'Value' : 'Field'} ${entity.name}`);
@@ -2225,7 +2225,7 @@ define("src/asledgehammer/rosetta/component/lua/LuaFunctionCard", ["require", "e
                     else {
                         delete clazz.methods[entity.name];
                     }
-                    app.showClass(clazz);
+                    app.showLuaClass(clazz);
                     app.sidebar.selectedItemID = undefined;
                     app.sidebar.populateTrees();
                 }, `Delete ${isStatic ? 'Function' : 'Method'} ${entity.name}`);
@@ -2570,10 +2570,10 @@ define("src/asledgehammer/rosetta/java/RosettaJavaField", ["require", "exports",
     }
     exports.RosettaJavaField = RosettaJavaField;
 });
-define("src/asledgehammer/rosetta/java/RosettaJavaNamespace", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaClass"], function (require, exports, Assert, RosettaEntity_13, RosettaJavaClass_1) {
+define("src/asledgehammer/rosetta/java/RosettaJavaClass", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaUtils", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaConstructor", "src/asledgehammer/rosetta/java/RosettaJavaMethodCluster", "src/asledgehammer/rosetta/java/RosettaJavaMethod", "src/asledgehammer/rosetta/java/RosettaJavaField"], function (require, exports, Assert, RosettaUtils_6, RosettaEntity_13, RosettaJavaConstructor_1, RosettaJavaMethodCluster_1, RosettaJavaMethod_1, RosettaJavaField_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.RosettaJavaNamespace = void 0;
+    exports.RosettaJavaClass = exports.RosettaJavaNamespace = void 0;
     /**
      * **RosettaJavaNamespace**
      *
@@ -2591,7 +2591,7 @@ define("src/asledgehammer/rosetta/java/RosettaJavaNamespace", ["require", "expor
                     const rawClazz = raw[clazzName];
                     let clazz = this.classes[clazzName];
                     if (clazz === undefined) {
-                        clazz = new RosettaJavaClass_1.RosettaJavaClass(clazzName, this, rawClazz);
+                        clazz = new RosettaJavaClass(clazzName, this, rawClazz);
                     }
                     else {
                         clazz.parse(rawClazz);
@@ -2607,7 +2607,7 @@ define("src/asledgehammer/rosetta/java/RosettaJavaNamespace", ["require", "expor
                 const rawClazz = raw[clazzName];
                 let clazz = this.classes[clazzName];
                 if (clazz === undefined) {
-                    clazz = new RosettaJavaClass_1.RosettaJavaClass(clazzName, this, rawClazz);
+                    clazz = new RosettaJavaClass(clazzName, this, rawClazz);
                 }
                 else {
                     clazz.parse(rawClazz);
@@ -2637,17 +2637,12 @@ define("src/asledgehammer/rosetta/java/RosettaJavaNamespace", ["require", "expor
         }
     }
     exports.RosettaJavaNamespace = RosettaJavaNamespace;
-});
-define("src/asledgehammer/rosetta/java/RosettaJavaClass", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaUtils", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaConstructor", "src/asledgehammer/rosetta/java/RosettaJavaMethodCluster", "src/asledgehammer/rosetta/java/RosettaJavaMethod", "src/asledgehammer/rosetta/java/RosettaJavaField"], function (require, exports, Assert, RosettaUtils_6, RosettaEntity_14, RosettaJavaConstructor_1, RosettaJavaMethodCluster_1, RosettaJavaMethod_1, RosettaJavaField_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.RosettaJavaClass = void 0;
     /**
      * **RosettaJavaClass**
      *
      * @author Jab
      */
-    class RosettaJavaClass extends RosettaEntity_14.RosettaEntity {
+    class RosettaJavaClass extends RosettaEntity_13.RosettaEntity {
         constructor(name, namespace, raw) {
             super(raw);
             this.fields = {};
@@ -2831,7 +2826,7 @@ define("src/asledgehammer/rosetta/java/RosettaJavaClass", ["require", "exports",
     }
     exports.RosettaJavaClass = RosettaJavaClass;
 });
-define("src/asledgehammer/rosetta/lua/RosettaLuaTableField", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/RosettaUtils"], function (require, exports, Assert, RosettaEntity_15, RosettaUtils_7) {
+define("src/asledgehammer/rosetta/lua/RosettaLuaTableField", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/RosettaUtils"], function (require, exports, Assert, RosettaEntity_14, RosettaUtils_7) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RosettaLuaTableField = void 0;
@@ -2840,7 +2835,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaTableField", ["require", "export
      *
      * @author Jab
      */
-    class RosettaLuaTableField extends RosettaEntity_15.RosettaEntity {
+    class RosettaLuaTableField extends RosettaEntity_14.RosettaEntity {
         constructor(name, raw = {}) {
             super(raw);
             Assert.assertNonEmptyString(name, 'name');
@@ -2879,7 +2874,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaTableField", ["require", "export
     }
     exports.RosettaLuaTableField = RosettaLuaTableField;
 });
-define("src/asledgehammer/rosetta/lua/RosettaLuaTable", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaTableField"], function (require, exports, Assert, RosettaEntity_16, RosettaLuaFunction_2, RosettaLuaTableField_1) {
+define("src/asledgehammer/rosetta/lua/RosettaLuaTable", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaTableField"], function (require, exports, Assert, RosettaEntity_15, RosettaLuaFunction_2, RosettaLuaTableField_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RosettaLuaTable = void 0;
@@ -2888,7 +2883,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaTable", ["require", "exports", "
      *
      * @author Jab
      */
-    class RosettaLuaTable extends RosettaEntity_16.RosettaEntity {
+    class RosettaLuaTable extends RosettaEntity_15.RosettaEntity {
         constructor(name, raw = {}) {
             super(raw);
             this.fields = {};
@@ -3007,7 +3002,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaTable", ["require", "exports", "
     }
     exports.RosettaLuaTable = RosettaLuaTable;
 });
-define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/lua/LuaCard"], function (require, exports, RosettaJavaClass_2, RosettaLuaClass_1, RosettaLuaTable_1, util_8, LuaCard_5) {
+define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/lua/LuaCard"], function (require, exports, RosettaJavaClass_1, RosettaLuaClass_1, RosettaLuaTable_1, util_8, LuaCard_5) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ItemTree = void 0;
@@ -3036,7 +3031,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
             else if (selected instanceof RosettaLuaTable_1.RosettaLuaTable) {
                 this.populateLuaTable(selected);
             }
-            else if (selected instanceof RosettaJavaClass_2.RosettaJavaClass) {
+            else if (selected instanceof RosettaJavaClass_1.RosettaJavaClass) {
                 this.populateJavaClass(selected);
             }
         }
@@ -3148,7 +3143,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                 // Prevent wasteful selection code executions here.
                 if (_this.app.selected === 'constructor')
                     return;
-                _this.app.showConstructor(entity.conztructor);
+                _this.app.showLuaConstructor(entity.conztructor);
                 // Let the editor know we last selected the constructor.
                 _this.app.selected = 'constructor';
             });
@@ -3160,7 +3155,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                 const field = entity.fields[fieldName];
                 if (!field)
                     return;
-                _this.app.showField(field);
+                _this.app.showLuaField(field);
                 // Let the editor know we last selected the field.
                 _this.app.selected = fieldName;
             });
@@ -3172,7 +3167,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                 const value = entity.values[valueName];
                 if (!value)
                     return;
-                _this.app.showValue(value);
+                _this.app.showLuaValue(value);
                 // Let the editor know we last selected the value.
                 _this.app.selected = valueName;
             });
@@ -3184,7 +3179,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                 const method = entity.methods[methodName];
                 if (!method)
                     return;
-                _this.app.showMethod(method);
+                _this.app.showLuaMethod(method);
                 // Let the editor know we last selected the method.
                 _this.app.selected = methodName;
             });
@@ -3196,7 +3191,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                 const func = entity.functions[functionName];
                 if (!func)
                     return;
-                _this.app.showFunction(func);
+                _this.app.showLuaFunction(func);
                 // Let the editor know we last selected the function.
                 _this.app.selected = functionName;
             });
@@ -3304,7 +3299,18 @@ define("src/asledgehammer/rosetta/component/ObjectTree", ["require", "exports", 
                 // Prevent wasteful selection code executions here.
                 if (_this.app.selected === name)
                     return;
-                _this.app.showClass(_this.app.active.luaClasses[name]);
+                _this.app.showLuaClass(_this.app.active.luaClasses[name]);
+                // Let the editor know we last selected the class.
+                _this.app.selected = name;
+                // Update the class properties tree.
+                _this.sidebar.itemTree.populate();
+            });
+            $('.object-tree-java-class').on('click', function () {
+                const name = this.id.substring('object-java-class-'.length);
+                // Prevent wasteful selection code executions here.
+                if (_this.app.selected === name)
+                    return;
+                _this.app.showJavaClass(_this.app.active.javaClasses[name]);
                 // Let the editor know we last selected the class.
                 _this.app.selected = name;
                 // Update the class properties tree.
@@ -6970,7 +6976,7 @@ define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", 
                         ////////////////////
                         const clazz = _this.parse(chunk);
                         if (clazz) {
-                            const card = app.showClass(clazz);
+                            const card = app.showLuaClass(clazz);
                             app.renderCode();
                             app.sidebar.populateTrees();
                             card.update();
@@ -6990,7 +6996,476 @@ define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", 
     }
     exports.LuaParser = LuaParser;
 });
-define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/component/lua/LuaClassCard", "src/asledgehammer/rosetta/component/lua/LuaConstructorCard", "src/asledgehammer/rosetta/component/lua/LuaFieldCard", "src/asledgehammer/rosetta/component/lua/LuaFunctionCard", "src/asledgehammer/rosetta/component/Sidebar", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/lua/wizard/LuaParser", "src/asledgehammer/rosetta/java/RosettaJavaNamespace"], function (require, exports, hljs, LuaClassCard_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, Sidebar_1, LuaGenerator_5, RosettaLuaClass_3, RosettaLuaConstructor_3, util_11, LuaParser_1, RosettaJavaNamespace_1) {
+define("src/asledgehammer/rosetta/java/JavaGenerator", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.generateJavaClass = void 0;
+    function generateJavaClass(clazz) {
+        // TODO: Implement.
+        return '';
+    }
+    exports.generateJavaClass = generateJavaClass;
+});
+define("src/asledgehammer/rosetta/component/java/JavaCard", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/CardComponent", "src/asledgehammer/Delta"], function (require, exports, hljs, util_11, CardComponent_2, Delta_2) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.JavaCard = void 0;
+    class JavaCard extends CardComponent_2.CardComponent {
+        constructor(app, options) {
+            super(options);
+            this.app = app;
+            this.idPreview = `${this.id}-preview`;
+            this.idPreviewCode = `${this.id}-preview-code`;
+            this.idBtnPreviewCopy = `${this.id}-preview-copy-btn`;
+        }
+        listenEdit(entity, idBtnEdit, mode, title, nameSelected = undefined) {
+            (0, util_11.$get)(idBtnEdit).on('click', () => {
+                const { modalName, $btnName, $titleName, $inputName } = this.app;
+                $titleName.html(title);
+                if (mode === 'edit_class' || mode === 'edit_field' || mode === 'edit_function' || mode === 'edit_method' || mode === 'edit_value') {
+                    $btnName.html('Edit');
+                    $btnName.removeClass('btn-success');
+                    $btnName.addClass('btn-primary');
+                }
+                else {
+                    $btnName.html('Create');
+                    $btnName.addClass('btn-success');
+                    $btnName.removeClass('btn-primary');
+                }
+                $inputName.val(entity.name);
+                this.app.nameMode = mode;
+                if (!nameSelected)
+                    nameSelected = entity.name;
+                this.app.nameSelected = nameSelected;
+                modalName.show();
+            });
+        }
+        renderEdit(idBtnEdit) {
+            return (0, util_11.html) `
+            <!-- Edit Button -->
+            <div style="position: absolute; padding: 0; right: 0; top: 0">
+                <button id="${idBtnEdit}" class="btn btn-sm responsive-btn float-end" style="position: relative; top: 5px; right: 5px;" title="Edit Name">
+                    <div class="btn-pane" style="width: 30px; height: 30px;">
+                        <i class="fa-solid fa-pen"></i>
+                    </div>
+                </button>
+            </div>
+        `;
+        }
+        listenNotes(entity, idNotes) {
+            (0, Delta_2.createDeltaEditor)(idNotes, entity.notes, (markdown) => {
+                entity.notes = markdown;
+                this.update();
+                this.app.renderCode();
+            });
+        }
+        renderNotes(idNotes) {
+            return (0, util_11.html) `
+            <div class="mb-3">
+                <label for="${idNotes}" class="form-label mb-2">Description</label>
+                <div id="${idNotes}" style="background-color: #222;"></div>
+            </div>
+        `;
+        }
+        listenDefaultValue(entity, idDefaultValue) {
+            const $defaultValue = (0, util_11.$get)(idDefaultValue);
+            $defaultValue.on('input', () => {
+                entity.defaultValue = $defaultValue.val();
+                this.update();
+                this.app.renderCode();
+            });
+        }
+        renderDefaultValue(defaultValue, idDefaultValue) {
+            if (!defaultValue)
+                defaultValue = '';
+            return (0, util_11.html) `
+            <div class="mb-3">
+                <label for="${idDefaultValue}" class="form-label mb-2">Default Value</label>
+                <textarea id="${idDefaultValue}" class="form-control responsive-input mt-1" spellcheck="false">${defaultValue}</textarea>
+            </div>
+        `;
+        }
+        listenParameters(entity, type) {
+            const { parameters } = entity;
+            for (const param of parameters) {
+                const idParamNotes = `${entity.name}-parameter-${param.name}-notes`;
+                const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
+                const idBtnDelete = `${entity.name}-parameter-${param.name}-delete`;
+                (0, Delta_2.createDeltaEditor)(idParamNotes, param.notes, (markdown) => {
+                    param.notes = markdown;
+                    this.update();
+                    this.app.renderCode();
+                });
+                (0, util_11.$get)(idBtnDelete).on('click', () => {
+                    this.app.askConfirm(() => {
+                        entity.parameters.splice(entity.parameters.indexOf(param), 1);
+                        this.update();
+                        // Implicit check for refreshability for parameters.
+                        if (this.refreshParameters)
+                            this.refreshParameters();
+                    }, `Delete Parameter ${param.name}?`);
+                });
+                this.listenEdit({ name: param.name }, idBtnEdit, 'edit_parameter', 'Edit Parameter Name', `${entity.name}-${param.name}`);
+            }
+            const idBtnAdd = `btn-${entity.name}-parameter-add`;
+            (0, util_11.$get)(idBtnAdd).on('click', () => {
+                const { modalName, $inputName, $titleName } = this.app;
+                this.app.nameMode = 'new_parameter';
+                this.app.nameSelected = `${type}-${entity.name}`;
+                $titleName.html('Add Parameter');
+                $inputName.val('');
+                modalName.show();
+            });
+        }
+        renderParameters(entity, show = false) {
+            const { parameters } = entity;
+            const idAccordion = `${entity.name}-parameters-accordion`;
+            let htmlParams = '';
+            for (const param of parameters) {
+                const idParamType = `${entity.name}-parameter-${param.name}-type`;
+                const idParamNotes = `${entity.name}-parameter-${param.name}-notes`;
+                const idCollapse = `${entity.name}-parameter-${param.name}-collapse`;
+                const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
+                const idBtnDelete = `${entity.name}-parameter-${param.name}-delete`;
+                htmlParams += (0, util_11.html) `
+                <div class="accordion-item rounded-0">
+                    <div class="accordion-header" style="position: relative" id="headingTwo">
+                        <div class="p-2" style="position: relative;">
+                            <button class="border-0 accordion-button collapsed rounded-0 p-0 text-white" style="background-color: transparent !important" type="button" data-bs-toggle="collapse" data-bs-target="#${idCollapse}" aria-expanded="false" aria-controls="${idCollapse}">
+                                <div class="col-auto responsive-badge border border-1 border-light-half desaturate shadow px-2 me-2" style="display: inline;"><strong>${param.type}</strong></div>
+                                <h6 class="font-monospace mb-1">${param.name}</h6>
+                            </button>
+                        </div>
+                        <div style="position: absolute; height: 32px; top: 5px; right: 2rem; z-index: 4;">
+                            <!-- Delete Button -->
+                            <button id="${idBtnDelete}" class="btn btn-sm responsive-btn float-end ms-1" style="z-index: 4">
+                                <div class="btn-pane">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </div>
+                            </button>
+                            <!-- Edit Button -->
+                            <button id="${idBtnEdit}" class="btn btn-sm responsive-btn float-end" style="z-index: 4">
+                                <div class="btn-pane"> 
+                                    <i class="fa-solid fa-pen"></i>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="${idCollapse}" class="accordion-collapse collapse rounded-0" aria-labelledby="headingTwo" data-bs-parent="#${idAccordion}">
+                        <div class="accordion-body bg-dark" style="position: relative;">
+                            <!-- Type -->
+                            <div class="mb-3">
+                                <label for="${idParamType}" class="form-label">Type</label>
+                                <!-- TODO: Might need to style. -->
+                                <select disabled>
+                                    <option selected>${param.type.basic}</option>
+                                </select>
+                            </div>
+                            <!-- Notes -->
+                            <div class="mb-3">
+                                <label for="${idParamNotes}" class="form-label">Description</label>
+                                <div id="${idParamNotes}"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            }
+            const idBtnAdd = `btn-${entity.name}-parameter-add`;
+            return (0, util_11.html) `
+            <div class="card responsive-subcard mt-3">
+                <div class="card-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idAccordion}" aria-expanded="true" aria-controls="${idAccordion}">
+                        <strong>Parameters</strong>
+                    </button>
+                    <div style="position: absolute; height: 32px; top: 5px; right: 5px; z-index: 4;">
+                        <!-- Add Button -->
+                        <button id="${idBtnAdd}" class="btn btn-sm responsive-btn float-end ms-1">
+                            <div class="btn-pane">
+                               <i class="fa-solid fa-plus"></i>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                <div id="${idAccordion}" class="card-body mb-0 collapse${show ? ' show' : ''}">
+                    <div class="accordion rounded-0">
+                        ${htmlParams}
+                    </div>
+                    <!-- <div class="mt-3" style="position: relative; width: 100%; height: 32px;"></div> -->
+                </div>
+            </div>
+        `;
+        }
+        update() {
+            const { idPreviewCode } = this;
+            const $pre = (0, util_11.$get)(idPreviewCode);
+            $pre.empty();
+            let text = this.onRenderPreview();
+            if (text.endsWith('\n'))
+                text = text.substring(0, text.length - 1);
+            // @ts-ignore
+            const highlightedCode = hljs.default.highlightAuto(text, ['java']).value;
+            $pre.append(highlightedCode);
+        }
+        listenPreview() {
+            const { idBtnPreviewCopy } = this;
+            // Copy the code.
+            (0, util_11.$get)(idBtnPreviewCopy).on('click', (event) => {
+                event.stopPropagation();
+                navigator.clipboard.writeText(this.onRenderPreview());
+            });
+        }
+        renderPreview(show) {
+            const { idPreview, idPreviewCode, idBtnPreviewCopy } = this;
+            return (0, util_11.html) `
+            <div class="card responsive-subcard mt-3">
+                <div class="card-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idPreview}" aria-expanded="true" aria-controls="${idPreview}">
+                        <strong>Preview</strong>
+                    </button>
+
+                    <!-- Copy Button -->
+                    <button id="${idBtnPreviewCopy}" class="btn btn-sm responsive-btn" style="z-index: 4; position: absolute; top: 5px; right: 5px;" title="Copy Code">
+                        <div class="btn-pane"> 
+                            <i class="fa-solid fa-copy"></i>
+                        </div>
+                    </button>
+                </div>
+                <div id="${idPreview}" class="card-body mb-0 p-0 collapse${show ? ' show' : ''}" style="position: relative; max-height: 512px">
+                    <pre id="${idPreviewCode}" class="w-100 h-100 p-4 m-0" style="background-color: #111; overflow: scroll; max-height: 512px;"></pre>
+                </div>
+            </div>
+        `;
+        }
+        listenReturns(entity, idReturnType, idReturnNotes, idSelect) {
+            (0, Delta_2.createDeltaEditor)(idReturnNotes, entity.returns.notes, (markdown) => {
+                entity.returns.notes = markdown;
+                this.update();
+                this.app.renderCode();
+            });
+        }
+        renderReturns(entity, idReturnType, idReturnNotes, show = false) {
+            const { returns } = entity;
+            let { notes } = returns;
+            if (!notes)
+                notes = '';
+            const idCard = `${entity.name}-returns-card`;
+            return (0, util_11.html) `
+            <div class="card responsive-subcard mt-3">
+                <div class="card-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idCard}" aria-expanded="true" aria-controls="${idCard}">
+                        <strong>Returns</strong>
+                    </button>
+                </div>
+                <div id="${idCard}" class="card-body mb-0 collapse${show ? ' show' : ''}">
+                    <!-- Return Type -->
+                    <div class="mb-3">
+                        <label for="${idReturnType}" class="form-label">Type</label>
+                        <!-- TODO: Might need to style. -->
+                        <select disabled>
+                            <option selected>${returns.type.basic}</option>
+                        </select>
+                    </div>
+
+                    <!-- Return Notes -->
+                    <div>
+                        <label for="${idReturnNotes}" class="form-label">Description</label>
+                        <div id="${idReturnNotes}" style="background-color: #222 !important;"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+        }
+        listenType(entity, idType, idSelect) {
+            const $select = (0, util_11.$get)(idType);
+            const $customInput = (0, util_11.$get)(`${idSelect}-custom-input`);
+            $select.on('change', (value) => {
+                entity.type = value.target.value;
+                if (entity.type === 'custom') {
+                    $customInput.show();
+                    // We default to 'any' for an undefined custom value.
+                    entity.type = 'any';
+                }
+                else {
+                    $customInput.hide();
+                    $customInput.val(''); // Clear custom field.
+                }
+                this.update();
+                this.app.renderCode();
+            });
+            $customInput.on('input', () => {
+                const val = $customInput.val();
+                if (val === '') {
+                    entity.type = 'any';
+                }
+                else {
+                    entity.type = val;
+                }
+                this.update();
+                this.app.renderCode();
+            });
+            $customInput.on('focusout', () => {
+                const value = $customInput.val().trim();
+                switch (value.toLowerCase()) {
+                    // Here the reference stays valid.
+                    case 'custom':
+                        break;
+                    // Here the reference converts to its select option.
+                    case 'void':
+                    case 'any':
+                    case 'nil':
+                    case 'boolean':
+                    case 'number':
+                    case 'string':
+                        entity.type = value;
+                        $select.val(value);
+                        $customInput.hide();
+                        $customInput.val(''); // Clear custom field.
+                        this.update();
+                        this.app.renderCode();
+                        break;
+                }
+            });
+        }
+        renderType(name, type, idReturnType) {
+            const idTypeCard = `${name}-type-card`;
+            return (0, util_11.html) `
+            <div class="card responsive-subcard">
+                <div class="card-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idTypeCard}" aria-expanded="true" aria-controls="${idTypeCard}">
+                        Type
+                    </button>   
+                </div>
+                <div id="${idTypeCard}" class="card-body collapse show">
+                    <div>
+                        <label for="${idReturnType}" class="form-label">Type</label>
+                        ${JavaCard.renderTypeSelect(idReturnType, 'The return type.', type, false)}
+                    </div>
+                </div>
+            </div>
+        `;
+        }
+        static renderTypeSelect(idSelect, label = '', value = 'any', margin) {
+            // Determine if custom field should show.
+            let style = '';
+            let customInputValue = value;
+            value = value.trim();
+            switch (value.toLowerCase()) {
+                // Here the reference stays valid.
+                case 'custom':
+                    style = '';
+                    customInputValue = value;
+                    break;
+                // Erase custom definition here.
+                case 'void':
+                case 'any':
+                case 'nil':
+                case 'boolean':
+                case 'number':
+                case 'string':
+                    style = 'display: none';
+                    customInputValue = '';
+                    break;
+                // Everything else gets shoved into the custom value.
+                default:
+                    customInputValue = value;
+                    value = 'custom';
+                    style = '';
+            }
+            return (0, util_11.html) `
+            <div class="${margin ? 'mb-2' : ''}">
+
+                <!-- Type Selection List -->
+                <select id="${idSelect}" class="form-select responsive-select" aria-label="${label}">
+                    <option value="any"  ${value === 'any' ? 'selected' : ''}><strong>Any</strong></option>
+                    <option value="void"  ${value === 'void' ? 'selected' : ''}><strong>Void</strong></option>
+                    <option value="nil"  ${value === 'nil' ? 'selected' : ''}><strong>Nil</strong></option>
+                    <option value="boolean"  ${value === 'boolean' ? 'selected' : ''}><strong>Boolean</strong></option>
+                    <option value="number" ${value === 'number' ? 'selected' : ''}><strong>Number</strong></option>
+                    <option value="string"  ${value === 'string' ? 'selected' : ''}><strong>String</strong></option>
+                    <option value="custom" ${value === 'custom' ? 'selected' : ''}><strong>Custom</strong></option>
+                </select>
+                
+                <!-- Manual Input for Custom Type -->
+                <input id="${idSelect}-custom-input" class="form-control responsive-input mt-2" type="text" style="${style}" value="${customInputValue}" />
+            
+            </div>
+        `;
+        }
+        static getTypeIcon(type) {
+            switch (type.toLocaleLowerCase().trim()) {
+                case 'class': return 'fa-solid fa-box-archive text-light mx-2 desaturate';
+                case 'constructor': return 'fa-solid fa-copyright text-light mx-2 desaturate';
+                case 'nil': return 'fa-solid fa-ban fa-danger mx-2 desaturate';
+                case 'void': return 'fa-solid fa-xmark mx-2 desaturate';
+                case 'number': return 'fa-solid fa-hashtag text-warning mx-2 desaturate';
+                case 'string': return 'fa-solid fa-quote-left text-light mx-2 desaturate';
+                case 'boolean': return 'fa-solid fa-flag text-info mx-2 desaturate';
+                // Uknown or other.
+                case 'any': return 'fa-solid fa-question text-danger mx-2 desaturate';
+                // Objects
+                default: return 'fa-solid fa-box text-success mx-2 desaturate';
+            }
+        }
+    }
+    exports.JavaCard = JavaCard;
+});
+define("src/asledgehammer/rosetta/component/java/JavaClassCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/java/JavaCard"], function (require, exports, JavaGenerator_1, util_12, JavaCard_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.JavaClassCard = void 0;
+    class JavaClassCard extends JavaCard_1.JavaCard {
+        onRenderPreview() {
+            return (0, JavaGenerator_1.generateJavaClass)(this.options.entity);
+        }
+        constructor(app, options) {
+            super(app, options);
+            this.idAuthors = `${this.id}-authors`;
+            this.idNotes = `${this.id}-description`;
+            this.idPreview = `${this.id}-preview`;
+            this.idInputExtends = `${this.id}-input-extends`;
+        }
+        onHeaderHTML() {
+            const { entity } = this.options;
+            return (0, util_12.html) ` 
+            <div class="row">
+                <!-- Visual Category Badge -->
+                <div class="col-auto ps-2 pe-2">
+                    <div class="text-bg-success px-2 border border-1 border-light-half desaturate shadow"><strong>Java Class</strong></div>
+                </div>
+                <div class="col-auto p-0">
+                    <h5 class="card-text"><strong>${entity.name}</strong></h5> 
+                </div>
+            </div>
+        `;
+        }
+        onBodyHTML() {
+            const { idInputExtends } = this;
+            const entity = this.options.entity;
+            const extendz = entity.extendz ? entity.extendz : '';
+            return (0, util_12.html) `
+            <div>
+                ${this.renderNotes(this.idNotes)}
+                <!-- Extends SuperClass -->
+                <div class="mb-3" title="The super-class that the Java class extends.">
+                    <label class="form-label" for="${idInputExtends}">Extends ${this.options.entity.extendz}</label>
+                </div>
+                <hr>
+                ${this.renderPreview(false)}
+            </div>
+        `;
+        }
+        listen() {
+            super.listen();
+            const { idNotes } = this;
+            const { entity } = this.options;
+            this.listenNotes(entity, idNotes);
+            this.listenPreview();
+        }
+    }
+    exports.JavaClassCard = JavaClassCard;
+});
+define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/component/lua/LuaClassCard", "src/asledgehammer/rosetta/component/lua/LuaConstructorCard", "src/asledgehammer/rosetta/component/lua/LuaFieldCard", "src/asledgehammer/rosetta/component/lua/LuaFunctionCard", "src/asledgehammer/rosetta/component/Sidebar", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/lua/wizard/LuaParser", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/component/java/JavaClassCard", "src/asledgehammer/rosetta/java/JavaGenerator"], function (require, exports, hljs, LuaClassCard_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, Sidebar_1, LuaGenerator_5, RosettaLuaClass_3, RosettaLuaConstructor_3, util_13, LuaParser_1, RosettaJavaClass_2, JavaClassCard_1, JavaGenerator_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.App = exports.Toast = exports.Active = void 0;
@@ -7000,6 +7475,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             this.luaTables = {};
             this.javaClasses = {};
             this.selected = undefined;
+            this.selectedCard = undefined;
             this.app = app;
         }
         reset() {
@@ -7031,7 +7507,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
         }
         alert(text, color = undefined) {
             const { idSimpleBody, idToastSimple } = this;
-            const $toast = (0, util_11.$get)(idToastSimple);
+            const $toast = (0, util_13.$get)(idToastSimple);
             // Set the background color.
             $toast.removeClass('bg-success');
             $toast.removeClass('bg-danger');
@@ -7059,14 +7535,14 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             this.$screenContent = $('#screen-content-end-container');
             // @ts-ignore This modal is for new items and editing their names.
             this.modalName = new bootstrap.Modal('#modal-name', {});
-            this.$titleName = (0, util_11.$get)('title-name');
-            this.$inputName = (0, util_11.$get)('input-name');
-            this.$btnName = (0, util_11.$get)('btn-name-create');
+            this.$titleName = (0, util_13.$get)('title-name');
+            this.$inputName = (0, util_13.$get)('input-name');
+            this.$btnName = (0, util_13.$get)('btn-name-create');
             // @ts-ignore This modal is for confirming actions.
             this.modalConfirm = new bootstrap.Modal('#modal-confirm', {});
-            this.$titleConfirm = (0, util_11.$get)('title-confirm');
-            this.$bodyConfirm = (0, util_11.$get)('body-confirm');
-            this.$btnConfirm = (0, util_11.$get)('btn-confirm');
+            this.$titleConfirm = (0, util_13.$get)('title-confirm');
+            this.$bodyConfirm = (0, util_13.$get)('body-confirm');
+            this.$btnConfirm = (0, util_13.$get)('btn-confirm');
             this.confirmSuccess = undefined;
             this.nameMode = null;
         }
@@ -7083,7 +7559,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             }
             if (json.namespaces) {
                 for (const name of Object.keys(json.namespaces)) {
-                    const namespace = new RosettaJavaNamespace_1.RosettaJavaNamespace(name, json.namespaces[name]);
+                    const namespace = new RosettaJavaClass_2.RosettaJavaNamespace(name, json.namespaces[name]);
                     for (const className of Object.keys(namespace.classes)) {
                         this.active.javaClasses[className] = namespace.classes[className];
                     }
@@ -7132,7 +7608,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                 namespaces
             };
         }
-        showClass(entity) {
+        showLuaClass(entity) {
             this.$screenContent.empty();
             this.active.selectedCard = new LuaClassCard_1.LuaClassCard(this, { entity });
             this.$screenContent.append(this.active.selectedCard.render());
@@ -7141,11 +7617,12 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             this.renderCode();
             return this.active.selectedCard;
         }
-        showConstructor(entity) {
-            var _a;
-            const clazz = (_a = this.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
+        showLuaConstructor(entity) {
+            const { selected } = this.active;
+            if (!(selected instanceof RosettaLuaClass_3.RosettaLuaClass))
+                return null;
             if (!entity)
-                entity = new RosettaLuaConstructor_3.RosettaLuaConstructor(clazz);
+                entity = new RosettaLuaConstructor_3.RosettaLuaConstructor(selected);
             this.$screenContent.empty();
             const card = new LuaConstructorCard_1.LuaConstructorCard(this, { entity });
             this.$screenContent.append(card.render());
@@ -7154,7 +7631,10 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             this.renderCode();
             return card;
         }
-        showField(entity) {
+        showLuaField(entity) {
+            const { selected } = this.active;
+            if (!(selected instanceof RosettaLuaClass_3.RosettaLuaClass))
+                return null;
             this.$screenContent.empty();
             const card = new LuaFieldCard_1.LuaFieldCard(this, { entity, isStatic: false });
             this.$screenContent.append(card.render());
@@ -7162,7 +7642,10 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             card.update();
             return card;
         }
-        showValue(entity) {
+        showLuaValue(entity) {
+            const { selected } = this.active;
+            if (!(selected instanceof RosettaLuaClass_3.RosettaLuaClass))
+                return null;
             this.$screenContent.empty();
             const card = new LuaFieldCard_1.LuaFieldCard(this, { entity, isStatic: true });
             this.$screenContent.append(card.render());
@@ -7170,7 +7653,10 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             card.update();
             return card;
         }
-        showMethod(entity) {
+        showLuaMethod(entity) {
+            const { selected } = this.active;
+            if (!(selected instanceof RosettaLuaClass_3.RosettaLuaClass))
+                return null;
             this.$screenContent.empty();
             const card = new LuaFunctionCard_1.LuaFunctionCard(this, { entity, isStatic: false });
             this.$screenContent.append(card.render());
@@ -7178,7 +7664,10 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             card.update();
             return card;
         }
-        showFunction(entity) {
+        showLuaFunction(entity) {
+            const { selected } = this.active;
+            if (!(selected instanceof RosettaLuaClass_3.RosettaLuaClass))
+                return null;
             this.$screenContent.empty();
             const card = new LuaFunctionCard_1.LuaFunctionCard(this, { entity, isStatic: true });
             this.$screenContent.append(card.render());
@@ -7186,12 +7675,28 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             card.update();
             return card;
         }
+        showJavaClass(entity) {
+            this.$screenContent.empty();
+            this.active.selectedCard = new JavaClassCard_1.JavaClassCard(this, { entity });
+            this.$screenContent.append(this.active.selectedCard.render());
+            this.active.selectedCard.listen();
+            this.active.selectedCard.update();
+            this.renderCode();
+            return this.active.selectedCard;
+        }
         renderCode() {
-            const $renderPane = (0, util_11.$get)('code-preview');
+            const $renderPane = (0, util_13.$get)('code-preview');
             $renderPane.empty();
             if (!this.active.selectedCard)
                 return;
-            const highlightedCode = hljs.default.highlightAuto((0, LuaGenerator_5.generateLuaClass)(this.active.selectedCard.options.entity), ['lua']).value;
+            const { selected } = this.active;
+            let highlightedCode = '';
+            if (selected instanceof RosettaLuaClass_3.RosettaLuaClass) {
+                highlightedCode = hljs.default.highlightAuto((0, LuaGenerator_5.generateLuaClass)(selected), ['lua']).value;
+            }
+            else if (selected instanceof RosettaJavaClass_2.RosettaJavaClass) {
+                highlightedCode = hljs.default.highlightAuto((0, JavaGenerator_2.generateJavaClass)(selected), ['java']).value;
+            }
             $renderPane.html(highlightedCode);
         }
         createSidebar() {
@@ -7209,18 +7714,18 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                 }
             });
             this.$inputName.on('input', () => {
-                setTimeout(() => this.$inputName.val((0, util_11.validateLuaVariableName)(this.$inputName.val())), 1);
+                setTimeout(() => this.$inputName.val((0, util_13.validateLuaVariableName)(this.$inputName.val())), 1);
             });
             this.$btnName.on('click', () => {
                 var _a;
                 const clazz = (_a = this.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
-                const name = (0, util_11.validateLuaVariableName)(this.$inputName.val()).trim();
+                const name = (0, util_13.validateLuaVariableName)(this.$inputName.val()).trim();
                 const nameOld = this.nameSelected;
                 switch (this.nameMode) {
                     case 'new_class': {
                         try {
-                            const entity = new RosettaLuaClass_3.RosettaLuaClass((0, util_11.validateLuaVariableName)(this.$inputName.val()).trim());
-                            this.showClass(entity);
+                            const entity = new RosettaLuaClass_3.RosettaLuaClass((0, util_13.validateLuaVariableName)(this.$inputName.val()).trim());
+                            this.showLuaClass(entity);
                             this.sidebar.populateTrees();
                             this.toast.alert('Created Lua Class.', 'success');
                         }
@@ -7231,231 +7736,265 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                         break;
                     }
                     case 'edit_class': {
-                        try {
-                            clazz.name = name;
-                            this.showClass(clazz);
-                            this.toast.alert('Edited Lua Class.');
+                        if (clazz instanceof RosettaLuaClass_3.RosettaLuaClass) {
+                            try {
+                                clazz.name = name;
+                                this.showLuaClass(clazz);
+                                this.toast.alert('Edited Lua Class.');
+                            }
+                            catch (e) {
+                                this.toast.alert(`Failed to edit Lua Class.`, 'error');
+                                console.error(e);
+                            }
                         }
-                        catch (e) {
-                            this.toast.alert(`Failed to edit Lua Class.`, 'error');
-                            console.error(e);
+                        else if (clazz instanceof RosettaJavaClass_2.RosettaJavaClass) {
+                            throw new Error('Cannot modify name of Java class. (Read-Only)');
                         }
                         break;
                     }
                     case 'new_field': {
-                        try {
-                            const field = clazz.createField(name);
-                            this.showField(field);
-                            this.sidebar.populateTrees();
-                            this.toast.alert('Created Lua Field.', 'success');
+                        if (clazz instanceof RosettaLuaClass_3.RosettaLuaClass) {
+                            try {
+                                const field = clazz.createField(name);
+                                this.showLuaField(field);
+                                this.sidebar.populateTrees();
+                                this.toast.alert('Created Lua Field.', 'success');
+                            }
+                            catch (e) {
+                                this.toast.alert(`Failed to create Lua Field.`, 'error');
+                                console.error(e);
+                            }
                         }
-                        catch (e) {
-                            this.toast.alert(`Failed to create Lua Field.`, 'error');
-                            console.error(e);
+                        else if (clazz instanceof RosettaJavaClass_2.RosettaJavaClass) {
+                            throw new Error('Cannot add field in Java class. (Not implemented)');
                         }
                         break;
                     }
                     case 'edit_field': {
-                        try {
-                            const field = clazz.fields[nameOld];
-                            field.name = name;
-                            clazz.fields[name] = field;
-                            delete clazz.fields[nameOld];
-                            this.showField(field);
-                            this.sidebar.populateTrees();
-                            this.toast.alert('Edited Lua Field.');
+                        if (clazz instanceof RosettaLuaClass_3.RosettaLuaClass) {
+                            try {
+                                const field = clazz.fields[nameOld];
+                                field.name = name;
+                                clazz.fields[name] = field;
+                                delete clazz.fields[nameOld];
+                                this.showLuaField(field);
+                                this.sidebar.populateTrees();
+                                this.toast.alert('Edited Lua Field.');
+                            }
+                            catch (e) {
+                                this.toast.alert(`Failed to edit Lua Field.`, 'error');
+                                console.error(e);
+                            }
                         }
-                        catch (e) {
-                            this.toast.alert(`Failed to edit Lua Field.`, 'error');
-                            console.error(e);
+                        else if (clazz instanceof RosettaJavaClass_2.RosettaJavaClass) {
+                            throw new Error('Cannot modify name of Java field. (Read-Only)');
                         }
                         break;
                     }
                     case 'new_value': {
-                        try {
-                            const value = clazz.createValue(name);
-                            this.showValue(value);
-                            this.sidebar.populateTrees();
-                            this.toast.alert('Created Lua Value.', 'success');
+                        if (clazz instanceof RosettaLuaClass_3.RosettaLuaClass) {
+                            try {
+                                const value = clazz.createValue(name);
+                                this.showLuaValue(value);
+                                this.sidebar.populateTrees();
+                                this.toast.alert('Created Lua Value.', 'success');
+                            }
+                            catch (e) {
+                                this.toast.alert(`Failed to create Lua Value.`, 'error');
+                                console.error(e);
+                            }
                         }
-                        catch (e) {
-                            this.toast.alert(`Failed to create Lua Value.`, 'error');
-                            console.error(e);
+                        else if (clazz instanceof RosettaJavaClass_2.RosettaJavaClass) {
+                            throw new Error('Values are not supported in Java.');
                         }
                         break;
                     }
                     case 'edit_value': {
-                        try {
-                            const value = clazz.values[nameOld];
-                            value.name = name;
-                            clazz.values[name] = value;
-                            delete clazz.values[nameOld];
-                            this.showValue(value);
-                            this.sidebar.populateTrees();
-                            this.toast.alert('Edited Lua value.');
-                        }
-                        catch (e) {
-                            this.toast.alert(`Failed to edit Lua Value.`, 'error');
-                            console.error(e);
+                        if (clazz instanceof RosettaLuaClass_3.RosettaLuaClass) {
+                            try {
+                                const value = clazz.values[nameOld];
+                                value.name = name;
+                                clazz.values[name] = value;
+                                delete clazz.values[nameOld];
+                                this.showLuaValue(value);
+                                this.sidebar.populateTrees();
+                                this.toast.alert('Edited Lua value.');
+                            }
+                            catch (e) {
+                                this.toast.alert(`Failed to edit Lua Value.`, 'error');
+                                console.error(e);
+                            }
                         }
                         break;
                     }
                     case 'new_function': {
-                        try {
-                            const func = clazz.createFunction(name);
-                            this.showFunction(func);
-                            this.sidebar.populateTrees();
-                            this.toast.alert('Created Lua Function.', 'success');
-                        }
-                        catch (e) {
-                            this.toast.alert(`Failed to create Lua Function.`, 'error');
-                            console.error(e);
+                        if (clazz instanceof RosettaLuaClass_3.RosettaLuaClass) {
+                            try {
+                                const func = clazz.createFunction(name);
+                                this.showLuaFunction(func);
+                                this.sidebar.populateTrees();
+                                this.toast.alert('Created Lua Function.', 'success');
+                            }
+                            catch (e) {
+                                this.toast.alert(`Failed to create Lua Function.`, 'error');
+                                console.error(e);
+                            }
                         }
                         break;
                     }
                     case 'edit_function': {
-                        try {
-                            const func = clazz.functions[nameOld];
-                            func.name = name;
-                            clazz.functions[name] = func;
-                            delete clazz.functions[nameOld];
-                            this.showFunction(func);
-                            this.sidebar.populateTrees();
-                            this.toast.alert('Edited Lua Function.');
-                        }
-                        catch (e) {
-                            this.toast.alert(`Failed to edit Lua Function.`, 'error');
-                            console.error(e);
+                        if (clazz instanceof RosettaLuaClass_3.RosettaLuaClass) {
+                            try {
+                                const func = clazz.functions[nameOld];
+                                func.name = name;
+                                clazz.functions[name] = func;
+                                delete clazz.functions[nameOld];
+                                this.showLuaFunction(func);
+                                this.sidebar.populateTrees();
+                                this.toast.alert('Edited Lua Function.');
+                            }
+                            catch (e) {
+                                this.toast.alert(`Failed to edit Lua Function.`, 'error');
+                                console.error(e);
+                            }
                         }
                         break;
                     }
                     case 'new_method': {
-                        try {
-                            const method = clazz.createMethod(name);
-                            this.showMethod(method);
-                            this.sidebar.populateTrees();
-                            this.toast.alert('Created Lua Method.', 'success');
-                        }
-                        catch (e) {
-                            this.toast.alert(`Failed to create Lua Method.`, 'error');
-                            console.error(e);
+                        if (clazz instanceof RosettaLuaClass_3.RosettaLuaClass) {
+                            try {
+                                const method = clazz.createMethod(name);
+                                this.showLuaMethod(method);
+                                this.sidebar.populateTrees();
+                                this.toast.alert('Created Lua Method.', 'success');
+                            }
+                            catch (e) {
+                                this.toast.alert(`Failed to create Lua Method.`, 'error');
+                                console.error(e);
+                            }
                         }
                         break;
                     }
                     case 'edit_method': {
-                        try {
-                            const method = clazz.methods[nameOld];
-                            method.name = name;
-                            clazz.methods[name] = method;
-                            delete clazz.methods[nameOld];
-                            this.showMethod(method);
-                            this.sidebar.populateTrees();
-                            this.toast.alert('Edited Lua Method.');
-                        }
-                        catch (e) {
-                            this.toast.alert(`Failed to edit Lua Method.`, 'error');
-                            console.error(e);
+                        if (clazz instanceof RosettaLuaClass_3.RosettaLuaClass) {
+                            try {
+                                const method = clazz.methods[nameOld];
+                                method.name = name;
+                                clazz.methods[name] = method;
+                                delete clazz.methods[nameOld];
+                                this.showLuaMethod(method);
+                                this.sidebar.populateTrees();
+                                this.toast.alert('Edited Lua Method.');
+                            }
+                            catch (e) {
+                                this.toast.alert(`Failed to edit Lua Method.`, 'error');
+                                console.error(e);
+                            }
                         }
                         break;
                     }
                     case 'new_parameter': {
-                        try {
-                            const split = nameOld.split('-');
-                            const type = split[0];
-                            const funcName = split[1];
-                            let func = null;
-                            if (type === 'constructor') {
-                                func = clazz.conztructor;
+                        if (clazz instanceof RosettaLuaClass_3.RosettaLuaClass) {
+                            try {
+                                const split = nameOld.split('-');
+                                const type = split[0];
+                                const funcName = split[1];
+                                let func = null;
+                                if (type === 'constructor') {
+                                    func = clazz.conztructor;
+                                }
+                                else if (type === 'function') {
+                                    func = clazz.functions[funcName];
+                                }
+                                else {
+                                    func = clazz.methods[funcName];
+                                }
+                                func.addParameter(name, 'any');
+                                if (type === 'constructor') {
+                                    this.showLuaConstructor(func);
+                                }
+                                else if (type === 'function') {
+                                    this.showLuaFunction(func);
+                                }
+                                else {
+                                    this.showLuaMethod(func);
+                                }
+                                this.renderCode();
+                                this.toast.alert('Created Lua Parameter.', 'success');
                             }
-                            else if (type === 'function') {
-                                func = clazz.functions[funcName];
+                            catch (e) {
+                                this.toast.alert(`Failed to create Lua Parameter.`, 'error');
+                                console.error(e);
                             }
-                            else {
-                                func = clazz.methods[funcName];
-                            }
-                            func.addParameter(name, 'any');
-                            if (type === 'constructor') {
-                                this.showConstructor(func);
-                            }
-                            else if (type === 'function') {
-                                this.showFunction(func);
-                            }
-                            else {
-                                this.showMethod(func);
-                            }
-                            this.renderCode();
-                            this.toast.alert('Created Lua Parameter.', 'success');
-                        }
-                        catch (e) {
-                            this.toast.alert(`Failed to create Lua Parameter.`, 'error');
-                            console.error(e);
                         }
                         break;
                     }
                     case 'edit_parameter': {
-                        try {
-                            const split = nameOld.split('-');
-                            const funcName = split[0];
-                            const paramName = split[1];
-                            let type = null;
-                            let func = null;
-                            let param = null;
-                            // Could be the constructor.
-                            if (funcName === 'new') {
-                                func = clazz.conztructor;
-                                type = 'constructor';
-                            }
-                            else {
-                                // First, check methods.
-                                for (const methodName of Object.keys(clazz.methods)) {
-                                    if (methodName === funcName) {
-                                        func = clazz.methods[methodName];
-                                        type = 'method';
-                                        break;
-                                    }
+                        if (clazz instanceof RosettaLuaClass_3.RosettaLuaClass) {
+                            try {
+                                const split = nameOld.split('-');
+                                const funcName = split[0];
+                                const paramName = split[1];
+                                let type = null;
+                                let func = null;
+                                let param = null;
+                                // Could be the constructor.
+                                if (funcName === 'new') {
+                                    func = clazz.conztructor;
+                                    type = 'constructor';
                                 }
-                                // Second, check functions.
-                                if (!func) {
-                                    for (const methodName of Object.keys(clazz.functions)) {
+                                else {
+                                    // First, check methods.
+                                    for (const methodName of Object.keys(clazz.methods)) {
                                         if (methodName === funcName) {
-                                            func = clazz.functions[methodName];
-                                            type = 'function';
+                                            func = clazz.methods[methodName];
+                                            type = 'method';
                                             break;
                                         }
                                     }
+                                    // Second, check functions.
+                                    if (!func) {
+                                        for (const methodName of Object.keys(clazz.functions)) {
+                                            if (methodName === funcName) {
+                                                func = clazz.functions[methodName];
+                                                type = 'function';
+                                                break;
+                                            }
+                                        }
+                                    }
                                 }
-                            }
-                            if (!func) {
-                                console.warn(`Unknown function / method / constructor: ${clazz.name}.${funcName}!`);
-                                break;
-                            }
-                            for (const next of func.parameters) {
-                                if (next.name === paramName) {
-                                    param = next;
+                                if (!func) {
+                                    console.warn(`Unknown function / method / constructor: ${clazz.name}.${funcName}!`);
                                     break;
                                 }
+                                for (const next of func.parameters) {
+                                    if (next.name === paramName) {
+                                        param = next;
+                                        break;
+                                    }
+                                }
+                                if (!param) {
+                                    console.warn(`Unknown parameter: ${clazz.name}.${funcName}#${paramName}!`);
+                                    break;
+                                }
+                                param.name = name;
+                                if (type === 'constructor') {
+                                    this.showLuaConstructor(func);
+                                }
+                                else if (type === 'function') {
+                                    this.showLuaFunction(func);
+                                }
+                                else if (type === 'method') {
+                                    this.showLuaMethod(func);
+                                }
+                                this.renderCode();
+                                this.sidebar.populateTrees();
+                                this.toast.alert('Edited Lua Parameter.');
                             }
-                            if (!param) {
-                                console.warn(`Unknown parameter: ${clazz.name}.${funcName}#${paramName}!`);
-                                break;
+                            catch (e) {
+                                this.toast.alert(`Failed to edit Lua Parameter.`, 'error');
+                                console.error(e);
                             }
-                            param.name = name;
-                            if (type === 'constructor') {
-                                this.showConstructor(func);
-                            }
-                            else if (type === 'function') {
-                                this.showFunction(func);
-                            }
-                            else if (type === 'method') {
-                                this.showMethod(func);
-                            }
-                            this.renderCode();
-                            this.sidebar.populateTrees();
-                            this.toast.alert('Edited Lua Parameter.');
-                        }
-                        catch (e) {
-                            this.toast.alert(`Failed to edit Lua Parameter.`, 'error');
-                            console.error(e);
                         }
                         break;
                     }
@@ -7463,13 +8002,13 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                 this.nameSelected = undefined;
                 this.modalName.hide();
             });
-            const $btnCopy = (0, util_11.$get)('btn-code-preview-copy');
-            const $container = (0, util_11.$get)('screen-content-container');
-            const $cardPreview = (0, util_11.$get)('screen-content-end-container');
-            const $codePreview = (0, util_11.$get)('code-preview');
-            const $btnCardCode = (0, util_11.$get)('btn-card-code');
-            const $iconCard = (0, util_11.$get)('icon-card');
-            const $iconCode = (0, util_11.$get)('icon-code');
+            const $btnCopy = (0, util_13.$get)('btn-code-preview-copy');
+            const $container = (0, util_13.$get)('screen-content-container');
+            const $cardPreview = (0, util_13.$get)('screen-content-end-container');
+            const $codePreview = (0, util_13.$get)('code-preview');
+            const $btnCardCode = (0, util_13.$get)('btn-card-code');
+            const $iconCard = (0, util_13.$get)('icon-card');
+            const $iconCode = (0, util_13.$get)('icon-code');
             let mode = 'card';
             $btnCardCode.on('click', () => {
                 if (mode === 'card') {
@@ -7544,7 +8083,7 @@ define("src/asledgehammer/rosetta/RosettaFileInfo", ["require", "exports"], func
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
 });
-define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asledgehammer/rosetta/Rosetta", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/lua/RosettaLuaTableField", "src/asledgehammer/rosetta/lua/RosettaLuaClass"], function (require, exports, Rosetta_1, RosettaEntity_17, RosettaLuaFunction_3, RosettaLuaTable_2, RosettaLuaTableField_2, RosettaLuaClass_4) {
+define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asledgehammer/rosetta/Rosetta", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/lua/RosettaLuaTableField", "src/asledgehammer/rosetta/lua/RosettaLuaClass"], function (require, exports, Rosetta_1, RosettaEntity_16, RosettaLuaFunction_3, RosettaLuaTable_2, RosettaLuaTableField_2, RosettaLuaClass_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RosettaFile = void 0;
@@ -7553,7 +8092,7 @@ define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asle
      *
      * @author Jab
      */
-    class RosettaFile extends RosettaEntity_17.RosettaEntity {
+    class RosettaFile extends RosettaEntity_16.RosettaEntity {
         constructor(fileInfo, raw = {}, readOnly) {
             super(raw, readOnly);
             /* (Lua) */
@@ -7782,7 +8321,7 @@ define("src/asledgehammer/rosetta/SerializableComponent", ["require", "exports"]
     }
     exports.SerializableComponent = SerializableComponent;
 });
-define("src/asledgehammer/rosetta/component/LabelComponent", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/Component"], function (require, exports, util_12, Component_3) {
+define("src/asledgehammer/rosetta/component/LabelComponent", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/Component"], function (require, exports, util_14, Component_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LabelComponent = void 0;
@@ -7791,12 +8330,12 @@ define("src/asledgehammer/rosetta/component/LabelComponent", ["require", "export
             super(options);
         }
         onRender() {
-            return (0, util_12.html) ``;
+            return (0, util_14.html) ``;
         }
     }
     exports.LabelComponent = LabelComponent;
 });
-define("src/asledgehammer/rosetta/component/SidebarPanelButton", ["require", "exports", "src/asledgehammer/rosetta/component/Component", "src/asledgehammer/rosetta/util"], function (require, exports, Component_4, util_13) {
+define("src/asledgehammer/rosetta/component/SidebarPanelButton", ["require", "exports", "src/asledgehammer/rosetta/component/Component", "src/asledgehammer/rosetta/util"], function (require, exports, Component_4, util_15) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.SidebarPanelButton = void 0;
@@ -7805,7 +8344,7 @@ define("src/asledgehammer/rosetta/component/SidebarPanelButton", ["require", "ex
             super(options);
         }
         listen() {
-            (0, util_13.$get)(this.id).on('click', () => {
+            (0, util_15.$get)(this.id).on('click', () => {
                 if (this.options && this.options.onclick) {
                     this.options.onclick();
                 }
@@ -7813,7 +8352,7 @@ define("src/asledgehammer/rosetta/component/SidebarPanelButton", ["require", "ex
         }
         onRender() {
             const { label } = this.options;
-            return (0, util_13.html) `
+            return (0, util_15.html) `
             <button class="btn btn-primary col-12 rounded-0">${label}</button>
         `;
         }

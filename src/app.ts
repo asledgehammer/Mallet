@@ -14,8 +14,9 @@ import { RosettaLuaFunction } from './asledgehammer/rosetta/lua/RosettaLuaFuncti
 import { $get, validateLuaVariableName } from './asledgehammer/rosetta/util';
 import { LuaParser } from './asledgehammer/rosetta/lua/wizard/LuaParser';
 import { RosettaLuaTable } from './asledgehammer/rosetta/lua/RosettaLuaTable';
-import { RosettaJavaNamespace } from './asledgehammer/rosetta/java/RosettaJavaNamespace';
-import { RosettaJavaClass } from './asledgehammer/rosetta/java/RosettaJavaClass';
+import { RosettaJavaClass, RosettaJavaNamespace } from './asledgehammer/rosetta/java/RosettaJavaClass';
+import { JavaClassCard } from './asledgehammer/rosetta/component/java/JavaClassCard';
+import { generateJavaClass } from './asledgehammer/rosetta/java/JavaGenerator';
 
 export class Active {
 
@@ -26,7 +27,7 @@ export class Active {
     readonly javaClasses: { [name: string]: RosettaJavaClass } = {};
 
     selected: RosettaLuaClass | RosettaLuaTable | RosettaJavaClass | undefined = undefined;
-    selectedCard: LuaClassCard | any;
+    selectedCard: LuaClassCard | JavaClassCard | undefined = undefined;
 
     constructor(app: App) {
         this.app = app;
@@ -215,7 +216,7 @@ export class App {
         };
     }
 
-    public showClass(entity: RosettaLuaClass): LuaClassCard {
+    public showLuaClass(entity: RosettaLuaClass): LuaClassCard {
         this.$screenContent.empty();
         this.active.selectedCard = new LuaClassCard(this, { entity });
         this.$screenContent.append(this.active.selectedCard.render());
@@ -225,9 +226,10 @@ export class App {
         return this.active.selectedCard;
     }
 
-    public showConstructor(entity: RosettaLuaConstructor | undefined): LuaConstructorCard {
-        const clazz = this.active.selectedCard?.options!.entity!;
-        if (!entity) entity = new RosettaLuaConstructor(clazz);
+    public showLuaConstructor(entity: RosettaLuaConstructor | undefined): LuaConstructorCard | null {
+        const { selected } = this.active;
+        if (!(selected instanceof RosettaLuaClass)) return null;
+        if (!entity) entity = new RosettaLuaConstructor(selected);
         this.$screenContent.empty();
         const card = new LuaConstructorCard(this, { entity });
         this.$screenContent.append(card.render());
@@ -237,7 +239,9 @@ export class App {
         return card;
     }
 
-    public showField(entity: RosettaLuaField): LuaFieldCard {
+    public showLuaField(entity: RosettaLuaField): LuaFieldCard | null {
+        const { selected } = this.active;
+        if (!(selected instanceof RosettaLuaClass)) return null;
         this.$screenContent.empty();
         const card = new LuaFieldCard(this, { entity, isStatic: false });
         this.$screenContent.append(card.render());
@@ -246,7 +250,9 @@ export class App {
         return card;
     }
 
-    public showValue(entity: RosettaLuaField): LuaFieldCard {
+    public showLuaValue(entity: RosettaLuaField): LuaFieldCard | null {
+        const { selected } = this.active;
+        if (!(selected instanceof RosettaLuaClass)) return null;
         this.$screenContent.empty();
         const card = new LuaFieldCard(this, { entity, isStatic: true });
         this.$screenContent.append(card.render());
@@ -255,7 +261,9 @@ export class App {
         return card;
     }
 
-    public showMethod(entity: RosettaLuaFunction): LuaFunctionCard {
+    public showLuaMethod(entity: RosettaLuaFunction): LuaFunctionCard | null {
+        const { selected } = this.active;
+        if (!(selected instanceof RosettaLuaClass)) return null;
         this.$screenContent.empty();
         const card = new LuaFunctionCard(this, { entity, isStatic: false });
         this.$screenContent.append(card.render());
@@ -264,7 +272,9 @@ export class App {
         return card;
     }
 
-    public showFunction(entity: RosettaLuaFunction): LuaFunctionCard {
+    public showLuaFunction(entity: RosettaLuaFunction): LuaFunctionCard | null {
+        const { selected } = this.active;
+        if (!(selected instanceof RosettaLuaClass)) return null;
         this.$screenContent.empty();
         const card = new LuaFunctionCard(this, { entity, isStatic: true });
         this.$screenContent.append(card.render());
@@ -273,12 +283,29 @@ export class App {
         return card;
     }
 
+    public showJavaClass(entity: RosettaJavaClass): JavaClassCard {
+        this.$screenContent.empty();
+        this.active.selectedCard = new JavaClassCard(this, { entity });
+        this.$screenContent.append(this.active.selectedCard.render());
+        this.active.selectedCard.listen();
+        this.active.selectedCard.update();
+        this.renderCode();
+        return this.active.selectedCard;
+    }
+
     renderCode() {
         const $renderPane = $get('code-preview');
         $renderPane.empty();
         if (!this.active.selectedCard) return;
 
-        const highlightedCode = hljs.default.highlightAuto(generateLuaClass(this.active.selectedCard.options!.entity), ['lua']).value;
+        const { selected } = this.active;
+
+        let highlightedCode = '';
+        if (selected instanceof RosettaLuaClass) {
+            highlightedCode = hljs.default.highlightAuto(generateLuaClass(selected), ['lua']).value;
+        } else if (selected instanceof RosettaJavaClass) {
+            highlightedCode = hljs.default.highlightAuto(generateJavaClass(selected), ['java']).value;
+        }
         $renderPane.html(highlightedCode);
     }
 
@@ -312,7 +339,7 @@ export class App {
                 case 'new_class': {
                     try {
                         const entity = new RosettaLuaClass(validateLuaVariableName(this.$inputName.val()!).trim());
-                        this.showClass(entity);
+                        this.showLuaClass(entity);
                         this.sidebar.populateTrees();
                         this.toast.alert('Created Lua Class.', 'success');
                     } catch (e) {
@@ -322,219 +349,246 @@ export class App {
                     break;
                 }
                 case 'edit_class': {
-                    try {
-                        clazz.name = name;
-                        this.showClass(clazz);
-                        this.toast.alert('Edited Lua Class.');
-                    } catch (e) {
-                        this.toast.alert(`Failed to edit Lua Class.`, 'error');
-                        console.error(e);
+                    if (clazz instanceof RosettaLuaClass) {
+                        try {
+                            clazz.name = name;
+                            this.showLuaClass(clazz);
+                            this.toast.alert('Edited Lua Class.');
+                        } catch (e) {
+                            this.toast.alert(`Failed to edit Lua Class.`, 'error');
+                            console.error(e);
+                        }
+                    } else if (clazz instanceof RosettaJavaClass) {
+                        throw new Error('Cannot modify name of Java class. (Read-Only)');
                     }
-
                     break;
                 }
                 case 'new_field': {
-                    try {
-                        const field = clazz.createField(name);
-                        this.showField(field);
-                        this.sidebar.populateTrees();
-                        this.toast.alert('Created Lua Field.', 'success');
-                    } catch (e) {
-                        this.toast.alert(`Failed to create Lua Field.`, 'error');
-                        console.error(e);
+                    if (clazz instanceof RosettaLuaClass) {
+                        try {
+                            const field = clazz.createField(name);
+                            this.showLuaField(field);
+                            this.sidebar.populateTrees();
+                            this.toast.alert('Created Lua Field.', 'success');
+                        } catch (e) {
+                            this.toast.alert(`Failed to create Lua Field.`, 'error');
+                            console.error(e);
+                        }
+                    } else if (clazz instanceof RosettaJavaClass) {
+                        throw new Error('Cannot add field in Java class. (Not implemented)');
                     }
-
                     break;
                 }
                 case 'edit_field': {
-                    try {
-                        const field = clazz.fields[nameOld];
-                        field.name = name;
-                        clazz.fields[name] = field;
-                        delete clazz.fields[nameOld];
-                        this.showField(field);
-                        this.sidebar.populateTrees();
-                        this.toast.alert('Edited Lua Field.');
-                    } catch (e) {
-                        this.toast.alert(`Failed to edit Lua Field.`, 'error');
-                        console.error(e);
+                    if (clazz instanceof RosettaLuaClass) {
+                        try {
+                            const field = clazz.fields[nameOld];
+                            field.name = name;
+                            clazz.fields[name] = field;
+                            delete clazz.fields[nameOld];
+                            this.showLuaField(field);
+                            this.sidebar.populateTrees();
+                            this.toast.alert('Edited Lua Field.');
+                        } catch (e) {
+                            this.toast.alert(`Failed to edit Lua Field.`, 'error');
+                            console.error(e);
+                        }
+                    } else if (clazz instanceof RosettaJavaClass) {
+                        throw new Error('Cannot modify name of Java field. (Read-Only)');
                     }
-
                     break;
                 }
                 case 'new_value': {
-                    try {
-                        const value = clazz.createValue(name);
-                        this.showValue(value);
-                        this.sidebar.populateTrees();
-                        this.toast.alert('Created Lua Value.', 'success');
-                    } catch (e) {
-                        this.toast.alert(`Failed to create Lua Value.`, 'error');
-                        console.error(e);
+                    if (clazz instanceof RosettaLuaClass) {
+                        try {
+                            const value = clazz.createValue(name);
+                            this.showLuaValue(value);
+                            this.sidebar.populateTrees();
+                            this.toast.alert('Created Lua Value.', 'success');
+                        } catch (e) {
+                            this.toast.alert(`Failed to create Lua Value.`, 'error');
+                            console.error(e);
+                        }
+                    } else if (clazz instanceof RosettaJavaClass) {
+                        throw new Error('Values are not supported in Java.');
                     }
                     break;
                 }
                 case 'edit_value': {
-                    try {
-                        const value = clazz.values[nameOld];
-                        value.name = name;
-                        clazz.values[name] = value;
-                        delete clazz.values[nameOld];
-                        this.showValue(value);
-                        this.sidebar.populateTrees();
-                        this.toast.alert('Edited Lua value.');
-                    } catch (e) {
-                        this.toast.alert(`Failed to edit Lua Value.`, 'error');
-                        console.error(e);
+                    if (clazz instanceof RosettaLuaClass) {
+                        try {
+                            const value = clazz.values[nameOld];
+                            value.name = name;
+                            clazz.values[name] = value;
+                            delete clazz.values[nameOld];
+                            this.showLuaValue(value);
+                            this.sidebar.populateTrees();
+                            this.toast.alert('Edited Lua value.');
+                        } catch (e) {
+                            this.toast.alert(`Failed to edit Lua Value.`, 'error');
+                            console.error(e);
+                        }
                     }
                     break;
                 }
                 case 'new_function': {
-                    try {
-                        const func = clazz.createFunction(name);
-                        this.showFunction(func);
-                        this.sidebar.populateTrees();
-                        this.toast.alert('Created Lua Function.', 'success');
-                    } catch (e) {
-                        this.toast.alert(`Failed to create Lua Function.`, 'error');
-                        console.error(e);
+                    if (clazz instanceof RosettaLuaClass) {
+                        try {
+                            const func = clazz.createFunction(name);
+                            this.showLuaFunction(func);
+                            this.sidebar.populateTrees();
+                            this.toast.alert('Created Lua Function.', 'success');
+                        } catch (e) {
+                            this.toast.alert(`Failed to create Lua Function.`, 'error');
+                            console.error(e);
+                        }
                     }
                     break;
                 }
                 case 'edit_function': {
-                    try {
-                        const func = clazz.functions[nameOld];
-                        func.name = name;
-                        clazz.functions[name] = func;
-                        delete clazz.functions[nameOld];
-                        this.showFunction(func);
-                        this.sidebar.populateTrees();
-                        this.toast.alert('Edited Lua Function.');
-                    } catch (e) {
-                        this.toast.alert(`Failed to edit Lua Function.`, 'error');
-                        console.error(e);
+                    if (clazz instanceof RosettaLuaClass) {
+                        try {
+                            const func = clazz.functions[nameOld];
+                            func.name = name;
+                            clazz.functions[name] = func;
+                            delete clazz.functions[nameOld];
+                            this.showLuaFunction(func);
+                            this.sidebar.populateTrees();
+                            this.toast.alert('Edited Lua Function.');
+                        } catch (e) {
+                            this.toast.alert(`Failed to edit Lua Function.`, 'error');
+                            console.error(e);
+                        }
                     }
                     break;
                 }
                 case 'new_method': {
-                    try {
-                        const method = clazz.createMethod(name);
-                        this.showMethod(method);
-                        this.sidebar.populateTrees();
-                        this.toast.alert('Created Lua Method.', 'success');
-                    } catch (e) {
-                        this.toast.alert(`Failed to create Lua Method.`, 'error');
-                        console.error(e);
+                    if (clazz instanceof RosettaLuaClass) {
+                        try {
+                            const method = clazz.createMethod(name);
+                            this.showLuaMethod(method);
+                            this.sidebar.populateTrees();
+                            this.toast.alert('Created Lua Method.', 'success');
+                        } catch (e) {
+                            this.toast.alert(`Failed to create Lua Method.`, 'error');
+                            console.error(e);
+                        }
                     }
                     break;
                 }
                 case 'edit_method': {
-                    try {
-                        const method = clazz.methods[nameOld];
-                        method.name = name;
-                        clazz.methods[name] = method;
-                        delete clazz.methods[nameOld];
-                        this.showMethod(method);
-                        this.sidebar.populateTrees();
-                        this.toast.alert('Edited Lua Method.');
-                    } catch (e) {
-                        this.toast.alert(`Failed to edit Lua Method.`, 'error');
-                        console.error(e);
+                    if (clazz instanceof RosettaLuaClass) {
+                        try {
+                            const method = clazz.methods[nameOld];
+                            method.name = name;
+                            clazz.methods[name] = method;
+                            delete clazz.methods[nameOld];
+                            this.showLuaMethod(method);
+                            this.sidebar.populateTrees();
+                            this.toast.alert('Edited Lua Method.');
+                        } catch (e) {
+                            this.toast.alert(`Failed to edit Lua Method.`, 'error');
+                            console.error(e);
+                        }
                     }
                     break;
                 }
                 case 'new_parameter': {
-                    try {
-                        const split = nameOld.split('-');
-                        const type = split[0];
-                        const funcName = split[1];
+                    if (clazz instanceof RosettaLuaClass) {
+                        try {
+                            const split = nameOld.split('-');
+                            const type = split[0];
+                            const funcName = split[1];
 
-                        let func: RosettaLuaConstructor | RosettaLuaFunction | null = null;
-                        if (type === 'constructor') {
-                            func = clazz.conztructor;
-                        } else if (type === 'function') {
-                            func = clazz.functions[funcName];
-                        } else {
-                            func = clazz.methods[funcName];
+                            let func: RosettaLuaConstructor | RosettaLuaFunction | null = null;
+                            if (type === 'constructor') {
+                                func = clazz.conztructor;
+                            } else if (type === 'function') {
+                                func = clazz.functions[funcName];
+                            } else {
+                                func = clazz.methods[funcName];
+                            }
+
+                            func!.addParameter(name, 'any');
+
+                            if (type === 'constructor') {
+                                this.showLuaConstructor(func as RosettaLuaConstructor);
+                            } else if (type === 'function') {
+                                this.showLuaFunction(func as RosettaLuaFunction);
+                            } else {
+                                this.showLuaMethod(func as RosettaLuaFunction);
+                            }
+                            this.renderCode();
+                            this.toast.alert('Created Lua Parameter.', 'success');
+                        } catch (e) {
+                            this.toast.alert(`Failed to create Lua Parameter.`, 'error');
+                            console.error(e);
                         }
-
-                        func!.addParameter(name, 'any');
-
-                        if (type === 'constructor') {
-                            this.showConstructor(func as RosettaLuaConstructor);
-                        } else if (type === 'function') {
-                            this.showFunction(func as RosettaLuaFunction);
-                        } else {
-                            this.showMethod(func as RosettaLuaFunction);
-                        }
-                        this.renderCode();
-                        this.toast.alert('Created Lua Parameter.', 'success');
-                    } catch (e) {
-                        this.toast.alert(`Failed to create Lua Parameter.`, 'error');
-                        console.error(e);
                     }
                     break;
                 }
                 case 'edit_parameter': {
-                    try {
-                        const split = nameOld.split('-');
-                        const funcName = split[0];
-                        const paramName = split[1];
-                        let type: 'constructor' | 'method' | 'function' | null = null;
-                        let func = null;
-                        let param = null;
-                        // Could be the constructor.
-                        if (funcName === 'new') {
-                            func = clazz.conztructor;
-                            type = 'constructor';
-                        } else {
-                            // First, check methods.
-                            for (const methodName of Object.keys(clazz.methods)) {
-                                if (methodName === funcName) {
-                                    func = clazz.methods[methodName];
-                                    type = 'method';
-                                    break;
-                                }
-                            }
-                            // Second, check functions.
-                            if (!func) {
-                                for (const methodName of Object.keys(clazz.functions)) {
+                    if (clazz instanceof RosettaLuaClass) {
+                        try {
+                            const split = nameOld.split('-');
+                            const funcName = split[0];
+                            const paramName = split[1];
+                            let type: 'constructor' | 'method' | 'function' | null = null;
+                            let func = null;
+                            let param = null;
+                            // Could be the constructor.
+                            if (funcName === 'new') {
+                                func = clazz.conztructor;
+                                type = 'constructor';
+                            } else {
+                                // First, check methods.
+                                for (const methodName of Object.keys(clazz.methods)) {
                                     if (methodName === funcName) {
-                                        func = clazz.functions[methodName];
-                                        type = 'function';
+                                        func = clazz.methods[methodName];
+                                        type = 'method';
                                         break;
                                     }
                                 }
+                                // Second, check functions.
+                                if (!func) {
+                                    for (const methodName of Object.keys(clazz.functions)) {
+                                        if (methodName === funcName) {
+                                            func = clazz.functions[methodName];
+                                            type = 'function';
+                                            break;
+                                        }
+                                    }
+                                }
                             }
-                        }
-                        if (!func) {
-                            console.warn(`Unknown function / method / constructor: ${clazz.name}.${funcName}!`);
-                            break;
-                        }
-                        for (const next of func.parameters) {
-                            if (next.name === paramName) {
-                                param = next;
+                            if (!func) {
+                                console.warn(`Unknown function / method / constructor: ${clazz.name}.${funcName}!`);
                                 break;
                             }
+                            for (const next of func.parameters) {
+                                if (next.name === paramName) {
+                                    param = next;
+                                    break;
+                                }
+                            }
+                            if (!param) {
+                                console.warn(`Unknown parameter: ${clazz.name}.${funcName}#${paramName}!`);
+                                break;
+                            }
+                            param.name = name;
+                            if (type === 'constructor') {
+                                this.showLuaConstructor(func as RosettaLuaConstructor);
+                            } else if (type === 'function') {
+                                this.showLuaFunction(func as RosettaLuaFunction);
+                            } else if (type === 'method') {
+                                this.showLuaMethod(func as RosettaLuaFunction);
+                            }
+                            this.renderCode();
+                            this.sidebar.populateTrees();
+                            this.toast.alert('Edited Lua Parameter.');
+                        } catch (e) {
+                            this.toast.alert(`Failed to edit Lua Parameter.`, 'error');
+                            console.error(e);
                         }
-                        if (!param) {
-                            console.warn(`Unknown parameter: ${clazz.name}.${funcName}#${paramName}!`);
-                            break;
-                        }
-                        param.name = name;
-                        if (type === 'constructor') {
-                            this.showConstructor(func as RosettaLuaConstructor);
-                        } else if (type === 'function') {
-                            this.showFunction(func as RosettaLuaFunction);
-                        } else if (type === 'method') {
-                            this.showMethod(func as RosettaLuaFunction);
-                        }
-                        this.renderCode();
-                        this.sidebar.populateTrees();
-                        this.toast.alert('Edited Lua Parameter.');
-                    } catch (e) {
-                        this.toast.alert(`Failed to edit Lua Parameter.`, 'error');
-                        console.error(e);
                     }
                     break;
                 }

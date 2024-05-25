@@ -167,7 +167,7 @@ export class ItemTree {
         $('.lua-constructor-item').on('click', function () {
             // Prevent wasteful selection code executions here.
             if (_this.app.selected === 'constructor') return;
-            _this.app.showConstructor(entity.conztructor);
+            _this.app.showLuaConstructor(entity.conztructor);
             // Let the editor know we last selected the constructor.
             _this.app.selected = 'constructor';
         });
@@ -178,7 +178,7 @@ export class ItemTree {
             if (_this.app.selected === fieldName) return;
             const field = entity.fields[fieldName];
             if (!field) return;
-            _this.app.showField(field);
+            _this.app.showLuaField(field);
             // Let the editor know we last selected the field.
             _this.app.selected = fieldName;
         });
@@ -189,7 +189,7 @@ export class ItemTree {
             if (_this.app.selected === valueName) return;
             const value = entity.values[valueName];
             if (!value) return;
-            _this.app.showValue(value);
+            _this.app.showLuaValue(value);
             // Let the editor know we last selected the value.
             _this.app.selected = valueName;
         });
@@ -200,7 +200,7 @@ export class ItemTree {
             if (_this.app.selected === methodName) return;
             const method = entity.methods[methodName];
             if (!method) return;
-            _this.app.showMethod(method);
+            _this.app.showLuaMethod(method);
             // Let the editor know we last selected the method.
             _this.app.selected = methodName;
         });
@@ -211,7 +211,7 @@ export class ItemTree {
             if (_this.app.selected === functionName) return;
             const func = entity.functions[functionName];
             if (!func) return;
-            _this.app.showFunction(func);
+            _this.app.showLuaFunction(func);
             // Let the editor know we last selected the function.
             _this.app.selected = functionName;
         });

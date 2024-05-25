@@ -1,5 +1,6 @@
 import { App } from '../../../../app';
 import { generateLuaMethod } from '../../lua/LuaGenerator';
+import { RosettaLuaClass } from '../../lua/RosettaLuaClass';
 import { RosettaLuaFunction } from '../../lua/RosettaLuaFunction';
 import { $get, html } from '../../util';
 import { CardOptions } from '../CardComponent';
@@ -109,13 +110,13 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
 
         $get(idBtnDelete).on('click', () => {
             app.askConfirm(() => {
-                const clazz = app.active.selectedCard?.options!.entity!;
+                const clazz = app.active.selectedCard?.options!.entity! as RosettaLuaClass;
                 if (isStatic) {
                     delete clazz.functions[entity.name];
                 } else {
                     delete clazz.methods[entity.name];
                 }
-                app.showClass(clazz);
+                app.showLuaClass(clazz);
                 app.sidebar.selectedItemID = undefined;
                 app.sidebar.populateTrees();
             }, `Delete ${isStatic ? 'Function' : 'Method'} ${entity.name}`);

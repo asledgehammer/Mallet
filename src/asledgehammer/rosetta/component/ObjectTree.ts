@@ -105,7 +105,22 @@ export class ObjectTree {
             // Prevent wasteful selection code executions here.
             if (_this.app.selected === name) return;
 
-            _this.app.showClass(_this.app.active.luaClasses[name]);
+            _this.app.showLuaClass(_this.app.active.luaClasses[name]);
+            
+            // Let the editor know we last selected the class.
+            _this.app.selected = name;
+
+            // Update the class properties tree.
+            _this.sidebar.itemTree.populate();
+        });
+
+        $('.object-tree-java-class').on('click', function () {
+            const name = this.id.substring('object-java-class-'.length);
+
+            // Prevent wasteful selection code executions here.
+            if (_this.app.selected === name) return;
+
+            _this.app.showJavaClass(_this.app.active.javaClasses[name]);
             
             // Let the editor know we last selected the class.
             _this.app.selected = name;
