@@ -30,7 +30,7 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
         if (!this.options) return '';
 
         const { entity } = this.options;
-        const classEntity = this.app.card!.options!.entity;
+        const classEntity = this.app.active.selectedCard!.options!.entity;
         const className = classEntity.name;
 
         return generateLuaMethod(className, entity);
@@ -39,7 +39,7 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
     onHeaderHTML(): string | undefined {
         const { idBtnDelete, idBtnEdit } = this;
         const { entity, isStatic } = this.options!;
-        const classEntity = this.app.card!.options!.entity;
+        const classEntity = this.app.active.selectedCard!.options!.entity;
         const className = classEntity.name;
 
         let name = `${className}${isStatic ? '.' : ':'}${entity.name}( )`;
@@ -109,7 +109,7 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
 
         $get(idBtnDelete).on('click', () => {
             app.askConfirm(() => {
-                const clazz = app.card?.options!.entity!;
+                const clazz = app.active.selectedCard?.options!.entity!;
                 if (isStatic) {
                     delete clazz.functions[entity.name];
                 } else {

@@ -13,6 +13,23 @@ import { RosettaLuaField } from './asledgehammer/rosetta/lua/RosettaLuaField';
 import { RosettaLuaFunction } from './asledgehammer/rosetta/lua/RosettaLuaFunction';
 import { $get, validateLuaVariableName } from './asledgehammer/rosetta/util';
 import { LuaParser } from './asledgehammer/rosetta/lua/wizard/LuaParser';
+import { RosettaLuaTable } from './asledgehammer/rosetta/lua/RosettaLuaTable';
+
+export class Active {
+
+    readonly app: App;
+
+    readonly luaClasses: RosettaLuaClass[] = [];
+    readonly luaTables: RosettaLuaTable[] = [];
+    readonly javaClasses: any[] = [];
+
+    selected: RosettaLuaClass | RosettaLuaTable | any;
+    selectedCard: LuaClassCard | any;
+
+    constructor(app: App) {
+        this.app = app;
+    }
+}
 
 export class Toast {
 
@@ -23,6 +40,7 @@ export class Toast {
 
     constructor(app: App) {
         this.app = app;
+
         // @ts-ignore
         this.toastSimple = new bootstrap.Toast(document.getElementById('toast-simple')!, {});
     }
@@ -50,6 +68,7 @@ export class Toast {
 
 export class App {
 
+    readonly active: Active;
     readonly sidebar: Sidebar;
     readonly toast: Toast;
     readonly eSidebarContainer: HTMLElement;
@@ -72,11 +91,13 @@ export class App {
     nameSelected: string | undefined;
     nameMode: NameModeType;
 
-    card: LuaClassCard | null = null;
+    // card: LuaClassCard | null = null;
 
     readonly luaParser: LuaParser;
 
     constructor() {
+
+        this.active = new Active(this);
         this.sidebar = new Sidebar(this);
         this.toast = new Toast(this);
         this.luaParser = new LuaParser(this);
@@ -110,27 +131,27 @@ export class App {
         // Always get first class
         const name = Object.keys(json.luaClasses)[0];
         const entity = new RosettaLuaClass(name, json.luaClasses[name]);
-        this.card = new LuaClassCard(this, { entity: entity });
-        this.$screenContent.append(this.card.render());
-        this.card.listen();
-        this.card.update();
+        this.active.selectedCard = new LuaClassCard(this, { entity: entity });
+        this.$screenContent.append(this.active.selectedCard.render());
+        this.active.selectedCard.listen();
+        this.active.selectedCard.update();
         this.renderCode();
         this.sidebar.populateTrees();
-        return this.card;
+        return this.active.selectedCard;
     }
 
     public showClass(entity: RosettaLuaClass): LuaClassCard {
         this.$screenContent.empty();
-        this.card = new LuaClassCard(this, { entity });
-        this.$screenContent.append(this.card.render());
-        this.card.listen();
-        this.card.update();
+        this.active.selectedCard = new LuaClassCard(this, { entity });
+        this.$screenContent.append(this.active.selectedCard.render());
+        this.active.selectedCard.listen();
+        this.active.selectedCard.update();
         this.renderCode();
-        return this.card;
+        return this.active.selectedCard;
     }
 
     public showConstructor(entity: RosettaLuaConstructor | undefined): LuaConstructorCard {
-        const clazz = this.card?.options!.entity!;
+        const clazz = this.active.selectedCard?.options!.entity!;
         if (!entity) entity = new RosettaLuaConstructor(clazz);
         this.$screenContent.empty();
         const card = new LuaConstructorCard(this, { entity });
@@ -180,9 +201,9 @@ export class App {
     renderCode() {
         const $renderPane = $get('code-preview');
         $renderPane.empty();
-        if (!this.card) return;
+        if (!this.active.selectedCard) return;
 
-        const highlightedCode = hljs.default.highlightAuto(generateLuaClass(this.card.options!.entity), ['lua']).value;
+        const highlightedCode = hljs.default.highlightAuto(generateLuaClass(this.active.selectedCard.options!.entity), ['lua']).value;
         $renderPane.html(highlightedCode);
     }
 
@@ -209,7 +230,7 @@ export class App {
         });
 
         this.$btnName.on('click', () => {
-            const clazz = this.card?.options!.entity!;
+            const clazz = this.active.selectedCard?.options!.entity!;
             const name = validateLuaVariableName(this.$inputName.val()!).trim();
             const nameOld = this.nameSelected!;
             switch (this.nameMode) {

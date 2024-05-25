@@ -172,7 +172,7 @@ export class Sidebar extends Component<SidebarOptions> {
                 // @ts-ignore
                 const result = await showSaveFilePicker();
 
-                const entity = this.app.card!.options!.entity!;
+                const entity = this.app.active.selectedCard!.options!.entity!;
                 const luaClasses: any = {};
                 luaClasses[entity.name] = entity.toJSON();
                 const contents = {
@@ -195,7 +195,7 @@ export class Sidebar extends Component<SidebarOptions> {
 
         $get('btn-new-lua-value').on('click', () => {
             try {
-                const { card } = app;
+                const { selectedCard: card } = app.active;
                 if (!card) return;
                 const clazz = card.options!.entity;
                 if (!clazz) return;
@@ -212,7 +212,7 @@ export class Sidebar extends Component<SidebarOptions> {
 
         $get('btn-new-lua-field').on('click', () => {
             try {
-                const { card } = app;
+                const { selectedCard: card } = app.active;
                 if (!card) return;
                 const clazz = card.options!.entity;
                 if (!clazz) return;
@@ -229,7 +229,7 @@ export class Sidebar extends Component<SidebarOptions> {
 
         $get('btn-new-lua-function').on('click', () => {
             try {
-                const { card } = app;
+                const { selectedCard: card } = app.active;
                 if (!card) return;
                 const clazz = card.options!.entity;
                 if (!clazz) return;
@@ -246,7 +246,7 @@ export class Sidebar extends Component<SidebarOptions> {
 
         $get('btn-new-lua-method').on('click', () => {
             try {
-                const { card } = app;
+                const { selectedCard: card } = app.active;
                 if (!card) return;
                 const clazz = card.options!.entity;
                 if (!clazz) return;

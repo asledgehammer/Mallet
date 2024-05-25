@@ -33,7 +33,7 @@ export class ItemTree {
 
         const _this = this;
 
-        const { card: luaClass } = this.app;
+        const { selectedCard: luaClass } = this.app.active;
         if (!luaClass) return;
 
         const entity = luaClass.options!.entity!;

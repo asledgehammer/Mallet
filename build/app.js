@@ -1968,12 +1968,12 @@ define("src/asledgehammer/rosetta/component/lua/LuaConstructorCard", ["require",
             if (!this.options)
                 return '';
             const { entity } = this.options;
-            const classEntity = this.app.card.options.entity;
+            const classEntity = this.app.active.selectedCard.options.entity;
             const className = classEntity.name;
             return (0, LuaGenerator_2.generateLuaConstructor)(className, entity);
         }
         onHeaderHTML() {
-            const classEntity = this.app.card.options.entity;
+            const classEntity = this.app.active.selectedCard.options.entity;
             const className = classEntity.name;
             const name = `${className}:new( )`;
             return (0, util_5.html) ` 
@@ -2042,7 +2042,7 @@ define("src/asledgehammer/rosetta/component/lua/LuaFieldCard", ["require", "expo
             const { app } = this;
             const { entity, isStatic } = this.options;
             const { defaultValue } = entity;
-            const name = (_b = (_a = app.card) === null || _a === void 0 ? void 0 : _a.options) === null || _b === void 0 ? void 0 : _b.entity.name;
+            const name = (_b = (_a = app.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options) === null || _b === void 0 ? void 0 : _b.entity.name;
             if (isStatic) {
                 return `${(0, LuaGenerator_3.generateLuaField)(entity)}\n\n${(0, LuaGenerator_3.generateLuaValue)(name, entity)}`;
             }
@@ -2056,7 +2056,7 @@ define("src/asledgehammer/rosetta/component/lua/LuaFieldCard", ["require", "expo
             var _a;
             const { idBtnEdit, idBtnDelete } = this;
             const { entity, isStatic } = this.options;
-            const luaClass = (_a = this.app.card) === null || _a === void 0 ? void 0 : _a.options.entity;
+            const luaClass = (_a = this.app.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
             let name = `${luaClass.name}.${entity.name}`;
             if (isStatic) {
                 name = (0, util_6.html) `<span class="fst-italic">${name}</span>`;
@@ -2115,7 +2115,7 @@ define("src/asledgehammer/rosetta/component/lua/LuaFieldCard", ["require", "expo
             (0, util_6.$get)(idBtnDelete).on('click', () => {
                 app.askConfirm(() => {
                     var _a;
-                    const clazz = (_a = app.card) === null || _a === void 0 ? void 0 : _a.options.entity;
+                    const clazz = (_a = app.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
                     if (isStatic) {
                         delete clazz.values[entity.name];
                     }
@@ -2149,14 +2149,14 @@ define("src/asledgehammer/rosetta/component/lua/LuaFunctionCard", ["require", "e
             if (!this.options)
                 return '';
             const { entity } = this.options;
-            const classEntity = this.app.card.options.entity;
+            const classEntity = this.app.active.selectedCard.options.entity;
             const className = classEntity.name;
             return (0, LuaGenerator_4.generateLuaMethod)(className, entity);
         }
         onHeaderHTML() {
             const { idBtnDelete, idBtnEdit } = this;
             const { entity, isStatic } = this.options;
-            const classEntity = this.app.card.options.entity;
+            const classEntity = this.app.active.selectedCard.options.entity;
             const className = classEntity.name;
             let name = `${className}${isStatic ? '.' : ':'}${entity.name}( )`;
             if (isStatic) {
@@ -2218,7 +2218,7 @@ define("src/asledgehammer/rosetta/component/lua/LuaFunctionCard", ["require", "e
             (0, util_7.$get)(idBtnDelete).on('click', () => {
                 app.askConfirm(() => {
                     var _a;
-                    const clazz = (_a = app.card) === null || _a === void 0 ? void 0 : _a.options.entity;
+                    const clazz = (_a = app.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
                     if (isStatic) {
                         delete clazz.functions[entity.name];
                     }
@@ -2262,7 +2262,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
         }
         populate() {
             const _this = this;
-            const { card: luaClass } = this.app;
+            const { selectedCard: luaClass } = this.app.active;
             if (!luaClass)
                 return;
             const entity = luaClass.options.entity;
@@ -2452,7 +2452,7 @@ define("src/asledgehammer/rosetta/component/ObjectTree", ["require", "exports", 
         }
         populate() {
             const _this = this;
-            const { card: luaClass } = this.app;
+            const { selectedCard: luaClass } = this.app.active;
             if (!luaClass)
                 return;
             const entity = luaClass.options.entity;
@@ -2675,7 +2675,7 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                 try {
                     // @ts-ignore
                     const result = await showSaveFilePicker();
-                    const entity = this.app.card.options.entity;
+                    const entity = this.app.active.selectedCard.options.entity;
                     const luaClasses = {};
                     luaClasses[entity.name] = entity.toJSON();
                     const contents = {
@@ -2695,7 +2695,7 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
             });
             (0, util_10.$get)('btn-new-lua-value').on('click', () => {
                 try {
-                    const { card } = app;
+                    const { selectedCard: card } = app.active;
                     if (!card)
                         return;
                     const clazz = card.options.entity;
@@ -2713,7 +2713,7 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
             });
             (0, util_10.$get)('btn-new-lua-field').on('click', () => {
                 try {
-                    const { card } = app;
+                    const { selectedCard: card } = app.active;
                     if (!card)
                         return;
                     const clazz = card.options.entity;
@@ -2731,7 +2731,7 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
             });
             (0, util_10.$get)('btn-new-lua-function').on('click', () => {
                 try {
-                    const { card } = app;
+                    const { selectedCard: card } = app.active;
                     if (!card)
                         return;
                     const clazz = card.options.entity;
@@ -2749,7 +2749,7 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
             });
             (0, util_10.$get)('btn-new-lua-method').on('click', () => {
                 try {
-                    const { card } = app;
+                    const { selectedCard: card } = app.active;
                     if (!card)
                         return;
                     const clazz = card.options.entity;
@@ -6195,10 +6195,195 @@ define("src/asledgehammer/rosetta/lua/wizard/LuaParser", ["require", "exports", 
     }
     exports.LuaParser = LuaParser;
 });
+define("src/asledgehammer/rosetta/lua/RosettaLuaTableField", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/RosettaUtils"], function (require, exports, Assert, RosettaEntity_7, RosettaUtils_4) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaLuaTableField = void 0;
+    /**
+     * **RosettaLuaTableField**
+     *
+     * @author Jab
+     */
+    class RosettaLuaTableField extends RosettaEntity_7.RosettaEntity {
+        constructor(name, raw = {}) {
+            super(raw);
+            Assert.assertNonEmptyString(name, 'name');
+            this.name = (0, RosettaUtils_4.formatName)(name);
+            if (raw.type !== undefined) {
+                let type = this.readString('type');
+                if (type === undefined)
+                    type = 'any';
+                this.type = type;
+            }
+            else {
+                this.type = 'any';
+            }
+            this.notes = this.readNotes();
+        }
+        parse(raw) {
+            /* (Properties) */
+            this.notes = this.readNotes(raw);
+            if (raw.type !== undefined) {
+                this.type = this.readRequiredString('type', raw);
+            }
+        }
+        /**
+         * @param patch If true, the exported JSON object will only contain Patch-specific information.
+         *
+         * @returns The JSON of the Rosetta entity.
+         */
+        toJSON(patch = false) {
+            const { name, type, notes } = this;
+            const json = {};
+            /* (Properties) */
+            json.type = type;
+            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            return json;
+        }
+    }
+    exports.RosettaLuaTableField = RosettaLuaTableField;
+});
+define("src/asledgehammer/rosetta/lua/RosettaLuaTable", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaTableField"], function (require, exports, Assert, RosettaEntity_8, RosettaLuaFunction_2, RosettaLuaTableField_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaLuaTable = void 0;
+    /**
+     * **RosettaLuaTable**
+     *
+     * @author Jab
+     */
+    class RosettaLuaTable extends RosettaEntity_8.RosettaEntity {
+        constructor(name, raw = {}) {
+            super(raw);
+            this.fields = {};
+            this.tables = {};
+            this.functions = {};
+            Assert.assertNonEmptyString(name, 'name');
+            this.name = name;
+            this.notes = this.readNotes();
+            /* (Tables) */
+            if (raw.tables !== undefined) {
+                const rawTables = raw.tables;
+                for (const name2 of Object.keys(rawTables)) {
+                    const rawTable = rawTables[name2];
+                    const table = new RosettaLuaTable(name2, rawTable);
+                    this.tables[table.name] = this.tables[name2] = table;
+                }
+            }
+            /* (Functions) */
+            if (raw.functions !== undefined) {
+                const rawFunctions = raw.functions;
+                for (const name2 of Object.keys(rawFunctions)) {
+                    const rawFunction = rawFunctions[name2];
+                    const func = new RosettaLuaFunction_2.RosettaLuaFunction(name2, rawFunction);
+                    this.functions[func.name] = this.functions[name2] = func;
+                }
+            }
+            /* (Values) */
+            if (raw.values !== undefined) {
+                const rawValues = raw.values;
+                for (const name2 of Object.keys(rawValues)) {
+                    const rawValue = rawValues[name2];
+                    const value = new RosettaLuaTableField_1.RosettaLuaTableField(name2, rawValue);
+                    this.fields[value.name] = this.fields[name2] = value;
+                }
+            }
+        }
+        parse(raw) {
+            this.notes = this.readNotes(raw);
+            /* (Tables) */
+            if (raw.tables !== undefined) {
+                const rawTables = raw.tables;
+                for (const name of Object.keys(rawTables)) {
+                    const rawTable = rawTables[name];
+                    let table = this.tables[name];
+                    if (table === undefined) {
+                        table = new RosettaLuaTable(name, rawTable);
+                    }
+                    else {
+                        table.parse(rawTable);
+                    }
+                    this.tables[table.name] = this.tables[name] = table;
+                }
+            }
+            /* (Functions) */
+            if (raw.functions !== undefined) {
+                const rawFunctions = raw.functions;
+                for (const name of Object.keys(rawFunctions)) {
+                    const rawFunction = rawFunctions[name];
+                    let func = this.functions[name];
+                    if (func === undefined) {
+                        func = new RosettaLuaFunction_2.RosettaLuaFunction(name, rawFunction);
+                    }
+                    else {
+                        func.parse(rawFunction);
+                    }
+                    this.functions[func.name] = this.functions[name] = func;
+                }
+            }
+            /* (Values) */
+            if (raw.values !== undefined) {
+                const rawValues = raw.values;
+                for (const name of Object.keys(rawValues)) {
+                    const rawValue = rawValues[name];
+                    let value = this.fields[name];
+                    if (value === undefined) {
+                        value = new RosettaLuaTableField_1.RosettaLuaTableField(name, rawValue);
+                    }
+                    else {
+                        value.parse(rawValue);
+                    }
+                    this.fields[value.name] = this.fields[name] = value;
+                }
+            }
+        }
+        toJSON(patch = false) {
+            const { fields, tables, functions, name, notes } = this;
+            const json = {};
+            /* (Properties) */
+            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            /* (Fields) */
+            let keys = Object.keys(fields);
+            if (keys.length) {
+                json.fields = {};
+                keys.sort((a, b) => a.localeCompare(b));
+                for (const key of keys)
+                    json.fields[key] = fields[key].toJSON(patch);
+            }
+            /* (Functions) */
+            keys = Object.keys(functions);
+            if (keys.length) {
+                json.functions = {};
+                keys.sort((a, b) => a.localeCompare(b));
+                for (const key of keys)
+                    json.functions[key] = functions[key].toJSON(patch);
+            }
+            /* (Tables) */
+            keys = Object.keys(tables);
+            if (keys.length) {
+                json.tables = {};
+                keys.sort((a, b) => a.localeCompare(b));
+                for (const key of keys)
+                    json.tables[key] = tables[key].toJSON(patch);
+            }
+            return json;
+        }
+    }
+    exports.RosettaLuaTable = RosettaLuaTable;
+});
 define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/component/lua/LuaClassCard", "src/asledgehammer/rosetta/component/lua/LuaConstructorCard", "src/asledgehammer/rosetta/component/lua/LuaFieldCard", "src/asledgehammer/rosetta/component/lua/LuaFunctionCard", "src/asledgehammer/rosetta/component/Sidebar", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/lua/wizard/LuaParser"], function (require, exports, hljs, LuaClassCard_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, Sidebar_1, LuaGenerator_5, RosettaLuaClass_2, RosettaLuaConstructor_3, util_11, LuaParser_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.App = exports.Toast = void 0;
+    exports.App = exports.Toast = exports.Active = void 0;
+    class Active {
+        constructor(app) {
+            this.luaClasses = [];
+            this.luaTables = [];
+            this.javaClasses = [];
+            this.app = app;
+        }
+    }
+    exports.Active = Active;
     class Toast {
         constructor(app) {
             this.idSimpleBody = 'toast-simple-body';
@@ -6229,7 +6414,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
     exports.Toast = Toast;
     class App {
         constructor() {
-            this.card = null;
+            this.active = new Active(this);
             this.sidebar = new Sidebar_1.Sidebar(this);
             this.toast = new Toast(this);
             this.luaParser = new LuaParser_1.LuaParser(this);
@@ -6256,26 +6441,26 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             // Always get first class
             const name = Object.keys(json.luaClasses)[0];
             const entity = new RosettaLuaClass_2.RosettaLuaClass(name, json.luaClasses[name]);
-            this.card = new LuaClassCard_1.LuaClassCard(this, { entity: entity });
-            this.$screenContent.append(this.card.render());
-            this.card.listen();
-            this.card.update();
+            this.active.selectedCard = new LuaClassCard_1.LuaClassCard(this, { entity: entity });
+            this.$screenContent.append(this.active.selectedCard.render());
+            this.active.selectedCard.listen();
+            this.active.selectedCard.update();
             this.renderCode();
             this.sidebar.populateTrees();
-            return this.card;
+            return this.active.selectedCard;
         }
         showClass(entity) {
             this.$screenContent.empty();
-            this.card = new LuaClassCard_1.LuaClassCard(this, { entity });
-            this.$screenContent.append(this.card.render());
-            this.card.listen();
-            this.card.update();
+            this.active.selectedCard = new LuaClassCard_1.LuaClassCard(this, { entity });
+            this.$screenContent.append(this.active.selectedCard.render());
+            this.active.selectedCard.listen();
+            this.active.selectedCard.update();
             this.renderCode();
-            return this.card;
+            return this.active.selectedCard;
         }
         showConstructor(entity) {
             var _a;
-            const clazz = (_a = this.card) === null || _a === void 0 ? void 0 : _a.options.entity;
+            const clazz = (_a = this.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
             if (!entity)
                 entity = new RosettaLuaConstructor_3.RosettaLuaConstructor(clazz);
             this.$screenContent.empty();
@@ -6321,9 +6506,9 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
         renderCode() {
             const $renderPane = (0, util_11.$get)('code-preview');
             $renderPane.empty();
-            if (!this.card)
+            if (!this.active.selectedCard)
                 return;
-            const highlightedCode = hljs.default.highlightAuto((0, LuaGenerator_5.generateLuaClass)(this.card.options.entity), ['lua']).value;
+            const highlightedCode = hljs.default.highlightAuto((0, LuaGenerator_5.generateLuaClass)(this.active.selectedCard.options.entity), ['lua']).value;
             $renderPane.html(highlightedCode);
         }
         createSidebar() {
@@ -6345,7 +6530,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             });
             this.$btnName.on('click', () => {
                 var _a;
-                const clazz = (_a = this.card) === null || _a === void 0 ? void 0 : _a.options.entity;
+                const clazz = (_a = this.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
                 const name = (0, util_11.validateLuaVariableName)(this.$inputName.val()).trim();
                 const nameOld = this.nameSelected;
                 switch (this.nameMode) {
@@ -6671,182 +6856,6 @@ define("src/asledgehammer/rosetta/Rosetta", ["require", "exports"], function (re
     exports.JSON_PATCH_SCHEMA_URL = exports.JSON_SCHEMA_URL = void 0;
     exports.JSON_SCHEMA_URL = 'https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-schema.json';
     exports.JSON_PATCH_SCHEMA_URL = 'https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-patch-schema.json';
-});
-define("src/asledgehammer/rosetta/lua/RosettaLuaTableField", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/RosettaUtils"], function (require, exports, Assert, RosettaEntity_7, RosettaUtils_4) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.RosettaLuaTableField = void 0;
-    /**
-     * **RosettaLuaTableField**
-     *
-     * @author Jab
-     */
-    class RosettaLuaTableField extends RosettaEntity_7.RosettaEntity {
-        constructor(name, raw = {}) {
-            super(raw);
-            Assert.assertNonEmptyString(name, 'name');
-            this.name = (0, RosettaUtils_4.formatName)(name);
-            if (raw.type !== undefined) {
-                let type = this.readString('type');
-                if (type === undefined)
-                    type = 'any';
-                this.type = type;
-            }
-            else {
-                this.type = 'any';
-            }
-            this.notes = this.readNotes();
-        }
-        parse(raw) {
-            /* (Properties) */
-            this.notes = this.readNotes(raw);
-            if (raw.type !== undefined) {
-                this.type = this.readRequiredString('type', raw);
-            }
-        }
-        /**
-         * @param patch If true, the exported JSON object will only contain Patch-specific information.
-         *
-         * @returns The JSON of the Rosetta entity.
-         */
-        toJSON(patch = false) {
-            const { name, type, notes } = this;
-            const json = {};
-            /* (Properties) */
-            json.type = type;
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
-            return json;
-        }
-    }
-    exports.RosettaLuaTableField = RosettaLuaTableField;
-});
-define("src/asledgehammer/rosetta/lua/RosettaLuaTable", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaTableField"], function (require, exports, Assert, RosettaEntity_8, RosettaLuaFunction_2, RosettaLuaTableField_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.RosettaLuaTable = void 0;
-    /**
-     * **RosettaLuaTable**
-     *
-     * @author Jab
-     */
-    class RosettaLuaTable extends RosettaEntity_8.RosettaEntity {
-        constructor(name, raw = {}) {
-            super(raw);
-            this.fields = {};
-            this.tables = {};
-            this.functions = {};
-            Assert.assertNonEmptyString(name, 'name');
-            this.name = name;
-            this.notes = this.readNotes();
-            /* (Tables) */
-            if (raw.tables !== undefined) {
-                const rawTables = raw.tables;
-                for (const name2 of Object.keys(rawTables)) {
-                    const rawTable = rawTables[name2];
-                    const table = new RosettaLuaTable(name2, rawTable);
-                    this.tables[table.name] = this.tables[name2] = table;
-                }
-            }
-            /* (Functions) */
-            if (raw.functions !== undefined) {
-                const rawFunctions = raw.functions;
-                for (const name2 of Object.keys(rawFunctions)) {
-                    const rawFunction = rawFunctions[name2];
-                    const func = new RosettaLuaFunction_2.RosettaLuaFunction(name2, rawFunction);
-                    this.functions[func.name] = this.functions[name2] = func;
-                }
-            }
-            /* (Values) */
-            if (raw.values !== undefined) {
-                const rawValues = raw.values;
-                for (const name2 of Object.keys(rawValues)) {
-                    const rawValue = rawValues[name2];
-                    const value = new RosettaLuaTableField_1.RosettaLuaTableField(name2, rawValue);
-                    this.fields[value.name] = this.fields[name2] = value;
-                }
-            }
-        }
-        parse(raw) {
-            this.notes = this.readNotes(raw);
-            /* (Tables) */
-            if (raw.tables !== undefined) {
-                const rawTables = raw.tables;
-                for (const name of Object.keys(rawTables)) {
-                    const rawTable = rawTables[name];
-                    let table = this.tables[name];
-                    if (table === undefined) {
-                        table = new RosettaLuaTable(name, rawTable);
-                    }
-                    else {
-                        table.parse(rawTable);
-                    }
-                    this.tables[table.name] = this.tables[name] = table;
-                }
-            }
-            /* (Functions) */
-            if (raw.functions !== undefined) {
-                const rawFunctions = raw.functions;
-                for (const name of Object.keys(rawFunctions)) {
-                    const rawFunction = rawFunctions[name];
-                    let func = this.functions[name];
-                    if (func === undefined) {
-                        func = new RosettaLuaFunction_2.RosettaLuaFunction(name, rawFunction);
-                    }
-                    else {
-                        func.parse(rawFunction);
-                    }
-                    this.functions[func.name] = this.functions[name] = func;
-                }
-            }
-            /* (Values) */
-            if (raw.values !== undefined) {
-                const rawValues = raw.values;
-                for (const name of Object.keys(rawValues)) {
-                    const rawValue = rawValues[name];
-                    let value = this.fields[name];
-                    if (value === undefined) {
-                        value = new RosettaLuaTableField_1.RosettaLuaTableField(name, rawValue);
-                    }
-                    else {
-                        value.parse(rawValue);
-                    }
-                    this.fields[value.name] = this.fields[name] = value;
-                }
-            }
-        }
-        toJSON(patch = false) {
-            const { fields, tables, functions, name, notes } = this;
-            const json = {};
-            /* (Properties) */
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
-            /* (Fields) */
-            let keys = Object.keys(fields);
-            if (keys.length) {
-                json.fields = {};
-                keys.sort((a, b) => a.localeCompare(b));
-                for (const key of keys)
-                    json.fields[key] = fields[key].toJSON(patch);
-            }
-            /* (Functions) */
-            keys = Object.keys(functions);
-            if (keys.length) {
-                json.functions = {};
-                keys.sort((a, b) => a.localeCompare(b));
-                for (const key of keys)
-                    json.functions[key] = functions[key].toJSON(patch);
-            }
-            /* (Tables) */
-            keys = Object.keys(tables);
-            if (keys.length) {
-                json.tables = {};
-                keys.sort((a, b) => a.localeCompare(b));
-                for (const key of keys)
-                    json.tables[key] = tables[key].toJSON(patch);
-            }
-            return json;
-        }
-    }
-    exports.RosettaLuaTable = RosettaLuaTable;
 });
 define("src/asledgehammer/rosetta/RosettaFileInfo", ["require", "exports"], function (require, exports) {
     "use strict";
