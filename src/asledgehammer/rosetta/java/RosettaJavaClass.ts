@@ -7,6 +7,7 @@ import { RosettaJavaConstructor } from './RosettaJavaConstructor';
 import { RosettaJavaMethodCluster } from './RosettaJavaMethodCluster';
 import { RosettaJavaMethod } from './RosettaJavaMethod';
 import { RosettaJavaField } from './RosettaJavaField';
+import { RosettaJavaNamespace } from './RosettaJavaNamespace';
 
 /**
  * **RosettaJavaClass**
@@ -24,13 +25,18 @@ export class RosettaJavaClass extends RosettaEntity {
   readonly deprecated: boolean;
   readonly javaType: string;
 
+  readonly namespace: RosettaJavaNamespace;
+
   notes: string | undefined;
 
-  constructor(name: string, raw: { [key: string]: any }) {
+  constructor(name: string, namespace: RosettaJavaNamespace, raw: { [key: string]: any }) {
     super(raw);
 
-    Assert.assertNonEmptyString(name, 'name');
 
+    Assert.assertNonEmptyString(name, 'name');
+    Assert.assertNonNull(namespace, 'namsepace');
+
+    this.namespace = namespace;
     this.name = formatName(name);
     this.extendz = this.readString('extends');
     this.modifiers = this.readModifiers();

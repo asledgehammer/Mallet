@@ -14,6 +14,8 @@ import { RosettaLuaFunction } from './asledgehammer/rosetta/lua/RosettaLuaFuncti
 import { $get, validateLuaVariableName } from './asledgehammer/rosetta/util';
 import { LuaParser } from './asledgehammer/rosetta/lua/wizard/LuaParser';
 import { RosettaLuaTable } from './asledgehammer/rosetta/lua/RosettaLuaTable';
+import { RosettaJavaNamespace } from './asledgehammer/rosetta/java/RosettaJavaNamespace';
+import { RosettaJavaClass } from './asledgehammer/rosetta/java/RosettaJavaClass';
 
 export class Active {
 
@@ -21,9 +23,9 @@ export class Active {
 
     readonly luaClasses: { [name: string]: RosettaLuaClass } = {};
     readonly luaTables: { [name: string]: RosettaLuaTable } = {};
-    readonly javaClasses: { [name: string]: any } = {};
+    readonly javaClasses: { [name: string]: RosettaJavaClass } = {};
 
-    selected: RosettaLuaClass | RosettaLuaTable | any;
+    selected: RosettaLuaClass | RosettaLuaTable | RosettaJavaClass | undefined = undefined;
     selectedCard: LuaClassCard | any;
 
     constructor(app: App) {
@@ -155,7 +157,62 @@ export class App {
             }
         }
 
+        if (json.namespaces) {
+            for (const name of Object.keys(json.namespaces)) {
+                const namespace = new RosettaJavaNamespace(name, json.namespaces[name]);
+                for (const className of Object.keys(namespace.classes)) {
+                    this.active.javaClasses[className] = namespace.classes[className];
+                }
+            }
+        }
+
         this.sidebar.populateTrees();
+    }
+
+    public saveJson(): any {
+        let keys: string[];
+
+        // Lua Classes
+        let luaClasses: any = undefined;
+        keys = Object.keys(this.active.luaClasses);
+        if (keys.length) {
+            luaClasses = {};
+            for (const name of keys) {
+                luaClasses[name] = this.active.luaClasses[name].toJSON();
+            }
+        }
+
+        // Lua Tables
+        let luaTables: any = undefined;
+        keys = Object.keys(this.active.luaTables);
+        if (keys.length) {
+            luaTables = {};
+            for (const name of keys) {
+                luaTables[name] = this.active.luaTables[name].toJSON();
+            }
+        }
+
+        // Java Classes
+        let namespaces: any = undefined;
+        keys = Object.keys(this.active.javaClasses);
+        if (keys.length) {
+            namespaces = {};
+            for (const name of keys) {
+                const javaClass = this.active.javaClasses[name];
+                const namespace = javaClass.namespace;
+                if (!namespaces[namespace.name]) {
+                    namespaces[namespace.name] = {};
+                }
+                namespaces[namespace.name][name] = this.active.javaClasses[name].toJSON();
+            }
+        }
+
+        return {
+            $schema: 'https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-schema.json',
+            luaClasses,
+            luaTables,
+            namespaces
+        };
     }
 
     public showClass(entity: RosettaLuaClass): LuaClassCard {

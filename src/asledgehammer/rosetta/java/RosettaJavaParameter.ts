@@ -35,7 +35,7 @@ export class RosettaJavaParameter extends RosettaEntity {
     const json: any = {};
 
     /* (Properties) */
-    if (!patch) json.types = type.toJSON(patch);
+    if (!patch) json.type = type.toJSON(patch);
     json.name = name;
     json.notes = notes !== undefined && notes !== '' ? notes : undefined;
 

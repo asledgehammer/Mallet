@@ -172,47 +172,10 @@ export class Sidebar extends Component<SidebarOptions> {
                 // @ts-ignore
                 const result = await showSaveFilePicker();
 
-                let keys: string[];
-
-                // Lua Classes
-                let luaClasses: any = undefined;
-                keys = Object.keys(this.app.active.luaClasses);
-                if (keys.length) {
-                    luaClasses = {};
-                    for (const name of keys) {
-                        luaClasses[name] = this.app.active.luaClasses[name].toJSON();
-                    }
-                }
-
-                // Lua Tables
-                let luaTables: any = undefined;
-                keys = Object.keys(this.app.active.luaTables);
-                if (keys.length) {
-                    luaTables = {};
-                    for (const name of keys) {
-                        luaTables[name] = this.app.active.luaTables[name].toJSON();
-                    }
-                }
-
-                // Java Classes
-                let javaClasses: any = undefined;
-                keys = Object.keys(this.app.active.javaClasses);
-                if (keys.length) {
-                    javaClasses = {};
-                    for (const name of keys) {
-                        javaClasses[name] = this.app.active.javaClasses[name].toJSON();
-                    }
-                }
-
-                const contents = {
-                    $schema: 'https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-schema.json',
-                    luaClasses,
-                    luaTables,
-                    javaClasses
-                };
+                const json = this.app.saveJson();
 
                 const writable = await result.createWritable();
-                await writable.write(JSON.stringify(contents, null, 2));
+                await writable.write(JSON.stringify(json, null, 2));
                 await writable.close();
 
                 app.toast.alert(`Saved LuaClass.`, 'info');

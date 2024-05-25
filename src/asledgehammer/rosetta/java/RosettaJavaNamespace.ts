@@ -23,7 +23,7 @@ export class RosettaJavaNamespace extends RosettaEntity {
         const rawClazz = raw[clazzName];
         let clazz = this.classes[clazzName];
         if (clazz === undefined) {
-          clazz = new RosettaJavaClass(clazzName, rawClazz);
+          clazz = new RosettaJavaClass(clazzName, this, rawClazz);
         } else {
           clazz.parse(rawClazz);
         }
@@ -40,7 +40,7 @@ export class RosettaJavaNamespace extends RosettaEntity {
       const rawClazz = raw[clazzName];
       let clazz = this.classes[clazzName];
       if (clazz === undefined) {
-        clazz = new RosettaJavaClass(clazzName, rawClazz);
+        clazz = new RosettaJavaClass(clazzName, this, rawClazz);
       } else {
         clazz.parse(rawClazz);
       }
