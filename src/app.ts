@@ -218,6 +218,8 @@ export class App {
 
     public showLuaClass(entity: RosettaLuaClass): LuaClassCard {
         this.$screenContent.empty();
+        // this.selected = entity.name;
+        this.active.selected = entity;
         this.active.selectedCard = new LuaClassCard(this, { entity });
         this.$screenContent.append(this.active.selectedCard.render());
         this.active.selectedCard.listen();
@@ -285,6 +287,8 @@ export class App {
 
     public showJavaClass(entity: RosettaJavaClass): JavaClassCard {
         this.$screenContent.empty();
+        // this.selected = entity.name;
+        this.active.selected = entity;
         this.active.selectedCard = new JavaClassCard(this, { entity });
         this.$screenContent.append(this.active.selectedCard.render());
         this.active.selectedCard.listen();
@@ -304,7 +308,7 @@ export class App {
         if (selected instanceof RosettaLuaClass) {
             highlightedCode = hljs.default.highlightAuto(generateLuaClass(selected), ['lua']).value;
         } else if (selected instanceof RosettaJavaClass) {
-            highlightedCode = hljs.default.highlightAuto(generateJavaClass(selected), ['java']).value;
+            highlightedCode = hljs.default.highlightAuto(generateJavaClass(selected), ['lua']).value;
         }
         $renderPane.html(highlightedCode);
     }

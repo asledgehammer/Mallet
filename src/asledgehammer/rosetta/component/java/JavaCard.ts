@@ -229,7 +229,7 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
         if (text.endsWith('\n')) text = text.substring(0, text.length - 1);
 
         // @ts-ignore
-        const highlightedCode = hljs.default.highlightAuto(text, ['java']).value;
+        const highlightedCode = hljs.default.highlightAuto(text, ['lua']).value;
 
         $pre.append(highlightedCode);
     }

@@ -8,6 +8,7 @@ import { RosettaJavaType } from './RosettaJavaType';
  * @author Jab
  */
 export class RosettaJavaField extends RosettaEntity {
+
   readonly name: string;
   readonly modifiers: string[];
   readonly type: RosettaJavaType;
@@ -48,6 +49,10 @@ export class RosettaJavaField extends RosettaEntity {
     }
 
     return json;
+  }
+
+  isStatic() {
+    return this.modifiers.length && this.modifiers.indexOf('static') !== -1;
   }
 }
 

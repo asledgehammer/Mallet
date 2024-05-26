@@ -9,6 +9,7 @@ import { RosettaJavaReturns } from './RosettaJavaReturns';
  * @author Jab
  */
 export class RosettaJavaMethod extends RosettaEntity {
+
   readonly parameters: RosettaJavaParameter[] = [];
   readonly returns: RosettaJavaReturns;
 
@@ -94,5 +95,9 @@ export class RosettaJavaMethod extends RosettaEntity {
     json.returns = returns.toJSON(patch);
 
     return json;
+  }
+
+  isStatic(): boolean {
+    return this.modifiers && !!this.modifiers.length && this.modifiers.indexOf('static') !== -1;
   }
 }
