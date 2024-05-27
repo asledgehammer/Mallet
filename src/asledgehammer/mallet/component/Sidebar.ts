@@ -39,40 +39,25 @@ export class Sidebar extends Component<SidebarOptions> {
                 <div class="p-1 border-bottom border-bottom-2 border-black shadow">
                     
                     <!-- New Class -->
-                    <button id="new-lua-class" class="btn btn-sm responsive-btn responsive-btn-success" title="New Class">
+                    <button id="new-lua-class" class="btn btn-sm responsive-btn responsive-btn-success" title="New Lua Class">
                         <div class="btn-pane">    
                             <i class="fa fa-file"></i>
                         </div>
                     </button>
 
                     <!-- Open -->
-                    <button id="open-lua-class" class="btn btn-sm responsive-btn responsive-btn-info" title="Open Class">
+                    <button id="open-lua-class" class="btn btn-sm responsive-btn responsive-btn-info" title="Open JSON File">
                         <div class="btn-pane">
                             <i class="fa-solid fa-folder-open"></i>
                         </div>
                     </button>
 
                     <!-- Save -->
-                    <button id="save-lua-class" class="btn btn-sm responsive-btn responsive-btn-info" title="Save Class">
+                    <button id="save-lua-class" class="btn btn-sm responsive-btn responsive-btn-info" title="Save JSON File">
                         <div class="btn-pane">
                             <i class="fa fa-save"></i>
                         </div>
-                    </button>    
-                    
-                    <!-- New Properties -->
-                    <div class="dropdown" style="position: absolute; top: 5px; right: 5px;">
-                        <button class="btn btn-sm responsive-btn responsive-btn-success float-end" style="width: 32px; height: 32px" data-bs-toggle="dropdown" aria-expanded="false" title="Add Element">
-                        <div class="btn-pane">     
-                                <i class="fa-solid fa-plus"></i>
-                            </div>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-dark">
-                            <li><a id="2btn-new-lua-value" class="dropdown-item" href="#">New Value</a></li>
-                            <li><a id="2btn-new-lua-field" class="dropdown-item" href="#">New Field</a></li>
-                            <li><a id="2btn-new-lua-function" class="dropdown-item" href="#">New Function</a></li>
-                            <li><a id="2btn-new-lua-method" class="dropdown-item" href="#">New Method</a></li>
-                        </ul>
-                    </div>
+                    </button>
                 </div>
 
                 <div class="bg-dark" style="height: 100%; overflow-y: auto;">
@@ -159,9 +144,12 @@ export class Sidebar extends Component<SidebarOptions> {
                         }
                         reader.readAsText(file);
                     }
-                    app.toast.alert(`Loaded LuaClass.`, 'success');
+                    app.toast.alert(`Loaded JSON file.`, 'success');
                 } catch (e) {
-                    app.toast.alert(`Failed to load LuaClass.`, 'error');
+                    if (e instanceof DOMException) {
+                        console.warn(e.name);
+                    }
+                    app.toast.alert(`Failed to load JSON file.`, 'error');
                     console.error(e);
                 }
             };
@@ -180,9 +168,15 @@ export class Sidebar extends Component<SidebarOptions> {
                 await writable.write(JSON.stringify(json, null, 2));
                 await writable.close();
 
-                app.toast.alert(`Saved LuaClass.`, 'info');
+                app.toast.alert(`Saved JSON file.`, 'info');
             } catch (e) {
-                app.toast.alert(`Failed to load LuaClass.`, 'error');
+                if (e instanceof DOMException) {
+                    /* (Ignore aborted dialogs) */
+                    if (e.name === 'AbortError') {
+                        return;
+                    }
+                }
+                app.toast.alert(`Failed to save JSON file.`, 'error');
                 console.error(e);
             }
 
