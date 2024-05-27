@@ -8,7 +8,7 @@ import { JavaCard } from './JavaCard';
 export class JavaClassCard extends JavaCard<JavaClassCardOptions> {
 
     onRenderPreview(): string {
-        return generateJavaClass(this.options!.entity);
+        return '--- @meta\n\n' + generateJavaClass(this.options!.entity);
     }
 
     readonly idAuthors: string;

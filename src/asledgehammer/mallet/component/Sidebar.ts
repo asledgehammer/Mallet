@@ -52,12 +52,26 @@ export class Sidebar extends Component<SidebarOptions> {
                         </div>
                     </button>
 
-                    <!-- Save -->
+                    <!-- Save
                     <button id="save-lua-class" class="btn btn-sm responsive-btn responsive-btn-info" title="Save JSON File">
                         <div class="btn-pane">
                             <i class="fa fa-save"></i>
                         </div>
-                    </button>
+                    </button> -->
+
+                    <!-- Save dropdown -->
+                    <div id="save-file-dropdown" class="dropdown" style="display: inline;">
+                        <button class="btn btn-sm responsive-btn responsive-btn-success" style="width: 32px; height: 32px" data-bs-toggle="dropdown" aria-expanded="false" title="Save Catalog">
+                        <div class="btn-pane">     
+                        <i class="fa fa-save"></i>
+                            </div>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a id="btn-save-json" class="dropdown-item" href="#">JSON Catalog</a></li>
+                            <li><a id="btn-save-lua" class="dropdown-item" href="#">Lua Typings</a></li>
+                        </ul>
+                    </div>
+
                 </div>
 
                 <div class="bg-dark" style="height: 100%; overflow-y: auto;">
@@ -138,7 +152,7 @@ export class Sidebar extends Component<SidebarOptions> {
                         var reader = new FileReader();
                         reader.onload = function (e) {
                             const json = JSON.parse(reader.result as string);
-                            app.loadJson(json);
+                            app.catalog.fromJSON(json);
                             app.renderCode();
                             _this.populateTrees();
                         }
@@ -157,30 +171,45 @@ export class Sidebar extends Component<SidebarOptions> {
             dFileLoad.click();
         });
 
-        $doc.on('click', '#save-lua-class', async () => {
+        $doc.on('click', '#btn-save-lua', async () => {
             try {
                 // @ts-ignore
                 const result = await showSaveFilePicker();
+                const { catalog } = this.app;
+                const lua = catalog.toLuaTypings();
 
-                const json = this.app.saveJson();
+                const writable = await result.createWritable();
+                await writable.write(lua);
+                await writable.close();
+
+                app.toast.alert(`Saved Lua typings file.`, 'info');
+            } catch(e) {
+                /* (Ignore aborted dialogs) */
+                if (e instanceof DOMException && e.name === 'AbortError') return;
+                app.toast.alert(`Failed to save Lua typings.`, 'error');
+                console.error(e);
+            }
+        });
+
+        $doc.on('click', '#btn-save-json', async () => {
+            try {
+                // @ts-ignore
+                const result = await showSaveFilePicker();
+                const { catalog } = this.app;
+                const json = catalog.toJSON();
 
                 const writable = await result.createWritable();
                 await writable.write(JSON.stringify(json, null, 2));
                 await writable.close();
 
                 app.toast.alert(`Saved JSON file.`, 'info');
-            } catch (e) {
-                if (e instanceof DOMException) {
-                    /* (Ignore aborted dialogs) */
-                    if (e.name === 'AbortError') {
-                        return;
-                    }
-                }
+
+            } catch(e) {
+                /* (Ignore aborted dialogs) */
+                if (e instanceof DOMException && e.name === 'AbortError') return;
                 app.toast.alert(`Failed to save JSON file.`, 'error');
                 console.error(e);
             }
-
-            return;
         });
 
         $doc.on('click', '#btn-new-lua-value', () => {
