@@ -1,16 +1,16 @@
 import { App } from '../../../../app';
-import { generateJavaConstructor } from '../../java/JavaGenerator';
-import { RosettaJavaConstructor } from '../../java/RosettaJavaConstructor';
-import { $get, html } from '../../util';
+import { generateLuaConstructor } from '../../../rosetta/lua/LuaGenerator';
+import { RosettaLuaConstructor } from '../../../rosetta/lua/RosettaLuaConstructor';
+import { $get, html } from '../../../rosetta/util';
 import { CardOptions } from '../CardComponent';
-import { JavaCard } from './JavaCard';
+import { LuaCard } from './LuaCard';
 
-export class JavaConstructorCard extends JavaCard<JavaConstructorCardOptions> {
+export class LuaConstructorCard extends LuaCard<LuaConstructorCardOptions> {
 
     idNotes: string;
     idParamContainer: string;
 
-    constructor(app: App, options: JavaConstructorCardOptions) {
+    constructor(app: App, options: LuaConstructorCardOptions) {
         super(app, options);
         this.idNotes = `${this.id}-notes`;
         this.idParamContainer = `${this.id}-parameter-container`;
@@ -21,31 +21,23 @@ export class JavaConstructorCard extends JavaCard<JavaConstructorCardOptions> {
         const { entity } = this.options;
         const classEntity = this.app.active.selectedCard!.options!.entity;
         const className = classEntity.name;
-        return generateJavaConstructor(className, [entity]);
+        return generateLuaConstructor(className, entity);
     }
 
     onHeaderHTML(): string | undefined {
-        const { entity } = this.options!;
         const classEntity = this.app.active.selectedCard!.options!.entity;
         const className = classEntity.name;
-
-        let params = '';
-        for (const param of entity.parameters) {
-            params += `${param.name}, `;
-        }
-        if (params.length) params = params.substring(0, params.length - 2);
-        let name = `${className}(${params})`;
-
+        const name = `${className}:new( )`;
         return html` 
             <div class="row">
                 <!-- Visual Category Badge -->
                 <div class="col-auto ps-2 pe-2">
-                    <div class="text-bg-success px-2 border border-1 border-light-half desaturate shadow">
-                        <strong>Java Constructor</strong>
+                    <div class="text-bg-primary px-2 border border-1 border-light-half desaturate shadow">
+                        <strong>Lua Constructor</strong>
                     </div>
                 </div>
                 <div class="col-auto p-0">
-                    <h5 class="card-text font-monospace" style="position: relative; top: 1px;"><strong>${name}</strong></h5> 
+                    <h5 class="card-text"><strong>${name}</strong></h5> 
                 </div>
             </div>
         `;
@@ -85,6 +77,6 @@ export class JavaConstructorCard extends JavaCard<JavaConstructorCardOptions> {
     }
 }
 
-export type JavaConstructorCardOptions = CardOptions & {
-    entity: RosettaJavaConstructor;
+export type LuaConstructorCardOptions = CardOptions & {
+    entity: RosettaLuaConstructor;
 };

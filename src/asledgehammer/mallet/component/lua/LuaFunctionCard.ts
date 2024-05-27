@@ -1,8 +1,8 @@
 import { App } from '../../../../app';
-import { generateLuaMethod } from '../../lua/LuaGenerator';
-import { RosettaLuaClass } from '../../lua/RosettaLuaClass';
-import { RosettaLuaFunction } from '../../lua/RosettaLuaFunction';
-import { $get, html } from '../../util';
+import { generateLuaMethod } from '../../../rosetta/lua/LuaGenerator';
+import { RosettaLuaClass } from '../../../rosetta/lua/RosettaLuaClass';
+import { RosettaLuaFunction } from '../../../rosetta/lua/RosettaLuaFunction';
+import { $get, html } from '../../../rosetta/util';
 import { CardOptions } from '../CardComponent';
 import { LuaCard } from './LuaCard';
 

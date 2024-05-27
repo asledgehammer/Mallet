@@ -1,6 +1,6 @@
 import { App } from "../../../app";
+import { $get } from "../../rosetta/util";
 import { LuaCard } from "./lua/LuaCard";
-import { $get } from "../util";
 import { Sidebar } from "./Sidebar";
 
 const CLASS_HEADER = 'obj-tree';

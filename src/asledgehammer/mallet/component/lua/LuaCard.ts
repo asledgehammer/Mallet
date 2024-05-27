@@ -1,13 +1,13 @@
 import hljs = require('highlight.js');
 import { App } from "../../../../app";
-import { RosettaEntity } from "../../RosettaEntity";
-import { RosettaLuaParameter } from "../../lua/RosettaLuaParameter";
-import { RosettaLuaReturns } from "../../lua/RosettaLuaReturns";
-import { $get, html } from "../../util";
 import { CardComponent } from "../CardComponent";
 import { ComponentOptions } from "../Component";
 import { NameModeType } from "../NameModeType";
 import { createDeltaEditor } from "../../../Delta";
+import { $get, html } from '../../../rosetta/util';
+import { RosettaLuaParameter } from '../../../rosetta/lua/RosettaLuaParameter';
+import { RosettaLuaReturns } from '../../../rosetta/lua/RosettaLuaReturns';
+import { RosettaEntity } from '../../../rosetta/RosettaEntity';
 
 export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O> {
 

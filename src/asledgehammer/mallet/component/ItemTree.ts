@@ -1,10 +1,10 @@
 import { App } from "../../../app";
-import { RosettaJavaClass } from "../java/RosettaJavaClass";
-import { RosettaJavaConstructor } from "../java/RosettaJavaConstructor";
-import { RosettaJavaMethod } from "../java/RosettaJavaMethod";
-import { RosettaLuaClass } from "../lua/RosettaLuaClass";
-import { RosettaLuaTable } from "../lua/RosettaLuaTable";
-import { $get, html } from "../util";
+import { RosettaJavaClass } from "../../rosetta/java/RosettaJavaClass";
+import { RosettaJavaConstructor } from "../../rosetta/java/RosettaJavaConstructor";
+import { RosettaJavaMethod } from "../../rosetta/java/RosettaJavaMethod";
+import { RosettaLuaClass } from "../../rosetta/lua/RosettaLuaClass";
+import { RosettaLuaTable } from "../../rosetta/lua/RosettaLuaTable";
+import { $get, html } from "../../rosetta/util";
 import { Sidebar } from "./Sidebar";
 import { LuaCard } from "./lua/LuaCard";
 

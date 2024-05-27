@@ -1,9 +1,9 @@
 import { App } from '../../../../app';
-import { generateJavaMethod } from '../../java/JavaGenerator';
-import { RosettaJavaClass } from '../../java/RosettaJavaClass';
-import { RosettaJavaMethod } from '../../java/RosettaJavaMethod';
-import { RosettaJavaMethodCluster } from '../../java/RosettaJavaMethodCluster';
-import { $get, html } from '../../util';
+import { generateJavaMethod } from '../../../rosetta/java/JavaGenerator';
+import { RosettaJavaClass } from '../../../rosetta/java/RosettaJavaClass';
+import { RosettaJavaMethod } from '../../../rosetta/java/RosettaJavaMethod';
+import { RosettaJavaMethodCluster } from '../../../rosetta/java/RosettaJavaMethodCluster';
+import { $get, html } from '../../../rosetta/util';
 import { CardOptions } from '../CardComponent';
 import { JavaCard } from './JavaCard';
 

@@ -1,4 +1,4 @@
-import { html } from '../util';
+import { html } from '../../rosetta/util';
 import { Component, ComponentOptions } from './Component';
 
 export class LabelComponent extends Component<LabelOptions> {

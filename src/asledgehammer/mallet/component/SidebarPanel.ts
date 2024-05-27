@@ -1,4 +1,3 @@
-import { html } from "../util";
 import { Component, ComponentOptions } from "./Component";
 import { SidebarPanelButton } from "./SidebarPanelButton";
 

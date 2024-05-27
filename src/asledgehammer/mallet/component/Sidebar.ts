@@ -1,5 +1,5 @@
 import { App } from '../../../app';
-import { $get, html } from '../util';
+import { html } from '../../rosetta/util';
 import { Component, ComponentOptions } from './Component';
 import { ItemTree } from './ItemTree';
 import { ObjectTree } from './ObjectTree';
@@ -80,15 +80,9 @@ export class Sidebar extends Component<SidebarOptions> {
                 </div>
             </div>
             <div style="position: absolute; top: 30%; left: 0; width: 100%; height: 70%;">
-                <div class="p-1 border-top border-top-2 border-bottom border-bottom-2 border-black shadow" style="height: 41px;">
-
-                    <!-- Lua Wizard -->
-                    <!-- <button id="lua-wizard" class="btn btn-sm responsive-btn responsive-btn-info" title="Lua Wizard">
-                        <div class="btn-pane">    
-                            <i class="fa-solid fa-wand-sparkles"></i>
-                        </div>
-                    </button> -->
-
+                <div 
+                    class="p-1 border-top border-top-2 border-bottom border-bottom-2 border-black shadow"
+                    style="height: 41px;">
                     <!-- New Properties -->
                     <div class="dropdown" style="position: absolute; top: 5px; right: 5px;">
                         <button class="btn btn-sm responsive-btn responsive-btn-success float-end" style="width: 32px; height: 32px" data-bs-toggle="dropdown" aria-expanded="false" title="Add Element">

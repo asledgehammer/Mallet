@@ -1,7 +1,7 @@
 import { App } from '../../../../app';
-import { generateJavaClass } from '../../java/JavaGenerator';
-import { RosettaJavaClass } from '../../java/RosettaJavaClass';
-import { $get, html } from '../../util';
+import { generateJavaClass } from '../../../rosetta/java/JavaGenerator';
+import { RosettaJavaClass } from '../../../rosetta/java/RosettaJavaClass';
+import { html } from '../../../rosetta/util';
 import { CardOptions } from '../CardComponent';
 import { JavaCard } from './JavaCard';
 

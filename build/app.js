@@ -1,4 +1,3 @@
-"use strict";
 define("src/asledgehammer/Assert", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -1037,7 +1036,1135 @@ define("src/asledgehammer/rosetta/util", ["require", "exports"], function (requi
     }
     exports.get = get;
 });
-define("src/asledgehammer/rosetta/component/Component", ["require", "exports", "src/asledgehammer/rosetta/util"], function (require, exports, util_1) {
+define("src/asledgehammer/rosetta/lua/RosettaLuaTableField", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/RosettaUtils"], function (require, exports, Assert, RosettaEntity_7, RosettaUtils_4) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaLuaTableField = void 0;
+    /**
+     * **RosettaLuaTableField**
+     *
+     * @author Jab
+     */
+    class RosettaLuaTableField extends RosettaEntity_7.RosettaEntity {
+        constructor(name, raw = {}) {
+            super(raw);
+            Assert.assertNonEmptyString(name, 'name');
+            this.name = (0, RosettaUtils_4.formatName)(name);
+            if (raw.type !== undefined) {
+                let type = this.readString('type');
+                if (type === undefined)
+                    type = 'any';
+                this.type = type;
+            }
+            else {
+                this.type = 'any';
+            }
+            this.notes = this.readNotes();
+        }
+        parse(raw) {
+            /* (Properties) */
+            this.notes = this.readNotes(raw);
+            if (raw.type !== undefined) {
+                this.type = this.readRequiredString('type', raw);
+            }
+        }
+        /**
+         * @param patch If true, the exported JSON object will only contain Patch-specific information.
+         *
+         * @returns The JSON of the Rosetta entity.
+         */
+        toJSON(patch = false) {
+            const { name, type, notes } = this;
+            const json = {};
+            /* (Properties) */
+            json.type = type;
+            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            return json;
+        }
+    }
+    exports.RosettaLuaTableField = RosettaLuaTableField;
+});
+define("src/asledgehammer/rosetta/lua/RosettaLuaTable", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaTableField"], function (require, exports, Assert, RosettaEntity_8, RosettaLuaFunction_2, RosettaLuaTableField_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaLuaTable = void 0;
+    /**
+     * **RosettaLuaTable**
+     *
+     * @author Jab
+     */
+    class RosettaLuaTable extends RosettaEntity_8.RosettaEntity {
+        constructor(name, raw = {}) {
+            super(raw);
+            this.fields = {};
+            this.tables = {};
+            this.functions = {};
+            Assert.assertNonEmptyString(name, 'name');
+            this.name = name;
+            this.notes = this.readNotes();
+            /* (Tables) */
+            if (raw.tables !== undefined) {
+                const rawTables = raw.tables;
+                for (const name2 of Object.keys(rawTables)) {
+                    const rawTable = rawTables[name2];
+                    const table = new RosettaLuaTable(name2, rawTable);
+                    this.tables[table.name] = this.tables[name2] = table;
+                }
+            }
+            /* (Functions) */
+            if (raw.functions !== undefined) {
+                const rawFunctions = raw.functions;
+                for (const name2 of Object.keys(rawFunctions)) {
+                    const rawFunction = rawFunctions[name2];
+                    const func = new RosettaLuaFunction_2.RosettaLuaFunction(name2, rawFunction);
+                    this.functions[func.name] = this.functions[name2] = func;
+                }
+            }
+            /* (Values) */
+            if (raw.values !== undefined) {
+                const rawValues = raw.values;
+                for (const name2 of Object.keys(rawValues)) {
+                    const rawValue = rawValues[name2];
+                    const value = new RosettaLuaTableField_1.RosettaLuaTableField(name2, rawValue);
+                    this.fields[value.name] = this.fields[name2] = value;
+                }
+            }
+        }
+        parse(raw) {
+            this.notes = this.readNotes(raw);
+            /* (Tables) */
+            if (raw.tables !== undefined) {
+                const rawTables = raw.tables;
+                for (const name of Object.keys(rawTables)) {
+                    const rawTable = rawTables[name];
+                    let table = this.tables[name];
+                    if (table === undefined) {
+                        table = new RosettaLuaTable(name, rawTable);
+                    }
+                    else {
+                        table.parse(rawTable);
+                    }
+                    this.tables[table.name] = this.tables[name] = table;
+                }
+            }
+            /* (Functions) */
+            if (raw.functions !== undefined) {
+                const rawFunctions = raw.functions;
+                for (const name of Object.keys(rawFunctions)) {
+                    const rawFunction = rawFunctions[name];
+                    let func = this.functions[name];
+                    if (func === undefined) {
+                        func = new RosettaLuaFunction_2.RosettaLuaFunction(name, rawFunction);
+                    }
+                    else {
+                        func.parse(rawFunction);
+                    }
+                    this.functions[func.name] = this.functions[name] = func;
+                }
+            }
+            /* (Values) */
+            if (raw.values !== undefined) {
+                const rawValues = raw.values;
+                for (const name of Object.keys(rawValues)) {
+                    const rawValue = rawValues[name];
+                    let value = this.fields[name];
+                    if (value === undefined) {
+                        value = new RosettaLuaTableField_1.RosettaLuaTableField(name, rawValue);
+                    }
+                    else {
+                        value.parse(rawValue);
+                    }
+                    this.fields[value.name] = this.fields[name] = value;
+                }
+            }
+        }
+        toJSON(patch = false) {
+            const { fields, tables, functions, name, notes } = this;
+            const json = {};
+            /* (Properties) */
+            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            /* (Fields) */
+            let keys = Object.keys(fields);
+            if (keys.length) {
+                json.fields = {};
+                keys.sort((a, b) => a.localeCompare(b));
+                for (const key of keys)
+                    json.fields[key] = fields[key].toJSON(patch);
+            }
+            /* (Functions) */
+            keys = Object.keys(functions);
+            if (keys.length) {
+                json.functions = {};
+                keys.sort((a, b) => a.localeCompare(b));
+                for (const key of keys)
+                    json.functions[key] = functions[key].toJSON(patch);
+            }
+            /* (Tables) */
+            keys = Object.keys(tables);
+            if (keys.length) {
+                json.tables = {};
+                keys.sort((a, b) => a.localeCompare(b));
+                for (const key of keys)
+                    json.tables[key] = tables[key].toJSON(patch);
+            }
+            return json;
+        }
+    }
+    exports.RosettaLuaTable = RosettaLuaTable;
+});
+define("src/asledgehammer/rosetta/java/RosettaJavaType", ["require", "exports", "src/asledgehammer/rosetta/RosettaEntity"], function (require, exports, RosettaEntity_9) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaJavaType = void 0;
+    /**
+     * **RosettaJavaType**
+     *
+     * @author Jab
+     */
+    class RosettaJavaType extends RosettaEntity_9.RosettaEntity {
+        constructor(raw) {
+            super(raw);
+            const basic = this.readRequiredString('basic');
+            this.rawBasic = basic;
+            if (basic.indexOf('.') !== -1) {
+                const split = basic.split('.');
+                this.basic = split[split.length - 1];
+            }
+            else {
+                this.basic = basic;
+            }
+            this.full = this.readString('full');
+        }
+        toJSON(patch = false) {
+            const { rawBasic: basic, full } = this;
+            const json = {};
+            if (!patch) {
+                json.basic = basic;
+                json.full = full;
+            }
+            return json;
+        }
+    }
+    exports.RosettaJavaType = RosettaJavaType;
+});
+define("src/asledgehammer/rosetta/java/RosettaJavaParameter", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaType", "src/asledgehammer/rosetta/RosettaUtils"], function (require, exports, Assert, RosettaEntity_10, RosettaJavaType_1, RosettaUtils_5) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaJavaParameter = void 0;
+    /**
+     * **RosettaJavaParameter**
+     *
+     * @author Jab
+     */
+    class RosettaJavaParameter extends RosettaEntity_10.RosettaEntity {
+        constructor(raw) {
+            super(raw);
+            Assert.assertNonNull(raw.type, 'raw.type');
+            this.name = (0, RosettaUtils_5.formatName)(this.readRequiredString('name'));
+            this.type = new RosettaJavaType_1.RosettaJavaType(raw.type);
+            this.parse(raw);
+        }
+        parse(raw) {
+            this.notes = this.readNotes(raw);
+        }
+        toJSON(patch = false) {
+            const { name, notes, type } = this;
+            const json = {};
+            /* (Properties) */
+            if (!patch)
+                json.type = type.toJSON(patch);
+            json.name = name;
+            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            return json;
+        }
+    }
+    exports.RosettaJavaParameter = RosettaJavaParameter;
+});
+define("src/asledgehammer/rosetta/java/RosettaJavaConstructor", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaParameter"], function (require, exports, Assert, RosettaEntity_11, RosettaJavaParameter_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaJavaConstructor = void 0;
+    /**
+     * **RosettaJavaConstructor**
+     *
+     * @author Jab
+     */
+    class RosettaJavaConstructor extends RosettaEntity_11.RosettaEntity {
+        constructor(clazz, raw) {
+            super(raw);
+            this.parameters = [];
+            Assert.assertNonNull(clazz, 'clazz');
+            this.clazz = clazz;
+            /* (Properties) */
+            this.deprecated = this.readBoolean('deprecated') != null;
+            this.modifiers = this.readModifiers();
+            this.notes = this.readNotes(raw);
+            /* (Parameters) */
+            if (raw.parameters !== undefined) {
+                const rawParameters = raw.parameters;
+                for (const rawParameter of rawParameters) {
+                    const parameter = new RosettaJavaParameter_1.RosettaJavaParameter(rawParameter);
+                    this.parameters.push(parameter);
+                }
+            }
+        }
+        parse(raw) {
+            /* (Properties) */
+            this.notes = this.readNotes(raw);
+            /* (Parameters) */
+            if (raw.parameters !== undefined) {
+                const rawParameters = raw.parameters;
+                /*
+                 * (To prevent deep-logic issues, check to see if Rosetta's parameters match the length of
+                 *  the overriding parameters. If not, this is the fault of the patch, not Rosetta)
+                 */
+                if (this.parameters.length !== rawParameters.length) {
+                    throw new Error(`The class ${this.clazz.name}'s constructor's parameters does not match the parameters to override. (method: ${this.parameters.length}, given: ${rawParameters.length})`);
+                }
+                for (let index = 0; index < rawParameters.length; index++) {
+                    this.parameters[index].parse(rawParameters[index]);
+                }
+            }
+        }
+        toJSON(patch = false) {
+            const { notes, deprecated, modifiers, parameters } = this;
+            const json = {};
+            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            /* (Properties) */
+            if (!patch) {
+                json.deprecated = deprecated;
+                if (modifiers.length)
+                    json.modifiers = modifiers;
+            }
+            /* (Properties) */
+            if (parameters.length) {
+                json.parameters = [];
+                for (const parameter of parameters)
+                    json.parameters.push(parameter.toJSON(patch));
+            }
+            return json;
+        }
+    }
+    exports.RosettaJavaConstructor = RosettaJavaConstructor;
+});
+define("src/asledgehammer/rosetta/java/RosettaJavaReturns", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaType"], function (require, exports, Assert, RosettaEntity_12, RosettaJavaType_2) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaJavaReturns = void 0;
+    /**
+     * **RosettaJavaReturns**
+     *
+     * @author Jab
+     */
+    class RosettaJavaReturns extends RosettaEntity_12.RosettaEntity {
+        constructor(raw) {
+            super(raw);
+            Assert.assertNonNull(raw.type, 'raw.type');
+            this.type = new RosettaJavaType_2.RosettaJavaType(raw.type);
+            this.parse(raw);
+        }
+        parse(raw) {
+            this.notes = this.readNotes(raw);
+        }
+        toJSON(patch = false) {
+            const { type, notes } = this;
+            const json = {};
+            /* (Properties) */
+            if (!patch)
+                json.type = type;
+            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            return json;
+        }
+    }
+    exports.RosettaJavaReturns = RosettaJavaReturns;
+});
+define("src/asledgehammer/rosetta/java/RosettaJavaMethod", ["require", "exports", "src/asledgehammer/rosetta/RosettaUtils", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaParameter", "src/asledgehammer/rosetta/java/RosettaJavaReturns"], function (require, exports, RosettaUtils_6, RosettaEntity_13, RosettaJavaParameter_2, RosettaJavaReturns_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaJavaMethod = void 0;
+    /**
+     * **RosettaJavaMethod**
+     *
+     * @author Jab
+     */
+    class RosettaJavaMethod extends RosettaEntity_13.RosettaEntity {
+        constructor(raw) {
+            super(raw);
+            this.parameters = [];
+            /* PROPERTIES */
+            this.name = (0, RosettaUtils_6.formatName)(this.readRequiredString('name'));
+            this.deprecated = this.readBoolean('deprecated') != null;
+            this.modifiers = this.readModifiers();
+            /* PARAMETERS */
+            if (raw.parameters !== undefined) {
+                const rawParameters = raw.parameters;
+                for (const rawParameter of rawParameters) {
+                    this.parameters.push(new RosettaJavaParameter_2.RosettaJavaParameter(rawParameter));
+                }
+            }
+            /* RETURNS */
+            if (raw.returns === undefined) {
+                throw new Error(`Method does not have returns definition: ${this.name}`);
+            }
+            this.returns = new RosettaJavaReturns_1.RosettaJavaReturns(raw.returns);
+            this.notes = this.readNotes();
+        }
+        parse(raw) {
+            this.notes = this.readNotes(raw);
+            /* PARAMETERS */
+            if (raw.parameters !== undefined) {
+                const rawParameters = raw.parameters;
+                /*
+                 * (To prevent deep-logic issues, check to see if Rosetta's parameters match the length of
+                 *  the overriding parameters. If not, this is the fault of the patch, not Rosetta)
+                 */
+                if (this.parameters.length !== rawParameters.length) {
+                    throw new Error(`The method ${this.name}'s parameters does not match the parameters to override. (method: ${this.parameters.length}, given: ${rawParameters.length})`);
+                }
+                for (let index = 0; index < rawParameters.length; index++) {
+                    this.parameters[index].parse(rawParameters[index]);
+                }
+            }
+            /* RETURNS */
+            if (raw.returns !== undefined) {
+                this.returns.parse(raw.returns);
+            }
+        }
+        toJSON(patch = false) {
+            const { name, deprecated, modifiers, notes, parameters, returns } = this;
+            const json = {};
+            /* (Properties) */
+            if (!patch) {
+                json.deprecated = deprecated;
+                if (modifiers.length)
+                    json.modifiers = modifiers;
+            }
+            json.name = name;
+            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            /* (Parameters) */
+            if (parameters.length) {
+                json.parameters = [];
+                for (const parameter of parameters)
+                    json.parameters.push(parameter.toJSON(patch));
+            }
+            /* (Returns) */
+            json.returns = returns.toJSON(patch);
+            return json;
+        }
+        isStatic() {
+            return this.modifiers != null && !!this.modifiers.length && this.modifiers.indexOf('static') !== -1;
+        }
+    }
+    exports.RosettaJavaMethod = RosettaJavaMethod;
+});
+define("src/asledgehammer/rosetta/java/RosettaJavaMethodCluster", ["require", "exports", "src/asledgehammer/Assert"], function (require, exports, Assert) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaJavaMethodCluster = void 0;
+    /**
+     * **RosettaJavaMethodCluster**
+     *
+     * @author Jab
+     */
+    class RosettaJavaMethodCluster {
+        constructor(name) {
+            this.methods = [];
+            Assert.assertNonEmptyString(name, 'name');
+            this.name = name;
+        }
+        add(method) {
+            const indexOf = this.methods.indexOf(method);
+            if (indexOf !== -1) {
+                this.methods[indexOf].parse(method.raw);
+                return;
+            }
+            this.methods.push(method);
+        }
+        getWithParameters(...parameterNames) {
+            for (const method of this.methods) {
+                const parameters = method.parameters;
+                if (parameterNames.length === parameters.length) {
+                    if (parameterNames.length === 0)
+                        return method;
+                    let invalid = false;
+                    for (let i = 0; i < parameters.length; i++) {
+                        if (parameters[i].type.basic !== parameterNames[i]) {
+                            invalid = true;
+                            break;
+                        }
+                    }
+                    if (invalid)
+                        continue;
+                    return method;
+                }
+            }
+            return;
+        }
+    }
+    exports.RosettaJavaMethodCluster = RosettaJavaMethodCluster;
+});
+define("src/asledgehammer/rosetta/java/RosettaJavaField", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaType"], function (require, exports, Assert, RosettaEntity_14, RosettaJavaType_3) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaJavaField = void 0;
+    /**
+     * **RosettaJavaField**
+     *
+     * @author Jab
+     */
+    class RosettaJavaField extends RosettaEntity_14.RosettaEntity {
+        constructor(name, raw) {
+            super(raw);
+            Assert.assertNonEmptyString(name, 'name');
+            Assert.assertNonNull(raw.type, 'raw.type');
+            this.name = name;
+            this.modifiers = this.readModifiers();
+            this.type = new RosettaJavaType_3.RosettaJavaType(raw.type);
+            this.deprecated = this.readBoolean('deprecated') != null;
+            this.notes = this.readNotes();
+        }
+        parse(raw) {
+            this.notes = this.readNotes(raw);
+        }
+        toJSON(patch = false) {
+            const { name, notes, modifiers, type, deprecated } = this;
+            const json = {};
+            /* (Properties) */
+            json.name = name;
+            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            if (!patch) {
+                if (modifiers.length)
+                    json.modifiers = modifiers;
+                json.deprecated = deprecated;
+                json.type = type.toJSON(patch);
+            }
+            return json;
+        }
+        isStatic() {
+            return !!this.modifiers.length && this.modifiers.indexOf('static') !== -1;
+        }
+    }
+    exports.RosettaJavaField = RosettaJavaField;
+});
+define("src/asledgehammer/rosetta/java/RosettaJavaClass", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaUtils", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaConstructor", "src/asledgehammer/rosetta/java/RosettaJavaMethodCluster", "src/asledgehammer/rosetta/java/RosettaJavaMethod", "src/asledgehammer/rosetta/java/RosettaJavaField"], function (require, exports, Assert, RosettaUtils_7, RosettaEntity_15, RosettaJavaConstructor_1, RosettaJavaMethodCluster_1, RosettaJavaMethod_1, RosettaJavaField_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaJavaClass = exports.RosettaJavaNamespace = void 0;
+    /**
+     * **RosettaJavaNamespace**
+     *
+     * @author Jab
+     */
+    class RosettaJavaNamespace extends RosettaEntity_15.RosettaEntity {
+        constructor(name, raw = {}) {
+            super(raw);
+            this.classes = {};
+            Assert.assertNonEmptyString(name, 'name');
+            this.name = name;
+            /* (Classes) */
+            if (Object.keys(raw).length) {
+                for (const clazzName of Object.keys(raw)) {
+                    const rawClazz = raw[clazzName];
+                    let clazz = this.classes[clazzName];
+                    if (clazz === undefined) {
+                        clazz = new RosettaJavaClass(clazzName, this, rawClazz);
+                    }
+                    else {
+                        clazz.parse(rawClazz);
+                    }
+                    /* (Formatted Class Name) */
+                    this.classes[clazz.name] = this.classes[clazzName] = clazz;
+                }
+            }
+        }
+        parse(raw) {
+            /* (Classes) */
+            for (const clazzName of Object.keys(raw)) {
+                const rawClazz = raw[clazzName];
+                let clazz = this.classes[clazzName];
+                if (clazz === undefined) {
+                    clazz = new RosettaJavaClass(clazzName, this, rawClazz);
+                }
+                else {
+                    clazz.parse(rawClazz);
+                }
+                /* (If the class exists, parse the additional data as a patch) */
+                if (this.classes[clazzName] !== undefined) {
+                    this.classes[clazzName].parse(rawClazz);
+                    continue;
+                }
+                /* (Formatted Class Name) */
+                this.classes[clazz.name] = this.classes[clazzName] = clazz;
+            }
+        }
+        toJSON(patch = false) {
+            const { name, classes } = this;
+            const json = {};
+            /* (Properties) */
+            json.name = name;
+            /* (Classes) */
+            const keys = Object.keys(classes);
+            if (keys.length) {
+                keys.sort((a, b) => a.localeCompare(b));
+                for (const key of keys)
+                    json[key] = classes[key].toJSON(patch);
+            }
+            return json;
+        }
+    }
+    exports.RosettaJavaNamespace = RosettaJavaNamespace;
+    /**
+     * **RosettaJavaClass**
+     *
+     * @author Jab
+     */
+    class RosettaJavaClass extends RosettaEntity_15.RosettaEntity {
+        constructor(name, namespace, raw) {
+            super(raw);
+            this.fields = {};
+            this.methods = {};
+            this.constructors = [];
+            Assert.assertNonEmptyString(name, 'name');
+            Assert.assertNonNull(namespace, 'namsepace');
+            this.namespace = namespace;
+            this.name = (0, RosettaUtils_7.formatName)(name);
+            this.extendz = this.readString('extends');
+            this.modifiers = this.readModifiers();
+            this.deprecated = this.readBoolean('deprecated') != null;
+            this.javaType = this.readRequiredString('javaType');
+            this.notes = this.readNotes();
+            /* FIELDS */
+            if (raw.fields !== undefined) {
+                const rawFields = raw.fields;
+                for (const fieldName of Object.keys(rawFields)) {
+                    const rawField = rawFields[fieldName];
+                    const field = new RosettaJavaField_1.RosettaJavaField(fieldName, rawField);
+                    this.fields[field.name] = this.fields[fieldName] = field;
+                }
+            }
+            /* METHODS */
+            if (raw.methods !== undefined) {
+                const rawMethods = raw.methods;
+                for (const rawMethod of rawMethods) {
+                    const method = new RosettaJavaMethod_1.RosettaJavaMethod(rawMethod);
+                    const { name: methodName } = method;
+                    let cluster;
+                    if (this.methods[methodName] === undefined) {
+                        cluster = new RosettaJavaMethodCluster_1.RosettaJavaMethodCluster(methodName);
+                        this.methods[methodName] = cluster;
+                    }
+                    else {
+                        cluster = this.methods[methodName];
+                    }
+                    cluster.add(method);
+                }
+            }
+            /* CONSTRUCTORS */
+            if (raw.constructors !== undefined) {
+                const rawConstructors = raw.constructors;
+                for (const rawConstructor of rawConstructors) {
+                    this.constructors.push(new RosettaJavaConstructor_1.RosettaJavaConstructor(this, rawConstructor));
+                }
+            }
+        }
+        parse(raw) {
+            /* (Properties) */
+            this.notes = this.readNotes(raw);
+            /* (Fields) */
+            if (raw.fields !== undefined) {
+                const rawFields = raw.fields;
+                for (const fieldName of Object.keys(rawFields)) {
+                    const rawField = rawFields[fieldName];
+                    const field = this.fields[fieldName];
+                    if (field === undefined) {
+                        throw new Error(`Cannot find field in class: ${this.name}.${fieldName}`);
+                    }
+                    field.parse(rawField);
+                }
+            }
+            /* (Methods) */
+            if (raw.methods !== undefined) {
+                const rawMethods = raw.methods;
+                for (const rawMethod of rawMethods) {
+                    const method = new RosettaJavaMethod_1.RosettaJavaMethod(rawMethod);
+                    const { name: methodName } = method;
+                    const cluster = this.methods[methodName];
+                    if (this.methods[methodName] === undefined) {
+                        throw new Error(`Cannot find method in class: ${this.name}.${methodName}`);
+                    }
+                    cluster.add(method);
+                }
+            }
+            /* (Constructors) */
+            if (raw.constructors !== undefined) {
+                const rawConstructors = raw.constructors;
+                for (const rawConstructor of rawConstructors) {
+                    const rawParameterCount = rawConstructor.parameters !== undefined ? rawConstructor.parameters.length : 0;
+                    let foundConstructor;
+                    for (const nextConstructor of this.constructors) {
+                        const nextParameterCount = nextConstructor.parameters.length;
+                        if (rawParameterCount === nextParameterCount) {
+                            foundConstructor = nextConstructor;
+                            break;
+                        }
+                    }
+                    if (foundConstructor === undefined) {
+                        throw new Error(`Class Constructor ${this.name} not found with param count: ${rawParameterCount}`);
+                    }
+                    foundConstructor.parse(rawConstructor);
+                }
+            }
+        }
+        getField(id) {
+            return this.fields[id];
+        }
+        getConstructor(...parameterTypes) {
+            if (!this.constructors.length)
+                return undefined;
+            for (const conztructor of this.constructors) {
+                if (conztructor.parameters.length === parameterTypes.length) {
+                    let invalid = false;
+                    for (let index = 0; index < parameterTypes.length; index++) {
+                        if (parameterTypes[index] !== conztructor.parameters[index].type.basic) {
+                            invalid = true;
+                            break;
+                        }
+                    }
+                    if (invalid)
+                        continue;
+                    return conztructor;
+                }
+            }
+            return;
+        }
+        getMethod(...parameterTypes) {
+            if (!this.methods.length)
+                return undefined;
+            for (const cluster of Object.values(this.methods)) {
+                for (const method of cluster.methods) {
+                    if (method.parameters.length === parameterTypes.length) {
+                        let invalid = false;
+                        for (let index = 0; index < parameterTypes.length; index++) {
+                            if (parameterTypes[index] !== method.parameters[index].type.basic) {
+                                invalid = true;
+                                break;
+                            }
+                        }
+                        if (invalid)
+                            continue;
+                        return method;
+                    }
+                }
+            }
+            return;
+        }
+        toJSON(patch = false) {
+            const { extendz, modifiers, deprecated, javaType, notes, fields, constructors, methods } = this;
+            const json = {};
+            /* (Properties) */
+            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            if (!patch) {
+                if (extendz !== undefined)
+                    json.extends = extendz;
+                if (modifiers !== undefined)
+                    json.modifiers = modifiers;
+                json.deprecated = deprecated;
+                json.javaType = javaType;
+            }
+            /* (Fields) */
+            let keys = Object.keys(fields);
+            keys.sort((a, b) => a.localeCompare(b));
+            if (keys.length) {
+                json.fields = {};
+                for (const key of keys) {
+                    json.fields[key] = fields[key].toJSON(patch);
+                }
+            }
+            /* (Constructors) */
+            if (constructors.length) {
+                json.constructors = [];
+                for (const conztructor of constructors)
+                    json.constructors.push(conztructor.toJSON(patch));
+            }
+            /* (Methods) */
+            keys = Object.keys(methods);
+            keys.sort((a, b) => a.localeCompare(b));
+            if (keys.length) {
+                json.methods = [];
+                /* (Flatten MethodClusters into JSON method bodies) */
+                for (const key of keys) {
+                    for (const method of methods[key].methods)
+                        json.methods.push(method.toJSON(patch));
+                }
+            }
+            return json;
+        }
+    }
+    exports.RosettaJavaClass = RosettaJavaClass;
+});
+define("src/asledgehammer/rosetta/java/JavaGenerator", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.generateJavaClass = exports.generateJavaMethod = exports.generateJavaConstructor = exports.generateJavaParameterBody = exports.generateJavaField = void 0;
+    function generateJavaField(field) {
+        let s = '';
+        // Description
+        if (field.notes && field.notes.length) {
+            const notes = field.notes.split('\n').join(' ');
+            s += `${notes}\n`;
+        }
+        while (s.endsWith('\n'))
+            s = s.substring(0, s.length - 1);
+        return `--- @field ${field.name} ${field.type.basic} ${s.trim()}`;
+    }
+    exports.generateJavaField = generateJavaField;
+    function generateJavaParameterBody(params) {
+        let s = '';
+        if (params.length) {
+            for (const param of params) {
+                s += `${param.name}, `;
+            }
+            s = s.substring(0, s.length - 2);
+        }
+        return `(${s})`;
+    }
+    exports.generateJavaParameterBody = generateJavaParameterBody;
+    function generateJavaConstructor(className, methods) {
+        if (!methods.length)
+            return '';
+        methods.sort((a, b) => a.parameters.length - b.parameters.length);
+        let s = '';
+        // Parameter(s).
+        let maxParams = 0;
+        const _paramNames = [];
+        const _paramTypes = [];
+        const _overloads = [];
+        for (const method of methods) {
+            const { parameters } = method;
+            if (parameters.length > maxParams) {
+                maxParams = parameters.length;
+            }
+            let _overload = `fun(`;
+            let oParams = '';
+            for (const param of method.parameters) {
+                oParams += `${param.name}: ${param.type.basic}, `;
+            }
+            if (oParams.length)
+                oParams = oParams.substring(0, oParams.length - 2);
+            _overload += `${oParams}): ${className}`;
+            _overloads.push(_overload);
+        }
+        const method0 = methods[0];
+        if (method0.parameters && method0.parameters.length) {
+            for (const param of method0.parameters) {
+                _paramNames.push(param.name);
+                _paramTypes.push(param.type.basic);
+            }
+        }
+        // Parameter(s).
+        let ps = '';
+        for (let index = 0; index < _paramNames.length; index++) {
+            ps += `${_paramNames[index]}, `;
+        }
+        if (ps.length) {
+            ps = ps.substring(0, ps.length - 2);
+        }
+        // Documentation.
+        let ds = '--- @public\n';
+        if (methods.length > 1) {
+            for (let index = 0; index < methods.length; index++) {
+                const method = methods[index];
+                let mds = '';
+                if (method.notes) {
+                    mds += '--- ### Description:';
+                    mds += `\n   ${method.notes}`;
+                }
+                if (mds.length)
+                    mds += '\n';
+                mds += '--- ### Parameter(s):';
+                if (method.parameters.length) {
+                    for (let pIndex = 0; pIndex < method.parameters.length; pIndex++) {
+                        const parameter = method.parameters[pIndex];
+                        mds += `\n---   * **${parameter.type.basic}** *${parameter.name}*`;
+                        if (parameter.notes) {
+                            mds += ` - ${parameter.notes}`;
+                        }
+                    }
+                }
+                else {
+                    mds += '\n--- * **(None)**';
+                }
+                if (mds.length) {
+                    mds += '\n--- ---\n';
+                    ds += mds;
+                }
+            }
+            ds += `--- \n`;
+            // Apply first method's notes.
+            const method = methods[0];
+            if (method.notes) {
+                ds += `--- ${methods[0].notes}\n--- \n`;
+            }
+            // Apply parameter(s).
+            for (let index = 0; index < _paramNames.length; index++) {
+                ds += `--- @param ${_paramNames[index]} ${_paramTypes[index]}\n`;
+            }
+            ds += `--- @return ${className}`;
+            // Apply overload(s).
+            if (_overloads.length > 1) {
+                ds += '\n--- \n';
+                for (let oIndex = 1; oIndex < methods.length; oIndex++) {
+                    ds += `--- @overload ${_overloads[oIndex]}\n`;
+                }
+            }
+        }
+        else {
+            const method = methods[0];
+            let vds = '';
+            if (method.notes) {
+                vds += `--- ${methods[0].notes}\n--- `;
+            }
+            for (let index = 0; index < _paramNames.length; index++) {
+                if (vds.length)
+                    vds += '\n';
+                vds += `--- @param ${_paramNames[index]} ${_paramTypes[index]}`;
+                if (method.parameters[index].notes) {
+                    vds += ` ${method.parameters[index].notes}`;
+                }
+            }
+            if (vds.length)
+                vds += '\n--- ';
+            vds += `\n--- @return ${className}\n`;
+            ds += vds;
+        }
+        while (ds.indexOf('\n\n') !== -1) {
+            ds = ds.replace('\n\n', '\n--- \n');
+        }
+        s += `${ds}function ${className}.new(${ps}) end`;
+        return s;
+    }
+    exports.generateJavaConstructor = generateJavaConstructor;
+    function generateJavaMethod(className, cluster) {
+        if (!cluster.methods.length)
+            return '';
+        const methods = [...cluster.methods];
+        methods.sort((a, b) => a.parameters.length - b.parameters.length);
+        const isStatic = methods[0].isStatic();
+        let s = '';
+        // Parameter(s).
+        let maxParams = 0;
+        const _returns = [];
+        const _paramNames = [];
+        const _paramTypes = [];
+        const _overloads = [];
+        for (const method of methods) {
+            const { parameters, returns } = method;
+            if (parameters.length > maxParams) {
+                maxParams = parameters.length;
+            }
+            if (_returns.indexOf(returns.type.basic) === -1) {
+                _returns.push(returns.type.basic);
+            }
+            let _overload = `fun(`;
+            let oParams = '';
+            for (const param of method.parameters) {
+                oParams += `${param.name}: ${param.type.basic}, `;
+            }
+            if (oParams.length)
+                oParams = oParams.substring(0, oParams.length - 2);
+            _overload += `${oParams}): ${method.returns.type.basic}`;
+            _overloads.push(_overload);
+        }
+        _returns.sort((a, b) => a.localeCompare(b));
+        const method0 = methods[0];
+        if (method0.parameters && method0.parameters.length) {
+            for (const param of method0.parameters) {
+                _paramNames.push(param.name);
+                _paramTypes.push(param.type.basic);
+            }
+        }
+        // Parameter(s).
+        let ps = '';
+        for (let index = 0; index < _paramNames.length; index++) {
+            ps += `${_paramNames[index]}, `;
+        }
+        if (ps.length) {
+            ps = ps.substring(0, ps.length - 2);
+        }
+        // Return Type(s).
+        let rs = '';
+        for (let index = 0; index < _returns.length; index++) {
+            rs += `${_returns[index]} | `;
+        }
+        if (rs.length)
+            rs = rs.substring(0, rs.length - 3);
+        // Documentation.
+        let ds = '--- @public\n';
+        if (isStatic)
+            ds += '--- @static\n';
+        if (methods.length > 1) {
+            for (let index = 0; index < methods.length; index++) {
+                const method = methods[index];
+                let mds = '';
+                if (method.notes) {
+                    mds += '--- ### Description:';
+                    mds += `\n   ${method.notes}`;
+                }
+                if (mds.length)
+                    mds += '\n';
+                mds += '--- ### Parameter(s):';
+                if (method.parameters.length) {
+                    for (let pIndex = 0; pIndex < method.parameters.length; pIndex++) {
+                        const parameter = method.parameters[pIndex];
+                        mds += `\n---   * **${parameter.type.basic}** *${parameter.name}*`;
+                        if (parameter.notes) {
+                            mds += ` - ${parameter.notes}`;
+                        }
+                    }
+                }
+                else {
+                    mds += '\n--- * **(None)**';
+                }
+                mds += '\n--- ### Returns:';
+                const returns = method.returns;
+                mds += `\n---   * ${returns.type.basic}`;
+                if (returns.notes)
+                    mds += ` ${returns.notes}`;
+                if (mds.length) {
+                    mds += '\n--- ---\n';
+                    ds += mds;
+                }
+            }
+            ds += `--- \n`;
+            // Apply first method's notes.
+            const method = methods[0];
+            if (method.notes) {
+                ds += `--- ${methods[0].notes}\n--- \n`;
+            }
+            // Apply parameter(s).
+            for (let index = 0; index < _paramNames.length; index++) {
+                ds += `--- @param ${_paramNames[index]} ${_paramTypes[index]}\n`;
+            }
+            if (ds.length)
+                ds += '--- \n';
+            // Apply return.
+            ds += `--- @return ${rs}\n--- \n`;
+            // Apply overload(s).
+            for (let oIndex = 1; oIndex < methods.length; oIndex++) {
+                ds += `--- @overload ${_overloads[oIndex]}\n`;
+            }
+        }
+        else {
+            let vds = '';
+            const method = methods[0];
+            if (method.notes) {
+                vds += `--- ${methods[0].notes}\n--- `;
+            }
+            for (let index = 0; index < _paramNames.length; index++) {
+                if (vds.length)
+                    vds += '\n';
+                vds += `--- @param ${_paramNames[index]} ${_paramTypes[index]}`;
+                if (method.parameters[index].notes) {
+                    vds += ` ${method.parameters[index].notes}`;
+                }
+            }
+            if (vds.length)
+                vds += '\n';
+            vds += `--- @return ${rs}`;
+            if (method.returns.notes) {
+                vds += ` ${method.returns.notes}`;
+            }
+            if (!vds.endsWith('\n'))
+                vds += '\n';
+            ds += vds;
+        }
+        while (ds.indexOf('\n\n') !== -1) {
+            ds = ds.replace('\n\n', '\n--- \n');
+        }
+        s += `${ds}function ${className}${isStatic ? '.' : ':'}${cluster.name}(${ps}) end`;
+        return s;
+    }
+    exports.generateJavaMethod = generateJavaMethod;
+    function generateJavaClass(clazz) {
+        let s = '';
+        // If the class has a description.
+        if (clazz.notes && clazz.notes.length > 0) {
+            const notes = clazz.notes.split('\n').join('\n--- ');
+            s += `--- ${notes}\n`;
+            if (notes.endsWith('\n'))
+                s += '--- \n';
+        }
+        s += `--- @class ${clazz.name}`;
+        // Super-class.
+        if (clazz.extendz && clazz.extendz.length && clazz.extendz !== 'Object') {
+            s += `: ${clazz.extendz}`;
+        }
+        s += '\n';
+        // Field(s)
+        const fieldNames = Object.keys(clazz.fields);
+        if (fieldNames.length) {
+            fieldNames.sort((a, b) => a.localeCompare(b));
+            // Static field(s) first.
+            for (const fieldName of fieldNames) {
+                const field = clazz.fields[fieldName];
+                if (field.isStatic()) {
+                    s += generateJavaField(field) + '\n';
+                }
+            }
+            // Instance field(s) next.
+            for (const fieldName of fieldNames) {
+                const field = clazz.fields[fieldName];
+                if (!field.isStatic()) {
+                    s += generateJavaField(field) + '\n';
+                }
+            }
+        }
+        const methodClusterNames = Object.keys(clazz.methods);
+        methodClusterNames.sort((a, b) => a.localeCompare(b));
+        s += `${clazz.name} = {};\n\n`;
+        const staticMethods = [];
+        const methods = [];
+        for (const clusterName of methodClusterNames) {
+            const cluster = clazz.methods[clusterName];
+            if (cluster.methods[0].isStatic()) {
+                staticMethods.push(cluster);
+            }
+            else {
+                methods.push(cluster);
+            }
+        }
+        if (staticMethods.length) {
+            s += `------------------------------------\n`;
+            s += `---------- STATIC METHODS ----------\n`;
+            s += `------------------------------------\n`;
+            s += '\n';
+            // Method Cluster(s)
+            for (const cluster of staticMethods) {
+                s += `${generateJavaMethod(clazz.name, cluster)}\n\n`;
+            }
+        }
+        if (methods.length) {
+            s += '------------------------------------\n';
+            s += '------------- METHODS --------------\n';
+            s += '------------------------------------\n';
+            s += '\n';
+            // Method Cluster(s)
+            for (const cluster of methods) {
+                s += `${generateJavaMethod(clazz.name, cluster)}\n\n`;
+            }
+        }
+        if (clazz.constructors && clazz.constructors.length) {
+            s += `------------------------------------\n`;
+            s += `----------- CONSTRUCTOR ------------\n`;
+            s += `------------------------------------\n`;
+            s += '\n';
+            s += `${generateJavaConstructor(clazz.name, clazz.constructors)}\n`;
+        }
+        return s;
+    }
+    exports.generateJavaClass = generateJavaClass;
+});
+define("src/asledgehammer/mallet/component/Component", ["require", "exports", "src/asledgehammer/rosetta/util"], function (require, exports, util_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Component = void 0;
@@ -1098,7 +2225,7 @@ define("src/asledgehammer/rosetta/component/Component", ["require", "exports", "
     }
     exports.Component = Component;
 });
-define("src/asledgehammer/rosetta/component/CardComponent", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/Component"], function (require, exports, util_2, Component_1) {
+define("src/asledgehammer/mallet/component/CardComponent", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/Component"], function (require, exports, util_2, Component_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.CardComponent = void 0;
@@ -1133,7 +2260,7 @@ define("src/asledgehammer/rosetta/component/CardComponent", ["require", "exports
     }
     exports.CardComponent = CardComponent;
 });
-define("src/asledgehammer/rosetta/component/NameModeType", ["require", "exports"], function (require, exports) {
+define("src/asledgehammer/mallet/component/NameModeType", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
 });
@@ -1391,7 +2518,7 @@ define("src/asledgehammer/Delta", ["require", "exports"], function (require, exp
     };
     exports.createDeltaEditor = createDeltaEditor;
 });
-define("src/asledgehammer/rosetta/component/lua/LuaCard", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/CardComponent", "src/asledgehammer/Delta"], function (require, exports, hljs, util_3, CardComponent_1, Delta_1) {
+define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", "highlight.js", "src/asledgehammer/mallet/component/CardComponent", "src/asledgehammer/Delta", "src/asledgehammer/rosetta/util"], function (require, exports, hljs, CardComponent_1, Delta_1, util_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaCard = void 0;
@@ -1875,7 +3002,7 @@ define("src/asledgehammer/rosetta/component/lua/LuaCard", ["require", "exports",
     }
     exports.LuaCard = LuaCard;
 });
-define("src/asledgehammer/rosetta/component/lua/LuaClassCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/lua/LuaCard"], function (require, exports, LuaGenerator_1, util_4, LuaCard_1) {
+define("src/asledgehammer/mallet/component/lua/LuaClassCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaGenerator_1, util_4, LuaCard_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaClassCard = void 0;
@@ -1954,150 +3081,421 @@ define("src/asledgehammer/rosetta/component/lua/LuaClassCard", ["require", "expo
     }
     exports.LuaClassCard = LuaClassCard;
 });
-define("src/asledgehammer/rosetta/component/lua/LuaConstructorCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/lua/LuaCard"], function (require, exports, LuaGenerator_2, util_5, LuaCard_2) {
+define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports", "highlight.js", "src/asledgehammer/mallet/component/CardComponent", "src/asledgehammer/Delta", "src/asledgehammer/rosetta/util"], function (require, exports, hljs, CardComponent_2, Delta_2, util_5) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.LuaConstructorCard = void 0;
-    class LuaConstructorCard extends LuaCard_2.LuaCard {
+    exports.JavaCard = void 0;
+    class JavaCard extends CardComponent_2.CardComponent {
         constructor(app, options) {
-            super(app, options);
-            this.idNotes = `${this.id}-notes`;
-            this.idParamContainer = `${this.id}-parameter-container`;
+            super(options);
+            this.app = app;
+            this.idPreview = `${this.id}-preview`;
+            this.idPreviewCode = `${this.id}-preview-code`;
+            this.idBtnPreviewCopy = `${this.id}-preview-copy-btn`;
         }
-        onRenderPreview() {
-            if (!this.options)
-                return '';
-            const { entity } = this.options;
-            const classEntity = this.app.active.selectedCard.options.entity;
-            const className = classEntity.name;
-            return (0, LuaGenerator_2.generateLuaConstructor)(className, entity);
+        listenEdit(entity, idBtnEdit, mode, title, nameSelected = undefined) {
+            (0, util_5.$get)(idBtnEdit).on('click', () => {
+                const { modalName, $btnName, $titleName, $inputName } = this.app;
+                $titleName.html(title);
+                if (mode === 'edit_class' || mode === 'edit_field' || mode === 'edit_function' || mode === 'edit_method' || mode === 'edit_value') {
+                    $btnName.html('Edit');
+                    $btnName.removeClass('btn-success');
+                    $btnName.addClass('btn-primary');
+                }
+                else {
+                    $btnName.html('Create');
+                    $btnName.addClass('btn-success');
+                    $btnName.removeClass('btn-primary');
+                }
+                $inputName.val(entity.name);
+                this.app.nameMode = mode;
+                if (!nameSelected)
+                    nameSelected = entity.name;
+                this.app.nameSelected = nameSelected;
+                modalName.show();
+            });
         }
-        onHeaderHTML() {
-            const classEntity = this.app.active.selectedCard.options.entity;
-            const className = classEntity.name;
-            const name = `${className}:new( )`;
-            return (0, util_5.html) ` 
-            <div class="row">
-                <!-- Visual Category Badge -->
-                <div class="col-auto ps-2 pe-2">
-                    <div class="text-bg-primary px-2 border border-1 border-light-half desaturate shadow">
-                        <strong>Lua Constructor</strong>
+        renderEdit(idBtnEdit) {
+            return (0, util_5.html) `
+            <!-- Edit Button -->
+            <div style="position: absolute; padding: 0; right: 0; top: 0">
+                <button id="${idBtnEdit}" class="btn btn-sm responsive-btn float-end" style="position: relative; top: 5px; right: 5px;" title="Edit Name">
+                    <div class="btn-pane" style="width: 30px; height: 30px;">
+                        <i class="fa-solid fa-pen"></i>
+                    </div>
+                </button>
+            </div>
+        `;
+        }
+        listenNotes(entity, idNotes) {
+            (0, Delta_2.createDeltaEditor)(idNotes, entity.notes, (markdown) => {
+                entity.notes = markdown;
+                this.update();
+                this.app.renderCode();
+            });
+        }
+        renderNotes(idNotes) {
+            return (0, util_5.html) `
+            <div class="mb-3">
+                <label for="${idNotes}" class="form-label mb-2">Description</label>
+                <div id="${idNotes}" style="background-color: #222;"></div>
+            </div>
+        `;
+        }
+        listenDefaultValue(entity, idDefaultValue) {
+            const $defaultValue = (0, util_5.$get)(idDefaultValue);
+            $defaultValue.on('input', () => {
+                entity.defaultValue = $defaultValue.val();
+                this.update();
+                this.app.renderCode();
+            });
+        }
+        renderDefaultValue(defaultValue, idDefaultValue) {
+            if (!defaultValue)
+                defaultValue = '';
+            return (0, util_5.html) `
+            <div class="mb-3">
+                <label for="${idDefaultValue}" class="form-label mb-2">Default Value</label>
+                <textarea id="${idDefaultValue}" class="form-control responsive-input mt-1" spellcheck="false">${defaultValue}</textarea>
+            </div>
+        `;
+        }
+        listenParameters(entity, type) {
+            const { parameters } = entity;
+            for (const param of parameters) {
+                const idParamNotes = `${entity.name}-parameter-${param.name}-notes`;
+                const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
+                const idBtnDelete = `${entity.name}-parameter-${param.name}-delete`;
+                (0, Delta_2.createDeltaEditor)(idParamNotes, param.notes, (markdown) => {
+                    param.notes = markdown;
+                    this.update();
+                    this.app.renderCode();
+                });
+                (0, util_5.$get)(idBtnDelete).on('click', () => {
+                    this.app.askConfirm(() => {
+                        entity.parameters.splice(entity.parameters.indexOf(param), 1);
+                        this.update();
+                        // Implicit check for refreshability for parameters.
+                        if (this.refreshParameters)
+                            this.refreshParameters();
+                    }, `Delete Parameter ${param.name}?`);
+                });
+                this.listenEdit({ name: param.name }, idBtnEdit, 'edit_parameter', 'Edit Parameter Name', `${entity.name}-${param.name}`);
+            }
+            const idBtnAdd = `btn-${entity.name}-parameter-add`;
+            (0, util_5.$get)(idBtnAdd).on('click', () => {
+                const { modalName, $inputName, $titleName } = this.app;
+                this.app.nameMode = 'new_parameter';
+                this.app.nameSelected = `${type}-${entity.name}`;
+                $titleName.html('Add Parameter');
+                $inputName.val('');
+                modalName.show();
+            });
+        }
+        renderParameters(entity, show = false) {
+            const { parameters } = entity;
+            const idAccordion = `${entity.name}-parameters-accordion`;
+            let htmlParams = '';
+            if (parameters && parameters.length) {
+                for (const param of parameters) {
+                    const idParamNotes = `${entity.name}-parameter-${param.name}-notes`;
+                    const idCollapse = `${entity.name}-parameter-${param.name}-collapse`;
+                    const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
+                    htmlParams += (0, util_5.html) `
+                <div class="accordion-item rounded-0">
+                    <div class="accordion-header" style="position: relative" id="headingTwo">
+                        <div class="p-2" style="position: relative;">
+                            <button class="border-0 accordion-button collapsed rounded-0 p-0 text-white" style="background-color: transparent !important" type="button" data-bs-toggle="collapse" data-bs-target="#${idCollapse}" aria-expanded="false" aria-controls="${idCollapse}">
+                                <div class="col-auto responsive-badge border border-1 border-light-half desaturate shadow px-2 me-2" style="display: inline;"><strong>${param.type.basic}</strong></div>
+                                <h6 class="font-monospace mb-1">${param.name}</h6>
+                            </button>
+                        </div>
+                        <div style="position: absolute; height: 32px; top: 5px; right: 2rem; z-index: 4;">
+                            <!-- Edit Button -->
+                            <button id="${idBtnEdit}" class="btn btn-sm responsive-btn float-end" style="z-index: 4">
+                                <div class="btn-pane"> 
+                                    <i class="fa-solid fa-pen"></i>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="${idCollapse}" class="accordion-collapse collapse rounded-0" aria-labelledby="headingTwo" data-bs-parent="#${idAccordion}">
+                        <div class="accordion-body bg-dark" style="position: relative;">
+                            <!-- Notes -->
+                            <div class="mb-3">
+                                <label for="${idParamNotes}" class="form-label">Description</label>
+                                <div id="${idParamNotes}"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-auto p-0">
-                    <h5 class="card-text"><strong>${name}</strong></h5> 
+            `;
+                }
+            }
+            else {
+                htmlParams += (0, util_5.html) `<h6 class="font-monospace mb-1">(None)</h6>`;
+            }
+            return (0, util_5.html) `
+            <div class="card responsive-subcard mt-3">
+                <div class="card-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idAccordion}" aria-expanded="true" aria-controls="${idAccordion}">
+                        <strong>Parameters</strong>
+                    </button>
+                </div>
+                <div id="${idAccordion}" class="card-body p-2 mb-0 collapse${show ? ' show' : ''}">
+                    <div class="accordion rounded-0">
+                        ${htmlParams}
+                    </div>
                 </div>
             </div>
         `;
         }
-        onBodyHTML() {
-            const { idNotes, idParamContainer } = this;
-            const { entity } = this.options;
+        update() {
+            const { idPreviewCode } = this;
+            const $pre = (0, util_5.$get)(idPreviewCode);
+            $pre.empty();
+            let text = this.onRenderPreview();
+            if (text.endsWith('\n'))
+                text = text.substring(0, text.length - 1);
+            // @ts-ignore
+            const highlightedCode = hljs.default.highlightAuto(text, ['lua']).value;
+            $pre.append(highlightedCode);
+        }
+        listenPreview() {
+            const { idBtnPreviewCopy } = this;
+            // Copy the code.
+            (0, util_5.$get)(idBtnPreviewCopy).on('click', (event) => {
+                event.stopPropagation();
+                navigator.clipboard.writeText(this.onRenderPreview());
+            });
+        }
+        renderPreview(show) {
+            const { idPreview, idPreviewCode, idBtnPreviewCopy } = this;
             return (0, util_5.html) `
-            ${this.renderNotes(idNotes)}
-            <hr>
-            <div id="${idParamContainer}">
-                ${this.renderParameters({ name: 'new', parameters: entity.parameters })}
+            <div class="card responsive-subcard mt-3">
+                <div class="card-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idPreview}" aria-expanded="true" aria-controls="${idPreview}">
+                        <strong>Preview</strong>
+                    </button>
+
+                    <!-- Copy Button -->
+                    <button id="${idBtnPreviewCopy}" class="btn btn-sm responsive-btn" style="z-index: 4; position: absolute; top: 5px; right: 5px;" title="Copy Code">
+                        <div class="btn-pane"> 
+                            <i class="fa-solid fa-copy"></i>
+                        </div>
+                    </button>
+                </div>
+                <div id="${idPreview}" class="card-body mb-0 p-0 collapse${show ? ' show' : ''}" style="position: relative; max-height: 512px">
+                    <pre id="${idPreviewCode}" class="w-100 h-100 p-2 m-0" style="background-color: #111; overflow: scroll; max-height: 512px;"></pre>
+                </div>
             </div>
-            <hr>
-            ${this.renderPreview(false)}
         `;
         }
-        listen() {
-            super.listen();
-            const { idNotes } = this;
-            const { entity } = this.options;
-            this.listenNotes(entity, idNotes);
-            this.listenParameters(Object.assign(Object.assign({}, entity), { name: 'new' }), 'constructor');
-            this.listenPreview();
+        listenReturns(entity, idReturnType, idReturnNotes, idSelect) {
+            (0, Delta_2.createDeltaEditor)(idReturnNotes, entity.returns.notes, (markdown) => {
+                entity.returns.notes = markdown;
+                this.update();
+                this.app.renderCode();
+            });
         }
-        refreshParameters() {
-            const { idParamContainer } = this;
-            const { entity } = this.options;
-            const $paramContainer = (0, util_5.$get)(idParamContainer);
-            $paramContainer.empty();
-            $paramContainer.html(this.renderParameters({ name: 'new', parameters: entity.parameters }, true));
-            this.listenParameters({ name: 'new', parameters: entity.parameters }, 'constructor');
+        renderReturns(entity, idReturnType, idReturnNotes, show = false) {
+            const { returns } = entity;
+            let { notes } = returns;
+            if (!notes)
+                notes = '';
+            const idCard = `${entity.name}-returns-card`;
+            return (0, util_5.html) `
+            <div class="card responsive-subcard mt-3">
+                <div class="card-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idCard}" aria-expanded="true" aria-controls="${idCard}">
+                        <strong>Returns</strong>
+                    </button>
+                </div>
+                <div id="${idCard}" class="card-body mb-0 collapse${show ? ' show' : ''}">
+                    <!-- Return Type -->
+                    <div class="mb-3">
+                        <label for="${idReturnType}" class="form-label">Type: ${returns.type.basic}</label>
+                    </div>
+                    <!-- Return Notes -->
+                    <div>
+                        <label for="${idReturnNotes}" class="form-label">Description</label>
+                        <div id="${idReturnNotes}" style="background-color: #222 !important;"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+        }
+        listenType(entity, idType, idSelect) {
+            const $select = (0, util_5.$get)(idType);
+            const $customInput = (0, util_5.$get)(`${idSelect}-custom-input`);
+            $select.on('change', (value) => {
+                entity.type = value.target.value;
+                if (entity.type === 'custom') {
+                    $customInput.show();
+                    // We default to 'any' for an undefined custom value.
+                    entity.type = 'any';
+                }
+                else {
+                    $customInput.hide();
+                    $customInput.val(''); // Clear custom field.
+                }
+                this.update();
+                this.app.renderCode();
+            });
+            $customInput.on('input', () => {
+                const val = $customInput.val();
+                if (val === '') {
+                    entity.type = 'any';
+                }
+                else {
+                    entity.type = val;
+                }
+                this.update();
+                this.app.renderCode();
+            });
+            $customInput.on('focusout', () => {
+                const value = $customInput.val().trim();
+                switch (value.toLowerCase()) {
+                    // Here the reference stays valid.
+                    case 'custom':
+                        break;
+                    // Here the reference converts to its select option.
+                    case 'void':
+                    case 'any':
+                    case 'nil':
+                    case 'boolean':
+                    case 'number':
+                    case 'string':
+                        entity.type = value;
+                        $select.val(value);
+                        $customInput.hide();
+                        $customInput.val(''); // Clear custom field.
+                        this.update();
+                        this.app.renderCode();
+                        break;
+                }
+            });
+        }
+        renderType(name, type) {
+            const idTypeCard = `${name}-type-card`;
+            return (0, util_5.html) `
+            <div class="card responsive-subcard">
+                <div class="card-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idTypeCard}" aria-expanded="true" aria-controls="${idTypeCard}">
+                        Type
+                    </button>   
+                </div>
+                <div id="${idTypeCard}" class="card-body py-2 collapse show">
+                    <span><strong>${type}</strong></span>
+                </div>
+            </div>
+        `;
+        }
+        static renderTypeSelect(idSelect, label = '', value = 'any', margin) {
+            // Determine if custom field should show.
+            let style = '';
+            let customInputValue = value;
+            value = value.trim();
+            switch (value.toLowerCase()) {
+                // Here the reference stays valid.
+                case 'custom':
+                    style = '';
+                    customInputValue = value;
+                    break;
+                // Erase custom definition here.
+                case 'void':
+                case 'any':
+                case 'nil':
+                case 'boolean':
+                case 'number':
+                case 'string':
+                    style = 'display: none';
+                    customInputValue = '';
+                    break;
+                // Everything else gets shoved into the custom value.
+                default:
+                    customInputValue = value;
+                    value = 'custom';
+                    style = '';
+            }
+            return (0, util_5.html) `
+            <div class="${margin ? 'mb-2' : ''}">
+
+                <!-- Type Selection List -->
+                <select id="${idSelect}" class="form-select responsive-select" aria-label="${label}">
+                    <option value="any"  ${value === 'any' ? 'selected' : ''}><strong>Any</strong></option>
+                    <option value="void"  ${value === 'void' ? 'selected' : ''}><strong>Void</strong></option>
+                    <option value="nil"  ${value === 'nil' ? 'selected' : ''}><strong>Nil</strong></option>
+                    <option value="boolean"  ${value === 'boolean' ? 'selected' : ''}><strong>Boolean</strong></option>
+                    <option value="number" ${value === 'number' ? 'selected' : ''}><strong>Number</strong></option>
+                    <option value="string"  ${value === 'string' ? 'selected' : ''}><strong>String</strong></option>
+                    <option value="custom" ${value === 'custom' ? 'selected' : ''}><strong>Custom</strong></option>
+                </select>
+                
+                <!-- Manual Input for Custom Type -->
+                <input id="${idSelect}-custom-input" class="form-control responsive-input mt-2" type="text" style="${style}" value="${customInputValue}" />
+            
+            </div>
+        `;
+        }
+        static getTypeIcon(type) {
+            switch (type.toLocaleLowerCase().trim()) {
+                case 'class': return 'fa-solid fa-box-archive text-light mx-2 desaturate';
+                case 'constructor': return 'fa-solid fa-copyright text-light mx-2 desaturate';
+                case 'nil': return 'fa-solid fa-ban fa-danger mx-2 desaturate';
+                case 'void': return 'fa-solid fa-xmark mx-2 desaturate';
+                case 'number': return 'fa-solid fa-hashtag text-warning mx-2 desaturate';
+                case 'string': return 'fa-solid fa-quote-left text-light mx-2 desaturate';
+                case 'boolean': return 'fa-solid fa-flag text-info mx-2 desaturate';
+                // Uknown or other.
+                case 'any': return 'fa-solid fa-question text-danger mx-2 desaturate';
+                // Objects
+                default: return 'fa-solid fa-box text-success mx-2 desaturate';
+            }
         }
     }
-    exports.LuaConstructorCard = LuaConstructorCard;
+    exports.JavaCard = JavaCard;
 });
-define("src/asledgehammer/rosetta/component/lua/LuaFieldCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/lua/LuaCard"], function (require, exports, LuaGenerator_3, util_6, LuaCard_3) {
+define("src/asledgehammer/mallet/component/java/JavaClassCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaGenerator_1, util_6, JavaCard_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.LuaFieldCard = void 0;
-    class LuaFieldCard extends LuaCard_3.LuaCard {
+    exports.JavaClassCard = void 0;
+    class JavaClassCard extends JavaCard_1.JavaCard {
+        onRenderPreview() {
+            return (0, JavaGenerator_1.generateJavaClass)(this.options.entity);
+        }
         constructor(app, options) {
             super(app, options);
-            this.idDefaultValue = `${this.id}-default-value`;
-            this.idNotes = `${this.id}-notes`;
-            this.idType = `${this.id}-type`;
-            this.idBtnEdit = `${this.id}-btn-edit`;
-            this.idBtnDelete = `${this.id}-btn-delete`;
-        }
-        onRenderPreview() {
-            var _a, _b;
-            if (!this.options)
-                return '';
-            const { app } = this;
-            const { entity, isStatic } = this.options;
-            const { defaultValue } = entity;
-            const name = (_b = (_a = app.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options) === null || _b === void 0 ? void 0 : _b.entity.name;
-            if (isStatic) {
-                return `${(0, LuaGenerator_3.generateLuaField)(entity)}\n\n${(0, LuaGenerator_3.generateLuaValue)(name, entity)}`;
-            }
-            let s = (0, LuaGenerator_3.generateLuaField)(entity);
-            if (defaultValue) {
-                s += `\n\n--- (Example of initialization of field) ---\nself.${entity.name} = ${defaultValue};`;
-            }
-            return s;
+            this.idAuthors = `${this.id}-authors`;
+            this.idNotes = `${this.id}-description`;
+            this.idPreview = `${this.id}-preview`;
+            this.idInputExtends = `${this.id}-input-extends`;
         }
         onHeaderHTML() {
-            var _a;
-            const { idBtnEdit, idBtnDelete } = this;
-            const { entity, isStatic } = this.options;
-            const luaClass = (_a = this.app.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
-            let name = `${luaClass.name}.${entity.name}`;
-            if (isStatic) {
-                name = (0, util_6.html) `<span class="fst-italic">${name}</span>`;
-            }
+            const { entity } = this.options;
             return (0, util_6.html) ` 
             <div class="row">
                 <!-- Visual Category Badge -->
                 <div class="col-auto ps-2 pe-2">
-                    <div class="text-bg-primary px-2 border border-1 border-light-half desaturate shadow">
-                        <strong>Lua ${isStatic ? 'Property' : 'Field'}</strong>
-                    </div>
+                    <div class="text-bg-success px-2 border border-1 border-light-half desaturate shadow"><strong>Java Class</strong></div>
                 </div>
                 <div class="col-auto p-0">
-                    <h5 class="card-text"><strong>${name}</strong></h5> 
-                </div>
-                <div style="position: absolute; top: 5px; width: 100%; height: 32px;">
-                    <!-- Delete Button -->
-                    <button id="${idBtnDelete}" class="btn btn-sm responsive-btn float-end ms-1" title="Delete ${isStatic ? 'Value' : 'Field'}">
-                        <div class="btn-pane">
-                            <i class="fa-solid fa-xmark"></i>
-                        </div>
-                    </button>
-                    <!-- Edit Button -->
-                    <button id="${idBtnEdit}" class="btn btn-sm responsive-btn float-end" title="Edit Name">
-                        <div class="btn-pane">
-                            <i class="fa-solid fa-pen"></i>
-                        </div>
-                    </button>
+                    <h5 class="card-text font-monospace" style="position: relative; top: 1px;"><strong>${entity.name}</strong></h5> 
                 </div>
             </div>
         `;
         }
         onBodyHTML() {
-            const { idDefaultValue, idNotes, idType } = this;
-            const { entity } = this.options;
+            const { idInputExtends } = this;
+            const entity = this.options.entity;
+            const extendz = entity.extendz ? entity.extendz : '';
             return (0, util_6.html) `
             <div>
-                ${this.renderNotes(idNotes)}
-                ${this.renderDefaultValue(entity.defaultValue, idDefaultValue)}
-                <hr>
-                ${this.renderType(entity.name, entity.type, idType)}
+                ${this.renderNotes(this.idNotes)}
+                <!-- Extends SuperClass -->
+                <div class="mb-3" title="The super-class that the Java class extends.">
+                    <label class="form-label" for="${idInputExtends}">Extends ${this.options.entity.extendz}</label>
+                </div>
                 <hr>
                 ${this.renderPreview(false)}
             </div>
@@ -2105,910 +3503,15 @@ define("src/asledgehammer/rosetta/component/lua/LuaFieldCard", ["require", "expo
         }
         listen() {
             super.listen();
-            const { app, idBtnDelete, idBtnEdit, idDefaultValue, idNotes, idType } = this;
-            const { entity, isStatic } = this.options;
-            this.listenNotes(entity, idNotes);
-            this.listenDefaultValue(entity, idDefaultValue);
-            this.listenType(entity, idType, idType);
-            this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_value' : 'edit_field', `Edit ${isStatic ? 'Value' : 'Field'} Name`);
-            this.listenPreview();
-            (0, util_6.$get)(idBtnDelete).on('click', () => {
-                app.askConfirm(() => {
-                    var _a;
-                    const clazz = (_a = app.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
-                    if (isStatic) {
-                        delete clazz.values[entity.name];
-                    }
-                    else {
-                        delete clazz.fields[entity.name];
-                    }
-                    app.showLuaClass(clazz);
-                    app.sidebar.itemTree.selectedID = undefined;
-                    app.sidebar.populateTrees();
-                }, `Delete ${isStatic ? 'Value' : 'Field'} ${entity.name}`);
-            });
-        }
-    }
-    exports.LuaFieldCard = LuaFieldCard;
-});
-define("src/asledgehammer/rosetta/component/lua/LuaFunctionCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/lua/LuaCard"], function (require, exports, LuaGenerator_4, util_7, LuaCard_4) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.LuaFunctionCard = void 0;
-    class LuaFunctionCard extends LuaCard_4.LuaCard {
-        constructor(app, options) {
-            super(app, options);
-            this.idNotes = `${this.id}-notes`;
-            this.idReturnType = `${this.id}-return-type`;
-            this.idReturnNotes = `${this.id}-return-notes`;
-            this.idBtnDelete = `${this.id}-btn-delete`;
-            this.idBtnEdit = `${this.id}-btn-edit`;
-            this.idParamContainer = `${this.id}-parameter-container`;
-        }
-        onRenderPreview() {
-            if (!this.options)
-                return '';
+            const { idNotes } = this;
             const { entity } = this.options;
-            const classEntity = this.app.active.selectedCard.options.entity;
-            const className = classEntity.name;
-            return (0, LuaGenerator_4.generateLuaMethod)(className, entity);
-        }
-        onHeaderHTML() {
-            const { idBtnDelete, idBtnEdit } = this;
-            const { entity, isStatic } = this.options;
-            const classEntity = this.app.active.selectedCard.options.entity;
-            const className = classEntity.name;
-            let name = `${className}${isStatic ? '.' : ':'}${entity.name}( )`;
-            if (isStatic) {
-                name = (0, util_7.html) `<span class="fst-italic">${name}</span>`;
-            }
-            return (0, util_7.html) ` 
-            <div class="row">
-
-                <!-- Visual Category Badge -->
-                <div class="col-auto ps-2 pe-2">
-                    <div class="text-bg-primary px-2 border border-1 border-light-half desaturate shadow">
-                        <strong>Lua ${isStatic ? 'Function' : 'Method'}</strong>
-                    </div>
-                </div>
-                
-                <div class="col-auto p-0">
-                    <h5 class="card-text"><strong>${name}</strong></h5> 
-                </div>
-                <div style="position: absolute; top: 5px; width: 100%; height: 32px;">
-                    <!-- Delete Button -->
-                    <button id="${idBtnDelete}" class="btn btn-sm responsive-btn float-end ms-1" title="Delete ${isStatic ? 'Function' : 'Method'}">
-                        <div class="btn-pane">
-                            <i class="fa-solid fa-xmark"></i>
-                        </div>
-                    </button>
-                    <!-- Edit Button -->
-                    <button id="${idBtnEdit}" class="btn btn-sm responsive-btn float-end" title="Edit Name">
-                        <div class="btn-pane">
-                            <i class="fa-solid fa-pen"></i>
-                        </div>
-                    </button>
-                </div>
-            </div>
-        `;
-        }
-        onBodyHTML() {
-            const { idNotes, idParamContainer, idReturnType, idReturnNotes } = this;
-            const { entity } = this.options;
-            return (0, util_7.html) `
-            ${this.renderNotes(idNotes)}
-            <hr>
-            <div id="${idParamContainer}">
-                ${this.renderParameters(entity)}
-            </div>
-            ${this.renderReturns(entity, idReturnType, idReturnNotes)}
-            <hr>
-            ${this.renderPreview(false)}
-        `;
-        }
-        listen() {
-            super.listen();
-            const { app, idBtnDelete, idBtnEdit, idNotes, idReturnType, idReturnNotes } = this;
-            const { entity, isStatic } = this.options;
-            this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_function' : 'edit_method', `Edit Lua ${isStatic ? 'Function' : 'Method'}`);
             this.listenNotes(entity, idNotes);
-            this.listenParameters(entity, isStatic ? 'function' : 'method');
-            this.listenReturns(entity, idReturnType, idReturnNotes, idReturnType);
             this.listenPreview();
-            (0, util_7.$get)(idBtnDelete).on('click', () => {
-                app.askConfirm(() => {
-                    var _a;
-                    const clazz = (_a = app.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
-                    if (isStatic) {
-                        delete clazz.functions[entity.name];
-                    }
-                    else {
-                        delete clazz.methods[entity.name];
-                    }
-                    app.showLuaClass(clazz);
-                    app.sidebar.itemTree.selectedID = undefined;
-                    app.sidebar.populateTrees();
-                }, `Delete ${isStatic ? 'Function' : 'Method'} ${entity.name}`);
-            });
-        }
-        refreshParameters() {
-            const { idParamContainer } = this;
-            const { entity, isStatic } = this.options;
-            const $paramContainer = (0, util_7.$get)(idParamContainer);
-            $paramContainer.empty();
-            $paramContainer.html(this.renderParameters(entity, true));
-            this.listenParameters(entity, isStatic ? 'function' : 'method');
         }
     }
-    exports.LuaFunctionCard = LuaFunctionCard;
+    exports.JavaClassCard = JavaClassCard;
 });
-define("src/asledgehammer/rosetta/java/RosettaJavaType", ["require", "exports", "src/asledgehammer/rosetta/RosettaEntity"], function (require, exports, RosettaEntity_7) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.RosettaJavaType = void 0;
-    /**
-     * **RosettaJavaType**
-     *
-     * @author Jab
-     */
-    class RosettaJavaType extends RosettaEntity_7.RosettaEntity {
-        constructor(raw) {
-            super(raw);
-            const basic = this.readRequiredString('basic');
-            this.rawBasic = basic;
-            if (basic.indexOf('.') !== -1) {
-                const split = basic.split('.');
-                this.basic = split[split.length - 1];
-            }
-            else {
-                this.basic = basic;
-            }
-            this.full = this.readString('full');
-        }
-        toJSON(patch = false) {
-            const { rawBasic: basic, full } = this;
-            const json = {};
-            if (!patch) {
-                json.basic = basic;
-                json.full = full;
-            }
-            return json;
-        }
-    }
-    exports.RosettaJavaType = RosettaJavaType;
-});
-define("src/asledgehammer/rosetta/java/RosettaJavaParameter", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaType", "src/asledgehammer/rosetta/RosettaUtils"], function (require, exports, Assert, RosettaEntity_8, RosettaJavaType_1, RosettaUtils_4) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.RosettaJavaParameter = void 0;
-    /**
-     * **RosettaJavaParameter**
-     *
-     * @author Jab
-     */
-    class RosettaJavaParameter extends RosettaEntity_8.RosettaEntity {
-        constructor(raw) {
-            super(raw);
-            Assert.assertNonNull(raw.type, 'raw.type');
-            this.name = (0, RosettaUtils_4.formatName)(this.readRequiredString('name'));
-            this.type = new RosettaJavaType_1.RosettaJavaType(raw.type);
-            this.parse(raw);
-        }
-        parse(raw) {
-            this.notes = this.readNotes(raw);
-        }
-        toJSON(patch = false) {
-            const { name, notes, type } = this;
-            const json = {};
-            /* (Properties) */
-            if (!patch)
-                json.type = type.toJSON(patch);
-            json.name = name;
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
-            return json;
-        }
-    }
-    exports.RosettaJavaParameter = RosettaJavaParameter;
-});
-define("src/asledgehammer/rosetta/java/RosettaJavaConstructor", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaParameter"], function (require, exports, Assert, RosettaEntity_9, RosettaJavaParameter_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.RosettaJavaConstructor = void 0;
-    /**
-     * **RosettaJavaConstructor**
-     *
-     * @author Jab
-     */
-    class RosettaJavaConstructor extends RosettaEntity_9.RosettaEntity {
-        constructor(clazz, raw) {
-            super(raw);
-            this.parameters = [];
-            Assert.assertNonNull(clazz, 'clazz');
-            this.clazz = clazz;
-            /* (Properties) */
-            this.deprecated = this.readBoolean('deprecated') != null;
-            this.modifiers = this.readModifiers();
-            this.notes = this.readNotes(raw);
-            /* (Parameters) */
-            if (raw.parameters !== undefined) {
-                const rawParameters = raw.parameters;
-                for (const rawParameter of rawParameters) {
-                    const parameter = new RosettaJavaParameter_1.RosettaJavaParameter(rawParameter);
-                    this.parameters.push(parameter);
-                }
-            }
-        }
-        parse(raw) {
-            /* (Properties) */
-            this.notes = this.readNotes(raw);
-            /* (Parameters) */
-            if (raw.parameters !== undefined) {
-                const rawParameters = raw.parameters;
-                /*
-                 * (To prevent deep-logic issues, check to see if Rosetta's parameters match the length of
-                 *  the overriding parameters. If not, this is the fault of the patch, not Rosetta)
-                 */
-                if (this.parameters.length !== rawParameters.length) {
-                    throw new Error(`The class ${this.clazz.name}'s constructor's parameters does not match the parameters to override. (method: ${this.parameters.length}, given: ${rawParameters.length})`);
-                }
-                for (let index = 0; index < rawParameters.length; index++) {
-                    this.parameters[index].parse(rawParameters[index]);
-                }
-            }
-        }
-        toJSON(patch = false) {
-            const { notes, deprecated, modifiers, parameters } = this;
-            const json = {};
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
-            /* (Properties) */
-            if (!patch) {
-                json.deprecated = deprecated;
-                if (modifiers.length)
-                    json.modifiers = modifiers;
-            }
-            /* (Properties) */
-            if (parameters.length) {
-                json.parameters = [];
-                for (const parameter of parameters)
-                    json.parameters.push(parameter.toJSON(patch));
-            }
-            return json;
-        }
-    }
-    exports.RosettaJavaConstructor = RosettaJavaConstructor;
-});
-define("src/asledgehammer/rosetta/java/RosettaJavaReturns", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaType"], function (require, exports, Assert, RosettaEntity_10, RosettaJavaType_2) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.RosettaJavaReturns = void 0;
-    /**
-     * **RosettaJavaReturns**
-     *
-     * @author Jab
-     */
-    class RosettaJavaReturns extends RosettaEntity_10.RosettaEntity {
-        constructor(raw) {
-            super(raw);
-            Assert.assertNonNull(raw.type, 'raw.type');
-            this.type = new RosettaJavaType_2.RosettaJavaType(raw.type);
-            this.parse(raw);
-        }
-        parse(raw) {
-            this.notes = this.readNotes(raw);
-        }
-        toJSON(patch = false) {
-            const { type, notes } = this;
-            const json = {};
-            /* (Properties) */
-            if (!patch)
-                json.type = type;
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
-            return json;
-        }
-    }
-    exports.RosettaJavaReturns = RosettaJavaReturns;
-});
-define("src/asledgehammer/rosetta/java/RosettaJavaMethod", ["require", "exports", "src/asledgehammer/rosetta/RosettaUtils", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaParameter", "src/asledgehammer/rosetta/java/RosettaJavaReturns"], function (require, exports, RosettaUtils_5, RosettaEntity_11, RosettaJavaParameter_2, RosettaJavaReturns_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.RosettaJavaMethod = void 0;
-    /**
-     * **RosettaJavaMethod**
-     *
-     * @author Jab
-     */
-    class RosettaJavaMethod extends RosettaEntity_11.RosettaEntity {
-        constructor(raw) {
-            super(raw);
-            this.parameters = [];
-            /* PROPERTIES */
-            this.name = (0, RosettaUtils_5.formatName)(this.readRequiredString('name'));
-            this.deprecated = this.readBoolean('deprecated') != null;
-            this.modifiers = this.readModifiers();
-            /* PARAMETERS */
-            if (raw.parameters !== undefined) {
-                const rawParameters = raw.parameters;
-                for (const rawParameter of rawParameters) {
-                    this.parameters.push(new RosettaJavaParameter_2.RosettaJavaParameter(rawParameter));
-                }
-            }
-            /* RETURNS */
-            if (raw.returns === undefined) {
-                throw new Error(`Method does not have returns definition: ${this.name}`);
-            }
-            this.returns = new RosettaJavaReturns_1.RosettaJavaReturns(raw.returns);
-            this.notes = this.readNotes();
-        }
-        parse(raw) {
-            this.notes = this.readNotes(raw);
-            /* PARAMETERS */
-            if (raw.parameters !== undefined) {
-                const rawParameters = raw.parameters;
-                /*
-                 * (To prevent deep-logic issues, check to see if Rosetta's parameters match the length of
-                 *  the overriding parameters. If not, this is the fault of the patch, not Rosetta)
-                 */
-                if (this.parameters.length !== rawParameters.length) {
-                    throw new Error(`The method ${this.name}'s parameters does not match the parameters to override. (method: ${this.parameters.length}, given: ${rawParameters.length})`);
-                }
-                for (let index = 0; index < rawParameters.length; index++) {
-                    this.parameters[index].parse(rawParameters[index]);
-                }
-            }
-            /* RETURNS */
-            if (raw.returns !== undefined) {
-                this.returns.parse(raw.returns);
-            }
-        }
-        toJSON(patch = false) {
-            const { name, deprecated, modifiers, notes, parameters, returns } = this;
-            const json = {};
-            /* (Properties) */
-            if (!patch) {
-                json.deprecated = deprecated;
-                if (modifiers.length)
-                    json.modifiers = modifiers;
-            }
-            json.name = name;
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
-            /* (Parameters) */
-            if (parameters.length) {
-                json.parameters = [];
-                for (const parameter of parameters)
-                    json.parameters.push(parameter.toJSON(patch));
-            }
-            /* (Returns) */
-            json.returns = returns.toJSON(patch);
-            return json;
-        }
-        isStatic() {
-            return this.modifiers != null && !!this.modifiers.length && this.modifiers.indexOf('static') !== -1;
-        }
-    }
-    exports.RosettaJavaMethod = RosettaJavaMethod;
-});
-define("src/asledgehammer/rosetta/java/RosettaJavaMethodCluster", ["require", "exports", "src/asledgehammer/Assert"], function (require, exports, Assert) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.RosettaJavaMethodCluster = void 0;
-    /**
-     * **RosettaJavaMethodCluster**
-     *
-     * @author Jab
-     */
-    class RosettaJavaMethodCluster {
-        constructor(name) {
-            this.methods = [];
-            Assert.assertNonEmptyString(name, 'name');
-            this.name = name;
-        }
-        add(method) {
-            const indexOf = this.methods.indexOf(method);
-            if (indexOf !== -1) {
-                this.methods[indexOf].parse(method.raw);
-                return;
-            }
-            this.methods.push(method);
-        }
-        getWithParameters(...parameterNames) {
-            for (const method of this.methods) {
-                const parameters = method.parameters;
-                if (parameterNames.length === parameters.length) {
-                    if (parameterNames.length === 0)
-                        return method;
-                    let invalid = false;
-                    for (let i = 0; i < parameters.length; i++) {
-                        if (parameters[i].type.basic !== parameterNames[i]) {
-                            invalid = true;
-                            break;
-                        }
-                    }
-                    if (invalid)
-                        continue;
-                    return method;
-                }
-            }
-            return;
-        }
-    }
-    exports.RosettaJavaMethodCluster = RosettaJavaMethodCluster;
-});
-define("src/asledgehammer/rosetta/java/RosettaJavaField", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaType"], function (require, exports, Assert, RosettaEntity_12, RosettaJavaType_3) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.RosettaJavaField = void 0;
-    /**
-     * **RosettaJavaField**
-     *
-     * @author Jab
-     */
-    class RosettaJavaField extends RosettaEntity_12.RosettaEntity {
-        constructor(name, raw) {
-            super(raw);
-            Assert.assertNonEmptyString(name, 'name');
-            Assert.assertNonNull(raw.type, 'raw.type');
-            this.name = name;
-            this.modifiers = this.readModifiers();
-            this.type = new RosettaJavaType_3.RosettaJavaType(raw.type);
-            this.deprecated = this.readBoolean('deprecated') != null;
-            this.notes = this.readNotes();
-        }
-        parse(raw) {
-            this.notes = this.readNotes(raw);
-        }
-        toJSON(patch = false) {
-            const { name, notes, modifiers, type, deprecated } = this;
-            const json = {};
-            /* (Properties) */
-            json.name = name;
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
-            if (!patch) {
-                if (modifiers.length)
-                    json.modifiers = modifiers;
-                json.deprecated = deprecated;
-                json.type = type.toJSON(patch);
-            }
-            return json;
-        }
-        isStatic() {
-            return !!this.modifiers.length && this.modifiers.indexOf('static') !== -1;
-        }
-    }
-    exports.RosettaJavaField = RosettaJavaField;
-});
-define("src/asledgehammer/rosetta/java/RosettaJavaClass", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaUtils", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaConstructor", "src/asledgehammer/rosetta/java/RosettaJavaMethodCluster", "src/asledgehammer/rosetta/java/RosettaJavaMethod", "src/asledgehammer/rosetta/java/RosettaJavaField"], function (require, exports, Assert, RosettaUtils_6, RosettaEntity_13, RosettaJavaConstructor_1, RosettaJavaMethodCluster_1, RosettaJavaMethod_1, RosettaJavaField_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.RosettaJavaClass = exports.RosettaJavaNamespace = void 0;
-    /**
-     * **RosettaJavaNamespace**
-     *
-     * @author Jab
-     */
-    class RosettaJavaNamespace extends RosettaEntity_13.RosettaEntity {
-        constructor(name, raw = {}) {
-            super(raw);
-            this.classes = {};
-            Assert.assertNonEmptyString(name, 'name');
-            this.name = name;
-            /* (Classes) */
-            if (Object.keys(raw).length) {
-                for (const clazzName of Object.keys(raw)) {
-                    const rawClazz = raw[clazzName];
-                    let clazz = this.classes[clazzName];
-                    if (clazz === undefined) {
-                        clazz = new RosettaJavaClass(clazzName, this, rawClazz);
-                    }
-                    else {
-                        clazz.parse(rawClazz);
-                    }
-                    /* (Formatted Class Name) */
-                    this.classes[clazz.name] = this.classes[clazzName] = clazz;
-                }
-            }
-        }
-        parse(raw) {
-            /* (Classes) */
-            for (const clazzName of Object.keys(raw)) {
-                const rawClazz = raw[clazzName];
-                let clazz = this.classes[clazzName];
-                if (clazz === undefined) {
-                    clazz = new RosettaJavaClass(clazzName, this, rawClazz);
-                }
-                else {
-                    clazz.parse(rawClazz);
-                }
-                /* (If the class exists, parse the additional data as a patch) */
-                if (this.classes[clazzName] !== undefined) {
-                    this.classes[clazzName].parse(rawClazz);
-                    continue;
-                }
-                /* (Formatted Class Name) */
-                this.classes[clazz.name] = this.classes[clazzName] = clazz;
-            }
-        }
-        toJSON(patch = false) {
-            const { name, classes } = this;
-            const json = {};
-            /* (Properties) */
-            json.name = name;
-            /* (Classes) */
-            const keys = Object.keys(classes);
-            if (keys.length) {
-                keys.sort((a, b) => a.localeCompare(b));
-                for (const key of keys)
-                    json[key] = classes[key].toJSON(patch);
-            }
-            return json;
-        }
-    }
-    exports.RosettaJavaNamespace = RosettaJavaNamespace;
-    /**
-     * **RosettaJavaClass**
-     *
-     * @author Jab
-     */
-    class RosettaJavaClass extends RosettaEntity_13.RosettaEntity {
-        constructor(name, namespace, raw) {
-            super(raw);
-            this.fields = {};
-            this.methods = {};
-            this.constructors = [];
-            Assert.assertNonEmptyString(name, 'name');
-            Assert.assertNonNull(namespace, 'namsepace');
-            this.namespace = namespace;
-            this.name = (0, RosettaUtils_6.formatName)(name);
-            this.extendz = this.readString('extends');
-            this.modifiers = this.readModifiers();
-            this.deprecated = this.readBoolean('deprecated') != null;
-            this.javaType = this.readRequiredString('javaType');
-            this.notes = this.readNotes();
-            /* FIELDS */
-            if (raw.fields !== undefined) {
-                const rawFields = raw.fields;
-                for (const fieldName of Object.keys(rawFields)) {
-                    const rawField = rawFields[fieldName];
-                    const field = new RosettaJavaField_1.RosettaJavaField(fieldName, rawField);
-                    this.fields[field.name] = this.fields[fieldName] = field;
-                }
-            }
-            /* METHODS */
-            if (raw.methods !== undefined) {
-                const rawMethods = raw.methods;
-                for (const rawMethod of rawMethods) {
-                    const method = new RosettaJavaMethod_1.RosettaJavaMethod(rawMethod);
-                    const { name: methodName } = method;
-                    let cluster;
-                    if (this.methods[methodName] === undefined) {
-                        cluster = new RosettaJavaMethodCluster_1.RosettaJavaMethodCluster(methodName);
-                        this.methods[methodName] = cluster;
-                    }
-                    else {
-                        cluster = this.methods[methodName];
-                    }
-                    cluster.add(method);
-                }
-            }
-            /* CONSTRUCTORS */
-            if (raw.constructors !== undefined) {
-                const rawConstructors = raw.constructors;
-                for (const rawConstructor of rawConstructors) {
-                    this.constructors.push(new RosettaJavaConstructor_1.RosettaJavaConstructor(this, rawConstructor));
-                }
-            }
-        }
-        parse(raw) {
-            /* (Properties) */
-            this.notes = this.readNotes(raw);
-            /* (Fields) */
-            if (raw.fields !== undefined) {
-                const rawFields = raw.fields;
-                for (const fieldName of Object.keys(rawFields)) {
-                    const rawField = rawFields[fieldName];
-                    const field = this.fields[fieldName];
-                    if (field === undefined) {
-                        throw new Error(`Cannot find field in class: ${this.name}.${fieldName}`);
-                    }
-                    field.parse(rawField);
-                }
-            }
-            /* (Methods) */
-            if (raw.methods !== undefined) {
-                const rawMethods = raw.methods;
-                for (const rawMethod of rawMethods) {
-                    const method = new RosettaJavaMethod_1.RosettaJavaMethod(rawMethod);
-                    const { name: methodName } = method;
-                    const cluster = this.methods[methodName];
-                    if (this.methods[methodName] === undefined) {
-                        throw new Error(`Cannot find method in class: ${this.name}.${methodName}`);
-                    }
-                    cluster.add(method);
-                }
-            }
-            /* (Constructors) */
-            if (raw.constructors !== undefined) {
-                const rawConstructors = raw.constructors;
-                for (const rawConstructor of rawConstructors) {
-                    const rawParameterCount = rawConstructor.parameters !== undefined ? rawConstructor.parameters.length : 0;
-                    let foundConstructor;
-                    for (const nextConstructor of this.constructors) {
-                        const nextParameterCount = nextConstructor.parameters.length;
-                        if (rawParameterCount === nextParameterCount) {
-                            foundConstructor = nextConstructor;
-                            break;
-                        }
-                    }
-                    if (foundConstructor === undefined) {
-                        throw new Error(`Class Constructor ${this.name} not found with param count: ${rawParameterCount}`);
-                    }
-                    foundConstructor.parse(rawConstructor);
-                }
-            }
-        }
-        getField(id) {
-            return this.fields[id];
-        }
-        getConstructor(...parameterTypes) {
-            if (!this.constructors.length)
-                return undefined;
-            for (const conztructor of this.constructors) {
-                if (conztructor.parameters.length === parameterTypes.length) {
-                    let invalid = false;
-                    for (let index = 0; index < parameterTypes.length; index++) {
-                        if (parameterTypes[index] !== conztructor.parameters[index].type.basic) {
-                            invalid = true;
-                            break;
-                        }
-                    }
-                    if (invalid)
-                        continue;
-                    return conztructor;
-                }
-            }
-            return;
-        }
-        getMethod(...parameterTypes) {
-            if (!this.methods.length)
-                return undefined;
-            for (const cluster of Object.values(this.methods)) {
-                for (const method of cluster.methods) {
-                    if (method.parameters.length === parameterTypes.length) {
-                        let invalid = false;
-                        for (let index = 0; index < parameterTypes.length; index++) {
-                            if (parameterTypes[index] !== method.parameters[index].type.basic) {
-                                invalid = true;
-                                break;
-                            }
-                        }
-                        if (invalid)
-                            continue;
-                        return method;
-                    }
-                }
-            }
-            return;
-        }
-        toJSON(patch = false) {
-            const { extendz, modifiers, deprecated, javaType, notes, fields, constructors, methods } = this;
-            const json = {};
-            /* (Properties) */
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
-            if (!patch) {
-                if (extendz !== undefined)
-                    json.extends = extendz;
-                if (modifiers !== undefined)
-                    json.modifiers = modifiers;
-                json.deprecated = deprecated;
-                json.javaType = javaType;
-            }
-            /* (Fields) */
-            let keys = Object.keys(fields);
-            keys.sort((a, b) => a.localeCompare(b));
-            if (keys.length) {
-                json.fields = {};
-                for (const key of keys) {
-                    json.fields[key] = fields[key].toJSON(patch);
-                }
-            }
-            /* (Constructors) */
-            if (constructors.length) {
-                json.constructors = [];
-                for (const conztructor of constructors)
-                    json.constructors.push(conztructor.toJSON(patch));
-            }
-            /* (Methods) */
-            keys = Object.keys(methods);
-            keys.sort((a, b) => a.localeCompare(b));
-            if (keys.length) {
-                json.methods = [];
-                /* (Flatten MethodClusters into JSON method bodies) */
-                for (const key of keys) {
-                    for (const method of methods[key].methods)
-                        json.methods.push(method.toJSON(patch));
-                }
-            }
-            return json;
-        }
-    }
-    exports.RosettaJavaClass = RosettaJavaClass;
-});
-define("src/asledgehammer/rosetta/lua/RosettaLuaTableField", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/RosettaUtils"], function (require, exports, Assert, RosettaEntity_14, RosettaUtils_7) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.RosettaLuaTableField = void 0;
-    /**
-     * **RosettaLuaTableField**
-     *
-     * @author Jab
-     */
-    class RosettaLuaTableField extends RosettaEntity_14.RosettaEntity {
-        constructor(name, raw = {}) {
-            super(raw);
-            Assert.assertNonEmptyString(name, 'name');
-            this.name = (0, RosettaUtils_7.formatName)(name);
-            if (raw.type !== undefined) {
-                let type = this.readString('type');
-                if (type === undefined)
-                    type = 'any';
-                this.type = type;
-            }
-            else {
-                this.type = 'any';
-            }
-            this.notes = this.readNotes();
-        }
-        parse(raw) {
-            /* (Properties) */
-            this.notes = this.readNotes(raw);
-            if (raw.type !== undefined) {
-                this.type = this.readRequiredString('type', raw);
-            }
-        }
-        /**
-         * @param patch If true, the exported JSON object will only contain Patch-specific information.
-         *
-         * @returns The JSON of the Rosetta entity.
-         */
-        toJSON(patch = false) {
-            const { name, type, notes } = this;
-            const json = {};
-            /* (Properties) */
-            json.type = type;
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
-            return json;
-        }
-    }
-    exports.RosettaLuaTableField = RosettaLuaTableField;
-});
-define("src/asledgehammer/rosetta/lua/RosettaLuaTable", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaTableField"], function (require, exports, Assert, RosettaEntity_15, RosettaLuaFunction_2, RosettaLuaTableField_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.RosettaLuaTable = void 0;
-    /**
-     * **RosettaLuaTable**
-     *
-     * @author Jab
-     */
-    class RosettaLuaTable extends RosettaEntity_15.RosettaEntity {
-        constructor(name, raw = {}) {
-            super(raw);
-            this.fields = {};
-            this.tables = {};
-            this.functions = {};
-            Assert.assertNonEmptyString(name, 'name');
-            this.name = name;
-            this.notes = this.readNotes();
-            /* (Tables) */
-            if (raw.tables !== undefined) {
-                const rawTables = raw.tables;
-                for (const name2 of Object.keys(rawTables)) {
-                    const rawTable = rawTables[name2];
-                    const table = new RosettaLuaTable(name2, rawTable);
-                    this.tables[table.name] = this.tables[name2] = table;
-                }
-            }
-            /* (Functions) */
-            if (raw.functions !== undefined) {
-                const rawFunctions = raw.functions;
-                for (const name2 of Object.keys(rawFunctions)) {
-                    const rawFunction = rawFunctions[name2];
-                    const func = new RosettaLuaFunction_2.RosettaLuaFunction(name2, rawFunction);
-                    this.functions[func.name] = this.functions[name2] = func;
-                }
-            }
-            /* (Values) */
-            if (raw.values !== undefined) {
-                const rawValues = raw.values;
-                for (const name2 of Object.keys(rawValues)) {
-                    const rawValue = rawValues[name2];
-                    const value = new RosettaLuaTableField_1.RosettaLuaTableField(name2, rawValue);
-                    this.fields[value.name] = this.fields[name2] = value;
-                }
-            }
-        }
-        parse(raw) {
-            this.notes = this.readNotes(raw);
-            /* (Tables) */
-            if (raw.tables !== undefined) {
-                const rawTables = raw.tables;
-                for (const name of Object.keys(rawTables)) {
-                    const rawTable = rawTables[name];
-                    let table = this.tables[name];
-                    if (table === undefined) {
-                        table = new RosettaLuaTable(name, rawTable);
-                    }
-                    else {
-                        table.parse(rawTable);
-                    }
-                    this.tables[table.name] = this.tables[name] = table;
-                }
-            }
-            /* (Functions) */
-            if (raw.functions !== undefined) {
-                const rawFunctions = raw.functions;
-                for (const name of Object.keys(rawFunctions)) {
-                    const rawFunction = rawFunctions[name];
-                    let func = this.functions[name];
-                    if (func === undefined) {
-                        func = new RosettaLuaFunction_2.RosettaLuaFunction(name, rawFunction);
-                    }
-                    else {
-                        func.parse(rawFunction);
-                    }
-                    this.functions[func.name] = this.functions[name] = func;
-                }
-            }
-            /* (Values) */
-            if (raw.values !== undefined) {
-                const rawValues = raw.values;
-                for (const name of Object.keys(rawValues)) {
-                    const rawValue = rawValues[name];
-                    let value = this.fields[name];
-                    if (value === undefined) {
-                        value = new RosettaLuaTableField_1.RosettaLuaTableField(name, rawValue);
-                    }
-                    else {
-                        value.parse(rawValue);
-                    }
-                    this.fields[value.name] = this.fields[name] = value;
-                }
-            }
-        }
-        toJSON(patch = false) {
-            const { fields, tables, functions, name, notes } = this;
-            const json = {};
-            /* (Properties) */
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
-            /* (Fields) */
-            let keys = Object.keys(fields);
-            if (keys.length) {
-                json.fields = {};
-                keys.sort((a, b) => a.localeCompare(b));
-                for (const key of keys)
-                    json.fields[key] = fields[key].toJSON(patch);
-            }
-            /* (Functions) */
-            keys = Object.keys(functions);
-            if (keys.length) {
-                json.functions = {};
-                keys.sort((a, b) => a.localeCompare(b));
-                for (const key of keys)
-                    json.functions[key] = functions[key].toJSON(patch);
-            }
-            /* (Tables) */
-            keys = Object.keys(tables);
-            if (keys.length) {
-                json.tables = {};
-                keys.sort((a, b) => a.localeCompare(b));
-                for (const key of keys)
-                    json.tables[key] = tables[key].toJSON(patch);
-            }
-            return json;
-        }
-    }
-    exports.RosettaLuaTable = RosettaLuaTable;
-});
-define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/lua/LuaCard"], function (require, exports, RosettaJavaClass_1, RosettaLuaClass_1, RosettaLuaTable_1, util_8, LuaCard_5) {
+define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, RosettaJavaClass_1, RosettaLuaClass_1, RosettaLuaTable_1, util_7, LuaCard_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ItemTree = void 0;
@@ -3243,7 +3746,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                 const id = `lua-class-${entity.name}-field-${field.name}`;
                 fields.push({
                     text: field.name,
-                    icon: LuaCard_5.LuaCard.getTypeIcon(field.type),
+                    icon: LuaCard_2.LuaCard.getTypeIcon(field.type),
                     id,
                     class: ['item-tree-item', 'lua-field-item']
                 });
@@ -3255,8 +3758,8 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                 const value = entity.values[valueName];
                 const id = `lua-class-${entity.name}-value-${value.name}`;
                 values.push({
-                    text: (0, util_8.html) `<span class="fst-italic">${value.name}</span>`,
-                    icon: LuaCard_5.LuaCard.getTypeIcon(value.type),
+                    text: (0, util_7.html) `<span class="fst-italic">${value.name}</span>`,
+                    icon: LuaCard_2.LuaCard.getTypeIcon(value.type),
                     id,
                     class: ['item-tree-item', 'lua-value-item']
                 });
@@ -3268,7 +3771,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                 const method = entity.methods[methodName];
                 const id = `lua-class-${entity.name}-method-${method.name}`;
                 methods.push({
-                    text: (0, util_8.html) `<i class="fa-solid fa-xmark me-2" title="${method.returns.type}"></i>${method.name}`,
+                    text: (0, util_7.html) `<i class="fa-solid fa-xmark me-2" title="${method.returns.type}"></i>${method.name}`,
                     icon: 'fa-solid fa-terminal text-success mx-2',
                     id,
                     class: ['item-tree-item', 'lua-method-item'],
@@ -3281,23 +3784,23 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                 const func = entity.functions[functionName];
                 const id = `lua-class-${entity.name}-function-${func.name}`;
                 functions.push({
-                    text: (0, util_8.html) `<i class="fa-solid fa-xmark me-2" title="${func.returns.type}"></i>${func.name}`,
+                    text: (0, util_7.html) `<i class="fa-solid fa-xmark me-2" title="${func.returns.type}"></i>${func.name}`,
                     icon: 'fa-solid fa-terminal text-success mx-2',
                     id,
                     class: ['item-tree-item', 'lua-function-item'],
                 });
             }
-            let $treeLower = (0, util_8.$get)('tree-lower');
+            let $treeLower = (0, util_7.$get)('tree-lower');
             $treeLower.remove();
-            const $sidebarContentLower = (0, util_8.$get)('sidebar-content-lower');
+            const $sidebarContentLower = (0, util_7.$get)('sidebar-content-lower');
             $sidebarContentLower.append('<div id="tree-lower" class="rounded-0 bg-dark text-white"></div>');
-            $treeLower = (0, util_8.$get)('tree-lower');
+            $treeLower = (0, util_7.$get)('tree-lower');
             // @ts-ignore
             $treeLower.bstreeview({
                 data: [
                     {
                         text: "Constructor",
-                        icon: LuaCard_5.LuaCard.getTypeIcon('constructor'),
+                        icon: LuaCard_2.LuaCard.getTypeIcon('constructor'),
                         class: ['item-tree-item', 'lua-constructor-item']
                     },
                     {
@@ -3368,11 +3871,11 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
             if (!entity)
                 return;
             const _this = this;
-            let $treeLower = (0, util_8.$get)('tree-lower');
+            let $treeLower = (0, util_7.$get)('tree-lower');
             $treeLower.remove();
-            const $sidebarContentLower = (0, util_8.$get)('sidebar-content-lower');
+            const $sidebarContentLower = (0, util_7.$get)('sidebar-content-lower');
             $sidebarContentLower.append('<div id="tree-lower" class="rounded-0 bg-dark text-white"></div>');
-            $treeLower = (0, util_8.$get)('tree-lower');
+            $treeLower = (0, util_7.$get)('tree-lower');
             const staticFields = [];
             const staticMethods = [];
             const fields = [];
@@ -3431,7 +3934,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                 }
                 constructors.push({
                     text: wrapItem(`${entity.name}(${params})`),
-                    icon: LuaCard_5.LuaCard.getTypeIcon('object'),
+                    icon: LuaCard_2.LuaCard.getTypeIcon('object'),
                     id,
                     class: ['item-tree-item', 'java-class-constructor-item']
                 });
@@ -3443,7 +3946,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                     const id = `java-class-${entity.name}-field-${field.name}`;
                     staticFields.push({
                         text: wrapItem(field.name),
-                        icon: LuaCard_5.LuaCard.getTypeIcon(field.type.basic),
+                        icon: LuaCard_2.LuaCard.getTypeIcon(field.type.basic),
                         id,
                         class: ['item-tree-item', 'java-class-field-item']
                     });
@@ -3456,7 +3959,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                     const id = `java-class-${entity.name}-field-${field.name}`;
                     fields.push({
                         text: wrapItem(field.name),
-                        icon: LuaCard_5.LuaCard.getTypeIcon(field.type.basic),
+                        icon: LuaCard_2.LuaCard.getTypeIcon(field.type.basic),
                         id,
                         class: ['item-tree-item', 'java-class-field-item']
                     });
@@ -3476,7 +3979,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                     params = params.substring(0, params.length - 2);
                 staticMethods.push({
                     text: wrapItem(`${method.name}(${params})`),
-                    icon: LuaCard_5.LuaCard.getTypeIcon(method.returns.type.basic),
+                    icon: LuaCard_2.LuaCard.getTypeIcon(method.returns.type.basic),
                     id,
                     class: ['item-tree-item', 'java-class-method-item']
                 });
@@ -3495,7 +3998,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                     params = params.substring(0, params.length - 2);
                 methods.push({
                     text: wrapItem(`${method.name}(${params})`),
-                    icon: LuaCard_5.LuaCard.getTypeIcon(method.returns.type.basic),
+                    icon: LuaCard_2.LuaCard.getTypeIcon(method.returns.type.basic),
                     id,
                     class: ['item-tree-item', 'java-class-method-item']
                 });
@@ -3558,7 +4061,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
     }
     exports.ItemTree = ItemTree;
 });
-define("src/asledgehammer/rosetta/component/ObjectTree", ["require", "exports", "src/asledgehammer/rosetta/component/lua/LuaCard", "src/asledgehammer/rosetta/util"], function (require, exports, LuaCard_6, util_9) {
+define("src/asledgehammer/mallet/component/ObjectTree", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, util_8, LuaCard_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ObjectTree = void 0;
@@ -3628,17 +4131,17 @@ define("src/asledgehammer/rosetta/component/ObjectTree", ["require", "exports", 
         }
         populate() {
             const _this = this;
-            let $treeUpper = (0, util_9.$get)('tree-upper');
+            let $treeUpper = (0, util_8.$get)('tree-upper');
             $treeUpper.remove();
-            const $sidebarContentUpper = (0, util_9.$get)('sidebar-content-upper');
+            const $sidebarContentUpper = (0, util_8.$get)('sidebar-content-upper');
             $sidebarContentUpper.append('<div id="tree-upper" class="rounded-0 bg-dark text-white"></div>');
-            $treeUpper = (0, util_9.$get)('tree-upper');
+            $treeUpper = (0, util_8.$get)('tree-upper');
             const luaClasses = [];
             for (const name of Object.keys(this.app.active.luaClasses)) {
                 luaClasses.push({
                     id: `object-lua-class-${name}`,
                     text: wrapItem(name),
-                    icon: LuaCard_6.LuaCard.getTypeIcon('class'),
+                    icon: LuaCard_3.LuaCard.getTypeIcon('class'),
                     class: ['object-tree-item', 'object-tree-lua-class'],
                 });
             }
@@ -3647,7 +4150,7 @@ define("src/asledgehammer/rosetta/component/ObjectTree", ["require", "exports", 
                 luaTables.push({
                     id: `object-lua-table-${name}`,
                     text: wrapItem(name),
-                    icon: LuaCard_6.LuaCard.getTypeIcon('class'),
+                    icon: LuaCard_3.LuaCard.getTypeIcon('class'),
                     class: ['object-tree-item', 'object-tree-lua-table'],
                 });
             }
@@ -3656,7 +4159,7 @@ define("src/asledgehammer/rosetta/component/ObjectTree", ["require", "exports", 
                 javaClasses.push({
                     id: `object-java-class-${name}`,
                     text: wrapItem(name),
-                    icon: LuaCard_6.LuaCard.getTypeIcon('class'),
+                    icon: LuaCard_3.LuaCard.getTypeIcon('class'),
                     class: ['object-tree-item', 'object-tree-java-class'],
                 });
             }
@@ -3697,7 +4200,7 @@ define("src/asledgehammer/rosetta/component/ObjectTree", ["require", "exports", 
     }
     exports.ObjectTree = ObjectTree;
 });
-define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/Component", "src/asledgehammer/rosetta/component/ItemTree", "src/asledgehammer/rosetta/component/ObjectTree"], function (require, exports, util_10, Component_2, ItemTree_1, ObjectTree_1) {
+define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/Component", "src/asledgehammer/mallet/component/ItemTree", "src/asledgehammer/mallet/component/ObjectTree"], function (require, exports, util_9, Component_2, ItemTree_1, ObjectTree_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Sidebar = void 0;
@@ -3719,7 +4222,7 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
             this.itemTree = new ItemTree_1.ItemTree(app, this);
         }
         onRender() {
-            return (0, util_10.html) `
+            return (0, util_9.html) `
         <div class="bg-dark" style="position: relative; top: 0; left: 0; width: 100%; height: 100%;">
             <div style="position: relative; top: 0; left: 0; width: 100%; height: 30%;">
                 <div class="p-1 border-bottom border-bottom-2 border-black shadow">
@@ -3768,15 +4271,9 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                 </div>
             </div>
             <div style="position: absolute; top: 30%; left: 0; width: 100%; height: 70%;">
-                <div class="p-1 border-top border-top-2 border-bottom border-bottom-2 border-black shadow" style="height: 41px;">
-
-                    <!-- Lua Wizard -->
-                    <!-- <button id="lua-wizard" class="btn btn-sm responsive-btn responsive-btn-info" title="Lua Wizard">
-                        <div class="btn-pane">    
-                            <i class="fa-solid fa-wand-sparkles"></i>
-                        </div>
-                    </button> -->
-
+                <div 
+                    class="p-1 border-top border-top-2 border-bottom border-bottom-2 border-black shadow"
+                    style="height: 41px;">
                     <!-- New Properties -->
                     <div class="dropdown" style="position: absolute; top: 5px; right: 5px;">
                         <button class="btn btn-sm responsive-btn responsive-btn-success float-end" style="width: 32px; height: 32px" data-bs-toggle="dropdown" aria-expanded="false" title="Add Element">
@@ -3955,786 +4452,53 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
     exports.Sidebar = Sidebar;
     ;
 });
-define("src/asledgehammer/rosetta/java/JavaGenerator", ["require", "exports"], function (require, exports) {
+define("src/asledgehammer/mallet/component/lua/LuaConstructorCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaGenerator_2, util_10, LuaCard_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.generateJavaClass = exports.generateJavaMethod = exports.generateJavaConstructor = exports.generateJavaParameterBody = exports.generateJavaField = void 0;
-    function generateJavaField(field) {
-        let s = '';
-        // Description
-        if (field.notes && field.notes.length) {
-            const notes = field.notes.split('\n').join(' ');
-            s += `${notes}\n`;
-        }
-        while (s.endsWith('\n'))
-            s = s.substring(0, s.length - 1);
-        return `--- @field ${field.name} ${field.type.basic} ${s.trim()}`;
-    }
-    exports.generateJavaField = generateJavaField;
-    function generateJavaParameterBody(params) {
-        let s = '';
-        if (params.length) {
-            for (const param of params) {
-                s += `${param.name}, `;
-            }
-            s = s.substring(0, s.length - 2);
-        }
-        return `(${s})`;
-    }
-    exports.generateJavaParameterBody = generateJavaParameterBody;
-    function generateJavaConstructor(className, methods) {
-        if (!methods.length)
-            return '';
-        methods.sort((a, b) => a.parameters.length - b.parameters.length);
-        let s = '';
-        // Parameter(s).
-        let maxParams = 0;
-        const _paramNames = [];
-        const _paramTypes = [];
-        const _overloads = [];
-        for (const method of methods) {
-            const { parameters } = method;
-            if (parameters.length > maxParams) {
-                maxParams = parameters.length;
-            }
-            let _overload = `fun(`;
-            let oParams = '';
-            for (const param of method.parameters) {
-                oParams += `${param.name}: ${param.type.basic}, `;
-            }
-            if (oParams.length)
-                oParams = oParams.substring(0, oParams.length - 2);
-            _overload += `${oParams}): ${className}`;
-            _overloads.push(_overload);
-        }
-        const method0 = methods[0];
-        if (method0.parameters && method0.parameters.length) {
-            for (const param of method0.parameters) {
-                _paramNames.push(param.name);
-                _paramTypes.push(param.type.basic);
-            }
-        }
-        // Parameter(s).
-        let ps = '';
-        for (let index = 0; index < _paramNames.length; index++) {
-            ps += `${_paramNames[index]}, `;
-        }
-        if (ps.length) {
-            ps = ps.substring(0, ps.length - 2);
-        }
-        // Documentation.
-        let ds = '--- @public\n';
-        if (methods.length > 1) {
-            for (let index = 0; index < methods.length; index++) {
-                const method = methods[index];
-                let mds = '';
-                if (method.notes) {
-                    mds += '--- ### Description:';
-                    mds += `\n   ${method.notes}`;
-                }
-                if (mds.length)
-                    mds += '\n';
-                mds += '--- ### Parameter(s):';
-                if (method.parameters.length) {
-                    for (let pIndex = 0; pIndex < method.parameters.length; pIndex++) {
-                        const parameter = method.parameters[pIndex];
-                        mds += `\n---   * **${parameter.type.basic}** *${parameter.name}*`;
-                        if (parameter.notes) {
-                            mds += ` - ${parameter.notes}`;
-                        }
-                    }
-                }
-                else {
-                    mds += '\n--- * **(None)**';
-                }
-                if (mds.length) {
-                    mds += '\n--- ---\n';
-                    ds += mds;
-                }
-            }
-            ds += `--- \n`;
-            // Apply first method's notes.
-            const method = methods[0];
-            if (method.notes) {
-                ds += `--- ${methods[0].notes}\n--- \n`;
-            }
-            // Apply parameter(s).
-            for (let index = 0; index < _paramNames.length; index++) {
-                ds += `--- @param ${_paramNames[index]} ${_paramTypes[index]}\n`;
-            }
-            ds += `--- @return ${className}`;
-            // Apply overload(s).
-            if (_overloads.length > 1) {
-                ds += '\n--- \n';
-                for (let oIndex = 1; oIndex < methods.length; oIndex++) {
-                    ds += `--- @overload ${_overloads[oIndex]}\n`;
-                }
-            }
-        }
-        else {
-            const method = methods[0];
-            let vds = '';
-            if (method.notes) {
-                vds += `--- ${methods[0].notes}\n--- `;
-            }
-            for (let index = 0; index < _paramNames.length; index++) {
-                if (vds.length)
-                    vds += '\n';
-                vds += `--- @param ${_paramNames[index]} ${_paramTypes[index]}`;
-                if (method.parameters[index].notes) {
-                    vds += ` ${method.parameters[index].notes}`;
-                }
-            }
-            if (vds.length)
-                vds += '\n--- ';
-            vds += `\n--- @return ${className}\n`;
-            ds += vds;
-        }
-        while (ds.indexOf('\n\n') !== -1) {
-            ds = ds.replace('\n\n', '\n--- \n');
-        }
-        s += `${ds}function ${className}.new(${ps}) end`;
-        return s;
-    }
-    exports.generateJavaConstructor = generateJavaConstructor;
-    function generateJavaMethod(className, cluster) {
-        if (!cluster.methods.length)
-            return '';
-        const methods = [...cluster.methods];
-        methods.sort((a, b) => a.parameters.length - b.parameters.length);
-        const isStatic = methods[0].isStatic();
-        let s = '';
-        // Parameter(s).
-        let maxParams = 0;
-        const _returns = [];
-        const _paramNames = [];
-        const _paramTypes = [];
-        const _overloads = [];
-        for (const method of methods) {
-            const { parameters, returns } = method;
-            if (parameters.length > maxParams) {
-                maxParams = parameters.length;
-            }
-            if (_returns.indexOf(returns.type.basic) === -1) {
-                _returns.push(returns.type.basic);
-            }
-            let _overload = `fun(`;
-            let oParams = '';
-            for (const param of method.parameters) {
-                oParams += `${param.name}: ${param.type.basic}, `;
-            }
-            if (oParams.length)
-                oParams = oParams.substring(0, oParams.length - 2);
-            _overload += `${oParams}): ${method.returns.type.basic}`;
-            _overloads.push(_overload);
-        }
-        _returns.sort((a, b) => a.localeCompare(b));
-        const method0 = methods[0];
-        if (method0.parameters && method0.parameters.length) {
-            for (const param of method0.parameters) {
-                _paramNames.push(param.name);
-                _paramTypes.push(param.type.basic);
-            }
-        }
-        // Parameter(s).
-        let ps = '';
-        for (let index = 0; index < _paramNames.length; index++) {
-            ps += `${_paramNames[index]}, `;
-        }
-        if (ps.length) {
-            ps = ps.substring(0, ps.length - 2);
-        }
-        // Return Type(s).
-        let rs = '';
-        for (let index = 0; index < _returns.length; index++) {
-            rs += `${_returns[index]} | `;
-        }
-        if (rs.length)
-            rs = rs.substring(0, rs.length - 3);
-        // Documentation.
-        let ds = '--- @public\n';
-        if (isStatic)
-            ds += '--- @static\n';
-        if (methods.length > 1) {
-            for (let index = 0; index < methods.length; index++) {
-                const method = methods[index];
-                let mds = '';
-                if (method.notes) {
-                    mds += '--- ### Description:';
-                    mds += `\n   ${method.notes}`;
-                }
-                if (mds.length)
-                    mds += '\n';
-                mds += '--- ### Parameter(s):';
-                if (method.parameters.length) {
-                    for (let pIndex = 0; pIndex < method.parameters.length; pIndex++) {
-                        const parameter = method.parameters[pIndex];
-                        mds += `\n---   * **${parameter.type.basic}** *${parameter.name}*`;
-                        if (parameter.notes) {
-                            mds += ` - ${parameter.notes}`;
-                        }
-                    }
-                }
-                else {
-                    mds += '\n--- * **(None)**';
-                }
-                mds += '\n--- ### Returns:';
-                const returns = method.returns;
-                mds += `\n---   * ${returns.type.basic}`;
-                if (returns.notes)
-                    mds += ` ${returns.notes}`;
-                if (mds.length) {
-                    mds += '\n--- ---\n';
-                    ds += mds;
-                }
-            }
-            ds += `--- \n`;
-            // Apply first method's notes.
-            const method = methods[0];
-            if (method.notes) {
-                ds += `--- ${methods[0].notes}\n--- \n`;
-            }
-            // Apply parameter(s).
-            for (let index = 0; index < _paramNames.length; index++) {
-                ds += `--- @param ${_paramNames[index]} ${_paramTypes[index]}\n`;
-            }
-            if (ds.length)
-                ds += '--- \n';
-            // Apply return.
-            ds += `--- @return ${rs}\n--- \n`;
-            // Apply overload(s).
-            for (let oIndex = 1; oIndex < methods.length; oIndex++) {
-                ds += `--- @overload ${_overloads[oIndex]}\n`;
-            }
-        }
-        else {
-            let vds = '';
-            const method = methods[0];
-            if (method.notes) {
-                vds += `--- ${methods[0].notes}\n--- `;
-            }
-            for (let index = 0; index < _paramNames.length; index++) {
-                if (vds.length)
-                    vds += '\n';
-                vds += `--- @param ${_paramNames[index]} ${_paramTypes[index]}`;
-                if (method.parameters[index].notes) {
-                    vds += ` ${method.parameters[index].notes}`;
-                }
-            }
-            if (vds.length)
-                vds += '\n';
-            vds += `--- @return ${rs}`;
-            if (method.returns.notes) {
-                vds += ` ${method.returns.notes}`;
-            }
-            if (!vds.endsWith('\n'))
-                vds += '\n';
-            ds += vds;
-        }
-        while (ds.indexOf('\n\n') !== -1) {
-            ds = ds.replace('\n\n', '\n--- \n');
-        }
-        s += `${ds}function ${className}${isStatic ? '.' : ':'}${cluster.name}(${ps}) end`;
-        return s;
-    }
-    exports.generateJavaMethod = generateJavaMethod;
-    function generateJavaClass(clazz) {
-        let s = '';
-        // If the class has a description.
-        if (clazz.notes && clazz.notes.length > 0) {
-            const notes = clazz.notes.split('\n').join('\n--- ');
-            s += `--- ${notes}\n`;
-            if (notes.endsWith('\n'))
-                s += '--- \n';
-        }
-        s += `--- @class ${clazz.name}`;
-        // Super-class.
-        if (clazz.extendz && clazz.extendz.length && clazz.extendz !== 'Object') {
-            s += `: ${clazz.extendz}`;
-        }
-        s += '\n';
-        // Field(s)
-        const fieldNames = Object.keys(clazz.fields);
-        if (fieldNames.length) {
-            fieldNames.sort((a, b) => a.localeCompare(b));
-            // Static field(s) first.
-            for (const fieldName of fieldNames) {
-                const field = clazz.fields[fieldName];
-                if (field.isStatic()) {
-                    s += generateJavaField(field) + '\n';
-                }
-            }
-            // Instance field(s) next.
-            for (const fieldName of fieldNames) {
-                const field = clazz.fields[fieldName];
-                if (!field.isStatic()) {
-                    s += generateJavaField(field) + '\n';
-                }
-            }
-        }
-        const methodClusterNames = Object.keys(clazz.methods);
-        methodClusterNames.sort((a, b) => a.localeCompare(b));
-        s += `${clazz.name} = {};\n\n`;
-        const staticMethods = [];
-        const methods = [];
-        for (const clusterName of methodClusterNames) {
-            const cluster = clazz.methods[clusterName];
-            if (cluster.methods[0].isStatic()) {
-                staticMethods.push(cluster);
-            }
-            else {
-                methods.push(cluster);
-            }
-        }
-        if (staticMethods.length) {
-            s += `------------------------------------\n`;
-            s += `---------- STATIC METHODS ----------\n`;
-            s += `------------------------------------\n`;
-            s += '\n';
-            // Method Cluster(s)
-            for (const cluster of staticMethods) {
-                s += `${generateJavaMethod(clazz.name, cluster)}\n\n`;
-            }
-        }
-        if (methods.length) {
-            s += '------------------------------------\n';
-            s += '------------- METHODS --------------\n';
-            s += '------------------------------------\n';
-            s += '\n';
-            // Method Cluster(s)
-            for (const cluster of methods) {
-                s += `${generateJavaMethod(clazz.name, cluster)}\n\n`;
-            }
-        }
-        if (clazz.constructors && clazz.constructors.length) {
-            s += `------------------------------------\n`;
-            s += `----------- CONSTRUCTOR ------------\n`;
-            s += `------------------------------------\n`;
-            s += '\n';
-            s += `${generateJavaConstructor(clazz.name, clazz.constructors)}\n`;
-        }
-        return s;
-    }
-    exports.generateJavaClass = generateJavaClass;
-});
-define("src/asledgehammer/rosetta/component/java/JavaCard", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/CardComponent", "src/asledgehammer/Delta"], function (require, exports, hljs, util_11, CardComponent_2, Delta_2) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.JavaCard = void 0;
-    class JavaCard extends CardComponent_2.CardComponent {
-        constructor(app, options) {
-            super(options);
-            this.app = app;
-            this.idPreview = `${this.id}-preview`;
-            this.idPreviewCode = `${this.id}-preview-code`;
-            this.idBtnPreviewCopy = `${this.id}-preview-copy-btn`;
-        }
-        listenEdit(entity, idBtnEdit, mode, title, nameSelected = undefined) {
-            (0, util_11.$get)(idBtnEdit).on('click', () => {
-                const { modalName, $btnName, $titleName, $inputName } = this.app;
-                $titleName.html(title);
-                if (mode === 'edit_class' || mode === 'edit_field' || mode === 'edit_function' || mode === 'edit_method' || mode === 'edit_value') {
-                    $btnName.html('Edit');
-                    $btnName.removeClass('btn-success');
-                    $btnName.addClass('btn-primary');
-                }
-                else {
-                    $btnName.html('Create');
-                    $btnName.addClass('btn-success');
-                    $btnName.removeClass('btn-primary');
-                }
-                $inputName.val(entity.name);
-                this.app.nameMode = mode;
-                if (!nameSelected)
-                    nameSelected = entity.name;
-                this.app.nameSelected = nameSelected;
-                modalName.show();
-            });
-        }
-        renderEdit(idBtnEdit) {
-            return (0, util_11.html) `
-            <!-- Edit Button -->
-            <div style="position: absolute; padding: 0; right: 0; top: 0">
-                <button id="${idBtnEdit}" class="btn btn-sm responsive-btn float-end" style="position: relative; top: 5px; right: 5px;" title="Edit Name">
-                    <div class="btn-pane" style="width: 30px; height: 30px;">
-                        <i class="fa-solid fa-pen"></i>
-                    </div>
-                </button>
-            </div>
-        `;
-        }
-        listenNotes(entity, idNotes) {
-            (0, Delta_2.createDeltaEditor)(idNotes, entity.notes, (markdown) => {
-                entity.notes = markdown;
-                this.update();
-                this.app.renderCode();
-            });
-        }
-        renderNotes(idNotes) {
-            return (0, util_11.html) `
-            <div class="mb-3">
-                <label for="${idNotes}" class="form-label mb-2">Description</label>
-                <div id="${idNotes}" style="background-color: #222;"></div>
-            </div>
-        `;
-        }
-        listenDefaultValue(entity, idDefaultValue) {
-            const $defaultValue = (0, util_11.$get)(idDefaultValue);
-            $defaultValue.on('input', () => {
-                entity.defaultValue = $defaultValue.val();
-                this.update();
-                this.app.renderCode();
-            });
-        }
-        renderDefaultValue(defaultValue, idDefaultValue) {
-            if (!defaultValue)
-                defaultValue = '';
-            return (0, util_11.html) `
-            <div class="mb-3">
-                <label for="${idDefaultValue}" class="form-label mb-2">Default Value</label>
-                <textarea id="${idDefaultValue}" class="form-control responsive-input mt-1" spellcheck="false">${defaultValue}</textarea>
-            </div>
-        `;
-        }
-        listenParameters(entity, type) {
-            const { parameters } = entity;
-            for (const param of parameters) {
-                const idParamNotes = `${entity.name}-parameter-${param.name}-notes`;
-                const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
-                const idBtnDelete = `${entity.name}-parameter-${param.name}-delete`;
-                (0, Delta_2.createDeltaEditor)(idParamNotes, param.notes, (markdown) => {
-                    param.notes = markdown;
-                    this.update();
-                    this.app.renderCode();
-                });
-                (0, util_11.$get)(idBtnDelete).on('click', () => {
-                    this.app.askConfirm(() => {
-                        entity.parameters.splice(entity.parameters.indexOf(param), 1);
-                        this.update();
-                        // Implicit check for refreshability for parameters.
-                        if (this.refreshParameters)
-                            this.refreshParameters();
-                    }, `Delete Parameter ${param.name}?`);
-                });
-                this.listenEdit({ name: param.name }, idBtnEdit, 'edit_parameter', 'Edit Parameter Name', `${entity.name}-${param.name}`);
-            }
-            const idBtnAdd = `btn-${entity.name}-parameter-add`;
-            (0, util_11.$get)(idBtnAdd).on('click', () => {
-                const { modalName, $inputName, $titleName } = this.app;
-                this.app.nameMode = 'new_parameter';
-                this.app.nameSelected = `${type}-${entity.name}`;
-                $titleName.html('Add Parameter');
-                $inputName.val('');
-                modalName.show();
-            });
-        }
-        renderParameters(entity, show = false) {
-            const { parameters } = entity;
-            const idAccordion = `${entity.name}-parameters-accordion`;
-            let htmlParams = '';
-            if (parameters && parameters.length) {
-                for (const param of parameters) {
-                    const idParamNotes = `${entity.name}-parameter-${param.name}-notes`;
-                    const idCollapse = `${entity.name}-parameter-${param.name}-collapse`;
-                    const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
-                    htmlParams += (0, util_11.html) `
-                <div class="accordion-item rounded-0">
-                    <div class="accordion-header" style="position: relative" id="headingTwo">
-                        <div class="p-2" style="position: relative;">
-                            <button class="border-0 accordion-button collapsed rounded-0 p-0 text-white" style="background-color: transparent !important" type="button" data-bs-toggle="collapse" data-bs-target="#${idCollapse}" aria-expanded="false" aria-controls="${idCollapse}">
-                                <div class="col-auto responsive-badge border border-1 border-light-half desaturate shadow px-2 me-2" style="display: inline;"><strong>${param.type.basic}</strong></div>
-                                <h6 class="font-monospace mb-1">${param.name}</h6>
-                            </button>
-                        </div>
-                        <div style="position: absolute; height: 32px; top: 5px; right: 2rem; z-index: 4;">
-                            <!-- Edit Button -->
-                            <button id="${idBtnEdit}" class="btn btn-sm responsive-btn float-end" style="z-index: 4">
-                                <div class="btn-pane"> 
-                                    <i class="fa-solid fa-pen"></i>
-                                </div>
-                            </button>
-                        </div>
-                    </div>
-                    <div id="${idCollapse}" class="accordion-collapse collapse rounded-0" aria-labelledby="headingTwo" data-bs-parent="#${idAccordion}">
-                        <div class="accordion-body bg-dark" style="position: relative;">
-                            <!-- Notes -->
-                            <div class="mb-3">
-                                <label for="${idParamNotes}" class="form-label">Description</label>
-                                <div id="${idParamNotes}"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-                }
-            }
-            else {
-                htmlParams += (0, util_11.html) `<h6 class="font-monospace mb-1">(None)</h6>`;
-            }
-            return (0, util_11.html) `
-            <div class="card responsive-subcard mt-3">
-                <div class="card-header">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idAccordion}" aria-expanded="true" aria-controls="${idAccordion}">
-                        <strong>Parameters</strong>
-                    </button>
-                </div>
-                <div id="${idAccordion}" class="card-body p-2 mb-0 collapse${show ? ' show' : ''}">
-                    <div class="accordion rounded-0">
-                        ${htmlParams}
-                    </div>
-                </div>
-            </div>
-        `;
-        }
-        update() {
-            const { idPreviewCode } = this;
-            const $pre = (0, util_11.$get)(idPreviewCode);
-            $pre.empty();
-            let text = this.onRenderPreview();
-            if (text.endsWith('\n'))
-                text = text.substring(0, text.length - 1);
-            // @ts-ignore
-            const highlightedCode = hljs.default.highlightAuto(text, ['lua']).value;
-            $pre.append(highlightedCode);
-        }
-        listenPreview() {
-            const { idBtnPreviewCopy } = this;
-            // Copy the code.
-            (0, util_11.$get)(idBtnPreviewCopy).on('click', (event) => {
-                event.stopPropagation();
-                navigator.clipboard.writeText(this.onRenderPreview());
-            });
-        }
-        renderPreview(show) {
-            const { idPreview, idPreviewCode, idBtnPreviewCopy } = this;
-            return (0, util_11.html) `
-            <div class="card responsive-subcard mt-3">
-                <div class="card-header">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idPreview}" aria-expanded="true" aria-controls="${idPreview}">
-                        <strong>Preview</strong>
-                    </button>
-
-                    <!-- Copy Button -->
-                    <button id="${idBtnPreviewCopy}" class="btn btn-sm responsive-btn" style="z-index: 4; position: absolute; top: 5px; right: 5px;" title="Copy Code">
-                        <div class="btn-pane"> 
-                            <i class="fa-solid fa-copy"></i>
-                        </div>
-                    </button>
-                </div>
-                <div id="${idPreview}" class="card-body mb-0 p-0 collapse${show ? ' show' : ''}" style="position: relative; max-height: 512px">
-                    <pre id="${idPreviewCode}" class="w-100 h-100 p-2 m-0" style="background-color: #111; overflow: scroll; max-height: 512px;"></pre>
-                </div>
-            </div>
-        `;
-        }
-        listenReturns(entity, idReturnType, idReturnNotes, idSelect) {
-            (0, Delta_2.createDeltaEditor)(idReturnNotes, entity.returns.notes, (markdown) => {
-                entity.returns.notes = markdown;
-                this.update();
-                this.app.renderCode();
-            });
-        }
-        renderReturns(entity, idReturnType, idReturnNotes, show = false) {
-            const { returns } = entity;
-            let { notes } = returns;
-            if (!notes)
-                notes = '';
-            const idCard = `${entity.name}-returns-card`;
-            return (0, util_11.html) `
-            <div class="card responsive-subcard mt-3">
-                <div class="card-header">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idCard}" aria-expanded="true" aria-controls="${idCard}">
-                        <strong>Returns</strong>
-                    </button>
-                </div>
-                <div id="${idCard}" class="card-body mb-0 collapse${show ? ' show' : ''}">
-                    <!-- Return Type -->
-                    <div class="mb-3">
-                        <label for="${idReturnType}" class="form-label">Type: ${returns.type.basic}</label>
-                    </div>
-                    <!-- Return Notes -->
-                    <div>
-                        <label for="${idReturnNotes}" class="form-label">Description</label>
-                        <div id="${idReturnNotes}" style="background-color: #222 !important;"></div>
-                    </div>
-                </div>
-            </div>
-        `;
-        }
-        listenType(entity, idType, idSelect) {
-            const $select = (0, util_11.$get)(idType);
-            const $customInput = (0, util_11.$get)(`${idSelect}-custom-input`);
-            $select.on('change', (value) => {
-                entity.type = value.target.value;
-                if (entity.type === 'custom') {
-                    $customInput.show();
-                    // We default to 'any' for an undefined custom value.
-                    entity.type = 'any';
-                }
-                else {
-                    $customInput.hide();
-                    $customInput.val(''); // Clear custom field.
-                }
-                this.update();
-                this.app.renderCode();
-            });
-            $customInput.on('input', () => {
-                const val = $customInput.val();
-                if (val === '') {
-                    entity.type = 'any';
-                }
-                else {
-                    entity.type = val;
-                }
-                this.update();
-                this.app.renderCode();
-            });
-            $customInput.on('focusout', () => {
-                const value = $customInput.val().trim();
-                switch (value.toLowerCase()) {
-                    // Here the reference stays valid.
-                    case 'custom':
-                        break;
-                    // Here the reference converts to its select option.
-                    case 'void':
-                    case 'any':
-                    case 'nil':
-                    case 'boolean':
-                    case 'number':
-                    case 'string':
-                        entity.type = value;
-                        $select.val(value);
-                        $customInput.hide();
-                        $customInput.val(''); // Clear custom field.
-                        this.update();
-                        this.app.renderCode();
-                        break;
-                }
-            });
-        }
-        renderType(name, type) {
-            const idTypeCard = `${name}-type-card`;
-            return (0, util_11.html) `
-            <div class="card responsive-subcard">
-                <div class="card-header">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idTypeCard}" aria-expanded="true" aria-controls="${idTypeCard}">
-                        Type
-                    </button>   
-                </div>
-                <div id="${idTypeCard}" class="card-body py-2 collapse show">
-                    <span><strong>${type}</strong></span>
-                </div>
-            </div>
-        `;
-        }
-        static renderTypeSelect(idSelect, label = '', value = 'any', margin) {
-            // Determine if custom field should show.
-            let style = '';
-            let customInputValue = value;
-            value = value.trim();
-            switch (value.toLowerCase()) {
-                // Here the reference stays valid.
-                case 'custom':
-                    style = '';
-                    customInputValue = value;
-                    break;
-                // Erase custom definition here.
-                case 'void':
-                case 'any':
-                case 'nil':
-                case 'boolean':
-                case 'number':
-                case 'string':
-                    style = 'display: none';
-                    customInputValue = '';
-                    break;
-                // Everything else gets shoved into the custom value.
-                default:
-                    customInputValue = value;
-                    value = 'custom';
-                    style = '';
-            }
-            return (0, util_11.html) `
-            <div class="${margin ? 'mb-2' : ''}">
-
-                <!-- Type Selection List -->
-                <select id="${idSelect}" class="form-select responsive-select" aria-label="${label}">
-                    <option value="any"  ${value === 'any' ? 'selected' : ''}><strong>Any</strong></option>
-                    <option value="void"  ${value === 'void' ? 'selected' : ''}><strong>Void</strong></option>
-                    <option value="nil"  ${value === 'nil' ? 'selected' : ''}><strong>Nil</strong></option>
-                    <option value="boolean"  ${value === 'boolean' ? 'selected' : ''}><strong>Boolean</strong></option>
-                    <option value="number" ${value === 'number' ? 'selected' : ''}><strong>Number</strong></option>
-                    <option value="string"  ${value === 'string' ? 'selected' : ''}><strong>String</strong></option>
-                    <option value="custom" ${value === 'custom' ? 'selected' : ''}><strong>Custom</strong></option>
-                </select>
-                
-                <!-- Manual Input for Custom Type -->
-                <input id="${idSelect}-custom-input" class="form-control responsive-input mt-2" type="text" style="${style}" value="${customInputValue}" />
-            
-            </div>
-        `;
-        }
-        static getTypeIcon(type) {
-            switch (type.toLocaleLowerCase().trim()) {
-                case 'class': return 'fa-solid fa-box-archive text-light mx-2 desaturate';
-                case 'constructor': return 'fa-solid fa-copyright text-light mx-2 desaturate';
-                case 'nil': return 'fa-solid fa-ban fa-danger mx-2 desaturate';
-                case 'void': return 'fa-solid fa-xmark mx-2 desaturate';
-                case 'number': return 'fa-solid fa-hashtag text-warning mx-2 desaturate';
-                case 'string': return 'fa-solid fa-quote-left text-light mx-2 desaturate';
-                case 'boolean': return 'fa-solid fa-flag text-info mx-2 desaturate';
-                // Uknown or other.
-                case 'any': return 'fa-solid fa-question text-danger mx-2 desaturate';
-                // Objects
-                default: return 'fa-solid fa-box text-success mx-2 desaturate';
-            }
-        }
-    }
-    exports.JavaCard = JavaCard;
-});
-define("src/asledgehammer/rosetta/component/java/JavaClassCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/java/JavaCard"], function (require, exports, JavaGenerator_1, util_12, JavaCard_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.JavaClassCard = void 0;
-    class JavaClassCard extends JavaCard_1.JavaCard {
-        onRenderPreview() {
-            return (0, JavaGenerator_1.generateJavaClass)(this.options.entity);
-        }
+    exports.LuaConstructorCard = void 0;
+    class LuaConstructorCard extends LuaCard_4.LuaCard {
         constructor(app, options) {
             super(app, options);
-            this.idAuthors = `${this.id}-authors`;
-            this.idNotes = `${this.id}-description`;
-            this.idPreview = `${this.id}-preview`;
-            this.idInputExtends = `${this.id}-input-extends`;
+            this.idNotes = `${this.id}-notes`;
+            this.idParamContainer = `${this.id}-parameter-container`;
+        }
+        onRenderPreview() {
+            if (!this.options)
+                return '';
+            const { entity } = this.options;
+            const classEntity = this.app.active.selectedCard.options.entity;
+            const className = classEntity.name;
+            return (0, LuaGenerator_2.generateLuaConstructor)(className, entity);
         }
         onHeaderHTML() {
-            const { entity } = this.options;
-            return (0, util_12.html) ` 
+            const classEntity = this.app.active.selectedCard.options.entity;
+            const className = classEntity.name;
+            const name = `${className}:new( )`;
+            return (0, util_10.html) ` 
             <div class="row">
                 <!-- Visual Category Badge -->
                 <div class="col-auto ps-2 pe-2">
-                    <div class="text-bg-success px-2 border border-1 border-light-half desaturate shadow"><strong>Java Class</strong></div>
+                    <div class="text-bg-primary px-2 border border-1 border-light-half desaturate shadow">
+                        <strong>Lua Constructor</strong>
+                    </div>
                 </div>
                 <div class="col-auto p-0">
-                    <h5 class="card-text font-monospace" style="position: relative; top: 1px;"><strong>${entity.name}</strong></h5> 
+                    <h5 class="card-text"><strong>${name}</strong></h5> 
                 </div>
             </div>
         `;
         }
         onBodyHTML() {
-            const { idInputExtends } = this;
-            const entity = this.options.entity;
-            const extendz = entity.extendz ? entity.extendz : '';
-            return (0, util_12.html) `
-            <div>
-                ${this.renderNotes(this.idNotes)}
-                <!-- Extends SuperClass -->
-                <div class="mb-3" title="The super-class that the Java class extends.">
-                    <label class="form-label" for="${idInputExtends}">Extends ${this.options.entity.extendz}</label>
-                </div>
-                <hr>
-                ${this.renderPreview(false)}
+            const { idNotes, idParamContainer } = this;
+            const { entity } = this.options;
+            return (0, util_10.html) `
+            ${this.renderNotes(idNotes)}
+            <hr>
+            <div id="${idParamContainer}">
+                ${this.renderParameters({ name: 'new', parameters: entity.parameters })}
             </div>
+            <hr>
+            ${this.renderPreview(false)}
         `;
         }
         listen() {
@@ -4742,16 +4506,320 @@ define("src/asledgehammer/rosetta/component/java/JavaClassCard", ["require", "ex
             const { idNotes } = this;
             const { entity } = this.options;
             this.listenNotes(entity, idNotes);
+            this.listenParameters(Object.assign(Object.assign({}, entity), { name: 'new' }), 'constructor');
             this.listenPreview();
         }
+        refreshParameters() {
+            const { idParamContainer } = this;
+            const { entity } = this.options;
+            const $paramContainer = (0, util_10.$get)(idParamContainer);
+            $paramContainer.empty();
+            $paramContainer.html(this.renderParameters({ name: 'new', parameters: entity.parameters }, true));
+            this.listenParameters({ name: 'new', parameters: entity.parameters }, 'constructor');
+        }
     }
-    exports.JavaClassCard = JavaClassCard;
+    exports.LuaConstructorCard = LuaConstructorCard;
 });
-define("src/asledgehammer/rosetta/component/java/JavaFieldCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/java/JavaCard"], function (require, exports, JavaGenerator_2, util_13, JavaCard_2) {
+define("src/asledgehammer/mallet/component/lua/LuaFieldCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaGenerator_3, util_11, LuaCard_5) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.LuaFieldCard = void 0;
+    class LuaFieldCard extends LuaCard_5.LuaCard {
+        constructor(app, options) {
+            super(app, options);
+            this.idDefaultValue = `${this.id}-default-value`;
+            this.idNotes = `${this.id}-notes`;
+            this.idType = `${this.id}-type`;
+            this.idBtnEdit = `${this.id}-btn-edit`;
+            this.idBtnDelete = `${this.id}-btn-delete`;
+        }
+        onRenderPreview() {
+            var _a, _b;
+            if (!this.options)
+                return '';
+            const { app } = this;
+            const { entity, isStatic } = this.options;
+            const { defaultValue } = entity;
+            const name = (_b = (_a = app.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options) === null || _b === void 0 ? void 0 : _b.entity.name;
+            if (isStatic) {
+                return `${(0, LuaGenerator_3.generateLuaField)(entity)}\n\n${(0, LuaGenerator_3.generateLuaValue)(name, entity)}`;
+            }
+            let s = (0, LuaGenerator_3.generateLuaField)(entity);
+            if (defaultValue) {
+                s += `\n\n--- (Example of initialization of field) ---\nself.${entity.name} = ${defaultValue};`;
+            }
+            return s;
+        }
+        onHeaderHTML() {
+            var _a;
+            const { idBtnEdit, idBtnDelete } = this;
+            const { entity, isStatic } = this.options;
+            const luaClass = (_a = this.app.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
+            let name = `${luaClass.name}.${entity.name}`;
+            if (isStatic) {
+                name = (0, util_11.html) `<span class="fst-italic">${name}</span>`;
+            }
+            return (0, util_11.html) ` 
+            <div class="row">
+                <!-- Visual Category Badge -->
+                <div class="col-auto ps-2 pe-2">
+                    <div class="text-bg-primary px-2 border border-1 border-light-half desaturate shadow">
+                        <strong>Lua ${isStatic ? 'Property' : 'Field'}</strong>
+                    </div>
+                </div>
+                <div class="col-auto p-0">
+                    <h5 class="card-text"><strong>${name}</strong></h5> 
+                </div>
+                <div style="position: absolute; top: 5px; width: 100%; height: 32px;">
+                    <!-- Delete Button -->
+                    <button id="${idBtnDelete}" class="btn btn-sm responsive-btn float-end ms-1" title="Delete ${isStatic ? 'Value' : 'Field'}">
+                        <div class="btn-pane">
+                            <i class="fa-solid fa-xmark"></i>
+                        </div>
+                    </button>
+                    <!-- Edit Button -->
+                    <button id="${idBtnEdit}" class="btn btn-sm responsive-btn float-end" title="Edit Name">
+                        <div class="btn-pane">
+                            <i class="fa-solid fa-pen"></i>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        `;
+        }
+        onBodyHTML() {
+            const { idDefaultValue, idNotes, idType } = this;
+            const { entity } = this.options;
+            return (0, util_11.html) `
+            <div>
+                ${this.renderNotes(idNotes)}
+                ${this.renderDefaultValue(entity.defaultValue, idDefaultValue)}
+                <hr>
+                ${this.renderType(entity.name, entity.type, idType)}
+                <hr>
+                ${this.renderPreview(false)}
+            </div>
+        `;
+        }
+        listen() {
+            super.listen();
+            const { app, idBtnDelete, idBtnEdit, idDefaultValue, idNotes, idType } = this;
+            const { entity, isStatic } = this.options;
+            this.listenNotes(entity, idNotes);
+            this.listenDefaultValue(entity, idDefaultValue);
+            this.listenType(entity, idType, idType);
+            this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_value' : 'edit_field', `Edit ${isStatic ? 'Value' : 'Field'} Name`);
+            this.listenPreview();
+            (0, util_11.$get)(idBtnDelete).on('click', () => {
+                app.askConfirm(() => {
+                    var _a;
+                    const clazz = (_a = app.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
+                    if (isStatic) {
+                        delete clazz.values[entity.name];
+                    }
+                    else {
+                        delete clazz.fields[entity.name];
+                    }
+                    app.showLuaClass(clazz);
+                    app.sidebar.itemTree.selectedID = undefined;
+                    app.sidebar.populateTrees();
+                }, `Delete ${isStatic ? 'Value' : 'Field'} ${entity.name}`);
+            });
+        }
+    }
+    exports.LuaFieldCard = LuaFieldCard;
+});
+define("src/asledgehammer/mallet/component/lua/LuaFunctionCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaGenerator_4, util_12, LuaCard_6) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.LuaFunctionCard = void 0;
+    class LuaFunctionCard extends LuaCard_6.LuaCard {
+        constructor(app, options) {
+            super(app, options);
+            this.idNotes = `${this.id}-notes`;
+            this.idReturnType = `${this.id}-return-type`;
+            this.idReturnNotes = `${this.id}-return-notes`;
+            this.idBtnDelete = `${this.id}-btn-delete`;
+            this.idBtnEdit = `${this.id}-btn-edit`;
+            this.idParamContainer = `${this.id}-parameter-container`;
+        }
+        onRenderPreview() {
+            if (!this.options)
+                return '';
+            const { entity } = this.options;
+            const classEntity = this.app.active.selectedCard.options.entity;
+            const className = classEntity.name;
+            return (0, LuaGenerator_4.generateLuaMethod)(className, entity);
+        }
+        onHeaderHTML() {
+            const { idBtnDelete, idBtnEdit } = this;
+            const { entity, isStatic } = this.options;
+            const classEntity = this.app.active.selectedCard.options.entity;
+            const className = classEntity.name;
+            let name = `${className}${isStatic ? '.' : ':'}${entity.name}( )`;
+            if (isStatic) {
+                name = (0, util_12.html) `<span class="fst-italic">${name}</span>`;
+            }
+            return (0, util_12.html) ` 
+            <div class="row">
+
+                <!-- Visual Category Badge -->
+                <div class="col-auto ps-2 pe-2">
+                    <div class="text-bg-primary px-2 border border-1 border-light-half desaturate shadow">
+                        <strong>Lua ${isStatic ? 'Function' : 'Method'}</strong>
+                    </div>
+                </div>
+                
+                <div class="col-auto p-0">
+                    <h5 class="card-text"><strong>${name}</strong></h5> 
+                </div>
+                <div style="position: absolute; top: 5px; width: 100%; height: 32px;">
+                    <!-- Delete Button -->
+                    <button id="${idBtnDelete}" class="btn btn-sm responsive-btn float-end ms-1" title="Delete ${isStatic ? 'Function' : 'Method'}">
+                        <div class="btn-pane">
+                            <i class="fa-solid fa-xmark"></i>
+                        </div>
+                    </button>
+                    <!-- Edit Button -->
+                    <button id="${idBtnEdit}" class="btn btn-sm responsive-btn float-end" title="Edit Name">
+                        <div class="btn-pane">
+                            <i class="fa-solid fa-pen"></i>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        `;
+        }
+        onBodyHTML() {
+            const { idNotes, idParamContainer, idReturnType, idReturnNotes } = this;
+            const { entity } = this.options;
+            return (0, util_12.html) `
+            ${this.renderNotes(idNotes)}
+            <hr>
+            <div id="${idParamContainer}">
+                ${this.renderParameters(entity)}
+            </div>
+            ${this.renderReturns(entity, idReturnType, idReturnNotes)}
+            <hr>
+            ${this.renderPreview(false)}
+        `;
+        }
+        listen() {
+            super.listen();
+            const { app, idBtnDelete, idBtnEdit, idNotes, idReturnType, idReturnNotes } = this;
+            const { entity, isStatic } = this.options;
+            this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_function' : 'edit_method', `Edit Lua ${isStatic ? 'Function' : 'Method'}`);
+            this.listenNotes(entity, idNotes);
+            this.listenParameters(entity, isStatic ? 'function' : 'method');
+            this.listenReturns(entity, idReturnType, idReturnNotes, idReturnType);
+            this.listenPreview();
+            (0, util_12.$get)(idBtnDelete).on('click', () => {
+                app.askConfirm(() => {
+                    var _a;
+                    const clazz = (_a = app.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
+                    if (isStatic) {
+                        delete clazz.functions[entity.name];
+                    }
+                    else {
+                        delete clazz.methods[entity.name];
+                    }
+                    app.showLuaClass(clazz);
+                    app.sidebar.itemTree.selectedID = undefined;
+                    app.sidebar.populateTrees();
+                }, `Delete ${isStatic ? 'Function' : 'Method'} ${entity.name}`);
+            });
+        }
+        refreshParameters() {
+            const { idParamContainer } = this;
+            const { entity, isStatic } = this.options;
+            const $paramContainer = (0, util_12.$get)(idParamContainer);
+            $paramContainer.empty();
+            $paramContainer.html(this.renderParameters(entity, true));
+            this.listenParameters(entity, isStatic ? 'function' : 'method');
+        }
+    }
+    exports.LuaFunctionCard = LuaFunctionCard;
+});
+define("src/asledgehammer/mallet/component/java/JavaConstructorCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaGenerator_2, util_13, JavaCard_2) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.JavaConstructorCard = void 0;
+    class JavaConstructorCard extends JavaCard_2.JavaCard {
+        constructor(app, options) {
+            super(app, options);
+            this.idNotes = `${this.id}-notes`;
+            this.idParamContainer = `${this.id}-parameter-container`;
+        }
+        onRenderPreview() {
+            if (!this.options)
+                return '';
+            const { entity } = this.options;
+            const classEntity = this.app.active.selectedCard.options.entity;
+            const className = classEntity.name;
+            return (0, JavaGenerator_2.generateJavaConstructor)(className, [entity]);
+        }
+        onHeaderHTML() {
+            const { entity } = this.options;
+            const classEntity = this.app.active.selectedCard.options.entity;
+            const className = classEntity.name;
+            let params = '';
+            for (const param of entity.parameters) {
+                params += `${param.name}, `;
+            }
+            if (params.length)
+                params = params.substring(0, params.length - 2);
+            let name = `${className}(${params})`;
+            return (0, util_13.html) ` 
+            <div class="row">
+                <!-- Visual Category Badge -->
+                <div class="col-auto ps-2 pe-2">
+                    <div class="text-bg-success px-2 border border-1 border-light-half desaturate shadow">
+                        <strong>Java Constructor</strong>
+                    </div>
+                </div>
+                <div class="col-auto p-0">
+                    <h5 class="card-text font-monospace" style="position: relative; top: 1px;"><strong>${name}</strong></h5> 
+                </div>
+            </div>
+        `;
+        }
+        onBodyHTML() {
+            const { idNotes, idParamContainer } = this;
+            const { entity } = this.options;
+            return (0, util_13.html) `
+            ${this.renderNotes(idNotes)}
+            <hr>
+            <div id="${idParamContainer}">
+                ${this.renderParameters({ name: 'new', parameters: entity.parameters })}
+            </div>
+            <hr>
+            ${this.renderPreview(false)}
+        `;
+        }
+        listen() {
+            super.listen();
+            const { idNotes } = this;
+            const { entity } = this.options;
+            this.listenNotes(entity, idNotes);
+            this.listenParameters(Object.assign(Object.assign({}, entity), { name: 'new' }), 'constructor');
+            this.listenPreview();
+        }
+        refreshParameters() {
+            const { idParamContainer } = this;
+            const { entity } = this.options;
+            const $paramContainer = (0, util_13.$get)(idParamContainer);
+            $paramContainer.empty();
+            $paramContainer.html(this.renderParameters({ name: 'new', parameters: entity.parameters }, true));
+            this.listenParameters({ name: 'new', parameters: entity.parameters }, 'constructor');
+        }
+    }
+    exports.JavaConstructorCard = JavaConstructorCard;
+});
+define("src/asledgehammer/mallet/component/java/JavaFieldCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaGenerator_3, util_14, JavaCard_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.JavaFieldCard = void 0;
-    class JavaFieldCard extends JavaCard_2.JavaCard {
+    class JavaFieldCard extends JavaCard_3.JavaCard {
         constructor(app, options) {
             super(app, options);
             this.idDefaultValue = `${this.id}-default-value`;
@@ -4764,7 +4832,7 @@ define("src/asledgehammer/rosetta/component/java/JavaFieldCard", ["require", "ex
             if (!this.options)
                 return '';
             const { entity } = this.options;
-            return (0, JavaGenerator_2.generateJavaField)(entity);
+            return (0, JavaGenerator_3.generateJavaField)(entity);
         }
         onHeaderHTML() {
             var _a;
@@ -4773,12 +4841,12 @@ define("src/asledgehammer/rosetta/component/java/JavaFieldCard", ["require", "ex
             const javaClass = (_a = this.app.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
             let name = `${javaClass.name}.${entity.name}`;
             if (isStatic) {
-                name = (0, util_13.html) `<span class="fst-italic">${name}</span>`;
+                name = (0, util_14.html) `<span class="fst-italic">${name}</span>`;
             }
-            return (0, util_13.html) ` 
+            return (0, util_14.html) ` 
             <div class="row">
             ${isStatic ?
-                (0, util_13.html) `
+                (0, util_14.html) `
                         <div class="col-auto ps-2 pe-0">
                             <div class="text-bg-primary px-2 border border-1 border-light-half desaturate shadow">
                                 <strong>Static</strong>
@@ -4802,7 +4870,7 @@ define("src/asledgehammer/rosetta/component/java/JavaFieldCard", ["require", "ex
         onBodyHTML() {
             const { idNotes, idType } = this;
             const { entity } = this.options;
-            return (0, util_13.html) `
+            return (0, util_14.html) `
             <div>
                 ${this.renderNotes(idNotes)}
                 <hr>
@@ -4819,7 +4887,7 @@ define("src/asledgehammer/rosetta/component/java/JavaFieldCard", ["require", "ex
             this.listenNotes(entity, idNotes);
             this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_value' : 'edit_field', `Edit ${isStatic ? 'Value' : 'Field'} Name`);
             this.listenPreview();
-            (0, util_13.$get)(idBtnDelete).on('click', () => {
+            (0, util_14.$get)(idBtnDelete).on('click', () => {
                 app.askConfirm(() => {
                     var _a;
                     const clazz = (_a = app.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
@@ -4833,11 +4901,11 @@ define("src/asledgehammer/rosetta/component/java/JavaFieldCard", ["require", "ex
     }
     exports.JavaFieldCard = JavaFieldCard;
 });
-define("src/asledgehammer/rosetta/component/java/JavaMethodCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/java/RosettaJavaMethodCluster", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/java/JavaCard"], function (require, exports, JavaGenerator_3, RosettaJavaMethodCluster_2, util_14, JavaCard_3) {
+define("src/asledgehammer/mallet/component/java/JavaMethodCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/java/RosettaJavaMethodCluster", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaGenerator_4, RosettaJavaMethodCluster_2, util_15, JavaCard_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.JavaMethodCard = void 0;
-    class JavaMethodCard extends JavaCard_3.JavaCard {
+    class JavaMethodCard extends JavaCard_4.JavaCard {
         constructor(app, options) {
             super(app, options);
             this.idNotes = `${this.id}-notes`;
@@ -4855,7 +4923,7 @@ define("src/asledgehammer/rosetta/component/java/JavaMethodCard", ["require", "e
             const className = classEntity.name;
             const cluster = new RosettaJavaMethodCluster_2.RosettaJavaMethodCluster(entity.name);
             cluster.add(entity);
-            return (0, JavaGenerator_3.generateJavaMethod)(className, cluster);
+            return (0, JavaGenerator_4.generateJavaMethod)(className, cluster);
         }
         onHeaderHTML() {
             const { entity, isStatic } = this.options;
@@ -4869,13 +4937,13 @@ define("src/asledgehammer/rosetta/component/java/JavaMethodCard", ["require", "e
                 params = params.substring(0, params.length - 2);
             let name = `${className}${isStatic ? '.' : ':'}${entity.name}(${params})`;
             if (isStatic) {
-                name = (0, util_14.html) `<span class="fst-italic">${name}</span>`;
+                name = (0, util_15.html) `<span class="fst-italic">${name}</span>`;
             }
-            return (0, util_14.html) ` 
+            return (0, util_15.html) ` 
             <div class="row">
 
             ${isStatic ?
-                (0, util_14.html) `
+                (0, util_15.html) `
                         <div class="col-auto ps-2 pe-0">
                             <div class="text-bg-primary px-2 border border-1 border-light-half desaturate shadow">
                                 <strong>Static</strong>
@@ -4898,7 +4966,7 @@ define("src/asledgehammer/rosetta/component/java/JavaMethodCard", ["require", "e
         onBodyHTML() {
             const { idNotes, idParamContainer, idReturnType, idReturnNotes } = this;
             const { entity } = this.options;
-            return (0, util_14.html) `
+            return (0, util_15.html) `
             ${this.renderNotes(idNotes)}
             <hr>
             <div id="${idParamContainer}">
@@ -4917,7 +4985,7 @@ define("src/asledgehammer/rosetta/component/java/JavaMethodCard", ["require", "e
             this.listenParameters(entity, 'method');
             this.listenReturns(entity, idReturnType, idReturnNotes, idReturnType);
             this.listenPreview();
-            (0, util_14.$get)(idBtnDelete).on('click', () => {
+            (0, util_15.$get)(idBtnDelete).on('click', () => {
                 app.askConfirm(() => {
                     var _a;
                     const clazz = (_a = app.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
@@ -4931,7 +4999,7 @@ define("src/asledgehammer/rosetta/component/java/JavaMethodCard", ["require", "e
         refreshParameters() {
             const { idParamContainer } = this;
             const { entity, isStatic } = this.options;
-            const $paramContainer = (0, util_14.$get)(idParamContainer);
+            const $paramContainer = (0, util_15.$get)(idParamContainer);
             $paramContainer.empty();
             $paramContainer.html(this.renderParameters(entity, true));
             this.listenParameters(entity, isStatic ? 'function' : 'method');
@@ -4939,82 +5007,7 @@ define("src/asledgehammer/rosetta/component/java/JavaMethodCard", ["require", "e
     }
     exports.JavaMethodCard = JavaMethodCard;
 });
-define("src/asledgehammer/rosetta/component/java/JavaConstructorCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/java/JavaCard"], function (require, exports, JavaGenerator_4, util_15, JavaCard_4) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.JavaConstructorCard = void 0;
-    class JavaConstructorCard extends JavaCard_4.JavaCard {
-        constructor(app, options) {
-            super(app, options);
-            this.idNotes = `${this.id}-notes`;
-            this.idParamContainer = `${this.id}-parameter-container`;
-        }
-        onRenderPreview() {
-            if (!this.options)
-                return '';
-            const { entity } = this.options;
-            const classEntity = this.app.active.selectedCard.options.entity;
-            const className = classEntity.name;
-            return (0, JavaGenerator_4.generateJavaConstructor)(className, [entity]);
-        }
-        onHeaderHTML() {
-            const { entity } = this.options;
-            const classEntity = this.app.active.selectedCard.options.entity;
-            const className = classEntity.name;
-            let params = '';
-            for (const param of entity.parameters) {
-                params += `${param.name}, `;
-            }
-            if (params.length)
-                params = params.substring(0, params.length - 2);
-            let name = `${className}(${params})`;
-            return (0, util_15.html) ` 
-            <div class="row">
-                <!-- Visual Category Badge -->
-                <div class="col-auto ps-2 pe-2">
-                    <div class="text-bg-success px-2 border border-1 border-light-half desaturate shadow">
-                        <strong>Java Constructor</strong>
-                    </div>
-                </div>
-                <div class="col-auto p-0">
-                    <h5 class="card-text font-monospace" style="position: relative; top: 1px;"><strong>${name}</strong></h5> 
-                </div>
-            </div>
-        `;
-        }
-        onBodyHTML() {
-            const { idNotes, idParamContainer } = this;
-            const { entity } = this.options;
-            return (0, util_15.html) `
-            ${this.renderNotes(idNotes)}
-            <hr>
-            <div id="${idParamContainer}">
-                ${this.renderParameters({ name: 'new', parameters: entity.parameters })}
-            </div>
-            <hr>
-            ${this.renderPreview(false)}
-        `;
-        }
-        listen() {
-            super.listen();
-            const { idNotes } = this;
-            const { entity } = this.options;
-            this.listenNotes(entity, idNotes);
-            this.listenParameters(Object.assign(Object.assign({}, entity), { name: 'new' }), 'constructor');
-            this.listenPreview();
-        }
-        refreshParameters() {
-            const { idParamContainer } = this;
-            const { entity } = this.options;
-            const $paramContainer = (0, util_15.$get)(idParamContainer);
-            $paramContainer.empty();
-            $paramContainer.html(this.renderParameters({ name: 'new', parameters: entity.parameters }, true));
-            this.listenParameters({ name: 'new', parameters: entity.parameters }, 'constructor');
-        }
-    }
-    exports.JavaConstructorCard = JavaConstructorCard;
-});
-define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/component/lua/LuaClassCard", "src/asledgehammer/rosetta/component/lua/LuaConstructorCard", "src/asledgehammer/rosetta/component/lua/LuaFieldCard", "src/asledgehammer/rosetta/component/lua/LuaFunctionCard", "src/asledgehammer/rosetta/component/Sidebar", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/component/java/JavaClassCard", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/component/java/JavaFieldCard", "src/asledgehammer/rosetta/component/java/JavaMethodCard", "src/asledgehammer/rosetta/component/java/JavaConstructorCard"], function (require, exports, hljs, LuaClassCard_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, Sidebar_1, LuaGenerator_5, RosettaLuaClass_2, RosettaLuaConstructor_2, util_16, RosettaJavaClass_2, JavaClassCard_1, JavaGenerator_5, JavaFieldCard_1, JavaMethodCard_1, JavaConstructorCard_1) {
+define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/mallet/component/lua/LuaClassCard", "src/asledgehammer/mallet/component/java/JavaClassCard", "src/asledgehammer/mallet/component/Sidebar", "src/asledgehammer/mallet/component/lua/LuaConstructorCard", "src/asledgehammer/mallet/component/lua/LuaFieldCard", "src/asledgehammer/mallet/component/lua/LuaFunctionCard", "src/asledgehammer/mallet/component/java/JavaConstructorCard", "src/asledgehammer/mallet/component/java/JavaFieldCard", "src/asledgehammer/mallet/component/java/JavaMethodCard"], function (require, exports, hljs, LuaGenerator_5, RosettaLuaClass_2, RosettaLuaConstructor_2, util_16, RosettaJavaClass_2, JavaGenerator_5, LuaClassCard_1, JavaClassCard_1, Sidebar_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, JavaConstructorCard_1, JavaFieldCard_1, JavaMethodCard_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.App = exports.Toast = exports.Active = void 0;
@@ -5653,15 +5646,70 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
     }
     $(() => init());
 });
-define("src/lib", ["require", "exports"], function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.message = void 0;
-    exports.message = "Hello World!";
-});
 define("src/asledgehammer/JSONSerializable", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+});
+define("src/asledgehammer/mallet/component/LabelComponent", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/Component"], function (require, exports, util_17, Component_3) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.LabelComponent = void 0;
+    class LabelComponent extends Component_3.Component {
+        constructor(options) {
+            super(options);
+        }
+        onRender() {
+            return (0, util_17.html) ``;
+        }
+    }
+    exports.LabelComponent = LabelComponent;
+});
+define("src/asledgehammer/mallet/component/SidebarPanelButton", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/Component"], function (require, exports, util_18, Component_4) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.SidebarPanelButton = void 0;
+    class SidebarPanelButton extends Component_4.Component {
+        constructor(options) {
+            super(options);
+        }
+        listen() {
+            (0, util_18.$get)(this.id).on('click', () => {
+                if (this.options && this.options.onclick) {
+                    this.options.onclick();
+                }
+            });
+        }
+        onRender() {
+            const { label } = this.options;
+            return (0, util_18.html) `
+            <button class="btn btn-primary col-12 rounded-0">${label}</button>
+        `;
+        }
+    }
+    exports.SidebarPanelButton = SidebarPanelButton;
+});
+define("src/asledgehammer/mallet/component/SidebarPanel", ["require", "exports", "src/asledgehammer/mallet/component/Component"], function (require, exports, Component_5) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.SidebarPanel = void 0;
+    class SidebarPanel extends Component_5.Component {
+        constructor(options) {
+            super(options);
+        }
+        listen() {
+            const { buttons } = this.options;
+            if (buttons && buttons.length) {
+                for (const button of buttons) {
+                    button.listen();
+                }
+            }
+        }
+        onRender() {
+            return '';
+        }
+    }
+    exports.SidebarPanel = SidebarPanel;
+    ;
 });
 define("src/asledgehammer/rosetta/Rosetta", ["require", "exports"], function (require, exports) {
     "use strict";
@@ -5911,66 +5959,5 @@ define("src/asledgehammer/rosetta/SerializableComponent", ["require", "exports"]
         }
     }
     exports.SerializableComponent = SerializableComponent;
-});
-define("src/asledgehammer/rosetta/component/LabelComponent", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/Component"], function (require, exports, util_17, Component_3) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.LabelComponent = void 0;
-    class LabelComponent extends Component_3.Component {
-        constructor(options) {
-            super(options);
-        }
-        onRender() {
-            return (0, util_17.html) ``;
-        }
-    }
-    exports.LabelComponent = LabelComponent;
-});
-define("src/asledgehammer/rosetta/component/SidebarPanelButton", ["require", "exports", "src/asledgehammer/rosetta/component/Component", "src/asledgehammer/rosetta/util"], function (require, exports, Component_4, util_18) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.SidebarPanelButton = void 0;
-    class SidebarPanelButton extends Component_4.Component {
-        constructor(options) {
-            super(options);
-        }
-        listen() {
-            (0, util_18.$get)(this.id).on('click', () => {
-                if (this.options && this.options.onclick) {
-                    this.options.onclick();
-                }
-            });
-        }
-        onRender() {
-            const { label } = this.options;
-            return (0, util_18.html) `
-            <button class="btn btn-primary col-12 rounded-0">${label}</button>
-        `;
-        }
-    }
-    exports.SidebarPanelButton = SidebarPanelButton;
-});
-define("src/asledgehammer/rosetta/component/SidebarPanel", ["require", "exports", "src/asledgehammer/rosetta/component/Component"], function (require, exports, Component_5) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.SidebarPanel = void 0;
-    class SidebarPanel extends Component_5.Component {
-        constructor(options) {
-            super(options);
-        }
-        listen() {
-            const { buttons } = this.options;
-            if (buttons && buttons.length) {
-                for (const button of buttons) {
-                    button.listen();
-                }
-            }
-        }
-        onRender() {
-            return '';
-        }
-    }
-    exports.SidebarPanel = SidebarPanel;
-    ;
 });
 //# sourceMappingURL=app.js.map

@@ -1,11 +1,5 @@
 // import bootstrap = require('bootstrap');
 import hljs = require('highlight.js');
-import { LuaClassCard } from './asledgehammer/rosetta/component/lua/LuaClassCard';
-import { LuaConstructorCard } from './asledgehammer/rosetta/component/lua/LuaConstructorCard';
-import { LuaFieldCard } from './asledgehammer/rosetta/component/lua/LuaFieldCard';
-import { LuaFunctionCard } from './asledgehammer/rosetta/component/lua/LuaFunctionCard';
-import { NameModeType } from './asledgehammer/rosetta/component/NameModeType';
-import { Sidebar } from './asledgehammer/rosetta/component/Sidebar';
 import { generateLuaClass } from './asledgehammer/rosetta/lua/LuaGenerator';
 import { RosettaLuaClass } from './asledgehammer/rosetta/lua/RosettaLuaClass';
 import { RosettaLuaConstructor } from './asledgehammer/rosetta/lua/RosettaLuaConstructor';
@@ -14,14 +8,20 @@ import { RosettaLuaFunction } from './asledgehammer/rosetta/lua/RosettaLuaFuncti
 import { $get, validateLuaVariableName } from './asledgehammer/rosetta/util';
 import { RosettaLuaTable } from './asledgehammer/rosetta/lua/RosettaLuaTable';
 import { RosettaJavaClass, RosettaJavaNamespace } from './asledgehammer/rosetta/java/RosettaJavaClass';
-import { JavaClassCard } from './asledgehammer/rosetta/component/java/JavaClassCard';
 import { generateJavaClass } from './asledgehammer/rosetta/java/JavaGenerator';
-import { JavaFieldCard } from './asledgehammer/rosetta/component/java/JavaFieldCard';
 import { RosettaJavaField } from './asledgehammer/rosetta/java/RosettaJavaField';
-import { JavaMethodCard } from './asledgehammer/rosetta/component/java/JavaMethodCard';
 import { RosettaJavaMethod } from './asledgehammer/rosetta/java/RosettaJavaMethod';
 import { RosettaJavaConstructor } from './asledgehammer/rosetta/java/RosettaJavaConstructor';
-import { JavaConstructorCard } from './asledgehammer/rosetta/component/java/JavaConstructorCard';
+import { LuaClassCard } from './asledgehammer/mallet/component/lua/LuaClassCard';
+import { JavaClassCard } from './asledgehammer/mallet/component/java/JavaClassCard';
+import { Sidebar } from './asledgehammer/mallet/component/Sidebar';
+import { NameModeType } from './asledgehammer/mallet/component/NameModeType';
+import { LuaConstructorCard } from './asledgehammer/mallet/component/lua/LuaConstructorCard';
+import { LuaFieldCard } from './asledgehammer/mallet/component/lua/LuaFieldCard';
+import { LuaFunctionCard } from './asledgehammer/mallet/component/lua/LuaFunctionCard';
+import { JavaConstructorCard } from './asledgehammer/mallet/component/java/JavaConstructorCard';
+import { JavaFieldCard } from './asledgehammer/mallet/component/java/JavaFieldCard';
+import { JavaMethodCard } from './asledgehammer/mallet/component/java/JavaMethodCard';
 
 export class Active {
 

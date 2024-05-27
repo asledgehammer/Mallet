@@ -1,8 +1,8 @@
 import { App } from '../../../../app';
-import { generateJavaField } from '../../java/JavaGenerator';
-import { RosettaJavaClass } from '../../java/RosettaJavaClass';
-import { RosettaJavaField } from '../../java/RosettaJavaField';
-import { $get, html } from '../../util';
+import { generateJavaField } from '../../../rosetta/java/JavaGenerator';
+import { RosettaJavaClass } from '../../../rosetta/java/RosettaJavaClass';
+import { RosettaJavaField } from '../../../rosetta/java/RosettaJavaField';
+import { $get, html } from '../../../rosetta/util';
 import { CardOptions } from '../CardComponent';
 import { JavaCard } from './JavaCard';
 

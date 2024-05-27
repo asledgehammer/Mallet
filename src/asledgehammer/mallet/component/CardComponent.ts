@@ -1,4 +1,4 @@
-import { combine, html } from '../util';
+import { combine, html } from '../../rosetta/util';
 import { Component, ComponentOptions } from './Component';
 
 export class CardComponent<O extends CardOptions> extends Component<O> {

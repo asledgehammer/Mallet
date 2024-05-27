@@ -1,7 +1,7 @@
 import { App } from '../../../../app';
-import { generateLuaClass } from '../../lua/LuaGenerator';
-import { RosettaLuaClass } from '../../lua/RosettaLuaClass';
-import { $get, html } from '../../util';
+import { generateLuaClass } from '../../../rosetta/lua/LuaGenerator';
+import { RosettaLuaClass } from '../../../rosetta/lua/RosettaLuaClass';
+import { $get, html } from '../../../rosetta/util';
 import { CardOptions } from '../CardComponent';
 import { LuaCard } from './LuaCard';
 

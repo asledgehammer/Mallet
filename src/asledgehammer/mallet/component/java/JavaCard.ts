@@ -1,13 +1,13 @@
 import hljs = require('highlight.js');
 import { App } from "../../../../app";
-import { RosettaEntity } from "../../RosettaEntity";
-import { $get, html } from "../../util";
 import { CardComponent } from "../CardComponent";
 import { ComponentOptions } from "../Component";
 import { NameModeType } from "../NameModeType";
 import { createDeltaEditor } from "../../../Delta";
-import { RosettaJavaParameter } from '../../java/RosettaJavaParameter';
-import { RosettaJavaReturns } from '../../java/RosettaJavaReturns';
+import { $get, html } from '../../../rosetta/util';
+import { RosettaJavaParameter } from '../../../rosetta/java/RosettaJavaParameter';
+import { RosettaJavaReturns } from '../../../rosetta/java/RosettaJavaReturns';
+import { RosettaEntity } from '../../../rosetta/RosettaEntity';
 
 export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<O> {
 
