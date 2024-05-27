@@ -52,7 +52,7 @@ export class RosettaJavaField extends RosettaEntity {
   }
 
   isStatic() {
-    return this.modifiers.length && this.modifiers.indexOf('static') !== -1;
+    return !!this.modifiers.length && this.modifiers.indexOf('static') !== -1;
   }
 }
 

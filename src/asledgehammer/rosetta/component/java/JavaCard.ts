@@ -261,7 +261,7 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
                     </button>
                 </div>
                 <div id="${idPreview}" class="card-body mb-0 p-0 collapse${show ? ' show' : ''}" style="position: relative; max-height: 512px">
-                    <pre id="${idPreviewCode}" class="w-100 h-100 p-4 m-0" style="background-color: #111; overflow: scroll; max-height: 512px;"></pre>
+                    <pre id="${idPreviewCode}" class="w-100 h-100 p-2 m-0" style="background-color: #111; overflow: scroll; max-height: 512px;"></pre>
                 </div>
             </div>
         `;
@@ -363,7 +363,7 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
         });
     }
 
-    renderType(name: string, type: string, idReturnType: string): string {
+    renderType(name: string, type: string): string {
 
         const idTypeCard = `${name}-type-card`;
 
@@ -374,11 +374,8 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
                         Type
                     </button>   
                 </div>
-                <div id="${idTypeCard}" class="card-body collapse show">
-                    <div>
-                        <label for="${idReturnType}" class="form-label">Type</label>
-                        ${JavaCard.renderTypeSelect(idReturnType, 'The return type.', type, false)}
-                    </div>
+                <div id="${idTypeCard}" class="card-body py-2 collapse show">
+                    <span><strong>${type}</strong></span>
                 </div>
             </div>
         `;

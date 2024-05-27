@@ -1,0 +1,110 @@
+import { App } from '../../../../app';
+import { generateJavaField } from '../../java/JavaGenerator';
+import { RosettaJavaClass } from '../../java/RosettaJavaClass';
+import { RosettaJavaField } from '../../java/RosettaJavaField';
+import { $get, html } from '../../util';
+import { CardOptions } from '../CardComponent';
+import { JavaCard } from './JavaCard';
+
+export class JavaFieldCard extends JavaCard<JavaFieldCardOptions> {
+
+    readonly idDefaultValue: string;
+    readonly idNotes: string;
+    readonly idType: string;
+    readonly idBtnEdit: string;
+    readonly idBtnDelete: string;
+
+    constructor(app: App, options: JavaFieldCardOptions) {
+        super(app, options);
+
+        this.idDefaultValue = `${this.id}-default-value`;
+        this.idNotes = `${this.id}-notes`;
+        this.idType = `${this.id}-type`;
+        this.idBtnEdit = `${this.id}-btn-edit`;
+        this.idBtnDelete = `${this.id}-btn-delete`;
+    }
+
+    onRenderPreview(): string {
+        if (!this.options) return '';
+        const { entity } = this.options;
+        return generateJavaField(entity);
+    }
+
+    onHeaderHTML(): string | undefined {
+        const { idBtnEdit, idBtnDelete } = this;
+        const { entity, isStatic } = this.options!;
+        const javaClass = this.app.active.selectedCard?.options!.entity!;
+
+        let name = `${javaClass.name}.${entity.name}`;
+        if (isStatic) {
+            name = html`<span class="fst-italic">${name}</span>`;
+        }
+
+        return html` 
+            <div class="row">
+                <!-- Visual Category Badge -->
+                <div class="col-auto ps-2 pe-2">
+                    <div class="text-bg-success px-2 border border-1 border-light-half desaturate shadow">
+                        <strong>Java ${isStatic ? 'Static Field' : 'Field'}</strong>
+                    </div>
+                </div>
+                <div class="col-auto p-0">
+                    <h5 class="card-text"><strong>${name}</strong></h5> 
+                </div>
+                <div style="position: absolute; top: 5px; width: 100%; height: 32px;">
+                    <!-- Delete Button -->
+                    <button id="${idBtnDelete}" class="btn btn-sm responsive-btn float-end ms-1" title="Delete ${isStatic ? 'Value' : 'Field'}">
+                        <div class="btn-pane">
+                            <i class="fa-solid fa-xmark"></i>
+                        </div>
+                    </button>
+                    <!-- Edit Button -->
+                    <button id="${idBtnEdit}" class="btn btn-sm responsive-btn float-end" title="Edit Name">
+                        <div class="btn-pane">
+                            <i class="fa-solid fa-pen"></i>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    onBodyHTML(): string | undefined {
+        const { idNotes, idType } = this;
+        const { entity } = this.options!;
+        return html`
+            <div>
+                ${this.renderNotes(idNotes)}
+                <hr>
+                ${this.renderType(entity.name, entity.type.basic)}
+                <hr>
+                ${this.renderPreview(false)}
+            </div>
+        `;
+    }
+
+    listen(): void {
+        super.listen();
+
+        const { app, idBtnDelete, idBtnEdit, idNotes } = this;
+        const { entity, isStatic } = this.options!;
+        this.listenNotes(entity, idNotes);
+        this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_value' : 'edit_field', `Edit ${isStatic ? 'Value' : 'Field'} Name`);
+        this.listenPreview();
+
+        $get(idBtnDelete).on('click', () => {
+            app.askConfirm(() => {
+                const clazz = app.active.selectedCard?.options!.entity! as RosettaJavaClass;
+                delete clazz.fields[entity.name];
+                app.showJavaClass(clazz);
+                app.sidebar.itemTree.selectedID = undefined;
+                app.sidebar.populateTrees();
+            }, `Delete ${isStatic ? 'Value' : 'Field'} ${entity.name}`);
+        })
+    }
+}
+
+export type JavaFieldCardOptions = CardOptions & {
+    entity: RosettaJavaField;
+    isStatic: boolean;
+};

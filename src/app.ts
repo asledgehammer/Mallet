@@ -17,6 +17,8 @@ import { RosettaLuaTable } from './asledgehammer/rosetta/lua/RosettaLuaTable';
 import { RosettaJavaClass, RosettaJavaNamespace } from './asledgehammer/rosetta/java/RosettaJavaClass';
 import { JavaClassCard } from './asledgehammer/rosetta/component/java/JavaClassCard';
 import { generateJavaClass } from './asledgehammer/rosetta/java/JavaGenerator';
+import { JavaFieldCard } from './asledgehammer/rosetta/component/java/JavaFieldCard';
+import { RosettaJavaField } from './asledgehammer/rosetta/java/RosettaJavaField';
 
 export class Active {
 
@@ -227,7 +229,7 @@ export class App {
         return this.active.selectedCard;
     }
 
-    public showLuaConstructor(entity: RosettaLuaConstructor | undefined): LuaConstructorCard | null {
+    public showLuaClassConstructor(entity: RosettaLuaConstructor | undefined): LuaConstructorCard | null {
         const { selected } = this.active;
         if (!(selected instanceof RosettaLuaClass)) return null;
         if (!entity) entity = new RosettaLuaConstructor(selected);
@@ -240,7 +242,7 @@ export class App {
         return card;
     }
 
-    public showLuaField(entity: RosettaLuaField): LuaFieldCard | null {
+    public showLuaClassField(entity: RosettaLuaField): LuaFieldCard | null {
         const { selected } = this.active;
         if (!(selected instanceof RosettaLuaClass)) return null;
         this.$screenContent.empty();
@@ -251,7 +253,7 @@ export class App {
         return card;
     }
 
-    public showLuaValue(entity: RosettaLuaField): LuaFieldCard | null {
+    public showLuaClassValue(entity: RosettaLuaField): LuaFieldCard | null {
         const { selected } = this.active;
         if (!(selected instanceof RosettaLuaClass)) return null;
         this.$screenContent.empty();
@@ -262,7 +264,7 @@ export class App {
         return card;
     }
 
-    public showLuaMethod(entity: RosettaLuaFunction): LuaFunctionCard | null {
+    public showLuaClassMethod(entity: RosettaLuaFunction): LuaFunctionCard | null {
         const { selected } = this.active;
         if (!(selected instanceof RosettaLuaClass)) return null;
         this.$screenContent.empty();
@@ -273,7 +275,7 @@ export class App {
         return card;
     }
 
-    public showLuaFunction(entity: RosettaLuaFunction): LuaFunctionCard | null {
+    public showLuaClassFunction(entity: RosettaLuaFunction): LuaFunctionCard | null {
         const { selected } = this.active;
         if (!(selected instanceof RosettaLuaClass)) return null;
         this.$screenContent.empty();
@@ -294,6 +296,17 @@ export class App {
         this.active.selectedCard.update();
         this.renderCode();
         return this.active.selectedCard;
+    }
+
+    public showJavaClassField(entity: RosettaJavaField): JavaFieldCard | null {
+        const { selected } = this.active;
+        if (!(selected instanceof RosettaJavaClass)) return null;
+        this.$screenContent.empty();
+        const card = new JavaFieldCard(this, { entity, isStatic: entity.isStatic() });
+        this.$screenContent.append(card.render());
+        card.listen();
+        card.update();
+        return card;
     }
 
     renderCode() {
@@ -370,7 +383,7 @@ export class App {
                     if (clazz instanceof RosettaLuaClass) {
                         try {
                             const field = clazz.createField(name);
-                            this.showLuaField(field);
+                            this.showLuaClassField(field);
                             this.sidebar.populateTrees();
                             this.toast.alert('Created Lua Field.', 'success');
                         } catch (e) {
@@ -389,7 +402,7 @@ export class App {
                             field.name = name;
                             clazz.fields[name] = field;
                             delete clazz.fields[nameOld];
-                            this.showLuaField(field);
+                            this.showLuaClassField(field);
                             this.sidebar.populateTrees();
                             this.toast.alert('Edited Lua Field.');
                         } catch (e) {
@@ -405,7 +418,7 @@ export class App {
                     if (clazz instanceof RosettaLuaClass) {
                         try {
                             const value = clazz.createValue(name);
-                            this.showLuaValue(value);
+                            this.showLuaClassValue(value);
                             this.sidebar.populateTrees();
                             this.toast.alert('Created Lua Value.', 'success');
                         } catch (e) {
@@ -424,7 +437,7 @@ export class App {
                             value.name = name;
                             clazz.values[name] = value;
                             delete clazz.values[nameOld];
-                            this.showLuaValue(value);
+                            this.showLuaClassValue(value);
                             this.sidebar.populateTrees();
                             this.toast.alert('Edited Lua value.');
                         } catch (e) {
@@ -438,7 +451,7 @@ export class App {
                     if (clazz instanceof RosettaLuaClass) {
                         try {
                             const func = clazz.createFunction(name);
-                            this.showLuaFunction(func);
+                            this.showLuaClassFunction(func);
                             this.sidebar.populateTrees();
                             this.toast.alert('Created Lua Function.', 'success');
                         } catch (e) {
@@ -455,7 +468,7 @@ export class App {
                             func.name = name;
                             clazz.functions[name] = func;
                             delete clazz.functions[nameOld];
-                            this.showLuaFunction(func);
+                            this.showLuaClassFunction(func);
                             this.sidebar.populateTrees();
                             this.toast.alert('Edited Lua Function.');
                         } catch (e) {
@@ -469,7 +482,7 @@ export class App {
                     if (clazz instanceof RosettaLuaClass) {
                         try {
                             const method = clazz.createMethod(name);
-                            this.showLuaMethod(method);
+                            this.showLuaClassMethod(method);
                             this.sidebar.populateTrees();
                             this.toast.alert('Created Lua Method.', 'success');
                         } catch (e) {
@@ -486,7 +499,7 @@ export class App {
                             method.name = name;
                             clazz.methods[name] = method;
                             delete clazz.methods[nameOld];
-                            this.showLuaMethod(method);
+                            this.showLuaClassMethod(method);
                             this.sidebar.populateTrees();
                             this.toast.alert('Edited Lua Method.');
                         } catch (e) {
@@ -515,11 +528,11 @@ export class App {
                             func!.addParameter(name, 'any');
 
                             if (type === 'constructor') {
-                                this.showLuaConstructor(func as RosettaLuaConstructor);
+                                this.showLuaClassConstructor(func as RosettaLuaConstructor);
                             } else if (type === 'function') {
-                                this.showLuaFunction(func as RosettaLuaFunction);
+                                this.showLuaClassFunction(func as RosettaLuaFunction);
                             } else {
-                                this.showLuaMethod(func as RosettaLuaFunction);
+                                this.showLuaClassMethod(func as RosettaLuaFunction);
                             }
                             this.renderCode();
                             this.toast.alert('Created Lua Parameter.', 'success');
@@ -579,11 +592,11 @@ export class App {
                             }
                             param.name = name;
                             if (type === 'constructor') {
-                                this.showLuaConstructor(func as RosettaLuaConstructor);
+                                this.showLuaClassConstructor(func as RosettaLuaConstructor);
                             } else if (type === 'function') {
-                                this.showLuaFunction(func as RosettaLuaFunction);
+                                this.showLuaClassFunction(func as RosettaLuaFunction);
                             } else if (type === 'method') {
-                                this.showLuaMethod(func as RosettaLuaFunction);
+                                this.showLuaClassMethod(func as RosettaLuaFunction);
                             }
                             this.renderCode();
                             this.sidebar.populateTrees();

@@ -81,7 +81,7 @@ export class ItemTree {
             // Prevent wasteful selection code executions here.
             if (_this.selected === 'constructor') return;
             const entity = _this.app.active.selected as RosettaLuaClass;
-            _this.app.showLuaConstructor(entity.conztructor);
+            _this.app.showLuaClassConstructor(entity.conztructor);
             // Let the editor know we last selected the constructor.
             _this.selected = 'constructor';
         });
@@ -93,7 +93,7 @@ export class ItemTree {
             const entity = _this.app.active.selected as RosettaLuaClass;
             const field = entity.fields[fieldName];
             if (!field) return;
-            _this.app.showLuaField(field);
+            _this.app.showLuaClassField(field);
             // Let the editor know we last selected the field.
             _this.selected = fieldName;
         });
@@ -105,7 +105,7 @@ export class ItemTree {
             const entity = _this.app.active.selected as RosettaLuaClass;
             const value = entity.values[valueName];
             if (!value) return;
-            _this.app.showLuaValue(value);
+            _this.app.showLuaClassValue(value);
             // Let the editor know we last selected the value.
             _this.selected = valueName;
         });
@@ -117,7 +117,7 @@ export class ItemTree {
             const entity = _this.app.active.selected as RosettaLuaClass;
             const method = entity.methods[methodName];
             if (!method) return;
-            _this.app.showLuaMethod(method);
+            _this.app.showLuaClassMethod(method);
             // Let the editor know we last selected the method.
             _this.selected = methodName;
         });
@@ -129,7 +129,7 @@ export class ItemTree {
             const entity = _this.app.active.selected as RosettaLuaClass;
             const func = entity.functions[functionName];
             if (!func) return;
-            _this.app.showLuaFunction(func);
+            _this.app.showLuaClassFunction(func);
             // Let the editor know we last selected the function.
             _this.selected = functionName;
         });
@@ -166,6 +166,18 @@ export class ItemTree {
 
         const _this = this;
         const $doc = $(document);
+
+        $doc.on('click', '.java-class-field-item', function() {
+            const fieldName = this.id.split('field-')[1].trim();
+            // Prevent wasteful selection code executions here.
+            if (_this.selected === fieldName) return;
+            const entity = _this.app.active.selected as RosettaJavaClass;
+            const field = entity.fields[fieldName];
+            if (!field) return;
+            _this.app.showJavaClassField(field);
+            // Let the editor know we last selected the field.
+            _this.selected = fieldName;
+        });
 
         // Preserve the state of folders.
         $doc.on('click', '#' + this.idFolderJavaClassStaticField, () => {
