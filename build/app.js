@@ -8068,28 +8068,24 @@ define("src/asledgehammer/rosetta/component/java/JavaFieldCard", ["require", "ex
             }
             return (0, util_13.html) ` 
             <div class="row">
+            ${isStatic ?
+                (0, util_13.html) `
+                        <div class="col-auto ps-2 pe-0">
+                            <div class="text-bg-primary px-2 border border-1 border-light-half desaturate shadow">
+                                <strong>Static</strong>
+                            </div>
+                        </div>
+                        `
+                : ''}
+
                 <!-- Visual Category Badge -->
                 <div class="col-auto ps-2 pe-2">
                     <div class="text-bg-success px-2 border border-1 border-light-half desaturate shadow">
-                        <strong>Java ${isStatic ? 'Static Field' : 'Field'}</strong>
+                        <strong>Java Field</strong>
                     </div>
                 </div>
                 <div class="col-auto p-0">
                     <h5 class="card-text"><strong>${name}</strong></h5> 
-                </div>
-                <div style="position: absolute; top: 5px; width: 100%; height: 32px;">
-                    <!-- Delete Button -->
-                    <button id="${idBtnDelete}" class="btn btn-sm responsive-btn float-end ms-1" title="Delete ${isStatic ? 'Value' : 'Field'}">
-                        <div class="btn-pane">
-                            <i class="fa-solid fa-xmark"></i>
-                        </div>
-                    </button>
-                    <!-- Edit Button -->
-                    <button id="${idBtnEdit}" class="btn btn-sm responsive-btn float-end" title="Edit Name">
-                        <div class="btn-pane">
-                            <i class="fa-solid fa-pen"></i>
-                        </div>
-                    </button>
                 </div>
             </div>
         `;
