@@ -111,7 +111,6 @@ export class App {
     readonly $bodyConfirm: JQuery<HTMLHeadingElement>;
 
     confirmSuccess: (() => void) | undefined;
-    selected: string | undefined;
     nameSelected: string | undefined;
     nameMode: NameModeType;
 

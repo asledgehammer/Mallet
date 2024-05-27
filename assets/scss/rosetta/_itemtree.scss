@@ -1,21 +1,23 @@
 @import '../bootstrap-5.3.2/bootstrap.scss';
 
+.object-tree-item,
 .item-tree-item {
     transition: all 120ms;
     border: 1px solid transparent;
 
     i {
-        transition: color 60ms ease-in;    
+        transition: color 60ms ease-in;
     }
 }
 
+.object-tree-item.selected,
 .item-tree-item.selected {
     background-color: rgba($light, 0.5);
     color: $white;
     transition: none;
     font-weight: bold;
     border: 1px solid transparent;
-    box-shadow: 0px 2px 12px 0px rgba(0,0,0,0.4);
+    box-shadow: 0px 2px 12px 0px rgba(0, 0, 0, 0.4);
 
     i {
         color: $white !important;

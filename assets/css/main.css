@@ -24068,14 +24068,17 @@ textarea.form-control-lg {
     display: none !important;
   }
 }
+.object-tree-item,
 .item-tree-item {
   transition: all 120ms;
   border: 1px solid transparent;
 }
+.object-tree-item i,
 .item-tree-item i {
   transition: color 60ms ease-in;
 }
 
+.object-tree-item.selected,
 .item-tree-item.selected {
   background-color: rgba(173, 181, 189, 0.5);
   color: #fff;
@@ -24084,6 +24087,7 @@ textarea.form-control-lg {
   border: 1px solid transparent;
   box-shadow: 0px 2px 12px 0px rgba(0, 0, 0, 0.4);
 }
+.object-tree-item.selected i,
 .item-tree-item.selected i {
   color: #fff !important;
   text-shadow: 1px 1px 0px 0px #fff;

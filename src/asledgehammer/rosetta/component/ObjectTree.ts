@@ -17,9 +17,68 @@ export class ObjectTree {
     folderLuaTableOpen: boolean = true;
     folderJavaClassOpen: boolean = true;
 
+    listening: boolean = false;
+
+    selected: string | undefined = undefined;
+    selectedID: string | undefined = undefined;
+
     constructor(app: App, sidebar: Sidebar) {
         this.app = app;
         this.sidebar = sidebar;
+    }
+
+    listen() {
+
+        if (this.listening) return;
+
+        const $doc = $(document);
+        const _this = this;
+
+        $doc.on('click', '.object-tree-item', function () {
+            const $this = $(this);
+            $('.object-tree-item.selected').removeClass('selected');
+            $this.addClass('selected');
+            _this.selectedID = this.id;
+            console.log(`Selected object: ${_this.selectedID}`);
+        });
+
+        // Apply jQuery listeners next.
+        $doc.on('click', '.object-tree-lua-class', function () {
+            const name = this.id.substring('object-lua-class-'.length);
+            // Prevent wasteful selection code executions here.
+            if (_this.selected === name) return;
+            _this.app.showLuaClass(_this.app.active.luaClasses[name]);
+            // Let the editor know we last selected the class.
+            _this.selected = name;
+            // Update the class properties tree.
+            _this.sidebar.itemTree.selectedID = undefined;
+            _this.sidebar.itemTree.populate();
+        });
+
+        $doc.on('click', '.object-tree-java-class', function () {
+            const name = this.id.substring('object-java-class-'.length);
+            // Prevent wasteful selection code executions here.
+            if (_this.selected === name) return;
+            _this.app.showJavaClass(_this.app.active.javaClasses[name]);
+            // Let the editor know we last selected the class.
+            _this.selected = name;
+            // Update the class properties tree.
+            _this.sidebar.itemTree.selectedID = undefined;
+            _this.sidebar.itemTree.populate();
+        });
+
+        // Preserve the state of folders.
+        $doc.on('click', '#' + this.idFolderLuaClass, () => {
+            this.folderLuaClassOpen = !this.folderLuaClassOpen;
+        });
+        $doc.on('click', '#' + this.idFolderLuaTable, () => {
+            this.folderLuaTableOpen = !this.folderLuaTableOpen;
+        });
+        $doc.on('click', '#' + this.idFolderJavaClass, () => {
+            this.folderJavaClassOpen = !this.folderJavaClassOpen;
+        });
+
+        this.listening = true;
     }
 
     populate() {
@@ -39,7 +98,7 @@ export class ObjectTree {
                     id: `object-lua-class-${name}`,
                     text: name,
                     icon: LuaCard.getTypeIcon('class'),
-                    class: ['item-tree-item', 'object-tree-lua-class'],
+                    class: ['object-tree-item', 'object-tree-lua-class'],
                 }
             );
         }
@@ -51,11 +110,11 @@ export class ObjectTree {
                     id: `object-lua-table-${name}`,
                     text: name,
                     icon: LuaCard.getTypeIcon('class'),
-                    class: ['item-tree-item', 'object-tree-lua-table'],
+                    class: ['object-tree-item', 'object-tree-lua-table'],
                 }
             );
         }
-        
+
         const javaClasses = [];
         for (const name of Object.keys(this.app.active.javaClasses)) {
             javaClasses.push(
@@ -63,7 +122,7 @@ export class ObjectTree {
                     id: `object-java-class-${name}`,
                     text: name,
                     icon: LuaCard.getTypeIcon('class'),
-                    class: ['item-tree-item', 'object-tree-java-class'],
+                    class: ['object-tree-item', 'object-tree-java-class'],
                 }
             );
         }
@@ -98,40 +157,5 @@ export class ObjectTree {
             ]
         });
 
-        // Apply jQuery listeners next.
-        $('.object-tree-lua-class').on('click', function () {
-            const name = this.id.substring('object-lua-class-'.length);
-
-            // Prevent wasteful selection code executions here.
-            if (_this.app.selected === name) return;
-
-            _this.app.showLuaClass(_this.app.active.luaClasses[name]);
-            
-            // Let the editor know we last selected the class.
-            _this.app.selected = name;
-
-            // Update the class properties tree.
-            _this.sidebar.itemTree.populate();
-        });
-
-        $('.object-tree-java-class').on('click', function () {
-            const name = this.id.substring('object-java-class-'.length);
-
-            // Prevent wasteful selection code executions here.
-            if (_this.app.selected === name) return;
-
-            _this.app.showJavaClass(_this.app.active.javaClasses[name]);
-            
-            // Let the editor know we last selected the class.
-            _this.app.selected = name;
-
-            // Update the class properties tree.
-            _this.sidebar.itemTree.populate();
-        });
-
-        // Preserve the state of folders.
-        $get(this.idFolderLuaClass).on('click', () => this.folderLuaClassOpen = !this.folderLuaClassOpen);
-        $get(this.idFolderLuaTable).on('click', () => this.folderLuaTableOpen = !this.folderLuaTableOpen);
-        $get(this.idFolderJavaClass).on('click', () => this.folderJavaClassOpen = !this.folderJavaClassOpen);
     }
 }

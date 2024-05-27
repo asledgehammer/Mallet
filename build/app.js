@@ -2123,7 +2123,7 @@ define("src/asledgehammer/rosetta/component/lua/LuaFieldCard", ["require", "expo
                         delete clazz.fields[entity.name];
                     }
                     app.showLuaClass(clazz);
-                    app.sidebar.selectedItemID = undefined;
+                    app.sidebar.itemTree.selectedID = undefined;
                     app.sidebar.populateTrees();
                 }, `Delete ${isStatic ? 'Value' : 'Field'} ${entity.name}`);
             });
@@ -2226,7 +2226,7 @@ define("src/asledgehammer/rosetta/component/lua/LuaFunctionCard", ["require", "e
                         delete clazz.methods[entity.name];
                     }
                     app.showLuaClass(clazz);
-                    app.sidebar.selectedItemID = undefined;
+                    app.sidebar.itemTree.selectedID = undefined;
                     app.sidebar.populateTrees();
                 }, `Delete ${isStatic ? 'Function' : 'Method'} ${entity.name}`);
             });
@@ -3014,20 +3014,158 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
     exports.ItemTree = void 0;
     class ItemTree {
         constructor(app, sidebar) {
-            this.folderFieldOpen = false;
-            this.folderValueOpen = false;
-            this.folderFunctionOpen = false;
-            this.folderMethodOpen = false;
+            /* Lua Class Folders */
+            this.idFolderLuaClassField = `item-tree-folder-lua-class-field`;
+            this.idFolderLuaClassValue = `item-tree-folder-lua-class-value`;
+            this.idFolderLuaClassFunction = `item-tree-folder-lua-class-function`;
+            this.idFolderLuaClassMethod = `item-tree-folder-lua-class-method`;
+            this.folderLuaClassFieldOpen = false;
+            this.folderLuaClassValueOpen = false;
+            this.folderLuaClassFunctionOpen = false;
+            this.folderLuaClassMethodOpen = false;
+            /* Lua Table Folders */
+            this.idFolderLuaTableValue = `item-tree-folder-lua-table-value`;
+            this.idFolderLuaTableFunction = `item-tree-folder-lua-table-function`;
+            this.folderLuaTableValueOpen = false;
+            this.folderLuaTableFunctionOpen = false;
+            /* Java Class Folders */
+            this.idFolderJavaClassStaticField = 'item-tree-folder-java-class-static-field';
+            this.idFolderJavaClassStaticMethod = 'item-tree-folder-java-class-static-method';
+            this.idFolderJavaClassField = 'item-tree-folder-java-class-field';
+            this.idFolderJavaClassMethod = 'item-tree-folder-java-class-method';
+            this.folderJavaClassStaticFieldOpen = false;
+            this.folderJavaClassStaticMethodOpen = false;
+            this.folderJavaClassFieldOpen = false;
+            this.folderJavaClassMethodOpen = false;
+            this.listening = false;
+            this.selected = undefined;
+            this.selectedID = undefined;
             this.app = app;
             this.sidebar = sidebar;
-            this.idItemClass = `item-tree-item-class`;
-            this.idFolderField = `item-tree-folder-field`;
-            this.idFolderValue = `item-tree-folder-value`;
-            this.idFolderFunction = `item-tree-folder-function`;
-            this.idFolderMethod = `item-tree-folder-method`;
+        }
+        listen() {
+            if (this.listening)
+                return;
+            const _this = this;
+            const $doc = $(document);
+            $doc.on('click', '.item-tree-item', function () {
+                const $this = $(this);
+                $('.item-tree-item.selected').removeClass('selected');
+                $this.addClass('selected');
+                _this.selectedID = this.id;
+                console.log(`Selected item: ${_this.selectedID}`);
+            });
+            this.listenLuaClass();
+            this.listenLuaTable();
+            this.listenJavaClass();
+            this.listening = true;
+        }
+        listenLuaClass() {
+            const _this = this;
+            const $doc = $(document);
+            $doc.on('click', '.lua-constructor-item', function () {
+                // Prevent wasteful selection code executions here.
+                if (_this.selected === 'constructor')
+                    return;
+                const entity = _this.app.active.selected;
+                _this.app.showLuaConstructor(entity.conztructor);
+                // Let the editor know we last selected the constructor.
+                _this.selected = 'constructor';
+            });
+            $doc.on('click', '.lua-field-item', function () {
+                const fieldName = this.id.split('field-')[1].trim();
+                // Prevent wasteful selection code executions here.
+                if (_this.selected === fieldName)
+                    return;
+                const entity = _this.app.active.selected;
+                const field = entity.fields[fieldName];
+                if (!field)
+                    return;
+                _this.app.showLuaField(field);
+                // Let the editor know we last selected the field.
+                _this.selected = fieldName;
+            });
+            $doc.on('click', '.lua-value-item', function () {
+                const valueName = this.id.split('value-')[1].trim();
+                // Prevent wasteful selection code executions here.
+                if (_this.selected === valueName)
+                    return;
+                const entity = _this.app.active.selected;
+                const value = entity.values[valueName];
+                if (!value)
+                    return;
+                _this.app.showLuaValue(value);
+                // Let the editor know we last selected the value.
+                _this.selected = valueName;
+            });
+            $doc.on('click', '.lua-method-item', function () {
+                const methodName = this.id.split('method-')[1].trim();
+                // Prevent wasteful selection code executions here.
+                if (_this.selected === methodName)
+                    return;
+                const entity = _this.app.active.selected;
+                const method = entity.methods[methodName];
+                if (!method)
+                    return;
+                _this.app.showLuaMethod(method);
+                // Let the editor know we last selected the method.
+                _this.selected = methodName;
+            });
+            $doc.on('click', '.lua-function-item', function () {
+                const functionName = this.id.split('function-')[1].trim();
+                // Prevent wasteful selection code executions here.
+                if (_this.selected === functionName)
+                    return;
+                const entity = _this.app.active.selected;
+                const func = entity.functions[functionName];
+                if (!func)
+                    return;
+                _this.app.showLuaFunction(func);
+                // Let the editor know we last selected the function.
+                _this.selected = functionName;
+            });
+            // Preserve the state of folders.
+            $doc.on('click', '#' + this.idFolderLuaClassField, () => {
+                this.folderLuaClassFieldOpen = !this.folderLuaClassFieldOpen;
+            });
+            $doc.on('click', '#' + this.idFolderLuaClassValue, () => {
+                this.folderLuaClassValueOpen = !this.folderLuaClassValueOpen;
+            });
+            $doc.on('click', '#' + this.idFolderLuaClassMethod, () => {
+                this.folderLuaClassMethodOpen = !this.folderLuaClassMethodOpen;
+            });
+            $doc.on('click', '#' + this.idFolderLuaClassFunction, () => {
+                this.folderLuaClassFunctionOpen = !this.folderLuaClassFunctionOpen;
+            });
+        }
+        listenLuaTable() {
+            const _this = this;
+            const $doc = $(document);
+            $doc.on('click', '#' + this.idFolderLuaTableValue, () => {
+                this.folderLuaTableValueOpen = !this.folderLuaTableValueOpen;
+            });
+            $doc.on('click', '#' + this.idFolderLuaTableFunction, () => {
+                this.folderLuaTableFunctionOpen = !this.folderLuaTableFunctionOpen;
+            });
+        }
+        listenJavaClass() {
+            const _this = this;
+            const $doc = $(document);
+            // Preserve the state of folders.
+            $doc.on('click', '#' + this.idFolderJavaClassStaticField, () => {
+                this.folderJavaClassStaticFieldOpen = !this.folderJavaClassStaticFieldOpen;
+            });
+            $doc.on('click', '#' + this.idFolderJavaClassStaticMethod, () => {
+                this.folderJavaClassStaticMethodOpen = !this.folderJavaClassStaticMethodOpen;
+            });
+            $doc.on('click', '#' + this.idFolderJavaClassField, () => {
+                this.folderJavaClassFieldOpen = !this.folderJavaClassFieldOpen;
+            });
+            $doc.on('click', '#' + this.idFolderJavaClassMethod, () => {
+                this.folderJavaClassMethodOpen = !this.folderJavaClassMethodOpen;
+            });
         }
         populate() {
-            const _this = this;
             const { selected } = this.app.active;
             if (!selected)
                 return;
@@ -3114,108 +3252,151 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                         text: "Fields",
                         icon: "fa-solid fa-folder text-light mx-2",
                         class: ['item-tree-folder', 'bg-secondary'],
-                        id: _this.idFolderField,
-                        expanded: _this.folderFieldOpen,
+                        id: _this.idFolderLuaClassField,
+                        expanded: _this.folderLuaClassFieldOpen,
                         nodes: fields
                     },
                     {
                         text: "Values",
                         icon: "fa-solid fa-folder text-light mx-2",
                         class: ['item-tree-folder', 'bg-secondary'],
-                        id: _this.idFolderValue,
-                        expanded: _this.folderValueOpen,
+                        id: _this.idFolderLuaClassValue,
+                        expanded: _this.folderLuaClassValueOpen,
                         nodes: values
                     },
                     {
                         text: "Methods",
                         icon: "fa-solid fa-folder text-light mx-2",
                         class: ['item-tree-folder', 'bg-secondary'],
-                        id: _this.idFolderMethod,
-                        expanded: _this.folderMethodOpen,
+                        id: _this.idFolderLuaClassMethod,
+                        expanded: _this.folderLuaClassMethodOpen,
                         nodes: methods
                     },
                     {
                         text: "Functions",
                         icon: "fa-solid fa-folder text-light mx-2",
                         class: ['item-tree-folder', 'bg-secondary'],
-                        id: _this.idFolderFunction,
-                        expanded: _this.folderFunctionOpen,
+                        id: _this.idFolderLuaClassFunction,
+                        expanded: _this.folderLuaClassFunctionOpen,
                         nodes: functions
                     },
                 ]
             });
             // Apply jQuery listeners next.
-            $('.lua-constructor-item').on('click', function () {
-                // Prevent wasteful selection code executions here.
-                if (_this.app.selected === 'constructor')
-                    return;
-                _this.app.showLuaConstructor(entity.conztructor);
-                // Let the editor know we last selected the constructor.
-                _this.app.selected = 'constructor';
-            });
-            $('.lua-field-item').on('click', function () {
-                const fieldName = this.id.split('field-')[1].trim();
-                // Prevent wasteful selection code executions here.
-                if (_this.app.selected === fieldName)
-                    return;
-                const field = entity.fields[fieldName];
-                if (!field)
-                    return;
-                _this.app.showLuaField(field);
-                // Let the editor know we last selected the field.
-                _this.app.selected = fieldName;
-            });
-            $('.lua-value-item').on('click', function () {
-                const valueName = this.id.split('value-')[1].trim();
-                // Prevent wasteful selection code executions here.
-                if (_this.app.selected === valueName)
-                    return;
-                const value = entity.values[valueName];
-                if (!value)
-                    return;
-                _this.app.showLuaValue(value);
-                // Let the editor know we last selected the value.
-                _this.app.selected = valueName;
-            });
-            $('.lua-method-item').on('click', function () {
-                const methodName = this.id.split('method-')[1].trim();
-                // Prevent wasteful selection code executions here.
-                if (_this.app.selected === methodName)
-                    return;
-                const method = entity.methods[methodName];
-                if (!method)
-                    return;
-                _this.app.showLuaMethod(method);
-                // Let the editor know we last selected the method.
-                _this.app.selected = methodName;
-            });
-            $('.lua-function-item').on('click', function () {
-                const functionName = this.id.split('function-')[1].trim();
-                // Prevent wasteful selection code executions here.
-                if (_this.app.selected === functionName)
-                    return;
-                const func = entity.functions[functionName];
-                if (!func)
-                    return;
-                _this.app.showLuaFunction(func);
-                // Let the editor know we last selected the function.
-                _this.app.selected = functionName;
-            });
-            // Preserve the state of folders.
-            (0, util_8.$get)(this.idFolderField).on('click', () => this.folderFieldOpen = !this.folderFieldOpen);
-            (0, util_8.$get)(this.idFolderValue).on('click', () => this.folderValueOpen = !this.folderValueOpen);
-            (0, util_8.$get)(this.idFolderMethod).on('click', () => this.folderMethodOpen = !this.folderMethodOpen);
-            (0, util_8.$get)(this.idFolderFunction).on('click', () => this.folderFunctionOpen = !this.folderFunctionOpen);
         }
         populateLuaTable(entity) {
             if (!entity)
                 return;
             const _this = this;
+            const funcs = [];
+            const values = [];
+            // @ts-ignore
+            $treeLower.bstreeview({
+                data: [
+                    {
+                        text: "Values",
+                        icon: "fa-solid fa-folder text-light mx-2",
+                        class: ['item-tree-folder', 'bg-secondary'],
+                        id: _this.idFolderLuaTableValue,
+                        expanded: _this.folderLuaTableValueOpen,
+                        nodes: values
+                    },
+                    {
+                        text: "Functions",
+                        icon: "fa-solid fa-folder text-light mx-2",
+                        class: ['item-tree-folder', 'bg-secondary'],
+                        id: _this.idFolderLuaTableFunction,
+                        expanded: _this.folderLuaTableFunctionOpen,
+                        nodes: funcs
+                    }
+                ]
+            });
         }
         populateJavaClass(entity) {
             if (!entity)
                 return;
             const _this = this;
+            let $treeLower = (0, util_8.$get)('tree-lower');
+            $treeLower.remove();
+            const $sidebarContentLower = (0, util_8.$get)('sidebar-content-lower');
+            $sidebarContentLower.append('<div id="tree-lower" class="rounded-0 bg-dark text-white"></div>');
+            $treeLower = (0, util_8.$get)('tree-lower');
+            const staticFields = [];
+            const staticMethods = [];
+            const fields = [];
+            const methods = [];
+            const fieldNames = Object.keys(entity.fields);
+            fieldNames.sort((a, b) => a.localeCompare(b));
+            const methodNames = Object.keys(entity.methods);
+            methodNames.sort((a, b) => a.localeCompare(b));
+            // Static field(s)
+            for (const name of fieldNames) {
+                const field = entity.fields[name];
+                if (field.isStatic()) {
+                    const id = `java-class-${entity.name}-field-${field.name}`;
+                    staticFields.push({
+                        text: field.name,
+                        icon: LuaCard_5.LuaCard.getTypeIcon(field.type.basic),
+                        id,
+                        class: ['item-tree-item', 'java-class-field-item']
+                    });
+                }
+            }
+            // Instance field(s)
+            for (const name of fieldNames) {
+                const field = entity.fields[name];
+                if (!field.isStatic()) {
+                    const id = `java-class-${entity.name}-field-${field.name}`;
+                    fields.push({
+                        text: field.name,
+                        icon: LuaCard_5.LuaCard.getTypeIcon(field.type.basic),
+                        id,
+                        class: ['item-tree-item', 'java-class-field-item']
+                    });
+                }
+            }
+            // @ts-ignore
+            $treeLower.bstreeview({
+                data: [
+                    {
+                        text: "Constructor",
+                        icon: LuaCard_5.LuaCard.getTypeIcon('constructor'),
+                        class: ['item-tree-item', 'java-class-constructor-item']
+                    },
+                    {
+                        text: "Static Fields",
+                        icon: "fa-solid fa-folder text-light mx-2",
+                        class: ['item-tree-folder', 'bg-secondary'],
+                        id: _this.idFolderLuaClassField,
+                        expanded: _this.folderLuaClassFieldOpen,
+                        nodes: staticFields
+                    },
+                    {
+                        text: "Static Methods",
+                        icon: "fa-solid fa-folder text-light mx-2",
+                        class: ['item-tree-folder', 'bg-secondary'],
+                        id: _this.idFolderLuaClassFunction,
+                        expanded: _this.folderLuaClassFunctionOpen,
+                        nodes: staticMethods
+                    },
+                    {
+                        text: "Fields",
+                        icon: "fa-solid fa-folder text-light mx-2",
+                        class: ['item-tree-folder', 'bg-secondary'],
+                        id: _this.idFolderLuaClassValue,
+                        expanded: _this.folderLuaClassValueOpen,
+                        nodes: fields
+                    },
+                    {
+                        text: "Methods",
+                        icon: "fa-solid fa-folder text-light mx-2",
+                        class: ['item-tree-folder', 'bg-secondary'],
+                        id: _this.idFolderLuaClassMethod,
+                        expanded: _this.folderLuaClassMethodOpen,
+                        nodes: methods
+                    },
+                ]
+            });
         }
     }
     exports.ItemTree = ItemTree;
@@ -3233,8 +3414,60 @@ define("src/asledgehammer/rosetta/component/ObjectTree", ["require", "exports", 
             this.folderLuaClassOpen = true;
             this.folderLuaTableOpen = true;
             this.folderJavaClassOpen = true;
+            this.listening = false;
+            this.selected = undefined;
+            this.selectedID = undefined;
             this.app = app;
             this.sidebar = sidebar;
+        }
+        listen() {
+            if (this.listening)
+                return;
+            const $doc = $(document);
+            const _this = this;
+            $doc.on('click', '.object-tree-item', function () {
+                const $this = $(this);
+                $('.object-tree-item.selected').removeClass('selected');
+                $this.addClass('selected');
+                _this.selectedID = this.id;
+                console.log(`Selected object: ${_this.selectedID}`);
+            });
+            // Apply jQuery listeners next.
+            $doc.on('click', '.object-tree-lua-class', function () {
+                const name = this.id.substring('object-lua-class-'.length);
+                // Prevent wasteful selection code executions here.
+                if (_this.selected === name)
+                    return;
+                _this.app.showLuaClass(_this.app.active.luaClasses[name]);
+                // Let the editor know we last selected the class.
+                _this.selected = name;
+                // Update the class properties tree.
+                _this.sidebar.itemTree.selectedID = undefined;
+                _this.sidebar.itemTree.populate();
+            });
+            $doc.on('click', '.object-tree-java-class', function () {
+                const name = this.id.substring('object-java-class-'.length);
+                // Prevent wasteful selection code executions here.
+                if (_this.selected === name)
+                    return;
+                _this.app.showJavaClass(_this.app.active.javaClasses[name]);
+                // Let the editor know we last selected the class.
+                _this.selected = name;
+                // Update the class properties tree.
+                _this.sidebar.itemTree.selectedID = undefined;
+                _this.sidebar.itemTree.populate();
+            });
+            // Preserve the state of folders.
+            $doc.on('click', '#' + this.idFolderLuaClass, () => {
+                this.folderLuaClassOpen = !this.folderLuaClassOpen;
+            });
+            $doc.on('click', '#' + this.idFolderLuaTable, () => {
+                this.folderLuaTableOpen = !this.folderLuaTableOpen;
+            });
+            $doc.on('click', '#' + this.idFolderJavaClass, () => {
+                this.folderJavaClassOpen = !this.folderJavaClassOpen;
+            });
+            this.listening = true;
         }
         populate() {
             const _this = this;
@@ -3249,7 +3482,7 @@ define("src/asledgehammer/rosetta/component/ObjectTree", ["require", "exports", 
                     id: `object-lua-class-${name}`,
                     text: name,
                     icon: LuaCard_6.LuaCard.getTypeIcon('class'),
-                    class: ['item-tree-item', 'object-tree-lua-class'],
+                    class: ['object-tree-item', 'object-tree-lua-class'],
                 });
             }
             const luaTables = [];
@@ -3258,7 +3491,7 @@ define("src/asledgehammer/rosetta/component/ObjectTree", ["require", "exports", 
                     id: `object-lua-table-${name}`,
                     text: name,
                     icon: LuaCard_6.LuaCard.getTypeIcon('class'),
-                    class: ['item-tree-item', 'object-tree-lua-table'],
+                    class: ['object-tree-item', 'object-tree-lua-table'],
                 });
             }
             const javaClasses = [];
@@ -3267,7 +3500,7 @@ define("src/asledgehammer/rosetta/component/ObjectTree", ["require", "exports", 
                     id: `object-java-class-${name}`,
                     text: name,
                     icon: LuaCard_6.LuaCard.getTypeIcon('class'),
-                    class: ['item-tree-item', 'object-tree-java-class'],
+                    class: ['object-tree-item', 'object-tree-java-class'],
                 });
             }
             // @ts-ignore
@@ -3299,33 +3532,6 @@ define("src/asledgehammer/rosetta/component/ObjectTree", ["require", "exports", 
                     },
                 ]
             });
-            // Apply jQuery listeners next.
-            $('.object-tree-lua-class').on('click', function () {
-                const name = this.id.substring('object-lua-class-'.length);
-                // Prevent wasteful selection code executions here.
-                if (_this.app.selected === name)
-                    return;
-                _this.app.showLuaClass(_this.app.active.luaClasses[name]);
-                // Let the editor know we last selected the class.
-                _this.app.selected = name;
-                // Update the class properties tree.
-                _this.sidebar.itemTree.populate();
-            });
-            $('.object-tree-java-class').on('click', function () {
-                const name = this.id.substring('object-java-class-'.length);
-                // Prevent wasteful selection code executions here.
-                if (_this.app.selected === name)
-                    return;
-                _this.app.showJavaClass(_this.app.active.javaClasses[name]);
-                // Let the editor know we last selected the class.
-                _this.app.selected = name;
-                // Update the class properties tree.
-                _this.sidebar.itemTree.populate();
-            });
-            // Preserve the state of folders.
-            (0, util_9.$get)(this.idFolderLuaClass).on('click', () => this.folderLuaClassOpen = !this.folderLuaClassOpen);
-            (0, util_9.$get)(this.idFolderLuaTable).on('click', () => this.folderLuaTableOpen = !this.folderLuaTableOpen);
-            (0, util_9.$get)(this.idFolderJavaClass).on('click', () => this.folderJavaClassOpen = !this.folderJavaClassOpen);
         }
     }
     exports.ObjectTree = ObjectTree;
@@ -3343,6 +3549,7 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                     height: '100%',
                 },
             });
+            this.listening = false;
             this.app = app;
             const result = document.getElementById('result');
             const reader = new FileReader();
@@ -3439,11 +3646,16 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
         `;
         }
         listen() {
+            if (this.listening)
+                return;
+            this.objTree.listen();
+            this.itemTree.listen();
             this.populateTrees();
             const { app } = this;
             const _this = this;
+            const $doc = $(document);
             const { $titleName, $btnName, $inputName, modalName } = app;
-            (0, util_10.$get)('new-lua-class').on('click', () => {
+            $doc.on('click', '#new-lua-class', () => {
                 try {
                     $titleName.html('New Lua Class');
                     $btnName.html('Create');
@@ -3458,7 +3670,7 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                     console.error(e);
                 }
             });
-            (0, util_10.$get)('open-lua-class').on('click', () => {
+            $doc.on('click', '#open-lua-class', () => {
                 const dFileLoad = document.getElementById('load-file');
                 const onchange = () => {
                     try {
@@ -3484,7 +3696,7 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                 dFileLoad.onchange = onchange;
                 dFileLoad.click();
             });
-            (0, util_10.$get)('save-lua-class').on('click', async () => {
+            $doc.on('click', '#save-lua-class', async () => {
                 try {
                     // @ts-ignore
                     const result = await showSaveFilePicker();
@@ -3500,7 +3712,7 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                 }
                 return;
             });
-            (0, util_10.$get)('btn-new-lua-value').on('click', () => {
+            $doc.on('click', '#btn-new-lua-value', () => {
                 try {
                     const { selectedCard: card } = app.active;
                     if (!card)
@@ -3518,7 +3730,7 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                     console.error(e);
                 }
             });
-            (0, util_10.$get)('btn-new-lua-field').on('click', () => {
+            $doc.on('click', '#btn-new-lua-field', () => {
                 try {
                     const { selectedCard: card } = app.active;
                     if (!card)
@@ -3536,7 +3748,7 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                     console.error(e);
                 }
             });
-            (0, util_10.$get)('btn-new-lua-function').on('click', () => {
+            $doc.on('click', '#btn-new-lua-function', () => {
                 try {
                     const { selectedCard: card } = app.active;
                     if (!card)
@@ -3554,7 +3766,7 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                     console.error(e);
                 }
             });
-            (0, util_10.$get)('btn-new-lua-method').on('click', () => {
+            $doc.on('click', '#btn-new-lua-method', () => {
                 try {
                     const { selectedCard: card } = app.active;
                     if (!card)
@@ -3572,20 +3784,14 @@ define("src/asledgehammer/rosetta/component/Sidebar", ["require", "exports", "sr
                     console.error(e);
                 }
             });
-            $('#lua-wizard').on('click', () => {
+            $doc.on('click', '#lua-wizard', () => {
                 app.luaParser.parseFilePicker();
             });
+            this.listening = true;
         }
         populateTrees() {
             this.objTree.populate();
             this.itemTree.populate();
-            const _this = this;
-            $('.item-tree-item').on('click', function () {
-                const $this = $(this);
-                $('.selected').removeClass('selected');
-                $this.addClass('selected');
-                _this.selectedItemID = this.id;
-            });
         }
     }
     exports.Sidebar = Sidebar;

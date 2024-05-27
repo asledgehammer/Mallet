@@ -10,7 +10,7 @@ export class Sidebar extends Component<SidebarOptions> {
     readonly itemTree: ItemTree;
     readonly objTree: ObjectTree;
 
-    selectedItemID: string | undefined;
+    listening: boolean = false;
 
     constructor(app: App) {
         super({
@@ -120,13 +120,19 @@ export class Sidebar extends Component<SidebarOptions> {
     }
 
     listen(): void {
+
+        if (this.listening) return;
+
+        this.objTree.listen();
+        this.itemTree.listen();
         this.populateTrees();
 
         const { app } = this;
         const _this = this;
+        const $doc = $(document);
         const { $titleName, $btnName, $inputName, modalName } = app;
 
-        $get('new-lua-class').on('click', () => {
+        $doc.on('click', '#new-lua-class', () => {
             try {
                 $titleName.html('New Lua Class');
                 $btnName.html('Create');
@@ -141,7 +147,7 @@ export class Sidebar extends Component<SidebarOptions> {
             }
         });
 
-        $get('open-lua-class').on('click', () => {
+        $doc.on('click', '#open-lua-class', () => {
             const dFileLoad = document.getElementById('load-file') as any;
             const onchange = () => {
                 try {
@@ -167,7 +173,7 @@ export class Sidebar extends Component<SidebarOptions> {
             dFileLoad.click();
         });
 
-        $get('save-lua-class').on('click', async () => {
+        $doc.on('click', '#save-lua-class', async () => {
             try {
                 // @ts-ignore
                 const result = await showSaveFilePicker();
@@ -187,7 +193,7 @@ export class Sidebar extends Component<SidebarOptions> {
             return;
         });
 
-        $get('btn-new-lua-value').on('click', () => {
+        $doc.on('click', '#btn-new-lua-value', () => {
             try {
                 const { selectedCard: card } = app.active;
                 if (!card) return;
@@ -204,7 +210,7 @@ export class Sidebar extends Component<SidebarOptions> {
             }
         });
 
-        $get('btn-new-lua-field').on('click', () => {
+        $doc.on('click', '#btn-new-lua-field', () => {
             try {
                 const { selectedCard: card } = app.active;
                 if (!card) return;
@@ -221,7 +227,7 @@ export class Sidebar extends Component<SidebarOptions> {
             }
         });
 
-        $get('btn-new-lua-function').on('click', () => {
+        $doc.on('click', '#btn-new-lua-function', () => {
             try {
                 const { selectedCard: card } = app.active;
                 if (!card) return;
@@ -238,7 +244,7 @@ export class Sidebar extends Component<SidebarOptions> {
             }
         });
 
-        $get('btn-new-lua-method').on('click', () => {
+        $doc.on('click', '#btn-new-lua-method', () => {
             try {
                 const { selectedCard: card } = app.active;
                 if (!card) return;
@@ -256,23 +262,16 @@ export class Sidebar extends Component<SidebarOptions> {
             }
         });
 
-        $('#lua-wizard').on('click', () => {
+        $doc.on('click', '#lua-wizard', () => {
             app.luaParser.parseFilePicker();
         });
+
+        this.listening = true;
     }
 
     populateTrees() {
         this.objTree.populate();
         this.itemTree.populate();
-
-        const _this = this;
-
-        $('.item-tree-item').on('click', function () {
-            const $this = $(this);
-            $('.selected').removeClass('selected');
-            $this.addClass('selected');
-            _this.selectedItemID = this.id;
-        });
     }
 };
 
