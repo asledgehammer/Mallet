@@ -21,6 +21,8 @@ import { JavaFieldCard } from './asledgehammer/rosetta/component/java/JavaFieldC
 import { RosettaJavaField } from './asledgehammer/rosetta/java/RosettaJavaField';
 import { JavaMethodCard } from './asledgehammer/rosetta/component/java/JavaMethodCard';
 import { RosettaJavaMethod } from './asledgehammer/rosetta/java/RosettaJavaMethod';
+import { RosettaJavaConstructor } from './asledgehammer/rosetta/java/RosettaJavaConstructor';
+import { JavaConstructorCard } from './asledgehammer/rosetta/component/java/JavaConstructorCard';
 
 export class Active {
 
@@ -298,6 +300,23 @@ export class App {
         this.active.selectedCard.update();
         this.renderCode();
         return this.active.selectedCard;
+    }
+
+    public showJavaClassConstructor(entity: RosettaJavaConstructor | undefined): JavaConstructorCard | null {
+        const { selected } = this.active;
+        console.log(`showJavaClassConstructor(${entity})`);
+        if (!(selected instanceof RosettaJavaClass)) return null;
+        console.log('a');
+        if (!entity) return null;
+        console.log('b');
+
+        this.$screenContent.empty();
+        const card = new JavaConstructorCard(this, { entity });
+        this.$screenContent.append(card.render());
+        card.listen();
+        card.update();
+        this.renderCode();
+        return card;
     }
 
     public showJavaClassField(entity: RosettaJavaField): JavaFieldCard | null {

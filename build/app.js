@@ -3012,6 +3012,12 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ItemTree = void 0;
+    function wrapFolderCount(text) {
+        return `<strong class="font-monospace text-white">${text}</strong>`;
+    }
+    function wrapItem(text) {
+        return `<span class="font-monospace" style="position: relative; top: -2px; font-size: 12px;">${text}</span>`;
+    }
     class ItemTree {
         constructor(app, sidebar) {
             /* Lua Class Folders */
@@ -3029,17 +3035,20 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
             this.folderLuaTableValueOpen = false;
             this.folderLuaTableFunctionOpen = false;
             /* Java Class Folders */
+            this.idFolderJavaClassConstructor = 'item-tree-folder-java-class-constructor';
             this.idFolderJavaClassStaticField = 'item-tree-folder-java-class-static-field';
             this.idFolderJavaClassStaticMethod = 'item-tree-folder-java-class-static-method';
             this.idFolderJavaClassField = 'item-tree-folder-java-class-field';
             this.idFolderJavaClassMethod = 'item-tree-folder-java-class-method';
-            this.folderJavaClassStaticFieldOpen = false;
-            this.folderJavaClassStaticMethodOpen = false;
-            this.folderJavaClassFieldOpen = false;
-            this.folderJavaClassMethodOpen = false;
+            this.folderJavaClassConstructorOpen = true;
+            this.folderJavaClassStaticFieldOpen = true;
+            this.folderJavaClassStaticMethodOpen = true;
+            this.folderJavaClassFieldOpen = true;
+            this.folderJavaClassMethodOpen = true;
             this.listening = false;
             this.selected = undefined;
             this.selectedID = undefined;
+            this.constructorSignatureMap = {};
             this.methodSignatureMap = {};
             this.staticMethodSignatureMap = {};
             this.app = app;
@@ -3167,9 +3176,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                 _this.selected = fieldName;
             });
             $doc.on('click', '.java-class-method-item', function () {
-                console.log(`id: ${this.id}`);
                 const signature = this.id.split('method-')[1].trim();
-                console.log(`signature: ${signature}`);
                 // Prevent wasteful selection code executions here.
                 if (_this.selected === signature)
                     return;
@@ -3180,6 +3187,19 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                 if (!method)
                     return;
                 _this.app.showJavaClassMethod(method);
+                // Let the editor know we last selected the field.
+                _this.selected = signature;
+            });
+            $doc.on('click', '.java-class-constructor-item', function () {
+                const signature = this.id.split('constructor-')[1].trim();
+                console.log(`signature: ${signature}`);
+                // Prevent wasteful selection code executions here.
+                if (_this.selected === signature)
+                    return;
+                const conztructor = _this.constructorSignatureMap[signature];
+                if (!conztructor)
+                    return;
+                _this.app.showJavaClassConstructor(conztructor);
                 // Let the editor know we last selected the field.
                 _this.selected = signature;
             });
@@ -3357,10 +3377,12 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
             const staticMethods = [];
             const fields = [];
             const methods = [];
+            const constructors = [];
             const fieldNames = Object.keys(entity.fields);
             fieldNames.sort((a, b) => a.localeCompare(b));
             const clusterNames = Object.keys(entity.methods);
             clusterNames.sort((a, b) => a.localeCompare(b));
+            this.constructorSignatureMap = {};
             this.methodSignatureMap = {};
             this.staticMethodSignatureMap = {};
             for (const clusterName of clusterNames) {
@@ -3382,13 +3404,45 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                     }
                 }
             }
+            for (const cons of entity.constructors) {
+                let signature = `constructor`;
+                if (cons.parameters && cons.parameters.length) {
+                    signature += '_';
+                    for (const param of cons.parameters) {
+                        signature += `${param.type.basic}-`;
+                    }
+                    signature = signature.substring(0, signature.length - 1);
+                }
+                this.constructorSignatureMap[signature] = cons;
+            }
+            // Constructor(s)
+            const consSignatures = Object.keys(this.constructorSignatureMap);
+            consSignatures.sort((a, b) => a.localeCompare(b));
+            for (const signature of consSignatures) {
+                const cons = this.constructorSignatureMap[signature];
+                const id = `java-class-${entity.name}-constructor-${signature}`;
+                let params = '';
+                if (cons.parameters && cons.parameters.length) {
+                    for (const param of cons.parameters) {
+                        params += `${param.name}, `;
+                    }
+                    if (params.length)
+                        params = params.substring(0, params.length - 2);
+                }
+                constructors.push({
+                    text: wrapItem(`${entity.name}(${params})`),
+                    icon: LuaCard_5.LuaCard.getTypeIcon('object'),
+                    id,
+                    class: ['item-tree-item', 'java-class-constructor-item']
+                });
+            }
             // Static field(s)
             for (const name of fieldNames) {
                 const field = entity.fields[name];
                 if (field.isStatic()) {
                     const id = `java-class-${entity.name}-field-${field.name}`;
                     staticFields.push({
-                        text: field.name,
+                        text: wrapItem(field.name),
                         icon: LuaCard_5.LuaCard.getTypeIcon(field.type.basic),
                         id,
                         class: ['item-tree-item', 'java-class-field-item']
@@ -3401,7 +3455,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                 if (!field.isStatic()) {
                     const id = `java-class-${entity.name}-field-${field.name}`;
                     fields.push({
-                        text: field.name,
+                        text: wrapItem(field.name),
                         icon: LuaCard_5.LuaCard.getTypeIcon(field.type.basic),
                         id,
                         class: ['item-tree-item', 'java-class-field-item']
@@ -3421,7 +3475,7 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                 if (params.length)
                     params = params.substring(0, params.length - 2);
                 staticMethods.push({
-                    text: `${method.name}(${params})`,
+                    text: wrapItem(`${method.name}(${params})`),
                     icon: LuaCard_5.LuaCard.getTypeIcon(method.returns.type.basic),
                     id,
                     class: ['item-tree-item', 'java-class-method-item']
@@ -3440,54 +3494,66 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                 if (params.length)
                     params = params.substring(0, params.length - 2);
                 methods.push({
-                    text: `${method.name}(${params})`,
+                    text: wrapItem(`${method.name}(${params})`),
                     icon: LuaCard_5.LuaCard.getTypeIcon(method.returns.type.basic),
                     id,
                     class: ['item-tree-item', 'java-class-method-item']
                 });
             }
+            const folderConstructors = {
+                text: `${wrapFolderCount(`(${constructors.length})`)} Constructors`,
+                icon: "fa-solid fa-folder text-light mx-2",
+                class: ['item-tree-folder', 'bg-secondary'],
+                id: _this.idFolderJavaClassConstructor,
+                expanded: _this.folderJavaClassConstructorOpen,
+                nodes: constructors
+            };
+            const folderStaticFields = {
+                text: `${wrapFolderCount(`(${staticFields.length})`)} Static Fields`,
+                icon: "fa-solid fa-folder text-light mx-2",
+                class: ['item-tree-folder', 'bg-secondary'],
+                id: _this.idFolderJavaClassStaticField,
+                expanded: _this.folderJavaClassStaticFieldOpen,
+                nodes: staticFields
+            };
+            const folderStaticMethods = {
+                text: `${wrapFolderCount(`(${staticMethods.length})`)} Static Methods`,
+                icon: "fa-solid fa-folder text-light mx-2",
+                class: ['item-tree-folder', 'bg-secondary'],
+                id: _this.idFolderJavaClassStaticMethod,
+                expanded: _this.folderJavaClassStaticMethodOpen,
+                nodes: staticMethods
+            };
+            const folderFields = {
+                text: `${wrapFolderCount(`(${fields.length})`)} Fields`,
+                icon: "fa-solid fa-folder text-light mx-2",
+                class: ['item-tree-folder', 'bg-secondary'],
+                id: _this.idFolderJavaClassField,
+                expanded: _this.folderJavaClassFieldOpen,
+                nodes: fields
+            };
+            const folderMethods = {
+                text: `${wrapFolderCount(`(${methods.length})`)} Methods`,
+                icon: "fa-solid fa-folder text-light mx-2",
+                class: ['item-tree-folder', 'bg-secondary'],
+                id: _this.idFolderJavaClassMethod,
+                expanded: _this.folderJavaClassMethodOpen,
+                nodes: methods
+            };
+            // Only add the folder if it is populated.
+            const data = [];
+            if (constructors.length)
+                data.push(folderConstructors);
+            if (staticFields.length)
+                data.push(folderStaticFields);
+            if (staticMethods.length)
+                data.push(folderStaticMethods);
+            if (fields.length)
+                data.push(folderFields);
+            if (methods.length)
+                data.push(folderMethods);
             // @ts-ignore
-            $treeLower.bstreeview({
-                data: [
-                    {
-                        text: "Constructor",
-                        icon: LuaCard_5.LuaCard.getTypeIcon('constructor'),
-                        class: ['item-tree-item', 'java-class-constructor-item']
-                    },
-                    {
-                        text: "Static Fields",
-                        icon: "fa-solid fa-folder text-light mx-2",
-                        class: ['item-tree-folder', 'bg-secondary'],
-                        id: _this.idFolderLuaClassField,
-                        expanded: _this.folderLuaClassFieldOpen,
-                        nodes: staticFields
-                    },
-                    {
-                        text: "Static Methods",
-                        icon: "fa-solid fa-folder text-light mx-2",
-                        class: ['item-tree-folder', 'bg-secondary'],
-                        id: _this.idFolderLuaClassFunction,
-                        expanded: _this.folderLuaClassFunctionOpen,
-                        nodes: staticMethods
-                    },
-                    {
-                        text: "Fields",
-                        icon: "fa-solid fa-folder text-light mx-2",
-                        class: ['item-tree-folder', 'bg-secondary'],
-                        id: _this.idFolderLuaClassValue,
-                        expanded: _this.folderLuaClassValueOpen,
-                        nodes: fields
-                    },
-                    {
-                        text: "Methods",
-                        icon: "fa-solid fa-folder text-light mx-2",
-                        class: ['item-tree-folder', 'bg-secondary'],
-                        id: _this.idFolderLuaClassMethod,
-                        expanded: _this.folderLuaClassMethodOpen,
-                        nodes: methods
-                    },
-                ]
-            });
+            $treeLower.bstreeview({ data });
         }
     }
     exports.ItemTree = ItemTree;
@@ -3497,6 +3563,12 @@ define("src/asledgehammer/rosetta/component/ObjectTree", ["require", "exports", 
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ObjectTree = void 0;
     const CLASS_HEADER = 'obj-tree';
+    function wrapFolderCount(count) {
+        return `<strong class="font-monospace text-white">(${count})</strong>`;
+    }
+    function wrapItem(text) {
+        return `<span class="font-monospace" style="position: relative; top: -2px; font-size: 12px;">${text}</span>`;
+    }
     class ObjectTree {
         constructor(app, sidebar) {
             this.idFolderLuaClass = `${CLASS_HEADER}-folder-lua-class`;
@@ -3526,27 +3598,21 @@ define("src/asledgehammer/rosetta/component/ObjectTree", ["require", "exports", 
             // Apply jQuery listeners next.
             $doc.on('click', '.object-tree-lua-class', function () {
                 const name = this.id.substring('object-lua-class-'.length);
-                // Prevent wasteful selection code executions here.
-                if (_this.selected === name)
-                    return;
                 _this.app.showLuaClass(_this.app.active.luaClasses[name]);
-                // Let the editor know we last selected the class.
-                _this.selected = name;
                 // Update the class properties tree.
-                _this.sidebar.itemTree.selectedID = undefined;
-                _this.sidebar.itemTree.populate();
+                const { itemTree } = _this.sidebar;
+                itemTree.selected = undefined;
+                itemTree.selectedID = undefined;
+                itemTree.populate();
             });
             $doc.on('click', '.object-tree-java-class', function () {
                 const name = this.id.substring('object-java-class-'.length);
-                // Prevent wasteful selection code executions here.
-                if (_this.selected === name)
-                    return;
                 _this.app.showJavaClass(_this.app.active.javaClasses[name]);
-                // Let the editor know we last selected the class.
-                _this.selected = name;
                 // Update the class properties tree.
-                _this.sidebar.itemTree.selectedID = undefined;
-                _this.sidebar.itemTree.populate();
+                const { itemTree } = _this.sidebar;
+                itemTree.selected = undefined;
+                itemTree.selectedID = undefined;
+                itemTree.populate();
             });
             // Preserve the state of folders.
             $doc.on('click', '#' + this.idFolderLuaClass, () => {
@@ -3571,7 +3637,7 @@ define("src/asledgehammer/rosetta/component/ObjectTree", ["require", "exports", 
             for (const name of Object.keys(this.app.active.luaClasses)) {
                 luaClasses.push({
                     id: `object-lua-class-${name}`,
-                    text: name,
+                    text: wrapItem(name),
                     icon: LuaCard_6.LuaCard.getTypeIcon('class'),
                     class: ['object-tree-item', 'object-tree-lua-class'],
                 });
@@ -3580,7 +3646,7 @@ define("src/asledgehammer/rosetta/component/ObjectTree", ["require", "exports", 
             for (const name of Object.keys(this.app.active.luaTables)) {
                 luaTables.push({
                     id: `object-lua-table-${name}`,
-                    text: name,
+                    text: wrapItem(name),
                     icon: LuaCard_6.LuaCard.getTypeIcon('class'),
                     class: ['object-tree-item', 'object-tree-lua-table'],
                 });
@@ -3589,40 +3655,44 @@ define("src/asledgehammer/rosetta/component/ObjectTree", ["require", "exports", 
             for (const name of Object.keys(this.app.active.javaClasses)) {
                 javaClasses.push({
                     id: `object-java-class-${name}`,
-                    text: name,
+                    text: wrapItem(name),
                     icon: LuaCard_6.LuaCard.getTypeIcon('class'),
                     class: ['object-tree-item', 'object-tree-java-class'],
                 });
             }
+            const folderLuaClasses = {
+                text: `${wrapFolderCount(luaClasses.length)} Lua Classes`,
+                icon: "fa-solid fa-folder text-light mx-2",
+                class: ['item-tree-folder', 'bg-secondary'],
+                id: _this.idFolderLuaClass,
+                expanded: _this.folderLuaClassOpen,
+                nodes: luaClasses
+            };
+            const folderLuaTables = {
+                text: `${wrapFolderCount(luaTables.length)} Lua Tables`,
+                icon: "fa-solid fa-folder text-light mx-2",
+                class: ['item-tree-folder', 'bg-secondary'],
+                id: _this.idFolderLuaTable,
+                expanded: _this.folderLuaTableOpen,
+                nodes: luaTables
+            };
+            const folderJavaClasses = {
+                text: `${wrapFolderCount(javaClasses.length)} Java Classes`,
+                icon: "fa-solid fa-folder text-light mx-2",
+                class: ['item-tree-folder', 'bg-secondary'],
+                id: _this.idFolderJavaClass,
+                expanded: _this.folderJavaClassOpen,
+                nodes: javaClasses
+            };
+            const data = [];
+            if (luaClasses.length)
+                data.push(folderLuaClasses);
+            if (luaTables.length)
+                data.push(folderLuaTables);
+            if (javaClasses.length)
+                data.push(folderJavaClasses);
             // @ts-ignore
-            $treeUpper.bstreeview({
-                data: [
-                    {
-                        text: "Lua Classes",
-                        icon: "fa-solid fa-folder text-light mx-2",
-                        class: ['item-tree-folder', 'bg-secondary'],
-                        id: _this.idFolderLuaClass,
-                        expanded: _this.folderLuaClassOpen,
-                        nodes: luaClasses
-                    },
-                    {
-                        text: "Lua Tables",
-                        icon: "fa-solid fa-folder text-light mx-2",
-                        class: ['item-tree-folder', 'bg-secondary'],
-                        id: _this.idFolderLuaTable,
-                        expanded: _this.folderLuaTableOpen,
-                        nodes: luaTables
-                    },
-                    {
-                        text: "Java Classes",
-                        icon: "fa-solid fa-folder text-light mx-2",
-                        class: ['item-tree-folder', 'bg-secondary'],
-                        id: _this.idFolderJavaClass,
-                        expanded: _this.folderJavaClassOpen,
-                        nodes: javaClasses
-                    },
-                ]
-            });
+            $treeUpper.bstreeview({ data });
         }
     }
     exports.ObjectTree = ObjectTree;
@@ -8060,7 +8130,7 @@ define("src/asledgehammer/rosetta/component/java/JavaClassCard", ["require", "ex
                     <div class="text-bg-success px-2 border border-1 border-light-half desaturate shadow"><strong>Java Class</strong></div>
                 </div>
                 <div class="col-auto p-0">
-                    <h5 class="card-text"><strong>${entity.name}</strong></h5> 
+                    <h5 class="card-text font-monospace" style="position: relative; top: 1px;"><strong>${entity.name}</strong></h5> 
                 </div>
             </div>
         `;
@@ -8138,7 +8208,7 @@ define("src/asledgehammer/rosetta/component/java/JavaFieldCard", ["require", "ex
                     </div>
                 </div>
                 <div class="col-auto p-0">
-                    <h5 class="card-text"><strong>${name}</strong></h5> 
+                    <h5 class="card-text font-monospace" style="position: relative; top: 1px;"><strong>${name}</strong></h5> 
                 </div>
             </div>
         `;
@@ -8234,7 +8304,7 @@ define("src/asledgehammer/rosetta/component/java/JavaMethodCard", ["require", "e
                     </div>
                 </div>
                 <div class="col-auto p-0">
-                    <h5 class="card-text"><strong>${name}</strong></h5> 
+                    <h5 class="card-text font-monospace" style="position: relative; top: 1px;"><strong>${name}</strong></h5> 
                 </div>
             </div>
         `;
@@ -8283,7 +8353,82 @@ define("src/asledgehammer/rosetta/component/java/JavaMethodCard", ["require", "e
     }
     exports.JavaMethodCard = JavaMethodCard;
 });
-define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/component/lua/LuaClassCard", "src/asledgehammer/rosetta/component/lua/LuaConstructorCard", "src/asledgehammer/rosetta/component/lua/LuaFieldCard", "src/asledgehammer/rosetta/component/lua/LuaFunctionCard", "src/asledgehammer/rosetta/component/Sidebar", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/lua/wizard/LuaParser", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/component/java/JavaClassCard", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/component/java/JavaFieldCard", "src/asledgehammer/rosetta/component/java/JavaMethodCard"], function (require, exports, hljs, LuaClassCard_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, Sidebar_1, LuaGenerator_5, RosettaLuaClass_3, RosettaLuaConstructor_3, util_15, LuaParser_1, RosettaJavaClass_2, JavaClassCard_1, JavaGenerator_4, JavaFieldCard_1, JavaMethodCard_1) {
+define("src/asledgehammer/rosetta/component/java/JavaConstructorCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/java/JavaCard"], function (require, exports, JavaGenerator_4, util_15, JavaCard_4) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.JavaConstructorCard = void 0;
+    class JavaConstructorCard extends JavaCard_4.JavaCard {
+        constructor(app, options) {
+            super(app, options);
+            this.idNotes = `${this.id}-notes`;
+            this.idParamContainer = `${this.id}-parameter-container`;
+        }
+        onRenderPreview() {
+            if (!this.options)
+                return '';
+            const { entity } = this.options;
+            const classEntity = this.app.active.selectedCard.options.entity;
+            const className = classEntity.name;
+            return (0, JavaGenerator_4.generateJavaConstructor)(className, [entity]);
+        }
+        onHeaderHTML() {
+            const { entity } = this.options;
+            const classEntity = this.app.active.selectedCard.options.entity;
+            const className = classEntity.name;
+            let params = '';
+            for (const param of entity.parameters) {
+                params += `${param.name}, `;
+            }
+            if (params.length)
+                params = params.substring(0, params.length - 2);
+            let name = `${className}(${params})`;
+            return (0, util_15.html) ` 
+            <div class="row">
+                <!-- Visual Category Badge -->
+                <div class="col-auto ps-2 pe-2">
+                    <div class="text-bg-success px-2 border border-1 border-light-half desaturate shadow">
+                        <strong>Java Constructor</strong>
+                    </div>
+                </div>
+                <div class="col-auto p-0">
+                    <h5 class="card-text font-monospace" style="position: relative; top: 1px;"><strong>${name}</strong></h5> 
+                </div>
+            </div>
+        `;
+        }
+        onBodyHTML() {
+            const { idNotes, idParamContainer } = this;
+            const { entity } = this.options;
+            return (0, util_15.html) `
+            ${this.renderNotes(idNotes)}
+            <hr>
+            <div id="${idParamContainer}">
+                ${this.renderParameters({ name: 'new', parameters: entity.parameters })}
+            </div>
+            <hr>
+            ${this.renderPreview(false)}
+        `;
+        }
+        listen() {
+            super.listen();
+            const { idNotes } = this;
+            const { entity } = this.options;
+            this.listenNotes(entity, idNotes);
+            this.listenParameters(Object.assign(Object.assign({}, entity), { name: 'new' }), 'constructor');
+            this.listenPreview();
+        }
+        refreshParameters() {
+            const { idParamContainer } = this;
+            const { entity } = this.options;
+            const $paramContainer = (0, util_15.$get)(idParamContainer);
+            $paramContainer.empty();
+            $paramContainer.html(this.renderParameters({ name: 'new', parameters: entity.parameters }, true));
+            this.listenParameters({ name: 'new', parameters: entity.parameters }, 'constructor');
+        }
+    }
+    exports.JavaConstructorCard = JavaConstructorCard;
+});
+define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/component/lua/LuaClassCard", "src/asledgehammer/rosetta/component/lua/LuaConstructorCard", "src/asledgehammer/rosetta/component/lua/LuaFieldCard", "src/asledgehammer/rosetta/component/lua/LuaFunctionCard", "src/asledgehammer/rosetta/component/Sidebar", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/lua/wizard/LuaParser", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/component/java/JavaClassCard", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/component/java/JavaFieldCard", "src/asledgehammer/rosetta/component/java/JavaMethodCard", "src/asledgehammer/rosetta/component/java/JavaConstructorCard"], function (require, exports, hljs, LuaClassCard_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, Sidebar_1, LuaGenerator_5, RosettaLuaClass_3, RosettaLuaConstructor_3, util_16, LuaParser_1, RosettaJavaClass_2, JavaClassCard_1, JavaGenerator_5, JavaFieldCard_1, JavaMethodCard_1, JavaConstructorCard_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.App = exports.Toast = exports.Active = void 0;
@@ -8325,7 +8470,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
         }
         alert(text, color = undefined) {
             const { idSimpleBody, idToastSimple } = this;
-            const $toast = (0, util_15.$get)(idToastSimple);
+            const $toast = (0, util_16.$get)(idToastSimple);
             // Set the background color.
             $toast.removeClass('bg-success');
             $toast.removeClass('bg-danger');
@@ -8353,14 +8498,14 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             this.$screenContent = $('#screen-content-end-container');
             // @ts-ignore This modal is for new items and editing their names.
             this.modalName = new bootstrap.Modal('#modal-name', {});
-            this.$titleName = (0, util_15.$get)('title-name');
-            this.$inputName = (0, util_15.$get)('input-name');
-            this.$btnName = (0, util_15.$get)('btn-name-create');
+            this.$titleName = (0, util_16.$get)('title-name');
+            this.$inputName = (0, util_16.$get)('input-name');
+            this.$btnName = (0, util_16.$get)('btn-name-create');
             // @ts-ignore This modal is for confirming actions.
             this.modalConfirm = new bootstrap.Modal('#modal-confirm', {});
-            this.$titleConfirm = (0, util_15.$get)('title-confirm');
-            this.$bodyConfirm = (0, util_15.$get)('body-confirm');
-            this.$btnConfirm = (0, util_15.$get)('btn-confirm');
+            this.$titleConfirm = (0, util_16.$get)('title-confirm');
+            this.$bodyConfirm = (0, util_16.$get)('body-confirm');
+            this.$btnConfirm = (0, util_16.$get)('btn-confirm');
             this.confirmSuccess = undefined;
             this.nameMode = null;
         }
@@ -8506,6 +8651,23 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             this.renderCode();
             return this.active.selectedCard;
         }
+        showJavaClassConstructor(entity) {
+            const { selected } = this.active;
+            console.log(`showJavaClassConstructor(${entity})`);
+            if (!(selected instanceof RosettaJavaClass_2.RosettaJavaClass))
+                return null;
+            console.log('a');
+            if (!entity)
+                return null;
+            console.log('b');
+            this.$screenContent.empty();
+            const card = new JavaConstructorCard_1.JavaConstructorCard(this, { entity });
+            this.$screenContent.append(card.render());
+            card.listen();
+            card.update();
+            this.renderCode();
+            return card;
+        }
         showJavaClassField(entity) {
             const { selected } = this.active;
             if (!(selected instanceof RosettaJavaClass_2.RosettaJavaClass))
@@ -8529,7 +8691,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             return card;
         }
         renderCode() {
-            const $renderPane = (0, util_15.$get)('code-preview');
+            const $renderPane = (0, util_16.$get)('code-preview');
             $renderPane.empty();
             if (!this.active.selectedCard)
                 return;
@@ -8539,7 +8701,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                 highlightedCode = hljs.default.highlightAuto((0, LuaGenerator_5.generateLuaClass)(selected), ['lua']).value;
             }
             else if (selected instanceof RosettaJavaClass_2.RosettaJavaClass) {
-                highlightedCode = hljs.default.highlightAuto((0, JavaGenerator_4.generateJavaClass)(selected), ['lua']).value;
+                highlightedCode = hljs.default.highlightAuto((0, JavaGenerator_5.generateJavaClass)(selected), ['lua']).value;
             }
             $renderPane.html(highlightedCode);
         }
@@ -8558,17 +8720,17 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                 }
             });
             this.$inputName.on('input', () => {
-                setTimeout(() => this.$inputName.val((0, util_15.validateLuaVariableName)(this.$inputName.val())), 1);
+                setTimeout(() => this.$inputName.val((0, util_16.validateLuaVariableName)(this.$inputName.val())), 1);
             });
             this.$btnName.on('click', () => {
                 var _a;
                 const clazz = (_a = this.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
-                const name = (0, util_15.validateLuaVariableName)(this.$inputName.val()).trim();
+                const name = (0, util_16.validateLuaVariableName)(this.$inputName.val()).trim();
                 const nameOld = this.nameSelected;
                 switch (this.nameMode) {
                     case 'new_class': {
                         try {
-                            const entity = new RosettaLuaClass_3.RosettaLuaClass((0, util_15.validateLuaVariableName)(this.$inputName.val()).trim());
+                            const entity = new RosettaLuaClass_3.RosettaLuaClass((0, util_16.validateLuaVariableName)(this.$inputName.val()).trim());
                             this.showLuaClass(entity);
                             this.sidebar.populateTrees();
                             this.toast.alert('Created Lua Class.', 'success');
@@ -8846,13 +9008,13 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                 this.nameSelected = undefined;
                 this.modalName.hide();
             });
-            const $btnCopy = (0, util_15.$get)('btn-code-preview-copy');
-            const $container = (0, util_15.$get)('screen-content-container');
-            const $cardPreview = (0, util_15.$get)('screen-content-end-container');
-            const $codePreview = (0, util_15.$get)('code-preview');
-            const $btnCardCode = (0, util_15.$get)('btn-card-code');
-            const $iconCard = (0, util_15.$get)('icon-card');
-            const $iconCode = (0, util_15.$get)('icon-code');
+            const $btnCopy = (0, util_16.$get)('btn-code-preview-copy');
+            const $container = (0, util_16.$get)('screen-content-container');
+            const $cardPreview = (0, util_16.$get)('screen-content-end-container');
+            const $codePreview = (0, util_16.$get)('code-preview');
+            const $btnCardCode = (0, util_16.$get)('btn-card-code');
+            const $iconCard = (0, util_16.$get)('icon-card');
+            const $iconCode = (0, util_16.$get)('icon-code');
             let mode = 'card';
             $btnCardCode.on('click', () => {
                 if (mode === 'card') {
@@ -9165,7 +9327,7 @@ define("src/asledgehammer/rosetta/SerializableComponent", ["require", "exports"]
     }
     exports.SerializableComponent = SerializableComponent;
 });
-define("src/asledgehammer/rosetta/component/LabelComponent", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/Component"], function (require, exports, util_16, Component_3) {
+define("src/asledgehammer/rosetta/component/LabelComponent", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/Component"], function (require, exports, util_17, Component_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LabelComponent = void 0;
@@ -9174,12 +9336,12 @@ define("src/asledgehammer/rosetta/component/LabelComponent", ["require", "export
             super(options);
         }
         onRender() {
-            return (0, util_16.html) ``;
+            return (0, util_17.html) ``;
         }
     }
     exports.LabelComponent = LabelComponent;
 });
-define("src/asledgehammer/rosetta/component/SidebarPanelButton", ["require", "exports", "src/asledgehammer/rosetta/component/Component", "src/asledgehammer/rosetta/util"], function (require, exports, Component_4, util_17) {
+define("src/asledgehammer/rosetta/component/SidebarPanelButton", ["require", "exports", "src/asledgehammer/rosetta/component/Component", "src/asledgehammer/rosetta/util"], function (require, exports, Component_4, util_18) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.SidebarPanelButton = void 0;
@@ -9188,7 +9350,7 @@ define("src/asledgehammer/rosetta/component/SidebarPanelButton", ["require", "ex
             super(options);
         }
         listen() {
-            (0, util_17.$get)(this.id).on('click', () => {
+            (0, util_18.$get)(this.id).on('click', () => {
                 if (this.options && this.options.onclick) {
                     this.options.onclick();
                 }
@@ -9196,7 +9358,7 @@ define("src/asledgehammer/rosetta/component/SidebarPanelButton", ["require", "ex
         }
         onRender() {
             const { label } = this.options;
-            return (0, util_17.html) `
+            return (0, util_18.html) `
             <button class="btn btn-primary col-12 rounded-0">${label}</button>
         `;
         }

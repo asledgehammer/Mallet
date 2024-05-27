@@ -34,7 +34,7 @@ export class JavaClassCard extends JavaCard<JavaClassCardOptions> {
                     <div class="text-bg-success px-2 border border-1 border-light-half desaturate shadow"><strong>Java Class</strong></div>
                 </div>
                 <div class="col-auto p-0">
-                    <h5 class="card-text"><strong>${entity.name}</strong></h5> 
+                    <h5 class="card-text font-monospace" style="position: relative; top: 1px;"><strong>${entity.name}</strong></h5> 
                 </div>
             </div>
         `;

@@ -1,11 +1,20 @@
 import { App } from "../../../app";
 import { RosettaJavaClass } from "../java/RosettaJavaClass";
+import { RosettaJavaConstructor } from "../java/RosettaJavaConstructor";
 import { RosettaJavaMethod } from "../java/RosettaJavaMethod";
 import { RosettaLuaClass } from "../lua/RosettaLuaClass";
 import { RosettaLuaTable } from "../lua/RosettaLuaTable";
 import { $get, html } from "../util";
 import { Sidebar } from "./Sidebar";
 import { LuaCard } from "./lua/LuaCard";
+
+function wrapFolderCount(text: string): string {
+    return `<strong class="font-monospace text-white">${text}</strong>`;
+}
+
+function wrapItem(text: string): string {
+    return `<span class="font-monospace" style="position: relative; top: -2px; font-size: 12px;">${text}</span>`;
+}
 
 export class ItemTree {
 
@@ -32,20 +41,23 @@ export class ItemTree {
 
     /* Java Class Folders */
 
+    readonly idFolderJavaClassConstructor = 'item-tree-folder-java-class-constructor';
     readonly idFolderJavaClassStaticField = 'item-tree-folder-java-class-static-field';
     readonly idFolderJavaClassStaticMethod = 'item-tree-folder-java-class-static-method';
     readonly idFolderJavaClassField = 'item-tree-folder-java-class-field';
     readonly idFolderJavaClassMethod = 'item-tree-folder-java-class-method';
-    folderJavaClassStaticFieldOpen = false;
-    folderJavaClassStaticMethodOpen = false;
-    folderJavaClassFieldOpen = false;
-    folderJavaClassMethodOpen = false;
+    folderJavaClassConstructorOpen = true;
+    folderJavaClassStaticFieldOpen = true;
+    folderJavaClassStaticMethodOpen = true;
+    folderJavaClassFieldOpen = true;
+    folderJavaClassMethodOpen = true;
 
     listening: boolean = false;
 
     selected: string | undefined = undefined;
     selectedID: string | undefined = undefined;
 
+    constructorSignatureMap: { [signature: string]: RosettaJavaConstructor } = {};
     methodSignatureMap: { [signature: string]: RosettaJavaMethod } = {};
     staticMethodSignatureMap: { [signature: string]: RosettaJavaMethod } = {};
 
@@ -184,9 +196,7 @@ export class ItemTree {
         });
 
         $doc.on('click', '.java-class-method-item', function () {
-            console.log(`id: ${this.id}`);
             const signature = this.id.split('method-')[1].trim();
-            console.log(`signature: ${signature}`);
 
             // Prevent wasteful selection code executions here.
             if (_this.selected === signature) return;
@@ -197,6 +207,22 @@ export class ItemTree {
             if (!method) return;
 
             _this.app.showJavaClassMethod(method);
+            // Let the editor know we last selected the field.
+            _this.selected = signature;
+        });
+
+        $doc.on('click', '.java-class-constructor-item', function () {
+            const signature = this.id.split('constructor-')[1].trim();
+
+            console.log(`signature: ${signature}`);
+
+            // Prevent wasteful selection code executions here.
+            if (_this.selected === signature) return;
+
+            const conztructor = _this.constructorSignatureMap[signature];
+            if (!conztructor) return;
+
+            _this.app.showJavaClassConstructor(conztructor);
             // Let the editor know we last selected the field.
             _this.selected = signature;
         });
@@ -391,6 +417,7 @@ export class ItemTree {
         const staticMethods: any[] = [];
         const fields: any[] = [];
         const methods: any[] = [];
+        const constructors: any[] = [];
 
         const fieldNames = Object.keys(entity.fields);
         fieldNames.sort((a, b) => a.localeCompare(b));
@@ -398,6 +425,7 @@ export class ItemTree {
         const clusterNames = Object.keys(entity.methods);
         clusterNames.sort((a, b) => a.localeCompare(b));
 
+        this.constructorSignatureMap = {};
         this.methodSignatureMap = {};
         this.staticMethodSignatureMap = {};
 
@@ -421,13 +449,50 @@ export class ItemTree {
             }
         }
 
+        for (const cons of entity.constructors) {
+            let signature = `constructor`;
+            if (cons.parameters && cons.parameters.length) {
+                signature += '_';
+                for (const param of cons.parameters) {
+                    signature += `${param.type.basic}-`;
+                }
+                signature = signature.substring(0, signature.length - 1);
+            }
+            this.constructorSignatureMap[signature] = cons;
+        }
+
+        // Constructor(s)
+        const consSignatures = Object.keys(this.constructorSignatureMap);
+        consSignatures.sort((a, b) => a.localeCompare(b));
+
+        for (const signature of consSignatures) {
+            const cons = this.constructorSignatureMap[signature];
+            const id = `java-class-${entity.name}-constructor-${signature}`;
+
+            let params = '';
+            if (cons.parameters && cons.parameters.length) {
+                for (const param of cons.parameters) {
+                    params += `${param.name}, `;
+                }
+                if (params.length) params = params.substring(0, params.length - 2);
+            }
+
+            constructors.push({
+                text: wrapItem(`${entity.name}(${params})`),
+                icon: LuaCard.getTypeIcon('object'),
+                id,
+                class: ['item-tree-item', 'java-class-constructor-item']
+            });
+        }
+
+
         // Static field(s)
         for (const name of fieldNames) {
             const field = entity.fields[name];
             if (field.isStatic()) {
                 const id = `java-class-${entity.name}-field-${field.name}`;
                 staticFields.push({
-                    text: field.name,
+                    text: wrapItem(field.name),
                     icon: LuaCard.getTypeIcon(field.type.basic),
                     id,
                     class: ['item-tree-item', 'java-class-field-item']
@@ -441,7 +506,7 @@ export class ItemTree {
             if (!field.isStatic()) {
                 const id = `java-class-${entity.name}-field-${field.name}`;
                 fields.push({
-                    text: field.name,
+                    text: wrapItem(field.name),
                     icon: LuaCard.getTypeIcon(field.type.basic),
                     id,
                     class: ['item-tree-item', 'java-class-field-item']
@@ -465,7 +530,7 @@ export class ItemTree {
             if (params.length) params = params.substring(0, params.length - 2);
 
             staticMethods.push({
-                text: `${method.name}(${params})`,
+                text: wrapItem(`${method.name}(${params})`),
                 icon: LuaCard.getTypeIcon(method.returns.type.basic),
                 id,
                 class: ['item-tree-item', 'java-class-method-item']
@@ -480,62 +545,75 @@ export class ItemTree {
         for (const signature of methodSignatures) {
             const method = this.methodSignatureMap[signature];
             const id = `java-class-${entity.name}-method-${signature}`;
-            
+
             let params = '';
             for (const param of method.parameters) {
                 params += `${param.name}, `;
             }
             if (params.length) params = params.substring(0, params.length - 2);
-            
+
             methods.push({
-                text: `${method.name}(${params})`,
+                text: wrapItem(`${method.name}(${params})`),
                 icon: LuaCard.getTypeIcon(method.returns.type.basic),
                 id,
                 class: ['item-tree-item', 'java-class-method-item']
             });
         }
 
+        const folderConstructors = {
+            text: `${wrapFolderCount(`(${constructors.length})`)} Constructors`,
+            icon: "fa-solid fa-folder text-light mx-2",
+            class: ['item-tree-folder', 'bg-secondary'],
+            id: _this.idFolderJavaClassConstructor,
+            expanded: _this.folderJavaClassConstructorOpen,
+            nodes: constructors
+        };
+
+        const folderStaticFields = {
+            text: `${wrapFolderCount(`(${staticFields.length})`)} Static Fields`,
+            icon: "fa-solid fa-folder text-light mx-2",
+            class: ['item-tree-folder', 'bg-secondary'],
+            id: _this.idFolderJavaClassStaticField,
+            expanded: _this.folderJavaClassStaticFieldOpen,
+            nodes: staticFields
+        };
+
+        const folderStaticMethods = {
+            text: `${wrapFolderCount(`(${staticMethods.length})`)} Static Methods`,
+            icon: "fa-solid fa-folder text-light mx-2",
+            class: ['item-tree-folder', 'bg-secondary'],
+            id: _this.idFolderJavaClassStaticMethod,
+            expanded: _this.folderJavaClassStaticMethodOpen,
+            nodes: staticMethods
+        };
+
+        const folderFields = {
+            text: `${wrapFolderCount(`(${fields.length})`)} Fields`,
+            icon: "fa-solid fa-folder text-light mx-2",
+            class: ['item-tree-folder', 'bg-secondary'],
+            id: _this.idFolderJavaClassField,
+            expanded: _this.folderJavaClassFieldOpen,
+            nodes: fields
+        };
+
+        const folderMethods = {
+            text: `${wrapFolderCount(`(${methods.length})`)} Methods`,
+            icon: "fa-solid fa-folder text-light mx-2",
+            class: ['item-tree-folder', 'bg-secondary'],
+            id: _this.idFolderJavaClassMethod,
+            expanded: _this.folderJavaClassMethodOpen,
+            nodes: methods
+        };
+
+        // Only add the folder if it is populated.
+        const data: any[] = [];
+        if (constructors.length) data.push(folderConstructors);
+        if (staticFields.length) data.push(folderStaticFields);
+        if (staticMethods.length) data.push(folderStaticMethods);
+        if (fields.length) data.push(folderFields);
+        if (methods.length) data.push(folderMethods);
+
         // @ts-ignore
-        $treeLower.bstreeview({
-            data: [
-                {
-                    text: "Constructor",
-                    icon: LuaCard.getTypeIcon('constructor'),
-                    class: ['item-tree-item', 'java-class-constructor-item']
-                },
-                {
-                    text: "Static Fields",
-                    icon: "fa-solid fa-folder text-light mx-2",
-                    class: ['item-tree-folder', 'bg-secondary'],
-                    id: _this.idFolderLuaClassField,
-                    expanded: _this.folderLuaClassFieldOpen,
-                    nodes: staticFields
-                },
-                {
-                    text: "Static Methods",
-                    icon: "fa-solid fa-folder text-light mx-2",
-                    class: ['item-tree-folder', 'bg-secondary'],
-                    id: _this.idFolderLuaClassFunction,
-                    expanded: _this.folderLuaClassFunctionOpen,
-                    nodes: staticMethods
-                },
-                {
-                    text: "Fields",
-                    icon: "fa-solid fa-folder text-light mx-2",
-                    class: ['item-tree-folder', 'bg-secondary'],
-                    id: _this.idFolderLuaClassValue,
-                    expanded: _this.folderLuaClassValueOpen,
-                    nodes: fields
-                },
-                {
-                    text: "Methods",
-                    icon: "fa-solid fa-folder text-light mx-2",
-                    class: ['item-tree-folder', 'bg-secondary'],
-                    id: _this.idFolderLuaClassMethod,
-                    expanded: _this.folderLuaClassMethodOpen,
-                    nodes: methods
-                },
-            ]
-        });
+        $treeLower.bstreeview({data});
     }
 }

@@ -77,7 +77,7 @@ export class JavaMethodCard extends JavaCard<JavaMethodCardOptions> {
                     </div>
                 </div>
                 <div class="col-auto p-0">
-                    <h5 class="card-text"><strong>${name}</strong></h5> 
+                    <h5 class="card-text font-monospace" style="position: relative; top: 1px;"><strong>${name}</strong></h5> 
                 </div>
             </div>
         `;

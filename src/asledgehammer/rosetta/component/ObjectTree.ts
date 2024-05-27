@@ -5,6 +5,14 @@ import { Sidebar } from "./Sidebar";
 
 const CLASS_HEADER = 'obj-tree';
 
+function wrapFolderCount(count: number): string {
+    return `<strong class="font-monospace text-white">(${count})</strong>`;
+}
+
+function wrapItem(text: string): string {
+    return `<span class="font-monospace" style="position: relative; top: -2px; font-size: 12px;">${text}</span>`;
+}
+
 export class ObjectTree {
 
     readonly app: App;
@@ -45,26 +53,22 @@ export class ObjectTree {
         // Apply jQuery listeners next.
         $doc.on('click', '.object-tree-lua-class', function () {
             const name = this.id.substring('object-lua-class-'.length);
-            // Prevent wasteful selection code executions here.
-            if (_this.selected === name) return;
             _this.app.showLuaClass(_this.app.active.luaClasses[name]);
-            // Let the editor know we last selected the class.
-            _this.selected = name;
             // Update the class properties tree.
-            _this.sidebar.itemTree.selectedID = undefined;
-            _this.sidebar.itemTree.populate();
+            const { itemTree } = _this.sidebar;
+            itemTree.selected = undefined;
+            itemTree.selectedID = undefined;
+            itemTree.populate();
         });
 
         $doc.on('click', '.object-tree-java-class', function () {
             const name = this.id.substring('object-java-class-'.length);
-            // Prevent wasteful selection code executions here.
-            if (_this.selected === name) return;
             _this.app.showJavaClass(_this.app.active.javaClasses[name]);
-            // Let the editor know we last selected the class.
-            _this.selected = name;
             // Update the class properties tree.
-            _this.sidebar.itemTree.selectedID = undefined;
-            _this.sidebar.itemTree.populate();
+            const { itemTree } = _this.sidebar;
+            itemTree.selected = undefined;
+            itemTree.selectedID = undefined;
+            itemTree.populate();
         });
 
         // Preserve the state of folders.
@@ -96,7 +100,7 @@ export class ObjectTree {
             luaClasses.push(
                 {
                     id: `object-lua-class-${name}`,
-                    text: name,
+                    text: wrapItem(name),
                     icon: LuaCard.getTypeIcon('class'),
                     class: ['object-tree-item', 'object-tree-lua-class'],
                 }
@@ -108,7 +112,7 @@ export class ObjectTree {
             luaTables.push(
                 {
                     id: `object-lua-table-${name}`,
-                    text: name,
+                    text: wrapItem(name),
                     icon: LuaCard.getTypeIcon('class'),
                     class: ['object-tree-item', 'object-tree-lua-table'],
                 }
@@ -120,42 +124,47 @@ export class ObjectTree {
             javaClasses.push(
                 {
                     id: `object-java-class-${name}`,
-                    text: name,
+                    text: wrapItem(name),
                     icon: LuaCard.getTypeIcon('class'),
                     class: ['object-tree-item', 'object-tree-java-class'],
                 }
             );
         }
 
-        // @ts-ignore
-        $treeUpper.bstreeview({
-            data: [
-                {
-                    text: "Lua Classes",
-                    icon: "fa-solid fa-folder text-light mx-2",
-                    class: ['item-tree-folder', 'bg-secondary'],
-                    id: _this.idFolderLuaClass,
-                    expanded: _this.folderLuaClassOpen,
-                    nodes: luaClasses
-                },
-                {
-                    text: "Lua Tables",
-                    icon: "fa-solid fa-folder text-light mx-2",
-                    class: ['item-tree-folder', 'bg-secondary'],
-                    id: _this.idFolderLuaTable,
-                    expanded: _this.folderLuaTableOpen,
-                    nodes: luaTables
-                },
-                {
-                    text: "Java Classes",
-                    icon: "fa-solid fa-folder text-light mx-2",
-                    class: ['item-tree-folder', 'bg-secondary'],
-                    id: _this.idFolderJavaClass,
-                    expanded: _this.folderJavaClassOpen,
-                    nodes: javaClasses
-                },
-            ]
-        });
+        const folderLuaClasses = {
+            text: `${wrapFolderCount(luaClasses.length)} Lua Classes`,
+            icon: "fa-solid fa-folder text-light mx-2",
+            class: ['item-tree-folder', 'bg-secondary'],
+            id: _this.idFolderLuaClass,
+            expanded: _this.folderLuaClassOpen,
+            nodes: luaClasses
+        };
 
+        const folderLuaTables = {
+            text: `${wrapFolderCount(luaTables.length)} Lua Tables`,
+            icon: "fa-solid fa-folder text-light mx-2",
+            class: ['item-tree-folder', 'bg-secondary'],
+            id: _this.idFolderLuaTable,
+            expanded: _this.folderLuaTableOpen,
+            nodes: luaTables
+        };
+
+        const folderJavaClasses = {
+            text: `${wrapFolderCount(javaClasses.length)} Java Classes`,
+            icon: "fa-solid fa-folder text-light mx-2",
+            class: ['item-tree-folder', 'bg-secondary'],
+            id: _this.idFolderJavaClass,
+            expanded: _this.folderJavaClassOpen,
+            nodes: javaClasses
+        };
+
+        const data: any[] = [];
+
+        if (luaClasses.length) data.push(folderLuaClasses);
+        if (luaTables.length) data.push(folderLuaTables);
+        if (javaClasses.length) data.push(folderJavaClasses);
+
+        // @ts-ignore
+        $treeUpper.bstreeview({ data });
     }
 }
