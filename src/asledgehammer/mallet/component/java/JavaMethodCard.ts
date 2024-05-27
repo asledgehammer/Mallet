@@ -112,7 +112,7 @@ export class JavaMethodCard extends JavaCard<JavaMethodCardOptions> {
         this.listenPreview();
 
         $get(idBtnDelete).on('click', () => {
-            app.askConfirm(() => {
+            app.modalConfirm.show(() => {
                 const clazz = app.active.selectedCard?.options!.entity! as RosettaJavaClass;
                 delete clazz.methods[entity.name];
                 app.showJavaClass(clazz);

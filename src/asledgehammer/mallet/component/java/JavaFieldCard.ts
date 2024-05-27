@@ -90,7 +90,7 @@ export class JavaFieldCard extends JavaCard<JavaFieldCardOptions> {
         this.listenPreview();
 
         $get(idBtnDelete).on('click', () => {
-            app.askConfirm(() => {
+            app.modalConfirm.show(() => {
                 const clazz = app.active.selectedCard?.options!.entity! as RosettaJavaClass;
                 delete clazz.fields[entity.name];
                 app.showJavaClass(clazz);

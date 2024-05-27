@@ -59,6 +59,7 @@ export class ObjectTree {
             itemTree.selected = undefined;
             itemTree.selectedID = undefined;
             itemTree.populate();
+            $(`#${_this.sidebar.idLuaClassDropdown}`).show();
         });
 
         $doc.on('click', '.object-tree-java-class', function () {
@@ -69,6 +70,7 @@ export class ObjectTree {
             itemTree.selected = undefined;
             itemTree.selectedID = undefined;
             itemTree.populate();
+            $(`#${_this.sidebar.idLuaClassDropdown}`).hide();
         });
 
         // Preserve the state of folders.

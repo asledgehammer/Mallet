@@ -109,7 +109,7 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
         this.listenPreview();
 
         $get(idBtnDelete).on('click', () => {
-            app.askConfirm(() => {
+            app.modalConfirm.show(() => {
                 const clazz = app.active.selectedCard?.options!.entity! as RosettaLuaClass;
                 if (isStatic) {
                     delete clazz.functions[entity.name];
