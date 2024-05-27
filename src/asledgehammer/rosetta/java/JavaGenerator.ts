@@ -85,7 +85,7 @@ export function generateJavaConstructor(className: string, methods: RosettaJavaC
             let mds = '';
             if (method.notes) {
                 mds += '--- ### Description:';
-                mds += `\n   ${method.notes}`;
+                mds += `\n--- ${method.notes.replace(/\n/g, '\n--- ')}`;
             }
             if (mds.length) mds += '\n';
             mds += '--- ### Parameter(s):';
@@ -94,7 +94,7 @@ export function generateJavaConstructor(className: string, methods: RosettaJavaC
                     const parameter = method.parameters[pIndex];
                     mds += `\n---   * **${parameter.type.basic}** *${parameter.name}*`;
                     if (parameter.notes) {
-                        mds += ` - ${parameter.notes}`;
+                        mds += ` - ${parameter.notes.replace(/\n/g, ' ')}`;
                     }
                 }
             } else {
@@ -110,7 +110,7 @@ export function generateJavaConstructor(className: string, methods: RosettaJavaC
         // Apply first method's notes.
         const method = methods[0];
         if (method.notes) {
-            ds += `--- ${methods[0].notes}\n--- \n`;
+            ds += `--- ${methods[0].notes!.replace(/\n/g, '\n--- ')}\n--- \n`;
         }
 
         // Apply parameter(s).
@@ -129,21 +129,20 @@ export function generateJavaConstructor(className: string, methods: RosettaJavaC
         }
 
     } else {
-        const method = methods[0];
         let vds = '';
+        const method = methods[0];
         if (method.notes) {
-            vds += `--- ${methods[0].notes}\n--- `;
+            vds += `--- ${method.notes.replace(/\n/g, '\n--- ')}`;
         }
 
         for (let index = 0; index < _paramNames.length; index++) {
-            if (vds.length) vds += '\n';
-            vds += `--- @param ${_paramNames[index]} ${_paramTypes[index]}`;
+            vds += `\n--- @param ${_paramNames[index]} ${_paramTypes[index]}`;
+
             if (method.parameters[index].notes) {
-                vds += ` ${method.parameters[index].notes}`;
+                vds += ` ${method.parameters[index].notes!.replace(/\n/g, ' ')}`;
             }
         }
 
-        if (vds.length) vds += '\n--- ';
         vds += `\n--- @return ${className}\n`;
         ds += vds;
     }
@@ -229,7 +228,7 @@ export function generateJavaMethod(className: string, cluster: RosettaJavaMethod
             let mds = '';
             if (method.notes) {
                 mds += '--- ### Description:';
-                mds += `\n   ${method.notes}`;
+                mds += `\n--- ${method.notes!.replace(/\n/g, '\n--- ')}`;
             }
             if (mds.length) mds += '\n';
             mds += '--- ### Parameter(s):';
@@ -238,7 +237,7 @@ export function generateJavaMethod(className: string, cluster: RosettaJavaMethod
                     const parameter = method.parameters[pIndex];
                     mds += `\n---   * **${parameter.type.basic}** *${parameter.name}*`;
                     if (parameter.notes) {
-                        mds += ` - ${parameter.notes}`;
+                        mds += ` - ${parameter.notes.replace(/\n/g, ' ')}`;
                     }
                 }
             } else {
@@ -247,7 +246,7 @@ export function generateJavaMethod(className: string, cluster: RosettaJavaMethod
             mds += '\n--- ### Returns:';
             const returns = method.returns;
             mds += `\n---   * ${returns.type.basic}`;
-            if (returns.notes) mds += ` ${returns.notes}`;
+            if (returns.notes) mds += ` ${returns.notes.replace(/\n/g, ' ')}`;
             if (mds.length) {
                 mds += '\n--- ---\n';
                 ds += mds;
@@ -258,7 +257,7 @@ export function generateJavaMethod(className: string, cluster: RosettaJavaMethod
         // Apply first method's notes.
         const method = methods[0];
         if (method.notes) {
-            ds += `--- ${methods[0].notes}\n--- \n`;
+            ds += `--- ${method.notes.replace(/\n/g, '\n--- ')}\n--- \n`;
         }
 
         // Apply parameter(s).
@@ -280,22 +279,20 @@ export function generateJavaMethod(className: string, cluster: RosettaJavaMethod
         let vds = '';
         const method = methods[0];
         if (method.notes) {
-            vds += `--- ${methods[0].notes}\n--- `;
+            vds += `--- ${method.notes.replace(/\n/g, '\n--- ')}`;
         }
 
         for (let index = 0; index < _paramNames.length; index++) {
-            if (vds.length) vds += '\n';
-            vds += `--- @param ${_paramNames[index]} ${_paramTypes[index]}`;
+            vds += `\n--- @param ${_paramNames[index]} ${_paramTypes[index]}`;
 
             if (method.parameters[index].notes) {
-                vds += ` ${method.parameters[index].notes}`;
+                vds += ` ${method.parameters[index].notes!.replace(/\n/g, ' ')}`;
             }
         }
 
-        if (vds.length) vds += '\n';
-        vds += `--- @return ${rs}`;
+        vds += `\n--- @return ${rs}`;
         if (method.returns.notes) {
-            vds += ` ${method.returns.notes}`;
+            vds += ` ${method.returns.notes.replace(/\n/g, ' ')}`;
         }
         if(!vds.endsWith('\n')) vds += '\n';
         ds += vds;
