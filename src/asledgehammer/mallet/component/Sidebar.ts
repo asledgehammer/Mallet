@@ -174,7 +174,15 @@ export class Sidebar extends Component<SidebarOptions> {
         $doc.on('click', '#btn-save-lua', async () => {
             try {
                 // @ts-ignore
-                const result = await showSaveFilePicker();
+                const result = await showSaveFilePicker({
+                    id: 'mallet-save-lua',
+                    types: [
+                        {
+                            description: "Lua file",
+                            accept: { "text/x-lua": [".lua"] },
+                        },
+                    ],
+                });
                 const { catalog } = this.app;
                 const lua = catalog.toLuaTypings();
 
@@ -183,7 +191,7 @@ export class Sidebar extends Component<SidebarOptions> {
                 await writable.close();
 
                 app.toast.alert(`Saved Lua typings file.`, 'info');
-            } catch(e) {
+            } catch (e) {
                 /* (Ignore aborted dialogs) */
                 if (e instanceof DOMException && e.name === 'AbortError') return;
                 app.toast.alert(`Failed to save Lua typings.`, 'error');
@@ -194,7 +202,15 @@ export class Sidebar extends Component<SidebarOptions> {
         $doc.on('click', '#btn-save-json', async () => {
             try {
                 // @ts-ignore
-                const result = await showSaveFilePicker();
+                const result = await showSaveFilePicker({
+                    id: 'mallet-save-json',
+                    types: [
+                        {
+                            description: "JSON file",
+                            accept: { "application/json": [".json"] },
+                        }
+                    ],
+                });
                 const { catalog } = this.app;
                 const json = catalog.toJSON();
 
@@ -204,7 +220,7 @@ export class Sidebar extends Component<SidebarOptions> {
 
                 app.toast.alert(`Saved JSON file.`, 'info');
 
-            } catch(e) {
+            } catch (e) {
                 /* (Ignore aborted dialogs) */
                 if (e instanceof DOMException && e.name === 'AbortError') return;
                 app.toast.alert(`Failed to save JSON file.`, 'error');

@@ -4366,7 +4366,15 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
             $doc.on('click', '#btn-save-lua', async () => {
                 try {
                     // @ts-ignore
-                    const result = await showSaveFilePicker();
+                    const result = await showSaveFilePicker({
+                        id: 'mallet-save-lua',
+                        types: [
+                            {
+                                description: "Lua file",
+                                accept: { "text/x-lua": [".lua"] },
+                            },
+                        ],
+                    });
                     const { catalog } = this.app;
                     const lua = catalog.toLuaTypings();
                     const writable = await result.createWritable();
@@ -4385,7 +4393,15 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
             $doc.on('click', '#btn-save-json', async () => {
                 try {
                     // @ts-ignore
-                    const result = await showSaveFilePicker();
+                    const result = await showSaveFilePicker({
+                        id: 'mallet-save-json',
+                        types: [
+                            {
+                                description: "JSON file",
+                                accept: { "application/json": [".json"] },
+                            }
+                        ],
+                    });
                     const { catalog } = this.app;
                     const json = catalog.toJSON();
                     const writable = await result.createWritable();
