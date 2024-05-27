@@ -119,7 +119,7 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
                     this.update();
 
                     // Implicit check for refreshability for parameters.
-                    if((this as any).refreshParameters) (this as any).refreshParameters();
+                    if ((this as any).refreshParameters) (this as any).refreshParameters();
 
                 }, `Delete Parameter ${param.name}?`);
             });
@@ -141,28 +141,22 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
         const { parameters } = entity;
         const idAccordion = `${entity.name}-parameters-accordion`;
         let htmlParams = '';
-        for (const param of parameters) {
-            const idParamType = `${entity.name}-parameter-${param.name}-type`;
-            const idParamNotes = `${entity.name}-parameter-${param.name}-notes`;
-            const idCollapse = `${entity.name}-parameter-${param.name}-collapse`;
-            const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
-            const idBtnDelete = `${entity.name}-parameter-${param.name}-delete`;
-            htmlParams += html`
+
+        if (parameters && parameters.length) {
+            for (const param of parameters) {
+                const idParamNotes = `${entity.name}-parameter-${param.name}-notes`;
+                const idCollapse = `${entity.name}-parameter-${param.name}-collapse`;
+                const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
+                htmlParams += html`
                 <div class="accordion-item rounded-0">
                     <div class="accordion-header" style="position: relative" id="headingTwo">
                         <div class="p-2" style="position: relative;">
                             <button class="border-0 accordion-button collapsed rounded-0 p-0 text-white" style="background-color: transparent !important" type="button" data-bs-toggle="collapse" data-bs-target="#${idCollapse}" aria-expanded="false" aria-controls="${idCollapse}">
-                                <div class="col-auto responsive-badge border border-1 border-light-half desaturate shadow px-2 me-2" style="display: inline;"><strong>${param.type}</strong></div>
+                                <div class="col-auto responsive-badge border border-1 border-light-half desaturate shadow px-2 me-2" style="display: inline;"><strong>${param.type.basic}</strong></div>
                                 <h6 class="font-monospace mb-1">${param.name}</h6>
                             </button>
                         </div>
                         <div style="position: absolute; height: 32px; top: 5px; right: 2rem; z-index: 4;">
-                            <!-- Delete Button -->
-                            <button id="${idBtnDelete}" class="btn btn-sm responsive-btn float-end ms-1" style="z-index: 4">
-                                <div class="btn-pane">
-                                    <i class="fa-solid fa-xmark"></i>
-                                </div>
-                            </button>
                             <!-- Edit Button -->
                             <button id="${idBtnEdit}" class="btn btn-sm responsive-btn float-end" style="z-index: 4">
                                 <div class="btn-pane"> 
@@ -173,14 +167,6 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
                     </div>
                     <div id="${idCollapse}" class="accordion-collapse collapse rounded-0" aria-labelledby="headingTwo" data-bs-parent="#${idAccordion}">
                         <div class="accordion-body bg-dark" style="position: relative;">
-                            <!-- Type -->
-                            <div class="mb-3">
-                                <label for="${idParamType}" class="form-label">Type</label>
-                                <!-- TODO: Might need to style. -->
-                                <select disabled>
-                                    <option selected>${param.type.basic}</option>
-                                </select>
-                            </div>
                             <!-- Notes -->
                             <div class="mb-3">
                                 <label for="${idParamNotes}" class="form-label">Description</label>
@@ -190,9 +176,10 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
                     </div>
                 </div>
             `;
+            }
+        } else {
+            htmlParams += html`<h6 class="font-monospace mb-1">(None)</h6>`
         }
-
-        const idBtnAdd = `btn-${entity.name}-parameter-add`;
 
         return html`
             <div class="card responsive-subcard mt-3">
@@ -200,20 +187,11 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
                     <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idAccordion}" aria-expanded="true" aria-controls="${idAccordion}">
                         <strong>Parameters</strong>
                     </button>
-                    <div style="position: absolute; height: 32px; top: 5px; right: 5px; z-index: 4;">
-                        <!-- Add Button -->
-                        <button id="${idBtnAdd}" class="btn btn-sm responsive-btn float-end ms-1">
-                            <div class="btn-pane">
-                               <i class="fa-solid fa-plus"></i>
-                            </div>
-                        </button>
-                    </div>
                 </div>
-                <div id="${idAccordion}" class="card-body mb-0 collapse${show ? ' show' : ''}">
+                <div id="${idAccordion}" class="card-body p-2 mb-0 collapse${show ? ' show' : ''}">
                     <div class="accordion rounded-0">
                         ${htmlParams}
                     </div>
-                    <!-- <div class="mt-3" style="position: relative; width: 100%; height: 32px;"></div> -->
                 </div>
             </div>
         `;
@@ -293,13 +271,8 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
                 <div id="${idCard}" class="card-body mb-0 collapse${show ? ' show' : ''}">
                     <!-- Return Type -->
                     <div class="mb-3">
-                        <label for="${idReturnType}" class="form-label">Type</label>
-                        <!-- TODO: Might need to style. -->
-                        <select disabled>
-                            <option selected>${returns.type.basic}</option>
-                        </select>
+                        <label for="${idReturnType}" class="form-label">Type: ${returns.type.basic}</label>
                     </div>
-
                     <!-- Return Notes -->
                     <div>
                         <label for="${idReturnNotes}" class="form-label">Description</label>

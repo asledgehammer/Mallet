@@ -297,7 +297,7 @@ export function generateJavaMethod(className: string, cluster: RosettaJavaMethod
         if (method.returns.notes) {
             vds += ` ${method.returns.notes}`;
         }
-        vds += '\n';
+        if(!vds.endsWith('\n')) vds += '\n';
         ds += vds;
     }
 

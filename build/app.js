@@ -2482,7 +2482,7 @@ define("src/asledgehammer/rosetta/java/RosettaJavaMethod", ["require", "exports"
             return json;
         }
         isStatic() {
-            return this.modifiers && !!this.modifiers.length && this.modifiers.indexOf('static') !== -1;
+            return this.modifiers != null && !!this.modifiers.length && this.modifiers.indexOf('static') !== -1;
         }
     }
     exports.RosettaJavaMethod = RosettaJavaMethod;
@@ -3040,6 +3040,8 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
             this.listening = false;
             this.selected = undefined;
             this.selectedID = undefined;
+            this.methodSignatureMap = {};
+            this.staticMethodSignatureMap = {};
             this.app = app;
             this.sidebar = sidebar;
         }
@@ -3163,6 +3165,23 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                 _this.app.showJavaClassField(field);
                 // Let the editor know we last selected the field.
                 _this.selected = fieldName;
+            });
+            $doc.on('click', '.java-class-method-item', function () {
+                console.log(`id: ${this.id}`);
+                const signature = this.id.split('method-')[1].trim();
+                console.log(`signature: ${signature}`);
+                // Prevent wasteful selection code executions here.
+                if (_this.selected === signature)
+                    return;
+                // This is lazy but it works.
+                let method = _this.staticMethodSignatureMap[signature];
+                if (!method)
+                    method = _this.methodSignatureMap[signature];
+                if (!method)
+                    return;
+                _this.app.showJavaClassMethod(method);
+                // Let the editor know we last selected the field.
+                _this.selected = signature;
             });
             // Preserve the state of folders.
             $doc.on('click', '#' + this.idFolderJavaClassStaticField, () => {
@@ -3340,8 +3359,29 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
             const methods = [];
             const fieldNames = Object.keys(entity.fields);
             fieldNames.sort((a, b) => a.localeCompare(b));
-            const methodNames = Object.keys(entity.methods);
-            methodNames.sort((a, b) => a.localeCompare(b));
+            const clusterNames = Object.keys(entity.methods);
+            clusterNames.sort((a, b) => a.localeCompare(b));
+            this.methodSignatureMap = {};
+            this.staticMethodSignatureMap = {};
+            for (const clusterName of clusterNames) {
+                const cluster = entity.methods[clusterName];
+                for (const method of cluster.methods) {
+                    let signature = `${method.name}`;
+                    if (method.parameters && method.parameters.length) {
+                        signature += '_';
+                        for (const param of method.parameters) {
+                            signature += `${param.type.basic}-`;
+                        }
+                        signature = signature.substring(0, signature.length - 1);
+                    }
+                    if (method.isStatic()) {
+                        this.staticMethodSignatureMap[signature] = method;
+                    }
+                    else {
+                        this.methodSignatureMap[signature] = method;
+                    }
+                }
+            }
             // Static field(s)
             for (const name of fieldNames) {
                 const field = entity.fields[name];
@@ -3367,6 +3407,44 @@ define("src/asledgehammer/rosetta/component/ItemTree", ["require", "exports", "s
                         class: ['item-tree-item', 'java-class-field-item']
                     });
                 }
+            }
+            // Static method(s)
+            const staticMethodSignatures = Object.keys(this.staticMethodSignatureMap);
+            staticMethodSignatures.sort((a, b) => a.localeCompare(b));
+            for (const signature of staticMethodSignatures) {
+                const method = this.staticMethodSignatureMap[signature];
+                const id = `java-class-${entity.name}-method-${signature}`;
+                let params = '';
+                for (const param of method.parameters) {
+                    params += `${param.name}, `;
+                }
+                if (params.length)
+                    params = params.substring(0, params.length - 2);
+                staticMethods.push({
+                    text: `${method.name}(${params})`,
+                    icon: LuaCard_5.LuaCard.getTypeIcon(method.returns.type.basic),
+                    id,
+                    class: ['item-tree-item', 'java-class-method-item']
+                });
+            }
+            // Instance method(s)
+            const methodSignatures = Object.keys(this.methodSignatureMap);
+            methodSignatures.sort((a, b) => a.localeCompare(b));
+            for (const signature of methodSignatures) {
+                const method = this.methodSignatureMap[signature];
+                const id = `java-class-${entity.name}-method-${signature}`;
+                let params = '';
+                for (const param of method.parameters) {
+                    params += `${param.name}, `;
+                }
+                if (params.length)
+                    params = params.substring(0, params.length - 2);
+                methods.push({
+                    text: `${method.name}(${params})`,
+                    icon: LuaCard_5.LuaCard.getTypeIcon(method.returns.type.basic),
+                    id,
+                    class: ['item-tree-item', 'java-class-method-item']
+                });
             }
             // @ts-ignore
             $treeLower.bstreeview({
@@ -7493,7 +7571,8 @@ define("src/asledgehammer/rosetta/java/JavaGenerator", ["require", "exports"], f
             if (method.returns.notes) {
                 vds += ` ${method.returns.notes}`;
             }
-            vds += '\n';
+            if (!vds.endsWith('\n'))
+                vds += '\n';
             ds += vds;
         }
         while (ds.indexOf('\n\n') !== -1) {
@@ -7697,28 +7776,21 @@ define("src/asledgehammer/rosetta/component/java/JavaCard", ["require", "exports
             const { parameters } = entity;
             const idAccordion = `${entity.name}-parameters-accordion`;
             let htmlParams = '';
-            for (const param of parameters) {
-                const idParamType = `${entity.name}-parameter-${param.name}-type`;
-                const idParamNotes = `${entity.name}-parameter-${param.name}-notes`;
-                const idCollapse = `${entity.name}-parameter-${param.name}-collapse`;
-                const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
-                const idBtnDelete = `${entity.name}-parameter-${param.name}-delete`;
-                htmlParams += (0, util_11.html) `
+            if (parameters && parameters.length) {
+                for (const param of parameters) {
+                    const idParamNotes = `${entity.name}-parameter-${param.name}-notes`;
+                    const idCollapse = `${entity.name}-parameter-${param.name}-collapse`;
+                    const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
+                    htmlParams += (0, util_11.html) `
                 <div class="accordion-item rounded-0">
                     <div class="accordion-header" style="position: relative" id="headingTwo">
                         <div class="p-2" style="position: relative;">
                             <button class="border-0 accordion-button collapsed rounded-0 p-0 text-white" style="background-color: transparent !important" type="button" data-bs-toggle="collapse" data-bs-target="#${idCollapse}" aria-expanded="false" aria-controls="${idCollapse}">
-                                <div class="col-auto responsive-badge border border-1 border-light-half desaturate shadow px-2 me-2" style="display: inline;"><strong>${param.type}</strong></div>
+                                <div class="col-auto responsive-badge border border-1 border-light-half desaturate shadow px-2 me-2" style="display: inline;"><strong>${param.type.basic}</strong></div>
                                 <h6 class="font-monospace mb-1">${param.name}</h6>
                             </button>
                         </div>
                         <div style="position: absolute; height: 32px; top: 5px; right: 2rem; z-index: 4;">
-                            <!-- Delete Button -->
-                            <button id="${idBtnDelete}" class="btn btn-sm responsive-btn float-end ms-1" style="z-index: 4">
-                                <div class="btn-pane">
-                                    <i class="fa-solid fa-xmark"></i>
-                                </div>
-                            </button>
                             <!-- Edit Button -->
                             <button id="${idBtnEdit}" class="btn btn-sm responsive-btn float-end" style="z-index: 4">
                                 <div class="btn-pane"> 
@@ -7729,14 +7801,6 @@ define("src/asledgehammer/rosetta/component/java/JavaCard", ["require", "exports
                     </div>
                     <div id="${idCollapse}" class="accordion-collapse collapse rounded-0" aria-labelledby="headingTwo" data-bs-parent="#${idAccordion}">
                         <div class="accordion-body bg-dark" style="position: relative;">
-                            <!-- Type -->
-                            <div class="mb-3">
-                                <label for="${idParamType}" class="form-label">Type</label>
-                                <!-- TODO: Might need to style. -->
-                                <select disabled>
-                                    <option selected>${param.type.basic}</option>
-                                </select>
-                            </div>
                             <!-- Notes -->
                             <div class="mb-3">
                                 <label for="${idParamNotes}" class="form-label">Description</label>
@@ -7746,28 +7810,22 @@ define("src/asledgehammer/rosetta/component/java/JavaCard", ["require", "exports
                     </div>
                 </div>
             `;
+                }
             }
-            const idBtnAdd = `btn-${entity.name}-parameter-add`;
+            else {
+                htmlParams += (0, util_11.html) `<h6 class="font-monospace mb-1">(None)</h6>`;
+            }
             return (0, util_11.html) `
             <div class="card responsive-subcard mt-3">
                 <div class="card-header">
                     <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idAccordion}" aria-expanded="true" aria-controls="${idAccordion}">
                         <strong>Parameters</strong>
                     </button>
-                    <div style="position: absolute; height: 32px; top: 5px; right: 5px; z-index: 4;">
-                        <!-- Add Button -->
-                        <button id="${idBtnAdd}" class="btn btn-sm responsive-btn float-end ms-1">
-                            <div class="btn-pane">
-                               <i class="fa-solid fa-plus"></i>
-                            </div>
-                        </button>
-                    </div>
                 </div>
-                <div id="${idAccordion}" class="card-body mb-0 collapse${show ? ' show' : ''}">
+                <div id="${idAccordion}" class="card-body p-2 mb-0 collapse${show ? ' show' : ''}">
                     <div class="accordion rounded-0">
                         ${htmlParams}
                     </div>
-                    <!-- <div class="mt-3" style="position: relative; width: 100%; height: 32px;"></div> -->
                 </div>
             </div>
         `;
@@ -7836,13 +7894,8 @@ define("src/asledgehammer/rosetta/component/java/JavaCard", ["require", "exports
                 <div id="${idCard}" class="card-body mb-0 collapse${show ? ' show' : ''}">
                     <!-- Return Type -->
                     <div class="mb-3">
-                        <label for="${idReturnType}" class="form-label">Type</label>
-                        <!-- TODO: Might need to style. -->
-                        <select disabled>
-                            <option selected>${returns.type.basic}</option>
-                        </select>
+                        <label for="${idReturnType}" class="form-label">Type: ${returns.type.basic}</label>
                     </div>
-
                     <!-- Return Notes -->
                     <div>
                         <label for="${idReturnNotes}" class="form-label">Description</label>
@@ -8124,7 +8177,113 @@ define("src/asledgehammer/rosetta/component/java/JavaFieldCard", ["require", "ex
     }
     exports.JavaFieldCard = JavaFieldCard;
 });
-define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/component/lua/LuaClassCard", "src/asledgehammer/rosetta/component/lua/LuaConstructorCard", "src/asledgehammer/rosetta/component/lua/LuaFieldCard", "src/asledgehammer/rosetta/component/lua/LuaFunctionCard", "src/asledgehammer/rosetta/component/Sidebar", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/lua/wizard/LuaParser", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/component/java/JavaClassCard", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/component/java/JavaFieldCard"], function (require, exports, hljs, LuaClassCard_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, Sidebar_1, LuaGenerator_5, RosettaLuaClass_3, RosettaLuaConstructor_3, util_14, LuaParser_1, RosettaJavaClass_2, JavaClassCard_1, JavaGenerator_3, JavaFieldCard_1) {
+define("src/asledgehammer/rosetta/component/java/JavaMethodCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/java/RosettaJavaMethodCluster", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/java/JavaCard"], function (require, exports, JavaGenerator_3, RosettaJavaMethodCluster_2, util_14, JavaCard_3) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.JavaMethodCard = void 0;
+    class JavaMethodCard extends JavaCard_3.JavaCard {
+        constructor(app, options) {
+            super(app, options);
+            this.idNotes = `${this.id}-notes`;
+            this.idReturnType = `${this.id}-return-type`;
+            this.idReturnNotes = `${this.id}-return-notes`;
+            this.idBtnDelete = `${this.id}-btn-delete`;
+            this.idBtnEdit = `${this.id}-btn-edit`;
+            this.idParamContainer = `${this.id}-parameter-container`;
+        }
+        onRenderPreview() {
+            if (!this.options)
+                return '';
+            const { entity } = this.options;
+            const classEntity = this.app.active.selectedCard.options.entity;
+            const className = classEntity.name;
+            const cluster = new RosettaJavaMethodCluster_2.RosettaJavaMethodCluster(entity.name);
+            cluster.add(entity);
+            return (0, JavaGenerator_3.generateJavaMethod)(className, cluster);
+        }
+        onHeaderHTML() {
+            const { entity, isStatic } = this.options;
+            const classEntity = this.app.active.selectedCard.options.entity;
+            const className = classEntity.name;
+            let params = '';
+            for (const param of entity.parameters) {
+                params += `${param.name}, `;
+            }
+            if (params.length)
+                params = params.substring(0, params.length - 2);
+            let name = `${className}${isStatic ? '.' : ':'}${entity.name}(${params})`;
+            if (isStatic) {
+                name = (0, util_14.html) `<span class="fst-italic">${name}</span>`;
+            }
+            return (0, util_14.html) ` 
+            <div class="row">
+
+            ${isStatic ?
+                (0, util_14.html) `
+                        <div class="col-auto ps-2 pe-0">
+                            <div class="text-bg-primary px-2 border border-1 border-light-half desaturate shadow">
+                                <strong>Static</strong>
+                            </div>
+                        </div>
+                        `
+                : ''}
+                <!-- Visual Category Badge -->
+                <div class="col-auto ps-2 pe-2">
+                    <div class="text-bg-success px-2 border border-1 border-light-half desaturate shadow">
+                        <strong>Java Method</strong>
+                    </div>
+                </div>
+                <div class="col-auto p-0">
+                    <h5 class="card-text"><strong>${name}</strong></h5> 
+                </div>
+            </div>
+        `;
+        }
+        onBodyHTML() {
+            const { idNotes, idParamContainer, idReturnType, idReturnNotes } = this;
+            const { entity } = this.options;
+            return (0, util_14.html) `
+            ${this.renderNotes(idNotes)}
+            <hr>
+            <div id="${idParamContainer}">
+                ${this.renderParameters(entity)}
+            </div>
+            ${this.renderReturns(entity, idReturnType, idReturnNotes)}
+            <hr>
+            ${this.renderPreview(false)}
+        `;
+        }
+        listen() {
+            super.listen();
+            const { app, idBtnDelete, idNotes, idReturnType, idReturnNotes } = this;
+            const { entity, isStatic } = this.options;
+            this.listenNotes(entity, idNotes);
+            this.listenParameters(entity, 'method');
+            this.listenReturns(entity, idReturnType, idReturnNotes, idReturnType);
+            this.listenPreview();
+            (0, util_14.$get)(idBtnDelete).on('click', () => {
+                app.askConfirm(() => {
+                    var _a;
+                    const clazz = (_a = app.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
+                    delete clazz.methods[entity.name];
+                    app.showJavaClass(clazz);
+                    app.sidebar.itemTree.selectedID = undefined;
+                    app.sidebar.populateTrees();
+                }, `Delete ${isStatic ? 'Function' : 'Method'} ${entity.name}`);
+            });
+        }
+        refreshParameters() {
+            const { idParamContainer } = this;
+            const { entity, isStatic } = this.options;
+            const $paramContainer = (0, util_14.$get)(idParamContainer);
+            $paramContainer.empty();
+            $paramContainer.html(this.renderParameters(entity, true));
+            this.listenParameters(entity, isStatic ? 'function' : 'method');
+        }
+    }
+    exports.JavaMethodCard = JavaMethodCard;
+});
+define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/component/lua/LuaClassCard", "src/asledgehammer/rosetta/component/lua/LuaConstructorCard", "src/asledgehammer/rosetta/component/lua/LuaFieldCard", "src/asledgehammer/rosetta/component/lua/LuaFunctionCard", "src/asledgehammer/rosetta/component/Sidebar", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/lua/wizard/LuaParser", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/component/java/JavaClassCard", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/component/java/JavaFieldCard", "src/asledgehammer/rosetta/component/java/JavaMethodCard"], function (require, exports, hljs, LuaClassCard_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, Sidebar_1, LuaGenerator_5, RosettaLuaClass_3, RosettaLuaConstructor_3, util_15, LuaParser_1, RosettaJavaClass_2, JavaClassCard_1, JavaGenerator_4, JavaFieldCard_1, JavaMethodCard_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.App = exports.Toast = exports.Active = void 0;
@@ -8166,7 +8325,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
         }
         alert(text, color = undefined) {
             const { idSimpleBody, idToastSimple } = this;
-            const $toast = (0, util_14.$get)(idToastSimple);
+            const $toast = (0, util_15.$get)(idToastSimple);
             // Set the background color.
             $toast.removeClass('bg-success');
             $toast.removeClass('bg-danger');
@@ -8194,14 +8353,14 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             this.$screenContent = $('#screen-content-end-container');
             // @ts-ignore This modal is for new items and editing their names.
             this.modalName = new bootstrap.Modal('#modal-name', {});
-            this.$titleName = (0, util_14.$get)('title-name');
-            this.$inputName = (0, util_14.$get)('input-name');
-            this.$btnName = (0, util_14.$get)('btn-name-create');
+            this.$titleName = (0, util_15.$get)('title-name');
+            this.$inputName = (0, util_15.$get)('input-name');
+            this.$btnName = (0, util_15.$get)('btn-name-create');
             // @ts-ignore This modal is for confirming actions.
             this.modalConfirm = new bootstrap.Modal('#modal-confirm', {});
-            this.$titleConfirm = (0, util_14.$get)('title-confirm');
-            this.$bodyConfirm = (0, util_14.$get)('body-confirm');
-            this.$btnConfirm = (0, util_14.$get)('btn-confirm');
+            this.$titleConfirm = (0, util_15.$get)('title-confirm');
+            this.$bodyConfirm = (0, util_15.$get)('body-confirm');
+            this.$btnConfirm = (0, util_15.$get)('btn-confirm');
             this.confirmSuccess = undefined;
             this.nameMode = null;
         }
@@ -8358,8 +8517,19 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             card.update();
             return card;
         }
+        showJavaClassMethod(entity) {
+            const { selected } = this.active;
+            if (!(selected instanceof RosettaJavaClass_2.RosettaJavaClass))
+                return null;
+            this.$screenContent.empty();
+            const card = new JavaMethodCard_1.JavaMethodCard(this, { entity, isStatic: entity.isStatic() });
+            this.$screenContent.append(card.render());
+            card.listen();
+            card.update();
+            return card;
+        }
         renderCode() {
-            const $renderPane = (0, util_14.$get)('code-preview');
+            const $renderPane = (0, util_15.$get)('code-preview');
             $renderPane.empty();
             if (!this.active.selectedCard)
                 return;
@@ -8369,7 +8539,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                 highlightedCode = hljs.default.highlightAuto((0, LuaGenerator_5.generateLuaClass)(selected), ['lua']).value;
             }
             else if (selected instanceof RosettaJavaClass_2.RosettaJavaClass) {
-                highlightedCode = hljs.default.highlightAuto((0, JavaGenerator_3.generateJavaClass)(selected), ['lua']).value;
+                highlightedCode = hljs.default.highlightAuto((0, JavaGenerator_4.generateJavaClass)(selected), ['lua']).value;
             }
             $renderPane.html(highlightedCode);
         }
@@ -8388,17 +8558,17 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                 }
             });
             this.$inputName.on('input', () => {
-                setTimeout(() => this.$inputName.val((0, util_14.validateLuaVariableName)(this.$inputName.val())), 1);
+                setTimeout(() => this.$inputName.val((0, util_15.validateLuaVariableName)(this.$inputName.val())), 1);
             });
             this.$btnName.on('click', () => {
                 var _a;
                 const clazz = (_a = this.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
-                const name = (0, util_14.validateLuaVariableName)(this.$inputName.val()).trim();
+                const name = (0, util_15.validateLuaVariableName)(this.$inputName.val()).trim();
                 const nameOld = this.nameSelected;
                 switch (this.nameMode) {
                     case 'new_class': {
                         try {
-                            const entity = new RosettaLuaClass_3.RosettaLuaClass((0, util_14.validateLuaVariableName)(this.$inputName.val()).trim());
+                            const entity = new RosettaLuaClass_3.RosettaLuaClass((0, util_15.validateLuaVariableName)(this.$inputName.val()).trim());
                             this.showLuaClass(entity);
                             this.sidebar.populateTrees();
                             this.toast.alert('Created Lua Class.', 'success');
@@ -8676,13 +8846,13 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                 this.nameSelected = undefined;
                 this.modalName.hide();
             });
-            const $btnCopy = (0, util_14.$get)('btn-code-preview-copy');
-            const $container = (0, util_14.$get)('screen-content-container');
-            const $cardPreview = (0, util_14.$get)('screen-content-end-container');
-            const $codePreview = (0, util_14.$get)('code-preview');
-            const $btnCardCode = (0, util_14.$get)('btn-card-code');
-            const $iconCard = (0, util_14.$get)('icon-card');
-            const $iconCode = (0, util_14.$get)('icon-code');
+            const $btnCopy = (0, util_15.$get)('btn-code-preview-copy');
+            const $container = (0, util_15.$get)('screen-content-container');
+            const $cardPreview = (0, util_15.$get)('screen-content-end-container');
+            const $codePreview = (0, util_15.$get)('code-preview');
+            const $btnCardCode = (0, util_15.$get)('btn-card-code');
+            const $iconCard = (0, util_15.$get)('icon-card');
+            const $iconCode = (0, util_15.$get)('icon-code');
             let mode = 'card';
             $btnCardCode.on('click', () => {
                 if (mode === 'card') {
@@ -8995,7 +9165,7 @@ define("src/asledgehammer/rosetta/SerializableComponent", ["require", "exports"]
     }
     exports.SerializableComponent = SerializableComponent;
 });
-define("src/asledgehammer/rosetta/component/LabelComponent", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/Component"], function (require, exports, util_15, Component_3) {
+define("src/asledgehammer/rosetta/component/LabelComponent", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/component/Component"], function (require, exports, util_16, Component_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LabelComponent = void 0;
@@ -9004,12 +9174,12 @@ define("src/asledgehammer/rosetta/component/LabelComponent", ["require", "export
             super(options);
         }
         onRender() {
-            return (0, util_15.html) ``;
+            return (0, util_16.html) ``;
         }
     }
     exports.LabelComponent = LabelComponent;
 });
-define("src/asledgehammer/rosetta/component/SidebarPanelButton", ["require", "exports", "src/asledgehammer/rosetta/component/Component", "src/asledgehammer/rosetta/util"], function (require, exports, Component_4, util_16) {
+define("src/asledgehammer/rosetta/component/SidebarPanelButton", ["require", "exports", "src/asledgehammer/rosetta/component/Component", "src/asledgehammer/rosetta/util"], function (require, exports, Component_4, util_17) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.SidebarPanelButton = void 0;
@@ -9018,7 +9188,7 @@ define("src/asledgehammer/rosetta/component/SidebarPanelButton", ["require", "ex
             super(options);
         }
         listen() {
-            (0, util_16.$get)(this.id).on('click', () => {
+            (0, util_17.$get)(this.id).on('click', () => {
                 if (this.options && this.options.onclick) {
                     this.options.onclick();
                 }
@@ -9026,7 +9196,7 @@ define("src/asledgehammer/rosetta/component/SidebarPanelButton", ["require", "ex
         }
         onRender() {
             const { label } = this.options;
-            return (0, util_16.html) `
+            return (0, util_17.html) `
             <button class="btn btn-primary col-12 rounded-0">${label}</button>
         `;
         }

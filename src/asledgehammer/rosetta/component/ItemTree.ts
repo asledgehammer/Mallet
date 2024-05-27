@@ -1,5 +1,6 @@
 import { App } from "../../../app";
 import { RosettaJavaClass } from "../java/RosettaJavaClass";
+import { RosettaJavaMethod } from "../java/RosettaJavaMethod";
 import { RosettaLuaClass } from "../lua/RosettaLuaClass";
 import { RosettaLuaTable } from "../lua/RosettaLuaTable";
 import { $get, html } from "../util";
@@ -44,6 +45,9 @@ export class ItemTree {
 
     selected: string | undefined = undefined;
     selectedID: string | undefined = undefined;
+
+    methodSignatureMap: { [signature: string]: RosettaJavaMethod } = {};
+    staticMethodSignatureMap: { [signature: string]: RosettaJavaMethod } = {};
 
     constructor(app: App, sidebar: Sidebar) {
         this.app = app;
@@ -167,7 +171,7 @@ export class ItemTree {
         const _this = this;
         const $doc = $(document);
 
-        $doc.on('click', '.java-class-field-item', function() {
+        $doc.on('click', '.java-class-field-item', function () {
             const fieldName = this.id.split('field-')[1].trim();
             // Prevent wasteful selection code executions here.
             if (_this.selected === fieldName) return;
@@ -177,6 +181,24 @@ export class ItemTree {
             _this.app.showJavaClassField(field);
             // Let the editor know we last selected the field.
             _this.selected = fieldName;
+        });
+
+        $doc.on('click', '.java-class-method-item', function () {
+            console.log(`id: ${this.id}`);
+            const signature = this.id.split('method-')[1].trim();
+            console.log(`signature: ${signature}`);
+
+            // Prevent wasteful selection code executions here.
+            if (_this.selected === signature) return;
+
+            // This is lazy but it works.
+            let method = _this.staticMethodSignatureMap[signature];
+            if (!method) method = _this.methodSignatureMap[signature];
+            if (!method) return;
+
+            _this.app.showJavaClassMethod(method);
+            // Let the editor know we last selected the field.
+            _this.selected = signature;
         });
 
         // Preserve the state of folders.
@@ -373,8 +395,31 @@ export class ItemTree {
         const fieldNames = Object.keys(entity.fields);
         fieldNames.sort((a, b) => a.localeCompare(b));
 
-        const methodNames = Object.keys(entity.methods);
-        methodNames.sort((a, b) => a.localeCompare(b));
+        const clusterNames = Object.keys(entity.methods);
+        clusterNames.sort((a, b) => a.localeCompare(b));
+
+        this.methodSignatureMap = {};
+        this.staticMethodSignatureMap = {};
+
+        for (const clusterName of clusterNames) {
+            const cluster = entity.methods[clusterName];
+
+            for (const method of cluster.methods) {
+                let signature = `${method.name}`;
+                if (method.parameters && method.parameters.length) {
+                    signature += '_';
+                    for (const param of method.parameters) {
+                        signature += `${param.type.basic}-`;
+                    }
+                    signature = signature.substring(0, signature.length - 1);
+                }
+                if (method.isStatic()) {
+                    this.staticMethodSignatureMap[signature] = method;
+                } else {
+                    this.methodSignatureMap[signature] = method;
+                }
+            }
+        }
 
         // Static field(s)
         for (const name of fieldNames) {
@@ -402,6 +447,52 @@ export class ItemTree {
                     class: ['item-tree-item', 'java-class-field-item']
                 });
             }
+        }
+
+        // Static method(s)
+
+        const staticMethodSignatures = Object.keys(this.staticMethodSignatureMap);
+        staticMethodSignatures.sort((a, b) => a.localeCompare(b));
+
+        for (const signature of staticMethodSignatures) {
+            const method = this.staticMethodSignatureMap[signature];
+            const id = `java-class-${entity.name}-method-${signature}`;
+
+            let params = '';
+            for (const param of method.parameters) {
+                params += `${param.name}, `;
+            }
+            if (params.length) params = params.substring(0, params.length - 2);
+
+            staticMethods.push({
+                text: `${method.name}(${params})`,
+                icon: LuaCard.getTypeIcon(method.returns.type.basic),
+                id,
+                class: ['item-tree-item', 'java-class-method-item']
+            });
+        }
+
+        // Instance method(s)
+
+        const methodSignatures = Object.keys(this.methodSignatureMap);
+        methodSignatures.sort((a, b) => a.localeCompare(b));
+
+        for (const signature of methodSignatures) {
+            const method = this.methodSignatureMap[signature];
+            const id = `java-class-${entity.name}-method-${signature}`;
+            
+            let params = '';
+            for (const param of method.parameters) {
+                params += `${param.name}, `;
+            }
+            if (params.length) params = params.substring(0, params.length - 2);
+            
+            methods.push({
+                text: `${method.name}(${params})`,
+                icon: LuaCard.getTypeIcon(method.returns.type.basic),
+                id,
+                class: ['item-tree-item', 'java-class-method-item']
+            });
         }
 
         // @ts-ignore

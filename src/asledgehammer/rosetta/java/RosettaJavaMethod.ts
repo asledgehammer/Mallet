@@ -98,6 +98,6 @@ export class RosettaJavaMethod extends RosettaEntity {
   }
 
   isStatic(): boolean {
-    return this.modifiers && !!this.modifiers.length && this.modifiers.indexOf('static') !== -1;
+    return this.modifiers != null && !!this.modifiers.length && this.modifiers.indexOf('static') !== -1;
   }
 }
