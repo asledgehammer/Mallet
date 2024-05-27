@@ -12,7 +12,6 @@ import { RosettaLuaConstructor } from './asledgehammer/rosetta/lua/RosettaLuaCon
 import { RosettaLuaField } from './asledgehammer/rosetta/lua/RosettaLuaField';
 import { RosettaLuaFunction } from './asledgehammer/rosetta/lua/RosettaLuaFunction';
 import { $get, validateLuaVariableName } from './asledgehammer/rosetta/util';
-import { LuaParser } from './asledgehammer/rosetta/lua/wizard/LuaParser';
 import { RosettaLuaTable } from './asledgehammer/rosetta/lua/RosettaLuaTable';
 import { RosettaJavaClass, RosettaJavaNamespace } from './asledgehammer/rosetta/java/RosettaJavaClass';
 import { JavaClassCard } from './asledgehammer/rosetta/component/java/JavaClassCard';
@@ -120,16 +119,11 @@ export class App {
     nameSelected: string | undefined;
     nameMode: NameModeType;
 
-    // card: LuaClassCard | null = null;
-
-    readonly luaParser: LuaParser;
-
     constructor() {
 
         this.active = new Active(this);
         this.sidebar = new Sidebar(this);
         this.toast = new Toast(this);
-        this.luaParser = new LuaParser(this);
         this.eSidebarContainer = document.getElementById('screen-sidebar-container')!;
         this.$screenContent = $('#screen-content-end-container');
 

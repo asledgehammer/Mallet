@@ -80,14 +80,14 @@ export class Sidebar extends Component<SidebarOptions> {
                 </div>
             </div>
             <div style="position: absolute; top: 30%; left: 0; width: 100%; height: 70%;">
-                <div class="p-1 border-top border-top-2 border-bottom border-bottom-2 border-black shadow">
+                <div class="p-1 border-top border-top-2 border-bottom border-bottom-2 border-black shadow" style="height: 41px;">
 
                     <!-- Lua Wizard -->
-                    <button id="lua-wizard" class="btn btn-sm responsive-btn responsive-btn-info" title="Lua Wizard">
+                    <!-- <button id="lua-wizard" class="btn btn-sm responsive-btn responsive-btn-info" title="Lua Wizard">
                         <div class="btn-pane">    
                             <i class="fa-solid fa-wand-sparkles"></i>
                         </div>
-                    </button>
+                    </button> -->
 
                     <!-- New Properties -->
                     <div class="dropdown" style="position: absolute; top: 5px; right: 5px;">
@@ -260,10 +260,6 @@ export class Sidebar extends Component<SidebarOptions> {
                 console.error(e);
 
             }
-        });
-
-        $doc.on('click', '#lua-wizard', () => {
-            app.luaParser.parseFilePicker();
         });
 
         this.listening = true;
