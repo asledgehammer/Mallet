@@ -185,9 +185,9 @@ export class App {
 
         let highlightedCode = '';
         if (selected instanceof RosettaLuaClass) {
-            this.previewCode = generateLuaClass(selected);
+            this.previewCode = '--- @meta\n\n' + generateLuaClass(selected);
         } else if (selected instanceof RosettaJavaClass) {
-            this.previewCode = generateJavaClass(selected);
+            this.previewCode = '--- @meta\n\n' + generateJavaClass(selected);
         }
 
         highlightedCode = hljs.default.highlightAuto(this.previewCode, ['lua']).value;

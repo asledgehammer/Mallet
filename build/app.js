@@ -5714,10 +5714,10 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             const { selected } = this.catalog;
             let highlightedCode = '';
             if (selected instanceof RosettaLuaClass_4.RosettaLuaClass) {
-                this.previewCode = (0, LuaGenerator_6.generateLuaClass)(selected);
+                this.previewCode = '--- @meta\n\n' + (0, LuaGenerator_6.generateLuaClass)(selected);
             }
             else if (selected instanceof RosettaJavaClass_4.RosettaJavaClass) {
-                this.previewCode = (0, JavaGenerator_6.generateJavaClass)(selected);
+                this.previewCode = '--- @meta\n\n' + (0, JavaGenerator_6.generateJavaClass)(selected);
             }
             highlightedCode = hljs.default.highlightAuto(this.previewCode, ['lua']).value;
             $renderPane.html(highlightedCode);
