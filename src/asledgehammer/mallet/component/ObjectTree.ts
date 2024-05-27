@@ -53,7 +53,7 @@ export class ObjectTree {
         // Apply jQuery listeners next.
         $doc.on('click', '.object-tree-lua-class', function () {
             const name = this.id.substring('object-lua-class-'.length);
-            _this.app.showLuaClass(_this.app.active.luaClasses[name]);
+            _this.app.showLuaClass(_this.app.catalog.luaClasses[name]);
             // Update the class properties tree.
             const { itemTree } = _this.sidebar;
             itemTree.selected = undefined;
@@ -64,7 +64,7 @@ export class ObjectTree {
 
         $doc.on('click', '.object-tree-java-class', function () {
             const name = this.id.substring('object-java-class-'.length);
-            _this.app.showJavaClass(_this.app.active.javaClasses[name]);
+            _this.app.showJavaClass(_this.app.catalog.javaClasses[name]);
             // Update the class properties tree.
             const { itemTree } = _this.sidebar;
             itemTree.selected = undefined;
@@ -98,7 +98,7 @@ export class ObjectTree {
         $treeUpper = $get('tree-upper');
 
         const luaClasses = [];
-        for (const name of Object.keys(this.app.active.luaClasses)) {
+        for (const name of Object.keys(this.app.catalog.luaClasses)) {
             luaClasses.push(
                 {
                     id: `object-lua-class-${name}`,
@@ -110,7 +110,7 @@ export class ObjectTree {
         }
 
         const luaTables = [];
-        for (const name of Object.keys(this.app.active.luaTables)) {
+        for (const name of Object.keys(this.app.catalog.luaTables)) {
             luaTables.push(
                 {
                     id: `object-lua-table-${name}`,
@@ -122,7 +122,7 @@ export class ObjectTree {
         }
 
         const javaClasses = [];
-        for (const name of Object.keys(this.app.active.javaClasses)) {
+        for (const name of Object.keys(this.app.catalog.javaClasses)) {
             javaClasses.push(
                 {
                     id: `object-java-class-${name}`,

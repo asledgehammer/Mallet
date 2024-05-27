@@ -185,7 +185,7 @@ export class Sidebar extends Component<SidebarOptions> {
 
         $doc.on('click', '#btn-new-lua-value', () => {
             try {
-                const { selectedCard: card } = app.active;
+                const { selectedCard: card } = app.catalog;
                 if (!card) return;
                 const clazz = card.options!.entity;
                 if (!clazz) return;
@@ -202,7 +202,7 @@ export class Sidebar extends Component<SidebarOptions> {
 
         $doc.on('click', '#btn-new-lua-field', () => {
             try {
-                const { selectedCard: card } = app.active;
+                const { selectedCard: card } = app.catalog;
                 if (!card) return;
                 const clazz = card.options!.entity;
                 if (!clazz) return;
@@ -219,7 +219,7 @@ export class Sidebar extends Component<SidebarOptions> {
 
         $doc.on('click', '#btn-new-lua-function', () => {
             try {
-                const { selectedCard: card } = app.active;
+                const { selectedCard: card } = app.catalog;
                 if (!card) return;
                 const clazz = card.options!.entity;
                 if (!clazz) return;
@@ -236,7 +236,7 @@ export class Sidebar extends Component<SidebarOptions> {
 
         $doc.on('click', '#btn-new-lua-method', () => {
             try {
-                const { selectedCard: card } = app.active;
+                const { selectedCard: card } = app.catalog;
                 if (!card) return;
                 const clazz = card.options!.entity;
                 if (!clazz) return;

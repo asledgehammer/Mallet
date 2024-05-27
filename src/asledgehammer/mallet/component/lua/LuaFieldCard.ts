@@ -31,7 +31,7 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
         const { app } = this;
         const { entity, isStatic } = this.options;
         const { defaultValue } = entity;
-        const name = app.active.selectedCard?.options?.entity.name!;
+        const name = app.catalog.selectedCard?.options?.entity.name!;
 
         if (isStatic) {
             return `${generateLuaField(entity)}\n\n${generateLuaValue(name, entity)}`;
@@ -46,7 +46,7 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
     onHeaderHTML(): string | undefined {
         const { idBtnEdit, idBtnDelete } = this;
         const { entity, isStatic } = this.options!;
-        const luaClass = this.app.active.selectedCard?.options!.entity!;
+        const luaClass = this.app.catalog.selectedCard?.options!.entity!;
 
         let name = `${luaClass.name}.${entity.name}`;
         if (isStatic) {
@@ -110,7 +110,7 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
 
         $get(idBtnDelete).on('click', () => {
             app.modalConfirm.show(() => {
-                const clazz = app.active.selectedCard?.options!.entity! as RosettaLuaClass;
+                const clazz = app.catalog.selectedCard?.options!.entity! as RosettaLuaClass;
                 if (isStatic) {
                     delete clazz.values[entity.name];
                 } else {

@@ -19,14 +19,14 @@ export class JavaConstructorCard extends JavaCard<JavaConstructorCardOptions> {
     onRenderPreview(): string {
         if (!this.options) return '';
         const { entity } = this.options;
-        const classEntity = this.app.active.selectedCard!.options!.entity;
+        const classEntity = this.app.catalog.selectedCard!.options!.entity;
         const className = classEntity.name;
         return generateJavaConstructor(className, [entity]);
     }
 
     onHeaderHTML(): string | undefined {
         const { entity } = this.options!;
-        const classEntity = this.app.active.selectedCard!.options!.entity;
+        const classEntity = this.app.catalog.selectedCard!.options!.entity;
         const className = classEntity.name;
 
         let params = '';

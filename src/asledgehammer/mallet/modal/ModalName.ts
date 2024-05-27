@@ -33,7 +33,7 @@ export class ModalName {
     listen() {
 
         const { app, $inputName, $titleName, $btnName } = this;
-        const { active, sidebar, toast } = app;
+        const { catalog: active, sidebar, toast } = app;
 
         this.$inputName.on('input', () => {
             setTimeout(() => this.$inputName.val(validateLuaVariableName(this.$inputName.val()!)), 1);

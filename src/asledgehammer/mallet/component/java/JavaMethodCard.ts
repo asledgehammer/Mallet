@@ -32,7 +32,7 @@ export class JavaMethodCard extends JavaCard<JavaMethodCardOptions> {
         if (!this.options) return '';
 
         const { entity } = this.options;
-        const classEntity = this.app.active.selectedCard!.options!.entity;
+        const classEntity = this.app.catalog.selectedCard!.options!.entity;
         const className = classEntity.name;
 
         const cluster = new RosettaJavaMethodCluster(entity.name);
@@ -43,7 +43,7 @@ export class JavaMethodCard extends JavaCard<JavaMethodCardOptions> {
 
     onHeaderHTML(): string | undefined {
         const { entity, isStatic } = this.options!;
-        const classEntity = this.app.active.selectedCard!.options!.entity;
+        const classEntity = this.app.catalog.selectedCard!.options!.entity;
         const className = classEntity.name;
 
         let params = '';
@@ -113,7 +113,7 @@ export class JavaMethodCard extends JavaCard<JavaMethodCardOptions> {
 
         $get(idBtnDelete).on('click', () => {
             app.modalConfirm.show(() => {
-                const clazz = app.active.selectedCard?.options!.entity! as RosettaJavaClass;
+                const clazz = app.catalog.selectedCard?.options!.entity! as RosettaJavaClass;
                 delete clazz.methods[entity.name];
                 app.showJavaClass(clazz);
                 app.sidebar.itemTree.selectedID = undefined;

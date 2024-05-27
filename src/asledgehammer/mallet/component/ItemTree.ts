@@ -96,7 +96,7 @@ export class ItemTree {
         $doc.on('click', '.lua-constructor-item', function () {
             // Prevent wasteful selection code executions here.
             if (_this.selected === 'constructor') return;
-            const entity = _this.app.active.selected as RosettaLuaClass;
+            const entity = _this.app.catalog.selected as RosettaLuaClass;
             _this.app.showLuaClassConstructor(entity.conztructor);
             // Let the editor know we last selected the constructor.
             _this.selected = 'constructor';
@@ -106,7 +106,7 @@ export class ItemTree {
             const fieldName = this.id.split('field-')[1].trim();
             // Prevent wasteful selection code executions here.
             if (_this.selected === fieldName) return;
-            const entity = _this.app.active.selected as RosettaLuaClass;
+            const entity = _this.app.catalog.selected as RosettaLuaClass;
             const field = entity.fields[fieldName];
             if (!field) return;
             _this.app.showLuaClassField(field);
@@ -118,7 +118,7 @@ export class ItemTree {
             const valueName = this.id.split('value-')[1].trim();
             // Prevent wasteful selection code executions here.
             if (_this.selected === valueName) return;
-            const entity = _this.app.active.selected as RosettaLuaClass;
+            const entity = _this.app.catalog.selected as RosettaLuaClass;
             const value = entity.values[valueName];
             if (!value) return;
             _this.app.showLuaClassValue(value);
@@ -130,7 +130,7 @@ export class ItemTree {
             const methodName = this.id.split('method-')[1].trim();
             // Prevent wasteful selection code executions here.
             if (_this.selected === methodName) return;
-            const entity = _this.app.active.selected as RosettaLuaClass;
+            const entity = _this.app.catalog.selected as RosettaLuaClass;
             const method = entity.methods[methodName];
             if (!method) return;
             _this.app.showLuaClassMethod(method);
@@ -142,7 +142,7 @@ export class ItemTree {
             const functionName = this.id.split('function-')[1].trim();
             // Prevent wasteful selection code executions here.
             if (_this.selected === functionName) return;
-            const entity = _this.app.active.selected as RosettaLuaClass;
+            const entity = _this.app.catalog.selected as RosettaLuaClass;
             const func = entity.functions[functionName];
             if (!func) return;
             _this.app.showLuaClassFunction(func);
@@ -187,7 +187,7 @@ export class ItemTree {
             const fieldName = this.id.split('field-')[1].trim();
             // Prevent wasteful selection code executions here.
             if (_this.selected === fieldName) return;
-            const entity = _this.app.active.selected as RosettaJavaClass;
+            const entity = _this.app.catalog.selected as RosettaJavaClass;
             const field = entity.fields[fieldName];
             if (!field) return;
             _this.app.showJavaClassField(field);
@@ -243,7 +243,7 @@ export class ItemTree {
     }
 
     populate() {
-        const { selected } = this.app.active;
+        const { selected } = this.app.catalog;
         if (!selected) return;
         if (selected instanceof RosettaLuaClass) {
             this.populateLuaClass(selected);

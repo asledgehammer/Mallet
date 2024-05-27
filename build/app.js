@@ -3581,7 +3581,7 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 // Prevent wasteful selection code executions here.
                 if (_this.selected === 'constructor')
                     return;
-                const entity = _this.app.active.selected;
+                const entity = _this.app.catalog.selected;
                 _this.app.showLuaClassConstructor(entity.conztructor);
                 // Let the editor know we last selected the constructor.
                 _this.selected = 'constructor';
@@ -3591,7 +3591,7 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 // Prevent wasteful selection code executions here.
                 if (_this.selected === fieldName)
                     return;
-                const entity = _this.app.active.selected;
+                const entity = _this.app.catalog.selected;
                 const field = entity.fields[fieldName];
                 if (!field)
                     return;
@@ -3604,7 +3604,7 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 // Prevent wasteful selection code executions here.
                 if (_this.selected === valueName)
                     return;
-                const entity = _this.app.active.selected;
+                const entity = _this.app.catalog.selected;
                 const value = entity.values[valueName];
                 if (!value)
                     return;
@@ -3617,7 +3617,7 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 // Prevent wasteful selection code executions here.
                 if (_this.selected === methodName)
                     return;
-                const entity = _this.app.active.selected;
+                const entity = _this.app.catalog.selected;
                 const method = entity.methods[methodName];
                 if (!method)
                     return;
@@ -3630,7 +3630,7 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 // Prevent wasteful selection code executions here.
                 if (_this.selected === functionName)
                     return;
-                const entity = _this.app.active.selected;
+                const entity = _this.app.catalog.selected;
                 const func = entity.functions[functionName];
                 if (!func)
                     return;
@@ -3670,7 +3670,7 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 // Prevent wasteful selection code executions here.
                 if (_this.selected === fieldName)
                     return;
-                const entity = _this.app.active.selected;
+                const entity = _this.app.catalog.selected;
                 const field = entity.fields[fieldName];
                 if (!field)
                     return;
@@ -3721,7 +3721,7 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
             });
         }
         populate() {
-            const { selected } = this.app.active;
+            const { selected } = this.app.catalog;
             if (!selected)
                 return;
             if (selected instanceof RosettaLuaClass_1.RosettaLuaClass) {
@@ -4101,7 +4101,7 @@ define("src/asledgehammer/mallet/component/ObjectTree", ["require", "exports", "
             // Apply jQuery listeners next.
             $doc.on('click', '.object-tree-lua-class', function () {
                 const name = this.id.substring('object-lua-class-'.length);
-                _this.app.showLuaClass(_this.app.active.luaClasses[name]);
+                _this.app.showLuaClass(_this.app.catalog.luaClasses[name]);
                 // Update the class properties tree.
                 const { itemTree } = _this.sidebar;
                 itemTree.selected = undefined;
@@ -4111,7 +4111,7 @@ define("src/asledgehammer/mallet/component/ObjectTree", ["require", "exports", "
             });
             $doc.on('click', '.object-tree-java-class', function () {
                 const name = this.id.substring('object-java-class-'.length);
-                _this.app.showJavaClass(_this.app.active.javaClasses[name]);
+                _this.app.showJavaClass(_this.app.catalog.javaClasses[name]);
                 // Update the class properties tree.
                 const { itemTree } = _this.sidebar;
                 itemTree.selected = undefined;
@@ -4139,7 +4139,7 @@ define("src/asledgehammer/mallet/component/ObjectTree", ["require", "exports", "
             $sidebarContentUpper.append('<div id="tree-upper" class="rounded-0 bg-dark text-white"></div>');
             $treeUpper = (0, util_8.$get)('tree-upper');
             const luaClasses = [];
-            for (const name of Object.keys(this.app.active.luaClasses)) {
+            for (const name of Object.keys(this.app.catalog.luaClasses)) {
                 luaClasses.push({
                     id: `object-lua-class-${name}`,
                     text: wrapItem(name),
@@ -4148,7 +4148,7 @@ define("src/asledgehammer/mallet/component/ObjectTree", ["require", "exports", "
                 });
             }
             const luaTables = [];
-            for (const name of Object.keys(this.app.active.luaTables)) {
+            for (const name of Object.keys(this.app.catalog.luaTables)) {
                 luaTables.push({
                     id: `object-lua-table-${name}`,
                     text: wrapItem(name),
@@ -4157,7 +4157,7 @@ define("src/asledgehammer/mallet/component/ObjectTree", ["require", "exports", "
                 });
             }
             const javaClasses = [];
-            for (const name of Object.keys(this.app.active.javaClasses)) {
+            for (const name of Object.keys(this.app.catalog.javaClasses)) {
                 javaClasses.push({
                     id: `object-java-class-${name}`,
                     text: wrapItem(name),
@@ -4369,7 +4369,7 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
             });
             $doc.on('click', '#btn-new-lua-value', () => {
                 try {
-                    const { selectedCard: card } = app.active;
+                    const { selectedCard: card } = app.catalog;
                     if (!card)
                         return;
                     const clazz = card.options.entity;
@@ -4387,7 +4387,7 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
             });
             $doc.on('click', '#btn-new-lua-field', () => {
                 try {
-                    const { selectedCard: card } = app.active;
+                    const { selectedCard: card } = app.catalog;
                     if (!card)
                         return;
                     const clazz = card.options.entity;
@@ -4405,7 +4405,7 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
             });
             $doc.on('click', '#btn-new-lua-function', () => {
                 try {
-                    const { selectedCard: card } = app.active;
+                    const { selectedCard: card } = app.catalog;
                     if (!card)
                         return;
                     const clazz = card.options.entity;
@@ -4423,7 +4423,7 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
             });
             $doc.on('click', '#btn-new-lua-method', () => {
                 try {
-                    const { selectedCard: card } = app.active;
+                    const { selectedCard: card } = app.catalog;
                     if (!card)
                         return;
                     const clazz = card.options.entity;
@@ -4463,12 +4463,12 @@ define("src/asledgehammer/mallet/component/lua/LuaConstructorCard", ["require", 
             if (!this.options)
                 return '';
             const { entity } = this.options;
-            const classEntity = this.app.active.selectedCard.options.entity;
+            const classEntity = this.app.catalog.selectedCard.options.entity;
             const className = classEntity.name;
             return (0, LuaGenerator_2.generateLuaConstructor)(className, entity);
         }
         onHeaderHTML() {
-            const classEntity = this.app.active.selectedCard.options.entity;
+            const classEntity = this.app.catalog.selectedCard.options.entity;
             const className = classEntity.name;
             const name = `${className}:new( )`;
             return (0, util_10.html) ` 
@@ -4537,7 +4537,7 @@ define("src/asledgehammer/mallet/component/lua/LuaFieldCard", ["require", "expor
             const { app } = this;
             const { entity, isStatic } = this.options;
             const { defaultValue } = entity;
-            const name = (_b = (_a = app.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options) === null || _b === void 0 ? void 0 : _b.entity.name;
+            const name = (_b = (_a = app.catalog.selectedCard) === null || _a === void 0 ? void 0 : _a.options) === null || _b === void 0 ? void 0 : _b.entity.name;
             if (isStatic) {
                 return `${(0, LuaGenerator_3.generateLuaField)(entity)}\n\n${(0, LuaGenerator_3.generateLuaValue)(name, entity)}`;
             }
@@ -4551,7 +4551,7 @@ define("src/asledgehammer/mallet/component/lua/LuaFieldCard", ["require", "expor
             var _a;
             const { idBtnEdit, idBtnDelete } = this;
             const { entity, isStatic } = this.options;
-            const luaClass = (_a = this.app.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
+            const luaClass = (_a = this.app.catalog.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
             let name = `${luaClass.name}.${entity.name}`;
             if (isStatic) {
                 name = (0, util_11.html) `<span class="fst-italic">${name}</span>`;
@@ -4610,7 +4610,7 @@ define("src/asledgehammer/mallet/component/lua/LuaFieldCard", ["require", "expor
             (0, util_11.$get)(idBtnDelete).on('click', () => {
                 app.modalConfirm.show(() => {
                     var _a;
-                    const clazz = (_a = app.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
+                    const clazz = (_a = app.catalog.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
                     if (isStatic) {
                         delete clazz.values[entity.name];
                     }
@@ -4644,14 +4644,14 @@ define("src/asledgehammer/mallet/component/lua/LuaFunctionCard", ["require", "ex
             if (!this.options)
                 return '';
             const { entity } = this.options;
-            const classEntity = this.app.active.selectedCard.options.entity;
+            const classEntity = this.app.catalog.selectedCard.options.entity;
             const className = classEntity.name;
             return (0, LuaGenerator_4.generateLuaMethod)(className, entity);
         }
         onHeaderHTML() {
             const { idBtnDelete, idBtnEdit } = this;
             const { entity, isStatic } = this.options;
-            const classEntity = this.app.active.selectedCard.options.entity;
+            const classEntity = this.app.catalog.selectedCard.options.entity;
             const className = classEntity.name;
             let name = `${className}${isStatic ? '.' : ':'}${entity.name}( )`;
             if (isStatic) {
@@ -4713,7 +4713,7 @@ define("src/asledgehammer/mallet/component/lua/LuaFunctionCard", ["require", "ex
             (0, util_12.$get)(idBtnDelete).on('click', () => {
                 app.modalConfirm.show(() => {
                     var _a;
-                    const clazz = (_a = app.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
+                    const clazz = (_a = app.catalog.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
                     if (isStatic) {
                         delete clazz.functions[entity.name];
                     }
@@ -4751,13 +4751,13 @@ define("src/asledgehammer/mallet/component/java/JavaConstructorCard", ["require"
             if (!this.options)
                 return '';
             const { entity } = this.options;
-            const classEntity = this.app.active.selectedCard.options.entity;
+            const classEntity = this.app.catalog.selectedCard.options.entity;
             const className = classEntity.name;
             return (0, JavaGenerator_2.generateJavaConstructor)(className, [entity]);
         }
         onHeaderHTML() {
             const { entity } = this.options;
-            const classEntity = this.app.active.selectedCard.options.entity;
+            const classEntity = this.app.catalog.selectedCard.options.entity;
             const className = classEntity.name;
             let params = '';
             for (const param of entity.parameters) {
@@ -4835,7 +4835,7 @@ define("src/asledgehammer/mallet/component/java/JavaFieldCard", ["require", "exp
             var _a;
             const { idBtnEdit, idBtnDelete } = this;
             const { entity, isStatic } = this.options;
-            const javaClass = (_a = this.app.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
+            const javaClass = (_a = this.app.catalog.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
             let name = `${javaClass.name}.${entity.name}`;
             if (isStatic) {
                 name = (0, util_14.html) `<span class="fst-italic">${name}</span>`;
@@ -4887,7 +4887,7 @@ define("src/asledgehammer/mallet/component/java/JavaFieldCard", ["require", "exp
             (0, util_14.$get)(idBtnDelete).on('click', () => {
                 app.modalConfirm.show(() => {
                     var _a;
-                    const clazz = (_a = app.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
+                    const clazz = (_a = app.catalog.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
                     delete clazz.fields[entity.name];
                     app.showJavaClass(clazz);
                     app.sidebar.itemTree.selectedID = undefined;
@@ -4916,7 +4916,7 @@ define("src/asledgehammer/mallet/component/java/JavaMethodCard", ["require", "ex
             if (!this.options)
                 return '';
             const { entity } = this.options;
-            const classEntity = this.app.active.selectedCard.options.entity;
+            const classEntity = this.app.catalog.selectedCard.options.entity;
             const className = classEntity.name;
             const cluster = new RosettaJavaMethodCluster_2.RosettaJavaMethodCluster(entity.name);
             cluster.add(entity);
@@ -4924,7 +4924,7 @@ define("src/asledgehammer/mallet/component/java/JavaMethodCard", ["require", "ex
         }
         onHeaderHTML() {
             const { entity, isStatic } = this.options;
-            const classEntity = this.app.active.selectedCard.options.entity;
+            const classEntity = this.app.catalog.selectedCard.options.entity;
             const className = classEntity.name;
             let params = '';
             for (const param of entity.parameters) {
@@ -4985,7 +4985,7 @@ define("src/asledgehammer/mallet/component/java/JavaMethodCard", ["require", "ex
             (0, util_15.$get)(idBtnDelete).on('click', () => {
                 app.modalConfirm.show(() => {
                     var _a;
-                    const clazz = (_a = app.active.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
+                    const clazz = (_a = app.catalog.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
                     delete clazz.methods[entity.name];
                     app.showJavaClass(clazz);
                     app.sidebar.itemTree.selectedID = undefined;
@@ -5020,7 +5020,7 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
         }
         listen() {
             const { app, $inputName, $titleName, $btnName } = this;
-            const { active, sidebar, toast } = app;
+            const { catalog: active, sidebar, toast } = app;
             this.$inputName.on('input', () => {
                 setTimeout(() => this.$inputName.val((0, util_16.validateLuaVariableName)(this.$inputName.val())), 1);
             });
@@ -5392,8 +5392,8 @@ define("src/asledgehammer/mallet/component/Toast", ["require", "exports", "src/a
 define("src/asledgehammer/mallet/Active", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.Active = void 0;
-    class Active {
+    exports.Catalog = void 0;
+    class Catalog {
         constructor(app) {
             this.luaClasses = {};
             this.luaTables = {};
@@ -5420,7 +5420,7 @@ define("src/asledgehammer/mallet/Active", ["require", "exports"], function (requ
             this.app.$screenContent.empty();
         }
     }
-    exports.Active = Active;
+    exports.Catalog = Catalog;
 });
 define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/mallet/component/lua/LuaClassCard", "src/asledgehammer/mallet/component/java/JavaClassCard", "src/asledgehammer/mallet/component/Sidebar", "src/asledgehammer/mallet/component/lua/LuaConstructorCard", "src/asledgehammer/mallet/component/lua/LuaFieldCard", "src/asledgehammer/mallet/component/lua/LuaFunctionCard", "src/asledgehammer/mallet/component/java/JavaConstructorCard", "src/asledgehammer/mallet/component/java/JavaFieldCard", "src/asledgehammer/mallet/component/java/JavaMethodCard", "src/asledgehammer/mallet/modal/ModalName", "src/asledgehammer/mallet/modal/ModalConfirm", "src/asledgehammer/mallet/component/Toast", "src/asledgehammer/mallet/Active"], function (require, exports, hljs, LuaGenerator_5, RosettaLuaClass_3, RosettaLuaConstructor_2, util_19, RosettaJavaClass_3, JavaGenerator_5, LuaClassCard_1, JavaClassCard_1, Sidebar_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, JavaConstructorCard_1, JavaFieldCard_1, JavaMethodCard_1, ModalName_1, ModalConfirm_1, Toast_1, Active_1) {
     "use strict";
@@ -5429,7 +5429,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
     class App {
         constructor() {
             this.previewCode = '';
-            this.active = new Active_1.Active(this);
+            this.catalog = new Active_1.Catalog(this);
             this.sidebar = new Sidebar_1.Sidebar(this);
             this.toast = new Toast_1.Toast(this);
             this.modalName = new ModalName_1.ModalName(this);
@@ -5441,18 +5441,18 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             this.createSidebar();
         }
         loadJson(json) {
-            this.active.reset();
+            this.catalog.reset();
             if (json.luaClasses) {
                 for (const name of Object.keys(json.luaClasses)) {
                     const entity = new RosettaLuaClass_3.RosettaLuaClass(name, json.luaClasses[name]);
-                    this.active.luaClasses[name] = entity;
+                    this.catalog.luaClasses[name] = entity;
                 }
             }
             if (json.namespaces) {
                 for (const name of Object.keys(json.namespaces)) {
                     const namespace = new RosettaJavaClass_3.RosettaJavaNamespace(name, json.namespaces[name]);
                     for (const className of Object.keys(namespace.classes)) {
-                        this.active.javaClasses[className] = namespace.classes[className];
+                        this.catalog.javaClasses[className] = namespace.classes[className];
                     }
                 }
             }
@@ -5462,34 +5462,34 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             let keys;
             // Lua Classes
             let luaClasses = undefined;
-            keys = Object.keys(this.active.luaClasses);
+            keys = Object.keys(this.catalog.luaClasses);
             if (keys.length) {
                 luaClasses = {};
                 for (const name of keys) {
-                    luaClasses[name] = this.active.luaClasses[name].toJSON();
+                    luaClasses[name] = this.catalog.luaClasses[name].toJSON();
                 }
             }
             // Lua Tables
             let luaTables = undefined;
-            keys = Object.keys(this.active.luaTables);
+            keys = Object.keys(this.catalog.luaTables);
             if (keys.length) {
                 luaTables = {};
                 for (const name of keys) {
-                    luaTables[name] = this.active.luaTables[name].toJSON();
+                    luaTables[name] = this.catalog.luaTables[name].toJSON();
                 }
             }
             // Java Classes
             let namespaces = undefined;
-            keys = Object.keys(this.active.javaClasses);
+            keys = Object.keys(this.catalog.javaClasses);
             if (keys.length) {
                 namespaces = {};
                 for (const name of keys) {
-                    const javaClass = this.active.javaClasses[name];
+                    const javaClass = this.catalog.javaClasses[name];
                     const namespace = javaClass.namespace;
                     if (!namespaces[namespace.name]) {
                         namespaces[namespace.name] = {};
                     }
-                    namespaces[namespace.name][name] = this.active.javaClasses[name].toJSON();
+                    namespaces[namespace.name][name] = this.catalog.javaClasses[name].toJSON();
                 }
             }
             return {
@@ -5502,16 +5502,16 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
         showLuaClass(entity) {
             this.$screenContent.empty();
             // this.selected = entity.name;
-            this.active.selected = entity;
-            this.active.selectedCard = new LuaClassCard_1.LuaClassCard(this, { entity });
-            this.$screenContent.append(this.active.selectedCard.render());
-            this.active.selectedCard.listen();
-            this.active.selectedCard.update();
+            this.catalog.selected = entity;
+            this.catalog.selectedCard = new LuaClassCard_1.LuaClassCard(this, { entity });
+            this.$screenContent.append(this.catalog.selectedCard.render());
+            this.catalog.selectedCard.listen();
+            this.catalog.selectedCard.update();
             this.renderCode();
-            return this.active.selectedCard;
+            return this.catalog.selectedCard;
         }
         showLuaClassConstructor(entity) {
-            const { selected } = this.active;
+            const { selected } = this.catalog;
             if (!(selected instanceof RosettaLuaClass_3.RosettaLuaClass))
                 return null;
             if (!entity)
@@ -5525,7 +5525,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             return card;
         }
         showLuaClassField(entity) {
-            const { selected } = this.active;
+            const { selected } = this.catalog;
             if (!(selected instanceof RosettaLuaClass_3.RosettaLuaClass))
                 return null;
             this.$screenContent.empty();
@@ -5536,7 +5536,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             return card;
         }
         showLuaClassValue(entity) {
-            const { selected } = this.active;
+            const { selected } = this.catalog;
             if (!(selected instanceof RosettaLuaClass_3.RosettaLuaClass))
                 return null;
             this.$screenContent.empty();
@@ -5547,7 +5547,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             return card;
         }
         showLuaClassMethod(entity) {
-            const { selected } = this.active;
+            const { selected } = this.catalog;
             if (!(selected instanceof RosettaLuaClass_3.RosettaLuaClass))
                 return null;
             this.$screenContent.empty();
@@ -5558,7 +5558,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             return card;
         }
         showLuaClassFunction(entity) {
-            const { selected } = this.active;
+            const { selected } = this.catalog;
             if (!(selected instanceof RosettaLuaClass_3.RosettaLuaClass))
                 return null;
             this.$screenContent.empty();
@@ -5571,16 +5571,16 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
         showJavaClass(entity) {
             this.$screenContent.empty();
             // this.selected = entity.name;
-            this.active.selected = entity;
-            this.active.selectedCard = new JavaClassCard_1.JavaClassCard(this, { entity });
-            this.$screenContent.append(this.active.selectedCard.render());
-            this.active.selectedCard.listen();
-            this.active.selectedCard.update();
+            this.catalog.selected = entity;
+            this.catalog.selectedCard = new JavaClassCard_1.JavaClassCard(this, { entity });
+            this.$screenContent.append(this.catalog.selectedCard.render());
+            this.catalog.selectedCard.listen();
+            this.catalog.selectedCard.update();
             this.renderCode();
-            return this.active.selectedCard;
+            return this.catalog.selectedCard;
         }
         showJavaClassConstructor(entity) {
-            const { selected } = this.active;
+            const { selected } = this.catalog;
             console.log(`showJavaClassConstructor(${entity})`);
             if (!(selected instanceof RosettaJavaClass_3.RosettaJavaClass))
                 return null;
@@ -5597,7 +5597,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             return card;
         }
         showJavaClassField(entity) {
-            const { selected } = this.active;
+            const { selected } = this.catalog;
             if (!(selected instanceof RosettaJavaClass_3.RosettaJavaClass))
                 return null;
             this.$screenContent.empty();
@@ -5608,7 +5608,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             return card;
         }
         showJavaClassMethod(entity) {
-            const { selected } = this.active;
+            const { selected } = this.catalog;
             if (!(selected instanceof RosettaJavaClass_3.RosettaJavaClass))
                 return null;
             this.$screenContent.empty();
@@ -5622,11 +5622,11 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             const $renderPane = (0, util_19.$get)('code-preview');
             $renderPane.empty();
             /* (Keep empty if nothing renders) */
-            if (!this.active.selectedCard) {
+            if (!this.catalog.selectedCard) {
                 this.previewCode = '';
                 return;
             }
-            const { selected } = this.active;
+            const { selected } = this.catalog;
             let highlightedCode = '';
             if (selected instanceof RosettaLuaClass_3.RosettaLuaClass) {
                 this.previewCode = (0, LuaGenerator_5.generateLuaClass)(selected);

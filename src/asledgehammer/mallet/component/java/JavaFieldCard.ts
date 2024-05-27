@@ -33,7 +33,7 @@ export class JavaFieldCard extends JavaCard<JavaFieldCardOptions> {
     onHeaderHTML(): string | undefined {
         const { idBtnEdit, idBtnDelete } = this;
         const { entity, isStatic } = this.options!;
-        const javaClass = this.app.active.selectedCard?.options!.entity!;
+        const javaClass = this.app.catalog.selectedCard?.options!.entity!;
 
         let name = `${javaClass.name}.${entity.name}`;
         if (isStatic) {
@@ -91,7 +91,7 @@ export class JavaFieldCard extends JavaCard<JavaFieldCardOptions> {
 
         $get(idBtnDelete).on('click', () => {
             app.modalConfirm.show(() => {
-                const clazz = app.active.selectedCard?.options!.entity! as RosettaJavaClass;
+                const clazz = app.catalog.selectedCard?.options!.entity! as RosettaJavaClass;
                 delete clazz.fields[entity.name];
                 app.showJavaClass(clazz);
                 app.sidebar.itemTree.selectedID = undefined;

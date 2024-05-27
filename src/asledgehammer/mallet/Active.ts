@@ -5,7 +5,7 @@ import { RosettaLuaTable } from "../rosetta/lua/RosettaLuaTable";
 import { JavaClassCard } from "./component/java/JavaClassCard";
 import { LuaClassCard } from "./component/lua/LuaClassCard";
 
-export class Active {
+export class Catalog {
 
     readonly app: App;
 

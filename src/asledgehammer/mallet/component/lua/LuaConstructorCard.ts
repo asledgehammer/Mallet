@@ -19,13 +19,13 @@ export class LuaConstructorCard extends LuaCard<LuaConstructorCardOptions> {
     onRenderPreview(): string {
         if (!this.options) return '';
         const { entity } = this.options;
-        const classEntity = this.app.active.selectedCard!.options!.entity;
+        const classEntity = this.app.catalog.selectedCard!.options!.entity;
         const className = classEntity.name;
         return generateLuaConstructor(className, entity);
     }
 
     onHeaderHTML(): string | undefined {
-        const classEntity = this.app.active.selectedCard!.options!.entity;
+        const classEntity = this.app.catalog.selectedCard!.options!.entity;
         const className = classEntity.name;
         const name = `${className}:new( )`;
         return html` 
