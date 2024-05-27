@@ -3,6 +3,7 @@ import { RosettaLuaConstructor } from "./RosettaLuaConstructor";
 import { RosettaLuaField } from "./RosettaLuaField";
 import { RosettaLuaFunction } from "./RosettaLuaFunction";
 import { RosettaLuaParameter } from "./RosettaLuaParameter";
+import { RosettaLuaTable } from "./RosettaLuaTable";
 
 
 export const generateLuaField = (field: RosettaLuaField): string => {
@@ -184,7 +185,7 @@ export const generateLuaConstructor = (className: string, conzstructor: RosettaL
 };
 
 export const generateLuaClass = (clazz: RosettaLuaClass): string => {
-    let s = '--- @meta\n\n';
+    let s = '';
 
     // If the class has a description.
     if (clazz.notes && clazz.notes.length > 0) {
@@ -264,3 +265,8 @@ export const generateLuaClass = (clazz: RosettaLuaClass): string => {
 
     return s;
 }
+
+export const generateLuaTable = (table: RosettaLuaTable): string => {
+    // TODO: Implement.
+    return '';
+};

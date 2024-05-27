@@ -8,7 +8,7 @@ import { LuaCard } from './LuaCard';
 export class LuaClassCard extends LuaCard<LuaClassCardOptions> {
 
     onRenderPreview(): string {
-        return generateLuaClass(this.options!.entity);
+        return '--- @meta\n\n' + generateLuaClass(this.options!.entity);
     }
 
     readonly idAuthors: string;

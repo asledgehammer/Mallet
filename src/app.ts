@@ -22,7 +22,7 @@ import { JavaMethodCard } from './asledgehammer/mallet/component/java/JavaMethod
 import { ModalName } from './asledgehammer/mallet/modal/ModalName';
 import { ModalConfirm } from './asledgehammer/mallet/modal/ModalConfirm';
 import { Toast } from './asledgehammer/mallet/component/Toast';
-import { Catalog } from './asledgehammer/mallet/Active';
+import { Catalog } from './asledgehammer/mallet/Catalog';
 
 export class App {
 
@@ -49,74 +49,6 @@ export class App {
 
     async init() {
         this.createSidebar();
-    }
-
-    public loadJson(json: any): void {
-        this.catalog.reset();
-
-        if (json.luaClasses) {
-            for (const name of Object.keys(json.luaClasses)) {
-                const entity = new RosettaLuaClass(name, json.luaClasses[name]);
-                this.catalog.luaClasses[name] = entity;
-            }
-        }
-
-        if (json.namespaces) {
-            for (const name of Object.keys(json.namespaces)) {
-                const namespace = new RosettaJavaNamespace(name, json.namespaces[name]);
-                for (const className of Object.keys(namespace.classes)) {
-                    this.catalog.javaClasses[className] = namespace.classes[className];
-                }
-            }
-        }
-
-        this.sidebar.populateTrees();
-    }
-
-    public saveJson(): any {
-        let keys: string[];
-
-        // Lua Classes
-        let luaClasses: any = undefined;
-        keys = Object.keys(this.catalog.luaClasses);
-        if (keys.length) {
-            luaClasses = {};
-            for (const name of keys) {
-                luaClasses[name] = this.catalog.luaClasses[name].toJSON();
-            }
-        }
-
-        // Lua Tables
-        let luaTables: any = undefined;
-        keys = Object.keys(this.catalog.luaTables);
-        if (keys.length) {
-            luaTables = {};
-            for (const name of keys) {
-                luaTables[name] = this.catalog.luaTables[name].toJSON();
-            }
-        }
-
-        // Java Classes
-        let namespaces: any = undefined;
-        keys = Object.keys(this.catalog.javaClasses);
-        if (keys.length) {
-            namespaces = {};
-            for (const name of keys) {
-                const javaClass = this.catalog.javaClasses[name];
-                const namespace = javaClass.namespace;
-                if (!namespaces[namespace.name]) {
-                    namespaces[namespace.name] = {};
-                }
-                namespaces[namespace.name][name] = this.catalog.javaClasses[name].toJSON();
-            }
-        }
-
-        return {
-            $schema: 'https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-schema.json',
-            luaClasses,
-            luaTables,
-            namespaces
-        };
     }
 
     public showLuaClass(entity: RosettaLuaClass): LuaClassCard {
