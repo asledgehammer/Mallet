@@ -5434,6 +5434,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
     exports.App = void 0;
     class App {
         constructor() {
+            this.previewCode = '';
             this.active = new Active_1.Active(this);
             this.sidebar = new Sidebar_1.Sidebar(this);
             this.toast = new Toast_1.Toast(this);
@@ -5626,16 +5627,20 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
         renderCode() {
             const $renderPane = (0, util_19.$get)('code-preview');
             $renderPane.empty();
-            if (!this.active.selectedCard)
+            /* (Keep empty if nothing renders) */
+            if (!this.active.selectedCard) {
+                this.previewCode = '';
                 return;
+            }
             const { selected } = this.active;
             let highlightedCode = '';
             if (selected instanceof RosettaLuaClass_3.RosettaLuaClass) {
-                highlightedCode = hljs.default.highlightAuto((0, LuaGenerator_5.generateLuaClass)(selected), ['lua']).value;
+                this.previewCode = (0, LuaGenerator_5.generateLuaClass)(selected);
             }
             else if (selected instanceof RosettaJavaClass_3.RosettaJavaClass) {
-                highlightedCode = hljs.default.highlightAuto((0, JavaGenerator_5.generateJavaClass)(selected), ['lua']).value;
+                this.previewCode = (0, JavaGenerator_5.generateJavaClass)(selected);
             }
+            highlightedCode = hljs.default.highlightAuto(this.previewCode, ['lua']).value;
             $renderPane.html(highlightedCode);
         }
         createSidebar() {
@@ -5684,6 +5689,18 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                     mode = 'card';
                 }
             });
+            /* (For copying the preview code) */
+            $btnCopy.on('click', () => {
+                if (!this.previewCode.length) {
+                    this.toast.alert('No code to copy.', 'error');
+                    return;
+                }
+                this.copy(this.previewCode);
+                this.toast.alert('Copied code.', 'info');
+            });
+        }
+        copy(text) {
+            navigator.clipboard.writeText(text);
         }
     }
     exports.App = App;

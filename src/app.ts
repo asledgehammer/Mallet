@@ -34,6 +34,7 @@ export class App {
 
     readonly modalName: ModalName;
     readonly modalConfirm: ModalConfirm;
+    previewCode: string = '';
 
     constructor() {
 
@@ -241,16 +242,23 @@ export class App {
     renderCode() {
         const $renderPane = $get('code-preview');
         $renderPane.empty();
-        if (!this.active.selectedCard) return;
+
+        /* (Keep empty if nothing renders) */
+        if (!this.active.selectedCard) {
+            this.previewCode = '';
+            return;
+        }
 
         const { selected } = this.active;
 
         let highlightedCode = '';
         if (selected instanceof RosettaLuaClass) {
-            highlightedCode = hljs.default.highlightAuto(generateLuaClass(selected), ['lua']).value;
+            this.previewCode = generateLuaClass(selected);
         } else if (selected instanceof RosettaJavaClass) {
-            highlightedCode = hljs.default.highlightAuto(generateJavaClass(selected), ['lua']).value;
+            this.previewCode = generateJavaClass(selected);
         }
+
+        highlightedCode = hljs.default.highlightAuto(this.previewCode, ['lua']).value;
         $renderPane.html(highlightedCode);
     }
 
@@ -304,6 +312,21 @@ export class App {
                 mode = 'card';
             }
         });
+
+        /* (For copying the preview code) */
+        $btnCopy.on('click', () => {
+            if (!this.previewCode.length) {
+                this.toast.alert('No code to copy.', 'error');
+                return;
+            }
+            this.copy(this.previewCode);
+            this.toast.alert('Copied code.', 'info');
+        });
+    }
+
+
+    copy(text: string) {
+        navigator.clipboard.writeText(text);
     }
 }
 
