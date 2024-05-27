@@ -2814,6 +2814,13 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
                 case 'constructor': return 'fa-solid fa-copyright text-light mx-2 desaturate';
                 case 'nil': return 'fa-solid fa-ban fa-danger mx-2 desaturate';
                 case 'void': return 'fa-solid fa-xmark mx-2 desaturate';
+                case 'nibble':
+                case 'tinyint':
+                case 'short':
+                case 'int':
+                case 'integer':
+                case 'float':
+                case 'double':
                 case 'number': return 'fa-solid fa-hashtag text-warning mx-2 desaturate';
                 case 'string': return 'fa-solid fa-quote-left text-light mx-2 desaturate';
                 case 'boolean': return 'fa-solid fa-flag text-info mx-2 desaturate';

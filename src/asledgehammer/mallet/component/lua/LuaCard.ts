@@ -531,6 +531,13 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
 
             case 'void': return 'fa-solid fa-xmark mx-2 desaturate';
 
+            case 'nibble':
+            case 'tinyint':
+            case 'short':
+            case 'int':
+            case 'integer':
+            case 'float':
+            case 'double':
             case 'number': return 'fa-solid fa-hashtag text-warning mx-2 desaturate';
 
             case 'string': return 'fa-solid fa-quote-left text-light mx-2 desaturate';
