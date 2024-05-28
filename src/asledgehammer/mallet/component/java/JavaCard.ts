@@ -8,6 +8,8 @@ import { $get, html } from '../../../rosetta/util';
 import { RosettaJavaParameter } from '../../../rosetta/java/RosettaJavaParameter';
 import { RosettaJavaReturns } from '../../../rosetta/java/RosettaJavaReturns';
 import { RosettaEntity } from '../../../rosetta/RosettaEntity';
+import { RosettaJavaMethod } from '../../../rosetta/java/RosettaJavaMethod';
+import { RosettaJavaConstructor } from '../../../rosetta/java/RosettaJavaConstructor';
 
 export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<O> {
 
@@ -98,14 +100,14 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
         `;
     }
 
-    listenParameters(entity: { name: string, parameters: RosettaJavaParameter[] }, type: 'constructor' | 'function' | 'method'): void {
+    listenParameters(entity: RosettaJavaMethod | RosettaJavaConstructor): void {
         const { parameters } = entity;
-
-        for (const param of parameters) {
-
-            const idParamNotes = `${entity.name}-parameter-${param.name}-notes`;
-            const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
-            const idBtnDelete = `${entity.name}-parameter-${param.name}-delete`;
+        const name = entity instanceof RosettaJavaConstructor ? 'new' : entity.name;
+        
+        for (let index = 0; index < parameters.length; index++) {
+            const param = parameters[index];
+            const idParamNotes = `${name}-parameter-${param.name}-notes`;
+            const idBtnEdit = `${name}-parameter-${param.name}-edit`;
 
             createDeltaEditor(idParamNotes, param.notes!, (markdown: string) => {
                 param.notes = markdown;
@@ -113,28 +115,24 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
                 this.app.renderCode();
             });
 
-            $get(idBtnDelete).on('click', () => {
-                this.app.modalConfirm.show(() => {
-                    entity.parameters.splice(entity.parameters.indexOf(param), 1);
-                    this.update();
-
-                    // Implicit check for refreshability for parameters.
-                    if ((this as any).refreshParameters) (this as any).refreshParameters();
-
-                }, `Delete Parameter ${param.name}?`);
+            $get(idBtnEdit).on('click', () => {
+                const { modalName, $btnName, $titleName, $inputName } = this.app.modalName;
+                $titleName.html('Edit Parameter Name');
+                $btnName.html('Edit');
+                $btnName.removeClass('btn-success');
+                $btnName.addClass('btn-primary');
+                if (entity instanceof RosettaJavaConstructor) this.app.modalName.javaConstructor = entity as any;
+                else this.app.modalName.javaMethod = entity;
+                $inputName.val(param.name);
+                this.app.modalName.javaParameter = param;
+                this.app.modalName.nameMode = 'edit_parameter';
+                this.app.modalName.nameSelected = param.name;
+                this.app.modalName.javaCallback = (nameNew: string) => {
+                    $(`#${name}_${index}_name`).html(nameNew);
+                };
+                modalName.show();
             });
-
-            this.listenEdit({ name: param.name }, idBtnEdit, 'edit_parameter', 'Edit Parameter Name', `${entity.name}-${param.name}`);
         }
-        const idBtnAdd = `btn-${entity.name}-parameter-add`;
-        $get(idBtnAdd).on('click', () => {
-            const { modalName, $inputName, $titleName } = this.app.modalName;
-            this.app.modalName.nameMode = 'new_parameter';
-            this.app.modalName.nameSelected = `${type}-${entity.name}`;
-            $titleName.html('Add Parameter');
-            $inputName.val('');
-            modalName.show();
-        });
     }
 
     renderParameters(entity: { name: string, parameters: RosettaJavaParameter[] }, show: boolean = false): string {
@@ -143,7 +141,8 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
         let htmlParams = '';
 
         if (parameters && parameters.length) {
-            for (const param of parameters) {
+            for (let index = 0; index < parameters.length; index++) {
+                const param = parameters[index];
                 const idParamNotes = `${entity.name}-parameter-${param.name}-notes`;
                 const idCollapse = `${entity.name}-parameter-${param.name}-collapse`;
                 const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
@@ -153,7 +152,7 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
                         <div class="p-2" style="position: relative;">
                             <button class="border-0 accordion-button collapsed rounded-0 p-0 text-white" style="background-color: transparent !important" type="button" data-bs-toggle="collapse" data-bs-target="#${idCollapse}" aria-expanded="false" aria-controls="${idCollapse}">
                                 <div class="col-auto responsive-badge border border-1 border-light-half desaturate shadow px-2 me-2" style="display: inline;"><strong>${param.type.basic}</strong></div>
-                                <h6 class="font-monospace mb-1">${param.name}</h6>
+                                <h6 id="${entity.name}_${index}_name" class="font-monospace mb-1">${param.name}</h6>
                             </button>
                         </div>
                         <div style="position: absolute; height: 32px; top: 5px; right: 2rem; z-index: 4;">

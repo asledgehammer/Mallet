@@ -266,11 +266,15 @@ export class ItemTree {
         for (const fieldName of fieldNames) {
             const field = entity.fields[fieldName];
             const id = `lua-class-${entity.name}-field-${field.name}`;
+
+            const classes: string[] = ['item-tree-item', 'lua-field-item'];
+            if (id === this.selectedID) classes.push('selected');
+
             fields.push({
                 text: field.name,
                 icon: LuaCard.getTypeIcon(field.type),
                 id,
-                class: ['item-tree-item', 'lua-field-item']
+                class: classes
             });
         }
 
@@ -280,11 +284,15 @@ export class ItemTree {
         for (const valueName of valueNames) {
             const value = entity.values[valueName];
             const id = `lua-class-${entity.name}-value-${value.name}`;
+
+            const classes: string[] = ['item-tree-item', 'lua-value-item'];
+            if (id === this.selectedID) classes.push('selected');
+
             values.push({
                 text: html`<span class="fst-italic">${value.name}</span>`,
                 icon: LuaCard.getTypeIcon(value.type),
                 id,
-                class: ['item-tree-item', 'lua-value-item']
+                class: classes
             });
         }
 
@@ -294,11 +302,15 @@ export class ItemTree {
         for (const methodName of methodNames) {
             const method = entity.methods[methodName];
             const id = `lua-class-${entity.name}-method-${method.name}`;
+
+            const classes: string[] = ['item-tree-item', 'lua-method-item'];
+            if (id === this.selectedID) classes.push('selected');
+
             methods.push({
                 text: html`<i class="fa-solid fa-xmark me-2" title="${method.returns.type}"></i>${method.name}`,
                 icon: 'fa-solid fa-terminal text-success mx-2',
                 id,
-                class: ['item-tree-item', 'lua-method-item'],
+                class: classes
             });
         }
 
@@ -308,11 +320,15 @@ export class ItemTree {
         for (const functionName of functionNames) {
             const func = entity.functions[functionName];
             const id = `lua-class-${entity.name}-function-${func.name}`;
+
+            const classes: string[] = ['item-tree-item', 'lua-function-item'];
+            if(id === this.selectedID) classes.push('selected');
+
             functions.push({
                 text: html`<i class="fa-solid fa-xmark me-2" title="${func.returns.type}"></i>${func.name}`,
                 icon: 'fa-solid fa-terminal text-success mx-2',
                 id,
-                class: ['item-tree-item', 'lua-function-item'],
+                class: classes
             });
         }
 
@@ -323,13 +339,18 @@ export class ItemTree {
         $sidebarContentLower.append('<div id="tree-lower" class="rounded-0 bg-dark text-white"></div>');
         $treeLower = $get('tree-lower');
 
+        const conzID = `lua-class-${entity.name}-constructor`;
+        const conzClasses: string[] = ['item-tree-item', 'lua-constructor-item'];
+        if(conzID === this.selectedID) conzClasses.push('selected');
+
         // @ts-ignore
         $treeLower.bstreeview({
             data: [
                 {
+                    id: conzID,
                     text: "Constructor",
                     icon: LuaCard.getTypeIcon('constructor'),
-                    class: ['item-tree-item', 'lua-constructor-item']
+                    class: conzClasses
                 },
                 {
                     text: "Fields",
@@ -365,9 +386,6 @@ export class ItemTree {
                 },
             ]
         });
-
-        // Apply jQuery listeners next.
-
     }
 
     populateLuaTable(entity: RosettaLuaTable) {
@@ -477,11 +495,14 @@ export class ItemTree {
                 if (params.length) params = params.substring(0, params.length - 2);
             }
 
+            const classes: string[] = ['item-tree-item', 'java-class-constructor-item'];
+            if (id === this.selectedID) classes.push('selected');
+
             constructors.push({
                 text: wrapItem(`${entity.name}(${params})`),
                 icon: LuaCard.getTypeIcon('object'),
                 id,
-                class: ['item-tree-item', 'java-class-constructor-item']
+                class: classes
             });
         }
 
@@ -491,11 +512,15 @@ export class ItemTree {
             const field = entity.fields[name];
             if (field.isStatic()) {
                 const id = `java-class-${entity.name}-field-${field.name}`;
+
+                const classes: string[] = ['item-tree-item', 'java-class-field-item'];
+                if (id === this.selectedID) classes.push('selected');
+
                 staticFields.push({
                     text: wrapItem(field.name),
                     icon: LuaCard.getTypeIcon(field.type.basic),
                     id,
-                    class: ['item-tree-item', 'java-class-field-item']
+                    class: classes
                 });
             }
         }
@@ -505,11 +530,15 @@ export class ItemTree {
             const field = entity.fields[name];
             if (!field.isStatic()) {
                 const id = `java-class-${entity.name}-field-${field.name}`;
+
+                const classes: string[] = ['item-tree-item', 'java-class-field-item'];
+                if (id === this.selectedID) classes.push('selected');
+
                 fields.push({
                     text: wrapItem(field.name),
                     icon: LuaCard.getTypeIcon(field.type.basic),
                     id,
-                    class: ['item-tree-item', 'java-class-field-item']
+                    class: classes
                 });
             }
         }
@@ -529,11 +558,14 @@ export class ItemTree {
             }
             if (params.length) params = params.substring(0, params.length - 2);
 
+            const classes: string[] = ['item-tree-item', 'java-class-method-item'];
+            if (id === this.selectedID) classes.push('selected');
+
             staticMethods.push({
                 text: wrapItem(`${method.name}(${params})`),
                 icon: LuaCard.getTypeIcon(method.returns.type.basic),
                 id,
-                class: ['item-tree-item', 'java-class-method-item']
+                class: classes
             });
         }
 
@@ -552,11 +584,14 @@ export class ItemTree {
             }
             if (params.length) params = params.substring(0, params.length - 2);
 
+            const classes: string[] = ['item-tree-item', 'java-class-method-item'];
+            if (id === this.selectedID) classes.push('selected');
+
             methods.push({
                 text: wrapItem(`${method.name}(${params})`),
                 icon: LuaCard.getTypeIcon(method.returns.type.basic),
                 id,
-                class: ['item-tree-item', 'java-class-method-item']
+                class: classes
             });
         }
 
@@ -614,6 +649,6 @@ export class ItemTree {
         if (methods.length) data.push(folderMethods);
 
         // @ts-ignore
-        $treeLower.bstreeview({data});
+        $treeLower.bstreeview({ data });
     }
 }

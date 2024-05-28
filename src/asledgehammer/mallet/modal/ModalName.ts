@@ -1,5 +1,8 @@
 import { App } from "../../../app";
 import { RosettaJavaClass } from "../../rosetta/java/RosettaJavaClass";
+import { RosettaJavaConstructor } from "../../rosetta/java/RosettaJavaConstructor";
+import { RosettaJavaMethod } from "../../rosetta/java/RosettaJavaMethod";
+import { RosettaJavaParameter } from "../../rosetta/java/RosettaJavaParameter";
 import { RosettaLuaClass } from "../../rosetta/lua/RosettaLuaClass";
 import { RosettaLuaConstructor } from "../../rosetta/lua/RosettaLuaConstructor";
 import { RosettaLuaFunction } from "../../rosetta/lua/RosettaLuaFunction";
@@ -15,6 +18,12 @@ export class ModalName {
     readonly $inputName: JQuery<HTMLInputElement>;
     readonly $btnName: JQuery<HTMLButtonElement>;
     readonly $titleName: JQuery<HTMLHeadingElement>;
+
+    // Temporary fields for editing.
+    javaMethod: RosettaJavaMethod | undefined = undefined;
+    javaConstructor: RosettaJavaMethod | undefined = undefined;
+    javaParameter: RosettaJavaParameter | undefined = undefined;
+    javaCallback: ((name: string) => void) | undefined = undefined;
 
     nameSelected: string | undefined;
     nameMode: NameModeType;
@@ -59,7 +68,7 @@ export class ModalName {
                 case 'edit_class': {
                     if (clazz instanceof RosettaLuaClass) {
                         try {
-                            
+
                             // Modify the dictionary.
                             delete active.luaClasses[clazz.name];
                             clazz.name = name;
@@ -299,6 +308,50 @@ export class ModalName {
                             app.renderCode();
                             sidebar.populateTrees();
                             toast.alert('Edited Lua Parameter.');
+                        } catch (e) {
+                            toast.alert(`Failed to edit Lua Parameter.`, 'error');
+                            console.error(e);
+                        }
+                    } else if (clazz instanceof RosettaJavaClass) {
+                        try {
+                            const split = nameOld.split('-');
+                            const funcName = split[0];
+                            const paramName = split[1];
+                            let type: 'constructor' | 'method' | null = null;
+                            let method: RosettaJavaConstructor | RosettaJavaMethod | undefined = undefined;
+                            let param = this.javaParameter;
+                            if (funcName === 'new') {
+                                method = this.javaConstructor;
+                                type = 'constructor';
+                            } else {
+                                method = this.javaMethod;
+                            }
+                            if (!method) {
+                                console.warn(`Unknown function / method / constructor: ${clazz.name}.${funcName}!`);
+                                break;
+                            }
+                            if (!param) {
+                                console.warn(`Unknown parameter: ${clazz.name}.${funcName}#${paramName}!`);
+                                break;
+                            }
+                            param.name = name;
+                            if (type === 'constructor') {
+                                app.showJavaClassConstructor((method as any) as RosettaJavaConstructor);
+                            } else if (type === 'method') {
+                                app.showJavaClassMethod((method as any) as RosettaJavaMethod);
+                            }
+                            app.renderCode();
+                            sidebar.populateTrees();
+                            toast.alert('Edited Lua Parameter.');
+
+                            if (this.javaCallback) {
+                                this.javaCallback(name);
+                            }
+
+                            // Reset.
+                            this.javaConstructor = undefined;
+                            this.javaMethod = undefined;
+                            this.javaParameter = undefined;
                         } catch (e) {
                             toast.alert(`Failed to edit Lua Parameter.`, 'error');
                             console.error(e);

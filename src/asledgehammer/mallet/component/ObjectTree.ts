@@ -99,36 +99,45 @@ export class ObjectTree {
 
         const luaClasses = [];
         for (const name of Object.keys(this.app.catalog.luaClasses)) {
+            const id = `object-lua-class-${name}`;
+            const classes: string[] = ['object-tree-item', 'object-tree-lua-class'];
+            if (this.selectedID === id) classes.push('selected');
             luaClasses.push(
                 {
-                    id: `object-lua-class-${name}`,
+                    id,
                     text: wrapItem(name),
                     icon: LuaCard.getTypeIcon('class'),
-                    class: ['object-tree-item', 'object-tree-lua-class'],
+                    class: classes
                 }
             );
         }
 
         const luaTables = [];
         for (const name of Object.keys(this.app.catalog.luaTables)) {
+            const id = `object-lua-table-${name}`;
+            const classes: string[] = ['object-tree-item', 'object-tree-lua-table'];
+            if (this.selectedID === id) classes.push('selected');
             luaTables.push(
                 {
-                    id: `object-lua-table-${name}`,
+                    id,
                     text: wrapItem(name),
                     icon: LuaCard.getTypeIcon('class'),
-                    class: ['object-tree-item', 'object-tree-lua-table'],
+                    class: classes,
                 }
             );
         }
 
         const javaClasses = [];
         for (const name of Object.keys(this.app.catalog.javaClasses)) {
+            const id = `object-java-class-${name}`;
+            const classes: string[] = ['object-tree-item', 'object-tree-java-class'];
+            if (this.selectedID === id) classes.push('selected');
             javaClasses.push(
                 {
-                    id: `object-java-class-${name}`,
+                    id,
                     text: wrapItem(name),
                     icon: LuaCard.getTypeIcon('class'),
-                    class: ['object-tree-item', 'object-tree-java-class'],
+                    class: classes,
                 }
             );
         }

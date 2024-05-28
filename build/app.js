@@ -3085,7 +3085,7 @@ define("src/asledgehammer/mallet/component/lua/LuaClassCard", ["require", "expor
     }
     exports.LuaClassCard = LuaClassCard;
 });
-define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports", "highlight.js", "src/asledgehammer/mallet/component/CardComponent", "src/asledgehammer/Delta", "src/asledgehammer/rosetta/util"], function (require, exports, hljs, CardComponent_2, Delta_2, util_5) {
+define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports", "highlight.js", "src/asledgehammer/mallet/component/CardComponent", "src/asledgehammer/Delta", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/java/RosettaJavaConstructor"], function (require, exports, hljs, CardComponent_2, Delta_2, util_5, RosettaJavaConstructor_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.JavaCard = void 0;
@@ -3164,44 +3164,46 @@ define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports"
             </div>
         `;
         }
-        listenParameters(entity, type) {
+        listenParameters(entity) {
             const { parameters } = entity;
-            for (const param of parameters) {
-                const idParamNotes = `${entity.name}-parameter-${param.name}-notes`;
-                const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
-                const idBtnDelete = `${entity.name}-parameter-${param.name}-delete`;
+            const name = entity instanceof RosettaJavaConstructor_2.RosettaJavaConstructor ? 'new' : entity.name;
+            for (let index = 0; index < parameters.length; index++) {
+                const param = parameters[index];
+                const idParamNotes = `${name}-parameter-${param.name}-notes`;
+                const idBtnEdit = `${name}-parameter-${param.name}-edit`;
                 (0, Delta_2.createDeltaEditor)(idParamNotes, param.notes, (markdown) => {
                     param.notes = markdown;
                     this.update();
                     this.app.renderCode();
                 });
-                (0, util_5.$get)(idBtnDelete).on('click', () => {
-                    this.app.modalConfirm.show(() => {
-                        entity.parameters.splice(entity.parameters.indexOf(param), 1);
-                        this.update();
-                        // Implicit check for refreshability for parameters.
-                        if (this.refreshParameters)
-                            this.refreshParameters();
-                    }, `Delete Parameter ${param.name}?`);
+                (0, util_5.$get)(idBtnEdit).on('click', () => {
+                    const { modalName, $btnName, $titleName, $inputName } = this.app.modalName;
+                    $titleName.html('Edit Parameter Name');
+                    $btnName.html('Edit');
+                    $btnName.removeClass('btn-success');
+                    $btnName.addClass('btn-primary');
+                    if (entity instanceof RosettaJavaConstructor_2.RosettaJavaConstructor)
+                        this.app.modalName.javaConstructor = entity;
+                    else
+                        this.app.modalName.javaMethod = entity;
+                    $inputName.val(param.name);
+                    this.app.modalName.javaParameter = param;
+                    this.app.modalName.nameMode = 'edit_parameter';
+                    this.app.modalName.nameSelected = param.name;
+                    this.app.modalName.javaCallback = (nameNew) => {
+                        $(`#${name}_${index}_name`).html(nameNew);
+                    };
+                    modalName.show();
                 });
-                this.listenEdit({ name: param.name }, idBtnEdit, 'edit_parameter', 'Edit Parameter Name', `${entity.name}-${param.name}`);
             }
-            const idBtnAdd = `btn-${entity.name}-parameter-add`;
-            (0, util_5.$get)(idBtnAdd).on('click', () => {
-                const { modalName, $inputName, $titleName } = this.app.modalName;
-                this.app.modalName.nameMode = 'new_parameter';
-                this.app.modalName.nameSelected = `${type}-${entity.name}`;
-                $titleName.html('Add Parameter');
-                $inputName.val('');
-                modalName.show();
-            });
         }
         renderParameters(entity, show = false) {
             const { parameters } = entity;
             const idAccordion = `${entity.name}-parameters-accordion`;
             let htmlParams = '';
             if (parameters && parameters.length) {
-                for (const param of parameters) {
+                for (let index = 0; index < parameters.length; index++) {
+                    const param = parameters[index];
                     const idParamNotes = `${entity.name}-parameter-${param.name}-notes`;
                     const idCollapse = `${entity.name}-parameter-${param.name}-collapse`;
                     const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
@@ -3211,7 +3213,7 @@ define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports"
                         <div class="p-2" style="position: relative;">
                             <button class="border-0 accordion-button collapsed rounded-0 p-0 text-white" style="background-color: transparent !important" type="button" data-bs-toggle="collapse" data-bs-target="#${idCollapse}" aria-expanded="false" aria-controls="${idCollapse}">
                                 <div class="col-auto responsive-badge border border-1 border-light-half desaturate shadow px-2 me-2" style="display: inline;"><strong>${param.type.basic}</strong></div>
-                                <h6 class="font-monospace mb-1">${param.name}</h6>
+                                <h6 id="${entity.name}_${index}_name" class="font-monospace mb-1">${param.name}</h6>
                             </button>
                         </div>
                         <div style="position: absolute; height: 32px; top: 5px; right: 2rem; z-index: 4;">
@@ -3748,11 +3750,14 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
             for (const fieldName of fieldNames) {
                 const field = entity.fields[fieldName];
                 const id = `lua-class-${entity.name}-field-${field.name}`;
+                const classes = ['item-tree-item', 'lua-field-item'];
+                if (id === this.selectedID)
+                    classes.push('selected');
                 fields.push({
                     text: field.name,
                     icon: LuaCard_2.LuaCard.getTypeIcon(field.type),
                     id,
-                    class: ['item-tree-item', 'lua-field-item']
+                    class: classes
                 });
             }
             const valueNames = Object.keys(entity.values);
@@ -3761,11 +3766,14 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
             for (const valueName of valueNames) {
                 const value = entity.values[valueName];
                 const id = `lua-class-${entity.name}-value-${value.name}`;
+                const classes = ['item-tree-item', 'lua-value-item'];
+                if (id === this.selectedID)
+                    classes.push('selected');
                 values.push({
                     text: (0, util_7.html) `<span class="fst-italic">${value.name}</span>`,
                     icon: LuaCard_2.LuaCard.getTypeIcon(value.type),
                     id,
-                    class: ['item-tree-item', 'lua-value-item']
+                    class: classes
                 });
             }
             const methodNames = Object.keys(entity.methods);
@@ -3774,11 +3782,14 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
             for (const methodName of methodNames) {
                 const method = entity.methods[methodName];
                 const id = `lua-class-${entity.name}-method-${method.name}`;
+                const classes = ['item-tree-item', 'lua-method-item'];
+                if (id === this.selectedID)
+                    classes.push('selected');
                 methods.push({
                     text: (0, util_7.html) `<i class="fa-solid fa-xmark me-2" title="${method.returns.type}"></i>${method.name}`,
                     icon: 'fa-solid fa-terminal text-success mx-2',
                     id,
-                    class: ['item-tree-item', 'lua-method-item'],
+                    class: classes
                 });
             }
             const functionNames = Object.keys(entity.functions);
@@ -3787,11 +3798,14 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
             for (const functionName of functionNames) {
                 const func = entity.functions[functionName];
                 const id = `lua-class-${entity.name}-function-${func.name}`;
+                const classes = ['item-tree-item', 'lua-function-item'];
+                if (id === this.selectedID)
+                    classes.push('selected');
                 functions.push({
                     text: (0, util_7.html) `<i class="fa-solid fa-xmark me-2" title="${func.returns.type}"></i>${func.name}`,
                     icon: 'fa-solid fa-terminal text-success mx-2',
                     id,
-                    class: ['item-tree-item', 'lua-function-item'],
+                    class: classes
                 });
             }
             let $treeLower = (0, util_7.$get)('tree-lower');
@@ -3799,13 +3813,18 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
             const $sidebarContentLower = (0, util_7.$get)('sidebar-content-lower');
             $sidebarContentLower.append('<div id="tree-lower" class="rounded-0 bg-dark text-white"></div>');
             $treeLower = (0, util_7.$get)('tree-lower');
+            const conzID = `lua-class-${entity.name}-constructor`;
+            const conzClasses = ['item-tree-item', 'lua-constructor-item'];
+            if (conzID === this.selectedID)
+                conzClasses.push('selected');
             // @ts-ignore
             $treeLower.bstreeview({
                 data: [
                     {
+                        id: conzID,
                         text: "Constructor",
                         icon: LuaCard_2.LuaCard.getTypeIcon('constructor'),
-                        class: ['item-tree-item', 'lua-constructor-item']
+                        class: conzClasses
                     },
                     {
                         text: "Fields",
@@ -3841,7 +3860,6 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                     },
                 ]
             });
-            // Apply jQuery listeners next.
         }
         populateLuaTable(entity) {
             if (!entity)
@@ -3936,11 +3954,14 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                     if (params.length)
                         params = params.substring(0, params.length - 2);
                 }
+                const classes = ['item-tree-item', 'java-class-constructor-item'];
+                if (id === this.selectedID)
+                    classes.push('selected');
                 constructors.push({
                     text: wrapItem(`${entity.name}(${params})`),
                     icon: LuaCard_2.LuaCard.getTypeIcon('object'),
                     id,
-                    class: ['item-tree-item', 'java-class-constructor-item']
+                    class: classes
                 });
             }
             // Static field(s)
@@ -3948,11 +3969,14 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 const field = entity.fields[name];
                 if (field.isStatic()) {
                     const id = `java-class-${entity.name}-field-${field.name}`;
+                    const classes = ['item-tree-item', 'java-class-field-item'];
+                    if (id === this.selectedID)
+                        classes.push('selected');
                     staticFields.push({
                         text: wrapItem(field.name),
                         icon: LuaCard_2.LuaCard.getTypeIcon(field.type.basic),
                         id,
-                        class: ['item-tree-item', 'java-class-field-item']
+                        class: classes
                     });
                 }
             }
@@ -3961,11 +3985,14 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 const field = entity.fields[name];
                 if (!field.isStatic()) {
                     const id = `java-class-${entity.name}-field-${field.name}`;
+                    const classes = ['item-tree-item', 'java-class-field-item'];
+                    if (id === this.selectedID)
+                        classes.push('selected');
                     fields.push({
                         text: wrapItem(field.name),
                         icon: LuaCard_2.LuaCard.getTypeIcon(field.type.basic),
                         id,
-                        class: ['item-tree-item', 'java-class-field-item']
+                        class: classes
                     });
                 }
             }
@@ -3981,11 +4008,14 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 }
                 if (params.length)
                     params = params.substring(0, params.length - 2);
+                const classes = ['item-tree-item', 'java-class-method-item'];
+                if (id === this.selectedID)
+                    classes.push('selected');
                 staticMethods.push({
                     text: wrapItem(`${method.name}(${params})`),
                     icon: LuaCard_2.LuaCard.getTypeIcon(method.returns.type.basic),
                     id,
-                    class: ['item-tree-item', 'java-class-method-item']
+                    class: classes
                 });
             }
             // Instance method(s)
@@ -4000,11 +4030,14 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 }
                 if (params.length)
                     params = params.substring(0, params.length - 2);
+                const classes = ['item-tree-item', 'java-class-method-item'];
+                if (id === this.selectedID)
+                    classes.push('selected');
                 methods.push({
                     text: wrapItem(`${method.name}(${params})`),
                     icon: LuaCard_2.LuaCard.getTypeIcon(method.returns.type.basic),
                     id,
-                    class: ['item-tree-item', 'java-class-method-item']
+                    class: classes
                 });
             }
             const folderConstructors = {
@@ -4144,29 +4177,41 @@ define("src/asledgehammer/mallet/component/ObjectTree", ["require", "exports", "
             $treeUpper = (0, util_8.$get)('tree-upper');
             const luaClasses = [];
             for (const name of Object.keys(this.app.catalog.luaClasses)) {
+                const id = `object-lua-class-${name}`;
+                const classes = ['object-tree-item', 'object-tree-lua-class'];
+                if (this.selectedID === id)
+                    classes.push('selected');
                 luaClasses.push({
-                    id: `object-lua-class-${name}`,
+                    id,
                     text: wrapItem(name),
                     icon: LuaCard_3.LuaCard.getTypeIcon('class'),
-                    class: ['object-tree-item', 'object-tree-lua-class'],
+                    class: classes
                 });
             }
             const luaTables = [];
             for (const name of Object.keys(this.app.catalog.luaTables)) {
+                const id = `object-lua-table-${name}`;
+                const classes = ['object-tree-item', 'object-tree-lua-table'];
+                if (this.selectedID === id)
+                    classes.push('selected');
                 luaTables.push({
-                    id: `object-lua-table-${name}`,
+                    id,
                     text: wrapItem(name),
                     icon: LuaCard_3.LuaCard.getTypeIcon('class'),
-                    class: ['object-tree-item', 'object-tree-lua-table'],
+                    class: classes,
                 });
             }
             const javaClasses = [];
             for (const name of Object.keys(this.app.catalog.javaClasses)) {
+                const id = `object-java-class-${name}`;
+                const classes = ['object-tree-item', 'object-tree-java-class'];
+                if (this.selectedID === id)
+                    classes.push('selected');
                 javaClasses.push({
-                    id: `object-java-class-${name}`,
+                    id,
                     text: wrapItem(name),
                     icon: LuaCard_3.LuaCard.getTypeIcon('class'),
-                    class: ['object-tree-item', 'object-tree-java-class'],
+                    class: classes,
                 });
             }
             const folderLuaClasses = {
@@ -4848,7 +4893,7 @@ define("src/asledgehammer/mallet/component/java/JavaConstructorCard", ["require"
             const { idNotes } = this;
             const { entity } = this.options;
             this.listenNotes(entity, idNotes);
-            this.listenParameters(Object.assign(Object.assign({}, entity), { name: 'new' }), 'constructor');
+            this.listenParameters(entity);
             this.listenPreview();
         }
         refreshParameters() {
@@ -4857,7 +4902,7 @@ define("src/asledgehammer/mallet/component/java/JavaConstructorCard", ["require"
             const $paramContainer = (0, util_13.$get)(idParamContainer);
             $paramContainer.empty();
             $paramContainer.html(this.renderParameters({ name: 'new', parameters: entity.parameters }, true));
-            this.listenParameters({ name: 'new', parameters: entity.parameters }, 'constructor');
+            this.listenParameters(entity);
         }
     }
     exports.JavaConstructorCard = JavaConstructorCard;
@@ -5029,7 +5074,7 @@ define("src/asledgehammer/mallet/component/java/JavaMethodCard", ["require", "ex
             const { app, idBtnDelete, idNotes, idReturnType, idReturnNotes } = this;
             const { entity, isStatic } = this.options;
             this.listenNotes(entity, idNotes);
-            this.listenParameters(entity, 'method');
+            this.listenParameters(entity);
             this.listenReturns(entity, idReturnType, idReturnNotes, idReturnType);
             this.listenPreview();
             (0, util_15.$get)(idBtnDelete).on('click', () => {
@@ -5049,7 +5094,7 @@ define("src/asledgehammer/mallet/component/java/JavaMethodCard", ["require", "ex
             const $paramContainer = (0, util_15.$get)(idParamContainer);
             $paramContainer.empty();
             $paramContainer.html(this.renderParameters(entity, true));
-            this.listenParameters(entity, isStatic ? 'function' : 'method');
+            this.listenParameters(entity);
         }
     }
     exports.JavaMethodCard = JavaMethodCard;
@@ -5060,6 +5105,11 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
     exports.ModalName = void 0;
     class ModalName {
         constructor(app) {
+            // Temporary fields for editing.
+            this.javaMethod = undefined;
+            this.javaConstructor = undefined;
+            this.javaParameter = undefined;
+            this.javaCallback = undefined;
             this.app = app;
             // @ts-ignore This modal is for new items and editing their names.
             this.modalName = new bootstrap.Modal('#modal-name', {});
@@ -5352,6 +5402,52 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 app.renderCode();
                                 sidebar.populateTrees();
                                 toast.alert('Edited Lua Parameter.');
+                            }
+                            catch (e) {
+                                toast.alert(`Failed to edit Lua Parameter.`, 'error');
+                                console.error(e);
+                            }
+                        }
+                        else if (clazz instanceof RosettaJavaClass_2.RosettaJavaClass) {
+                            try {
+                                const split = nameOld.split('-');
+                                const funcName = split[0];
+                                const paramName = split[1];
+                                let type = null;
+                                let method = undefined;
+                                let param = this.javaParameter;
+                                if (funcName === 'new') {
+                                    method = this.javaConstructor;
+                                    type = 'constructor';
+                                }
+                                else {
+                                    method = this.javaMethod;
+                                }
+                                if (!method) {
+                                    console.warn(`Unknown function / method / constructor: ${clazz.name}.${funcName}!`);
+                                    break;
+                                }
+                                if (!param) {
+                                    console.warn(`Unknown parameter: ${clazz.name}.${funcName}#${paramName}!`);
+                                    break;
+                                }
+                                param.name = name;
+                                if (type === 'constructor') {
+                                    app.showJavaClassConstructor(method);
+                                }
+                                else if (type === 'method') {
+                                    app.showJavaClassMethod(method);
+                                }
+                                app.renderCode();
+                                sidebar.populateTrees();
+                                toast.alert('Edited Lua Parameter.');
+                                if (this.javaCallback) {
+                                    this.javaCallback(name);
+                                }
+                                // Reset.
+                                this.javaConstructor = undefined;
+                                this.javaMethod = undefined;
+                                this.javaParameter = undefined;
                             }
                             catch (e) {
                                 toast.alert(`Failed to edit Lua Parameter.`, 'error');
