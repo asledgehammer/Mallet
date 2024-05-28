@@ -66,6 +66,7 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
 
     listenNotes(entity: { notes: string | undefined }, idNotes: string): void {
         createDeltaEditor(idNotes, entity.notes!, (markdown: string) => {
+            while (markdown.endsWith('\n')) markdown = markdown.substring(0, markdown.length - 1);
             entity.notes = markdown;
             this.update();
             this.app.renderCode();
@@ -103,13 +104,14 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
     listenParameters(entity: RosettaJavaMethod | RosettaJavaConstructor): void {
         const { parameters } = entity;
         const name = entity instanceof RosettaJavaConstructor ? 'new' : entity.name;
-        
+
         for (let index = 0; index < parameters.length; index++) {
             const param = parameters[index];
             const idParamNotes = `${name}-parameter-${param.name}-notes`;
             const idBtnEdit = `${name}-parameter-${param.name}-edit`;
 
             createDeltaEditor(idParamNotes, param.notes!, (markdown: string) => {
+                while (markdown.endsWith('\n')) markdown = markdown.substring(0, markdown.length - 1);
                 param.notes = markdown;
                 this.update();
                 this.app.renderCode();
@@ -246,6 +248,7 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
 
     listenReturns(entity: { returns: RosettaJavaReturns }, idReturnType: string, idReturnNotes: string, idSelect: string): void {
         createDeltaEditor(idReturnNotes, entity.returns.notes!, (markdown: string) => {
+            while (markdown.endsWith('\n')) markdown = markdown.substring(0, markdown.length - 1);
             entity.returns.notes = markdown;
             this.update();
             this.app.renderCode();

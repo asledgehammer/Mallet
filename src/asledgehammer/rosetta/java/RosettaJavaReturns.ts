@@ -27,13 +27,9 @@ export class RosettaJavaReturns extends RosettaEntity {
 
   toJSON(patch: boolean = false): any {
     const { type, notes } = this;
-
     const json: any = {};
-
-    /* (Properties) */
-    if (!patch) json.type = type;
+    json.type = type.toJSON(patch);
     json.notes = notes !== undefined && notes !== '' ? notes : undefined;
-
     return json;
   }
 }

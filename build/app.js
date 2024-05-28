@@ -1243,10 +1243,8 @@ define("src/asledgehammer/rosetta/java/RosettaJavaType", ["require", "exports", 
         toJSON(patch = false) {
             const { rawBasic: basic, full } = this;
             const json = {};
-            if (!patch) {
-                json.basic = basic;
-                json.full = full;
-            }
+            json.basic = basic;
+            json.full = full;
             return json;
         }
     }
@@ -1374,9 +1372,7 @@ define("src/asledgehammer/rosetta/java/RosettaJavaReturns", ["require", "exports
         toJSON(patch = false) {
             const { type, notes } = this;
             const json = {};
-            /* (Properties) */
-            if (!patch)
-                json.type = type;
+            json.type = type.toJSON(patch);
             json.notes = notes !== undefined && notes !== '' ? notes : undefined;
             return json;
         }
@@ -2563,6 +2559,8 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
         }
         listenNotes(entity, idNotes) {
             (0, Delta_1.createDeltaEditor)(idNotes, entity.notes, (markdown) => {
+                while (markdown.endsWith('\n'))
+                    markdown = markdown.substring(0, markdown.length - 1);
                 entity.notes = markdown;
                 this.update();
                 this.app.renderCode();
@@ -2602,6 +2600,8 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
                 const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
                 const idBtnDelete = `${entity.name}-parameter-${param.name}-delete`;
                 (0, Delta_1.createDeltaEditor)(idParamNotes, param.notes, (markdown) => {
+                    while (markdown.endsWith('\n'))
+                        markdown = markdown.substring(0, markdown.length - 1);
                     param.notes = markdown;
                     this.update();
                     this.app.renderCode();
@@ -2795,6 +2795,8 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
         listenReturns(entity, idReturnType, idReturnNotes, idSelect) {
             const { returns } = entity;
             (0, Delta_1.createDeltaEditor)(idReturnNotes, entity.returns.notes, (markdown) => {
+                while (markdown.endsWith('\n'))
+                    markdown = markdown.substring(0, markdown.length - 1);
                 entity.returns.notes = markdown;
                 this.update();
                 this.app.renderCode();
@@ -3133,6 +3135,8 @@ define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports"
         }
         listenNotes(entity, idNotes) {
             (0, Delta_2.createDeltaEditor)(idNotes, entity.notes, (markdown) => {
+                while (markdown.endsWith('\n'))
+                    markdown = markdown.substring(0, markdown.length - 1);
                 entity.notes = markdown;
                 this.update();
                 this.app.renderCode();
@@ -3172,6 +3176,8 @@ define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports"
                 const idParamNotes = `${name}-parameter-${param.name}-notes`;
                 const idBtnEdit = `${name}-parameter-${param.name}-edit`;
                 (0, Delta_2.createDeltaEditor)(idParamNotes, param.notes, (markdown) => {
+                    while (markdown.endsWith('\n'))
+                        markdown = markdown.substring(0, markdown.length - 1);
                     param.notes = markdown;
                     this.update();
                     this.app.renderCode();
@@ -3299,6 +3305,8 @@ define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports"
         }
         listenReturns(entity, idReturnType, idReturnNotes, idSelect) {
             (0, Delta_2.createDeltaEditor)(idReturnNotes, entity.returns.notes, (markdown) => {
+                while (markdown.endsWith('\n'))
+                    markdown = markdown.substring(0, markdown.length - 1);
                 entity.returns.notes = markdown;
                 this.update();
                 this.app.renderCode();

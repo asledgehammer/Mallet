@@ -28,14 +28,9 @@ export class RosettaJavaType extends RosettaEntity {
 
   toJSON(patch: boolean = false): any {
     const { rawBasic: basic, full } = this;
-
     const json: any = {};
-
-    if (!patch) {
-      json.basic = basic;
-      json.full = full;
-    }
-
+    json.basic = basic;
+    json.full = full;
     return json;
   }
 }

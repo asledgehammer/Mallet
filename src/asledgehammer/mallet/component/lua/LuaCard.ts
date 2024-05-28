@@ -64,6 +64,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
 
     listenNotes(entity: { notes: string | undefined }, idNotes: string): void {
         createDeltaEditor(idNotes, entity.notes!, (markdown: string) => {
+            while (markdown.endsWith('\n')) markdown = markdown.substring(0, markdown.length - 1);
             entity.notes = markdown;
             this.update();
             this.app.renderCode();
@@ -109,6 +110,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
             const idBtnDelete = `${entity.name}-parameter-${param.name}-delete`;
 
             createDeltaEditor(idParamNotes, param.notes!, (markdown: string) => {
+                while (markdown.endsWith('\n')) markdown = markdown.substring(0, markdown.length - 1);
                 param.notes = markdown;
                 this.update();
                 this.app.renderCode();
@@ -317,6 +319,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         const { returns } = entity;
 
         createDeltaEditor(idReturnNotes, entity.returns.notes!, (markdown: string) => {
+            while (markdown.endsWith('\n')) markdown = markdown.substring(0, markdown.length - 1);
             entity.returns.notes = markdown;
             this.update();
             this.app.renderCode();
