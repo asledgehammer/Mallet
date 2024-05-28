@@ -24072,6 +24072,7 @@ textarea.form-control-lg {
 .item-tree-item {
   transition: all 120ms;
   border: 1px solid transparent;
+  font-size: 12px;
 }
 .object-tree-item i,
 .item-tree-item i {
