@@ -5441,13 +5441,13 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 app.renderCode();
                                 sidebar.populateTrees();
                                 toast.alert('Edited Lua Parameter.');
-                                if (this.javaCallback) {
+                                if (this.javaCallback)
                                     this.javaCallback(name);
-                                }
                                 // Reset.
                                 this.javaConstructor = undefined;
                                 this.javaMethod = undefined;
                                 this.javaParameter = undefined;
+                                this.javaCallback = undefined;
                             }
                             catch (e) {
                                 toast.alert(`Failed to edit Lua Parameter.`, 'error');

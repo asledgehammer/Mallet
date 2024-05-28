@@ -344,14 +344,13 @@ export class ModalName {
                             sidebar.populateTrees();
                             toast.alert('Edited Lua Parameter.');
 
-                            if (this.javaCallback) {
-                                this.javaCallback(name);
-                            }
+                            if (this.javaCallback) this.javaCallback(name);
 
                             // Reset.
                             this.javaConstructor = undefined;
                             this.javaMethod = undefined;
                             this.javaParameter = undefined;
+                            this.javaCallback = undefined;
                         } catch (e) {
                             toast.alert(`Failed to edit Lua Parameter.`, 'error');
                             console.error(e);
