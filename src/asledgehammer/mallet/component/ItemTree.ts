@@ -27,17 +27,17 @@ export class ItemTree {
     readonly idFolderLuaClassValue = `item-tree-folder-lua-class-value`;
     readonly idFolderLuaClassFunction = `item-tree-folder-lua-class-function`;
     readonly idFolderLuaClassMethod = `item-tree-folder-lua-class-method`;
-    folderLuaClassFieldOpen = false;
-    folderLuaClassValueOpen = false;
-    folderLuaClassFunctionOpen = false;
-    folderLuaClassMethodOpen = false;
+    folderLuaClassFieldOpen = true;
+    folderLuaClassValueOpen = true;
+    folderLuaClassFunctionOpen = true;
+    folderLuaClassMethodOpen = true;
 
     /* Lua Table Folders */
 
     readonly idFolderLuaTableValue = `item-tree-folder-lua-table-value`;
     readonly idFolderLuaTableFunction = `item-tree-folder-lua-table-function`;
-    folderLuaTableValueOpen = false;
-    folderLuaTableFunctionOpen = false;
+    folderLuaTableValueOpen = true;
+    folderLuaTableFunctionOpen = true;
 
     /* Java Class Folders */
 
@@ -322,7 +322,7 @@ export class ItemTree {
             const id = `lua-class-${entity.name}-function-${func.name}`;
 
             const classes: string[] = ['item-tree-item', 'lua-function-item'];
-            if(id === this.selectedID) classes.push('selected');
+            if (id === this.selectedID) classes.push('selected');
 
             functions.push({
                 text: html`<i class="fa-solid fa-xmark me-2" title="${func.returns.type}"></i>${func.name}`,
@@ -341,51 +341,55 @@ export class ItemTree {
 
         const conzID = `lua-class-${entity.name}-constructor`;
         const conzClasses: string[] = ['item-tree-item', 'lua-constructor-item'];
-        if(conzID === this.selectedID) conzClasses.push('selected');
+        if (conzID === this.selectedID) conzClasses.push('selected');
+
+        const folderFields = {
+            text: `${wrapFolderCount(`(${fields.length})`)} Field(s)`,
+            icon: "fa-solid fa-folder text-light mx-2",
+            class: ['item-tree-folder', 'bg-secondary'],
+            id: _this.idFolderLuaClassField,
+            expanded: _this.folderLuaClassFieldOpen,
+            nodes: fields
+        };
+        const folderValues = {
+            text: `${wrapFolderCount(`(${values.length})`)} Value(s)`,
+            icon: "fa-solid fa-folder text-light mx-2",
+            class: ['item-tree-folder', 'bg-secondary'],
+            id: _this.idFolderLuaClassValue,
+            expanded: _this.folderLuaClassValueOpen,
+            nodes: values
+        };
+        const folderMethods = {
+            text: `${wrapFolderCount(`(${methods.length})`)} Method(s)`,
+            icon: "fa-solid fa-folder text-light mx-2",
+            class: ['item-tree-folder', 'bg-secondary'],
+            id: _this.idFolderLuaClassMethod,
+            expanded: _this.folderLuaClassMethodOpen,
+            nodes: methods
+        };
+        const folderFuncs = {
+            text: `${wrapFolderCount(`(${functions.length})`)} Function(s)`,
+            icon: "fa-solid fa-folder text-light mx-2",
+            class: ['item-tree-folder', 'bg-secondary'],
+            id: _this.idFolderLuaClassFunction,
+            expanded: _this.folderLuaClassFunctionOpen,
+            nodes: functions
+        };
+
+        const data: any[] = [{
+            id: conzID,
+            text: "Constructor",
+            icon: LuaCard.getTypeIcon('constructor'),
+            class: conzClasses
+        }];
+
+        if (fields.length) data.push(folderFields);
+        if (values.length) data.push(folderValues);
+        if (methods.length) data.push(folderMethods);
+        if (functions.length) data.push(folderFuncs);
 
         // @ts-ignore
-        $treeLower.bstreeview({
-            data: [
-                {
-                    id: conzID,
-                    text: "Constructor",
-                    icon: LuaCard.getTypeIcon('constructor'),
-                    class: conzClasses
-                },
-                {
-                    text: "Fields",
-                    icon: "fa-solid fa-folder text-light mx-2",
-                    class: ['item-tree-folder', 'bg-secondary'],
-                    id: _this.idFolderLuaClassField,
-                    expanded: _this.folderLuaClassFieldOpen,
-                    nodes: fields
-                },
-                {
-                    text: "Values",
-                    icon: "fa-solid fa-folder text-light mx-2",
-                    class: ['item-tree-folder', 'bg-secondary'],
-                    id: _this.idFolderLuaClassValue,
-                    expanded: _this.folderLuaClassValueOpen,
-                    nodes: values
-                },
-                {
-                    text: "Methods",
-                    icon: "fa-solid fa-folder text-light mx-2",
-                    class: ['item-tree-folder', 'bg-secondary'],
-                    id: _this.idFolderLuaClassMethod,
-                    expanded: _this.folderLuaClassMethodOpen,
-                    nodes: methods
-                },
-                {
-                    text: "Functions",
-                    icon: "fa-solid fa-folder text-light mx-2",
-                    class: ['item-tree-folder', 'bg-secondary'],
-                    id: _this.idFolderLuaClassFunction,
-                    expanded: _this.folderLuaClassFunctionOpen,
-                    nodes: functions
-                },
-            ]
-        });
+        $treeLower.bstreeview({ data });
     }
 
     populateLuaTable(entity: RosettaLuaTable) {
@@ -596,7 +600,7 @@ export class ItemTree {
         }
 
         const folderConstructors = {
-            text: `${wrapFolderCount(`(${constructors.length})`)} Constructors`,
+            text: `${wrapFolderCount(`(${constructors.length})`)} Constructor(s)`,
             icon: "fa-solid fa-folder text-light mx-2",
             class: ['item-tree-folder', 'bg-secondary'],
             id: _this.idFolderJavaClassConstructor,
@@ -605,7 +609,7 @@ export class ItemTree {
         };
 
         const folderStaticFields = {
-            text: `${wrapFolderCount(`(${staticFields.length})`)} Static Fields`,
+            text: `${wrapFolderCount(`(${staticFields.length})`)} Static Field(s)`,
             icon: "fa-solid fa-folder text-light mx-2",
             class: ['item-tree-folder', 'bg-secondary'],
             id: _this.idFolderJavaClassStaticField,
@@ -614,7 +618,7 @@ export class ItemTree {
         };
 
         const folderStaticMethods = {
-            text: `${wrapFolderCount(`(${staticMethods.length})`)} Static Methods`,
+            text: `${wrapFolderCount(`(${staticMethods.length})`)} Static Method(s)`,
             icon: "fa-solid fa-folder text-light mx-2",
             class: ['item-tree-folder', 'bg-secondary'],
             id: _this.idFolderJavaClassStaticMethod,
@@ -623,7 +627,7 @@ export class ItemTree {
         };
 
         const folderFields = {
-            text: `${wrapFolderCount(`(${fields.length})`)} Fields`,
+            text: `${wrapFolderCount(`(${fields.length})`)} Field(s)`,
             icon: "fa-solid fa-folder text-light mx-2",
             class: ['item-tree-folder', 'bg-secondary'],
             id: _this.idFolderJavaClassField,
@@ -632,7 +636,7 @@ export class ItemTree {
         };
 
         const folderMethods = {
-            text: `${wrapFolderCount(`(${methods.length})`)} Methods`,
+            text: `${wrapFolderCount(`(${methods.length})`)} Method(s)`,
             icon: "fa-solid fa-folder text-light mx-2",
             class: ['item-tree-folder', 'bg-secondary'],
             id: _this.idFolderJavaClassMethod,

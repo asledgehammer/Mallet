@@ -3542,15 +3542,15 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
             this.idFolderLuaClassValue = `item-tree-folder-lua-class-value`;
             this.idFolderLuaClassFunction = `item-tree-folder-lua-class-function`;
             this.idFolderLuaClassMethod = `item-tree-folder-lua-class-method`;
-            this.folderLuaClassFieldOpen = false;
-            this.folderLuaClassValueOpen = false;
-            this.folderLuaClassFunctionOpen = false;
-            this.folderLuaClassMethodOpen = false;
+            this.folderLuaClassFieldOpen = true;
+            this.folderLuaClassValueOpen = true;
+            this.folderLuaClassFunctionOpen = true;
+            this.folderLuaClassMethodOpen = true;
             /* Lua Table Folders */
             this.idFolderLuaTableValue = `item-tree-folder-lua-table-value`;
             this.idFolderLuaTableFunction = `item-tree-folder-lua-table-function`;
-            this.folderLuaTableValueOpen = false;
-            this.folderLuaTableFunctionOpen = false;
+            this.folderLuaTableValueOpen = true;
+            this.folderLuaTableFunctionOpen = true;
             /* Java Class Folders */
             this.idFolderJavaClassConstructor = 'item-tree-folder-java-class-constructor';
             this.idFolderJavaClassStaticField = 'item-tree-folder-java-class-static-field';
@@ -3825,49 +3825,54 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
             const conzClasses = ['item-tree-item', 'lua-constructor-item'];
             if (conzID === this.selectedID)
                 conzClasses.push('selected');
+            const folderFields = {
+                text: `${wrapFolderCount(`(${fields.length})`)} Field(s)`,
+                icon: "fa-solid fa-folder text-light mx-2",
+                class: ['item-tree-folder', 'bg-secondary'],
+                id: _this.idFolderLuaClassField,
+                expanded: _this.folderLuaClassFieldOpen,
+                nodes: fields
+            };
+            const folderValues = {
+                text: `${wrapFolderCount(`(${values.length})`)} Value(s)`,
+                icon: "fa-solid fa-folder text-light mx-2",
+                class: ['item-tree-folder', 'bg-secondary'],
+                id: _this.idFolderLuaClassValue,
+                expanded: _this.folderLuaClassValueOpen,
+                nodes: values
+            };
+            const folderMethods = {
+                text: `${wrapFolderCount(`(${methods.length})`)} Method(s)`,
+                icon: "fa-solid fa-folder text-light mx-2",
+                class: ['item-tree-folder', 'bg-secondary'],
+                id: _this.idFolderLuaClassMethod,
+                expanded: _this.folderLuaClassMethodOpen,
+                nodes: methods
+            };
+            const folderFuncs = {
+                text: `${wrapFolderCount(`(${functions.length})`)} Function(s)`,
+                icon: "fa-solid fa-folder text-light mx-2",
+                class: ['item-tree-folder', 'bg-secondary'],
+                id: _this.idFolderLuaClassFunction,
+                expanded: _this.folderLuaClassFunctionOpen,
+                nodes: functions
+            };
+            const data = [{
+                    id: conzID,
+                    text: "Constructor",
+                    icon: LuaCard_2.LuaCard.getTypeIcon('constructor'),
+                    class: conzClasses
+                }];
+            if (fields.length)
+                data.push(folderFields);
+            if (values.length)
+                data.push(folderValues);
+            if (methods.length)
+                data.push(folderMethods);
+            if (functions.length)
+                data.push(folderFuncs);
             // @ts-ignore
-            $treeLower.bstreeview({
-                data: [
-                    {
-                        id: conzID,
-                        text: "Constructor",
-                        icon: LuaCard_2.LuaCard.getTypeIcon('constructor'),
-                        class: conzClasses
-                    },
-                    {
-                        text: "Fields",
-                        icon: "fa-solid fa-folder text-light mx-2",
-                        class: ['item-tree-folder', 'bg-secondary'],
-                        id: _this.idFolderLuaClassField,
-                        expanded: _this.folderLuaClassFieldOpen,
-                        nodes: fields
-                    },
-                    {
-                        text: "Values",
-                        icon: "fa-solid fa-folder text-light mx-2",
-                        class: ['item-tree-folder', 'bg-secondary'],
-                        id: _this.idFolderLuaClassValue,
-                        expanded: _this.folderLuaClassValueOpen,
-                        nodes: values
-                    },
-                    {
-                        text: "Methods",
-                        icon: "fa-solid fa-folder text-light mx-2",
-                        class: ['item-tree-folder', 'bg-secondary'],
-                        id: _this.idFolderLuaClassMethod,
-                        expanded: _this.folderLuaClassMethodOpen,
-                        nodes: methods
-                    },
-                    {
-                        text: "Functions",
-                        icon: "fa-solid fa-folder text-light mx-2",
-                        class: ['item-tree-folder', 'bg-secondary'],
-                        id: _this.idFolderLuaClassFunction,
-                        expanded: _this.folderLuaClassFunctionOpen,
-                        nodes: functions
-                    },
-                ]
-            });
+            $treeLower.bstreeview({ data });
         }
         populateLuaTable(entity) {
             if (!entity)
@@ -4049,7 +4054,7 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 });
             }
             const folderConstructors = {
-                text: `${wrapFolderCount(`(${constructors.length})`)} Constructors`,
+                text: `${wrapFolderCount(`(${constructors.length})`)} Constructor(s)`,
                 icon: "fa-solid fa-folder text-light mx-2",
                 class: ['item-tree-folder', 'bg-secondary'],
                 id: _this.idFolderJavaClassConstructor,
@@ -4057,7 +4062,7 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 nodes: constructors
             };
             const folderStaticFields = {
-                text: `${wrapFolderCount(`(${staticFields.length})`)} Static Fields`,
+                text: `${wrapFolderCount(`(${staticFields.length})`)} Static Field(s)`,
                 icon: "fa-solid fa-folder text-light mx-2",
                 class: ['item-tree-folder', 'bg-secondary'],
                 id: _this.idFolderJavaClassStaticField,
@@ -4065,7 +4070,7 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 nodes: staticFields
             };
             const folderStaticMethods = {
-                text: `${wrapFolderCount(`(${staticMethods.length})`)} Static Methods`,
+                text: `${wrapFolderCount(`(${staticMethods.length})`)} Static Method(s)`,
                 icon: "fa-solid fa-folder text-light mx-2",
                 class: ['item-tree-folder', 'bg-secondary'],
                 id: _this.idFolderJavaClassStaticMethod,
@@ -4073,7 +4078,7 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 nodes: staticMethods
             };
             const folderFields = {
-                text: `${wrapFolderCount(`(${fields.length})`)} Fields`,
+                text: `${wrapFolderCount(`(${fields.length})`)} Field(s)`,
                 icon: "fa-solid fa-folder text-light mx-2",
                 class: ['item-tree-folder', 'bg-secondary'],
                 id: _this.idFolderJavaClassField,
@@ -4081,7 +4086,7 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 nodes: fields
             };
             const folderMethods = {
-                text: `${wrapFolderCount(`(${methods.length})`)} Methods`,
+                text: `${wrapFolderCount(`(${methods.length})`)} Method(s)`,
                 icon: "fa-solid fa-folder text-light mx-2",
                 class: ['item-tree-folder', 'bg-secondary'],
                 id: _this.idFolderJavaClassMethod,
