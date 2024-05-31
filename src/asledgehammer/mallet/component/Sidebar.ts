@@ -84,6 +84,21 @@ export class Sidebar extends Component<SidebarOptions> {
                 <div 
                     class="p-1 border-top border-top-2 border-bottom border-bottom-2 border-black shadow"
                     style="height: 41px;">
+                    
+                    
+                    <!-- Save dropdown -->
+                    <div id="save-object-dropdown" class="dropdown" style="display: inline;">
+                        <button class="btn btn-sm responsive-btn responsive-btn-success" style="width: 32px; height: 32px" data-bs-toggle="dropdown" aria-expanded="false" title="Save Object">
+                        <div class="btn-pane">     
+                            <i class="fa fa-save"></i>
+                        </div>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a id="btn-save-object-json" class="dropdown-item" href="#">JSON Object</a></li>
+                            <li><a id="btn-save-object-lua" class="dropdown-item" href="#">Lua Typings</a></li>
+                        </ul>
+                    </div>
+                    
                     <!-- New Properties -->
                     <div id="${this.idLuaClassDropdown}" class="dropdown" style="position: absolute; top: 5px; right: 5px; display: none">
                         <button class="btn btn-sm responsive-btn responsive-btn-success float-end" style="width: 32px; height: 32px" data-bs-toggle="dropdown" aria-expanded="false" title="Add Element">
@@ -180,6 +195,42 @@ export class Sidebar extends Component<SidebarOptions> {
                         {
                             description: "Lua file",
                             accept: { "text/x-lua": [".lua"] },
+                        },
+                    ],
+                });
+                const { catalog } = this.app;
+                const lua = catalog.toLuaTypings();
+
+                const writable = await result.createWritable();
+                await writable.write(lua);
+                await writable.close();
+
+                app.toast.alert(`Saved Lua typings file.`, 'info');
+            } catch (e) {
+                /* (Ignore aborted dialogs) */
+                if (e instanceof DOMException && e.name === 'AbortError') return;
+                app.toast.alert(`Failed to save Lua typings.`, 'error');
+                console.error(e);
+            }
+        });
+
+        $doc.on('click', '#btn-save-object-lua', async () => {
+            try {
+
+                if(!this.app.catalog.selected) {
+                    return;
+                }
+
+                const { selected } = this.app.catalog;
+
+                // @ts-ignore
+                const result = await showSaveFilePicker({
+                    id: 'mallet-save-lua',
+                    types: [
+                        {
+                            description: "Lua file",
+                            accept: { "text/x-lua": [".lua"] },
+                            suggestedName: `${selected.name}.lua`,
                         },
                     ],
                 });

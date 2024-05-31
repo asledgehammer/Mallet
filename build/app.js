@@ -1283,6 +1283,10 @@ define("src/asledgehammer/rosetta/java/RosettaJavaParameter", ["require", "expor
     }
     exports.RosettaJavaParameter = RosettaJavaParameter;
 });
+define("src/asledgehammer/rosetta/java/Types", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+});
 define("src/asledgehammer/rosetta/java/RosettaJavaConstructor", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaParameter"], function (require, exports, Assert, RosettaEntity_11, RosettaJavaParameter_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -1346,6 +1350,30 @@ define("src/asledgehammer/rosetta/java/RosettaJavaConstructor", ["require", "exp
                     json.parameters.push(parameter.toJSON(patch));
             }
             return json;
+        }
+        isStatic() {
+            return this.hasModifier('static');
+        }
+        isFinal() {
+            return this.hasModifier('final');
+        }
+        hasModifiers() {
+            return this.modifiers && !!this.modifiers.length;
+        }
+        hasModifier(modifier) {
+            return this.hasModifiers() && this.modifiers.indexOf(modifier) !== -1;
+        }
+        getVisibilityScope() {
+            if (!this.modifiers.length)
+                return 'package';
+            if (this.hasModifier('public'))
+                return 'public';
+            else if (this.hasModifier('protected'))
+                return 'protected';
+            else if (this.hasModifier('private'))
+                return 'private';
+            else
+                return 'package';
         }
     }
     exports.RosettaJavaConstructor = RosettaJavaConstructor;
@@ -1453,7 +1481,28 @@ define("src/asledgehammer/rosetta/java/RosettaJavaMethod", ["require", "exports"
             return json;
         }
         isStatic() {
-            return this.modifiers != null && !!this.modifiers.length && this.modifiers.indexOf('static') !== -1;
+            return this.hasModifier('static');
+        }
+        isFinal() {
+            return this.hasModifier('final');
+        }
+        hasModifiers() {
+            return this.modifiers && !!this.modifiers.length;
+        }
+        hasModifier(modifier) {
+            return this.hasModifiers() && this.modifiers.indexOf(modifier) !== -1;
+        }
+        getVisibilityScope() {
+            if (!this.modifiers.length)
+                return 'package';
+            if (this.hasModifier('public'))
+                return 'public';
+            else if (this.hasModifier('protected'))
+                return 'protected';
+            else if (this.hasModifier('private'))
+                return 'private';
+            else
+                return 'package';
         }
     }
     exports.RosettaJavaMethod = RosettaJavaMethod;
@@ -1542,7 +1591,28 @@ define("src/asledgehammer/rosetta/java/RosettaJavaField", ["require", "exports",
             return json;
         }
         isStatic() {
-            return !!this.modifiers.length && this.modifiers.indexOf('static') !== -1;
+            return this.hasModifier('static');
+        }
+        isFinal() {
+            return this.hasModifier('final');
+        }
+        hasModifiers() {
+            return this.modifiers && !!this.modifiers.length;
+        }
+        hasModifier(modifier) {
+            return this.hasModifiers() && this.modifiers.indexOf(modifier) !== -1;
+        }
+        getVisibilityScope() {
+            if (!this.modifiers.length)
+                return 'package';
+            if (this.hasModifier('public'))
+                return 'public';
+            else if (this.hasModifier('protected'))
+                return 'protected';
+            else if (this.hasModifier('private'))
+                return 'private';
+            else
+                return 'package';
         }
     }
     exports.RosettaJavaField = RosettaJavaField;
@@ -4338,6 +4408,21 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
                 <div 
                     class="p-1 border-top border-top-2 border-bottom border-bottom-2 border-black shadow"
                     style="height: 41px;">
+                    
+                    
+                    <!-- Save dropdown -->
+                    <div id="save-object-dropdown" class="dropdown" style="display: inline;">
+                        <button class="btn btn-sm responsive-btn responsive-btn-success" style="width: 32px; height: 32px" data-bs-toggle="dropdown" aria-expanded="false" title="Save Object">
+                        <div class="btn-pane">     
+                            <i class="fa fa-save"></i>
+                        </div>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a id="btn-save-object-json" class="dropdown-item" href="#">JSON Object</a></li>
+                            <li><a id="btn-save-object-lua" class="dropdown-item" href="#">Lua Typings</a></li>
+                        </ul>
+                    </div>
+                    
                     <!-- New Properties -->
                     <div id="${this.idLuaClassDropdown}" class="dropdown" style="position: absolute; top: 5px; right: 5px; display: none">
                         <button class="btn btn-sm responsive-btn responsive-btn-success float-end" style="width: 32px; height: 32px" data-bs-toggle="dropdown" aria-expanded="false" title="Add Element">
@@ -4430,6 +4515,38 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
                             {
                                 description: "Lua file",
                                 accept: { "text/x-lua": [".lua"] },
+                            },
+                        ],
+                    });
+                    const { catalog } = this.app;
+                    const lua = catalog.toLuaTypings();
+                    const writable = await result.createWritable();
+                    await writable.write(lua);
+                    await writable.close();
+                    app.toast.alert(`Saved Lua typings file.`, 'info');
+                }
+                catch (e) {
+                    /* (Ignore aborted dialogs) */
+                    if (e instanceof DOMException && e.name === 'AbortError')
+                        return;
+                    app.toast.alert(`Failed to save Lua typings.`, 'error');
+                    console.error(e);
+                }
+            });
+            $doc.on('click', '#btn-save-object-lua', async () => {
+                try {
+                    if (!this.app.catalog.selected) {
+                        return;
+                    }
+                    const { selected } = this.app.catalog;
+                    // @ts-ignore
+                    const result = await showSaveFilePicker({
+                        id: 'mallet-save-lua',
+                        types: [
+                            {
+                                description: "Lua file",
+                                accept: { "text/x-lua": [".lua"] },
+                                suggestedName: `${selected.name}.lua`,
                             },
                         ],
                     });
@@ -5675,7 +5792,405 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
     }
     exports.Catalog = Catalog;
 });
-define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/mallet/component/lua/LuaClassCard", "src/asledgehammer/mallet/component/java/JavaClassCard", "src/asledgehammer/mallet/component/Sidebar", "src/asledgehammer/mallet/component/lua/LuaConstructorCard", "src/asledgehammer/mallet/component/lua/LuaFieldCard", "src/asledgehammer/mallet/component/lua/LuaFunctionCard", "src/asledgehammer/mallet/component/java/JavaConstructorCard", "src/asledgehammer/mallet/component/java/JavaFieldCard", "src/asledgehammer/mallet/component/java/JavaMethodCard", "src/asledgehammer/mallet/modal/ModalName", "src/asledgehammer/mallet/modal/ModalConfirm", "src/asledgehammer/mallet/component/Toast", "src/asledgehammer/mallet/Catalog"], function (require, exports, hljs, LuaGenerator_6, RosettaLuaClass_4, RosettaLuaConstructor_2, util_19, RosettaJavaClass_4, JavaGenerator_6, LuaClassCard_1, JavaClassCard_1, Sidebar_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, JavaConstructorCard_1, JavaFieldCard_1, JavaMethodCard_1, ModalName_1, ModalConfirm_1, Toast_1, Catalog_1) {
+define("src/asledgehammer/rosetta/typescript/TypeScriptGenerator", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.tsType = exports.applyTSDocumentation = exports.paginateNotes = exports.javaClassToTS = exports.javaMethodToTS = exports.javaMethodDocumentation = exports.javaConstructorDocumentation = exports.javaMethodClusterToTS = exports.javaConstructorsToTS = exports.javaConstructorToTS = exports.javaFieldToTS = exports.wrapAsTSNamespace = exports.wrapAsTSFile = void 0;
+    function wrapAsTSFile(text) {
+        let s = '';
+        s += `/** @noSelfInFile */\n`;
+        s += `declare module '@asledgehammer/pipewrench'`;
+        if (text.length) {
+            return `${s} {\n` + text.split('\n').map((a) => `    ${a}`).join('\n') + '\n}';
+        }
+        return `${s} {}\n`;
+    }
+    exports.wrapAsTSFile = wrapAsTSFile;
+    function wrapAsTSNamespace(namespace, text) {
+        const s = `export namespace ${namespace}`;
+        if (text.length) {
+            return `${s} {\n\n` + text.split('\n').map((a) => `    ${a}`).join('\n') + '\n}';
+        }
+        return `${s} {}\n`;
+    }
+    exports.wrapAsTSNamespace = wrapAsTSNamespace;
+    function javaFieldToTS(field, indent = 0, notesLength) {
+        const i = ' '.repeat(indent * 4);
+        let s = '';
+        /* Documentation */
+        let ds = [];
+        if (field.deprecated)
+            ds.push('@deprecated');
+        if (field.notes) {
+            const notes = paginateNotes(field.notes, notesLength);
+            if (ds.length)
+                ds.push('');
+            for (const line of notes) {
+                ds.push(line);
+            }
+        }
+        s = applyTSDocumentation(ds, s, indent);
+        s += i;
+        /* Definition-line */
+        if (field.isStatic())
+            s += 'static ';
+        if (field.isFinal())
+            s += 'readonly ';
+        s += `${field.name}: ${tsType(field.type.basic)};`;
+        // Format documented variables as spaced for better legability.
+        if (ds.length)
+            s += '\n';
+        return s;
+    }
+    exports.javaFieldToTS = javaFieldToTS;
+    function javaConstructorToTS(con, indent, notesLength) {
+        const i = ' '.repeat(indent * 4);
+        const ds = javaConstructorDocumentation(con, notesLength);
+        let ps = '';
+        if (con.parameters && con.parameters.length) {
+            ps += '(';
+            for (const parameter of con.parameters) {
+                ps += `${parameter.name}: ${tsType(parameter.type.basic)}, `;
+            }
+            ps = ps.substring(0, ps.length - 2) + ')';
+        }
+        else {
+            ps = '()';
+        }
+        let s = applyTSDocumentation(ds, '', indent);
+        s += `${i}`;
+        s += `constructor${ps};`;
+        // Format documented variables as spaced for better legability.
+        if (ds.length)
+            s += '\n';
+        return s;
+    }
+    exports.javaConstructorToTS = javaConstructorToTS;
+    function javaConstructorsToTS(constructors, indent, notesLength) {
+        const i = ' '.repeat(indent * 4);
+        let s = '';
+        const cons = [...constructors];
+        if (cons.length) {
+            cons.sort((a, b) => {
+                // Smaller param count = first.
+                const apl = a.parameters ? a.parameters.length : 0;
+                const bpl = b.parameters ? b.parameters.length : 0;
+                let compare = apl - bpl;
+                // If same count, compare type strings. a < b.
+                if (compare === 0) {
+                    for (let index = 0; index < apl; index++) {
+                        const ap = a.parameters[index];
+                        const bp = b.parameters[index];
+                        compare = ap.type.basic.localeCompare(bp.type.basic);
+                        if (compare !== 0)
+                            break;
+                    }
+                }
+                return compare;
+            });
+            for (const con of cons) {
+                if (con.getVisibilityScope() !== 'public')
+                    continue;
+                s += javaConstructorToTS(con, indent, notesLength) + '\n\n';
+            }
+            // Remove trailing new-line.
+            s = s.substring(0, s.length - 3);
+        }
+        return s;
+    }
+    exports.javaConstructorsToTS = javaConstructorsToTS;
+    function javaMethodClusterToTS(cluster, indent = 0, notesLength) {
+        if (cluster.methods.length === 1) {
+            return javaMethodToTS(cluster.methods[0], indent, notesLength);
+        }
+        let s = '';
+        const methods = [...cluster.methods];
+        if (methods.length) {
+            methods.sort((a, b) => {
+                // Smaller param count = first.
+                const apl = a.parameters ? a.parameters.length : 0;
+                const bpl = b.parameters ? b.parameters.length : 0;
+                let compare = apl - bpl;
+                // If same count, compare type strings. a < b.
+                if (compare === 0) {
+                    for (let index = 0; index < apl; index++) {
+                        const ap = a.parameters[index];
+                        const bp = b.parameters[index];
+                        compare = ap.type.basic.localeCompare(bp.type.basic);
+                        if (compare !== 0)
+                            break;
+                    }
+                }
+                return compare;
+            });
+            for (const method of cluster.methods) {
+                if (method.getVisibilityScope() !== 'public')
+                    continue;
+                s += javaMethodToTS(method, indent, notesLength) + '\n';
+            }
+            // Remove trailing new-line.
+            s = s.substring(0, s.length - 1);
+        }
+        return s;
+    }
+    exports.javaMethodClusterToTS = javaMethodClusterToTS;
+    function javaConstructorDocumentation(con, notesLength) {
+        const ds = [];
+        /* (Annotations) */
+        if (con.deprecated)
+            ds.push('@deprecated');
+        /* (Notes) */
+        if (con.notes && con.notes.length) {
+            if (ds.length)
+                ds.push('');
+            const notes = paginateNotes(con.notes, notesLength);
+            for (const line of notes)
+                ds.push(line);
+        }
+        /* (Parameters) */
+        if (con.parameters && con.parameters.length) {
+            if (ds.length)
+                ds.push('');
+            for (const param of con.parameters) {
+                if (param.notes && param.notes.length) {
+                    const notes = paginateNotes(`@param ${param.name} ${param.notes}`, notesLength);
+                    for (const line of notes)
+                        ds.push(line);
+                }
+                else {
+                    ds.push(`@param ${param.name}`);
+                }
+            }
+        }
+        return ds;
+    }
+    exports.javaConstructorDocumentation = javaConstructorDocumentation;
+    function javaMethodDocumentation(method, notesLength, overload = false) {
+        const ds = [];
+        /* (Annotations) */
+        if (overload)
+            ds.push('@overload');
+        if (method.deprecated)
+            ds.push('@deprecated');
+        /* (Notes) */
+        if (method.notes && method.notes.length) {
+            if (ds.length)
+                ds.push('');
+            const notes = paginateNotes(method.notes, notesLength);
+            for (const line of notes)
+                ds.push(line);
+        }
+        /* (Parameters) */
+        if (method.parameters && method.parameters.length) {
+            if (ds.length)
+                ds.push('');
+            for (const param of method.parameters) {
+                if (param.notes && param.notes.length) {
+                    const notes = paginateNotes(`@param ${param.name} ${param.notes}`, notesLength);
+                    for (const line of notes)
+                        ds.push(line);
+                }
+                else {
+                    ds.push(`@param ${param.name}`);
+                }
+            }
+        }
+        /* (Returns) */
+        if (method.returns && method.returns.notes && method.returns.notes.length) {
+            if (ds.length)
+                ds.push('');
+            const notes = paginateNotes(`@returns ${method.returns.notes}`, notesLength);
+            for (const line of notes)
+                ds.push(line);
+        }
+        return ds;
+    }
+    exports.javaMethodDocumentation = javaMethodDocumentation;
+    function javaMethodToTS(method, indent = 0, notesLength) {
+        const i = ' '.repeat(indent * 4);
+        const ds = javaMethodDocumentation(method, notesLength, false);
+        let ps = '';
+        if (method.parameters && method.parameters.length) {
+            ps += '(';
+            for (const parameter of method.parameters) {
+                ps += `${parameter.name}: ${tsType(parameter.type.basic)}, `;
+            }
+            ps = ps.substring(0, ps.length - 2) + ')';
+        }
+        else {
+            ps = '()';
+        }
+        let s = applyTSDocumentation(ds, '', indent);
+        s += `${i}`;
+        if (method.isStatic())
+            s += 'static ';
+        if (method.isFinal())
+            s += 'readonly ';
+        s += `${method.name}${ps}: ${tsType(method.returns.type.basic)};`;
+        s += '\n';
+        return s;
+    }
+    exports.javaMethodToTS = javaMethodToTS;
+    function javaClassToTS(clazz, wrapNamespace = false, wrapFile = false) {
+        let s = '';
+        const fieldNames = Object.keys(clazz.fields);
+        fieldNames.sort((a, b) => a.localeCompare(b));
+        const methodNames = Object.keys(clazz.methods);
+        methodNames.sort((a, b) => a.localeCompare(b));
+        const staticFields = [];
+        const fields = [];
+        const staticMethods = [];
+        const methods = [];
+        /* (STATIC FIELDS) */
+        for (const fieldName of fieldNames) {
+            const field = clazz.fields[fieldName];
+            if (field.isStatic())
+                staticFields.push(field);
+            else
+                fields.push(field);
+        }
+        /* (INSTANCE METHODS) */
+        for (const methodName of methodNames) {
+            const cluster = clazz.methods[methodName];
+            if (!cluster.methods.length)
+                continue; // (Sanity-Check)
+            if (!cluster.methods[0].isStatic())
+                staticMethods.push(cluster);
+            else
+                methods.push(cluster);
+        }
+        /** 100 - 4 (module indent) - 4 (namespace indent) - 3 (' * ') */
+        let notesLength = 96;
+        if (wrapFile)
+            notesLength -= 4;
+        if (wrapNamespace)
+            notesLength -= 4;
+        /* (Class Documentation) */
+        const ds = [];
+        ds.push(`@customConstructor ${clazz.name}.new`);
+        ds.push('');
+        ds.push(`Class: ${clazz.namespace.name}.${clazz.name}`);
+        if (clazz.notes && clazz.notes.length) {
+            ds.push('');
+            const lines = paginateNotes(clazz.notes, notesLength);
+            for (const line of lines)
+                ds.push(line);
+        }
+        s = applyTSDocumentation(ds, s, 0);
+        s += `export class ${clazz.name} `;
+        let i = '    ';
+        let is = '';
+        if (staticFields.length) {
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* ---------- STATIC FIELDS ----------- */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            for (const field of staticFields) {
+                if (field.getVisibilityScope() !== 'public')
+                    continue;
+                else if (!field.isFinal())
+                    continue;
+                is += `${javaFieldToTS(field, 1, notesLength)}\n`;
+            }
+        }
+        // if (fields.length) {
+        //     if (is.length) is += '\n';
+        //     is += `${i}/* ------------------------------------ */\n`;
+        //     is += `${i}/* ------------- FIELDS --------------- */\n`;
+        //     is += `${i}/* ------------------------------------ */\n`;
+        //     is += '\n';
+        //     for (const field of fields) {
+        //         is += `${javaFieldToTS(field, 1, notesLength)}\n`;
+        //     }
+        // }
+        if (clazz.constructors && clazz.constructors.length) {
+            if (is.length)
+                is += '\n';
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* ----------- CONSTRUCTOR ------------ */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            is += `${javaConstructorsToTS(clazz.constructors, 1, notesLength)}\n`;
+        }
+        if (methods.length) {
+            if (is.length)
+                is += '\n';
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* ------------- METHODS -------------- */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            for (const cluster of methods) {
+                is += `${javaMethodClusterToTS(cluster, 1, notesLength)}\n`;
+            }
+        }
+        if (staticMethods.length) {
+            if (is.length)
+                is += '\n';
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* ---------- STATIC METHODS ---------- */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            for (const cluster of staticMethods) {
+                is += `${javaMethodClusterToTS(cluster, 1, notesLength)}\n`;
+            }
+        }
+        if (is.length) {
+            s += `{\n\n${is}}`;
+        }
+        else {
+            s += `{}\n`;
+        }
+        if (wrapNamespace)
+            s = wrapAsTSNamespace(clazz.namespace.name, s);
+        if (wrapFile)
+            return wrapAsTSFile(s);
+        return s;
+    }
+    exports.javaClassToTS = javaClassToTS;
+    function paginateNotes(notes, length) {
+        const split = notes === null || notes === void 0 ? void 0 : notes.split(' ');
+        const result = [];
+        let s = split[0];
+        for (let i = 1; i < split.length; i++) {
+            let word = split[i];
+            if (s.length + word.length + 1 <= length)
+                s = s + ' ' + word;
+            else {
+                result.push(s);
+                s = word;
+            }
+        }
+        if (s.length)
+            result.push(s);
+        return result;
+    }
+    exports.paginateNotes = paginateNotes;
+    function applyTSDocumentation(ds, s, indent) {
+        const i = ' '.repeat(indent * 4);
+        if (ds.length) {
+            if (ds.length === 1) {
+                s += `${i}/** ${ds[0]} */\n`;
+            }
+            else {
+                s += `${i}/**\n`;
+                s += ds.map((a) => `${i} * ${a}`).join('\n');
+                s += `\n${i} */\n`;
+            }
+        }
+        return s;
+    }
+    exports.applyTSDocumentation = applyTSDocumentation;
+    function tsType(type) {
+        console.log(`tsType(${type})`);
+        switch (type) {
+            case 'String': return 'string';
+            case 'KahluaTable': return 'any';
+            default: return type;
+        }
+    }
+    exports.tsType = tsType;
+});
+define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/mallet/component/lua/LuaClassCard", "src/asledgehammer/mallet/component/java/JavaClassCard", "src/asledgehammer/mallet/component/Sidebar", "src/asledgehammer/mallet/component/lua/LuaConstructorCard", "src/asledgehammer/mallet/component/lua/LuaFieldCard", "src/asledgehammer/mallet/component/lua/LuaFunctionCard", "src/asledgehammer/mallet/component/java/JavaConstructorCard", "src/asledgehammer/mallet/component/java/JavaFieldCard", "src/asledgehammer/mallet/component/java/JavaMethodCard", "src/asledgehammer/mallet/modal/ModalName", "src/asledgehammer/mallet/modal/ModalConfirm", "src/asledgehammer/mallet/component/Toast", "src/asledgehammer/mallet/Catalog", "src/asledgehammer/rosetta/typescript/TypeScriptGenerator"], function (require, exports, hljs, RosettaLuaClass_4, RosettaLuaConstructor_2, util_19, RosettaJavaClass_4, LuaClassCard_1, JavaClassCard_1, Sidebar_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, JavaConstructorCard_1, JavaFieldCard_1, JavaMethodCard_1, ModalName_1, ModalConfirm_1, Toast_1, Catalog_1, TypeScriptGenerator_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.App = void 0;
@@ -5822,13 +6337,18 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             }
             const { selected } = this.catalog;
             let highlightedCode = '';
+            // if (selected instanceof RosettaLuaClass) {
+            //     this.previewCode = '--- @meta\n\n' + generateLuaClass(selected);
+            // } else if (selected instanceof RosettaJavaClass) {
+            //     this.previewCode = '--- @meta\n\n' + generateJavaClass(selected);
+            // }
+            // highlightedCode = hljs.default.highlightAuto(this.previewCode, ['lua']).value;
             if (selected instanceof RosettaLuaClass_4.RosettaLuaClass) {
-                this.previewCode = '--- @meta\n\n' + (0, LuaGenerator_6.generateLuaClass)(selected);
             }
             else if (selected instanceof RosettaJavaClass_4.RosettaJavaClass) {
-                this.previewCode = '--- @meta\n\n' + (0, JavaGenerator_6.generateJavaClass)(selected);
+                this.previewCode = (0, TypeScriptGenerator_1.javaClassToTS)(selected, true, true);
             }
-            highlightedCode = hljs.default.highlightAuto(this.previewCode, ['lua']).value;
+            highlightedCode = hljs.default.highlightAuto(this.previewCode, ['typescript']).value;
             $renderPane.html(highlightedCode);
         }
         createSidebar() {

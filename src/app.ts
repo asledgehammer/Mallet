@@ -23,6 +23,7 @@ import { ModalName } from './asledgehammer/mallet/modal/ModalName';
 import { ModalConfirm } from './asledgehammer/mallet/modal/ModalConfirm';
 import { Toast } from './asledgehammer/mallet/component/Toast';
 import { Catalog } from './asledgehammer/mallet/Catalog';
+import { javaClassToTS } from './asledgehammer/rosetta/typescript/TypeScriptGenerator';
 
 export class App {
 
@@ -184,13 +185,21 @@ export class App {
         const { selected } = this.catalog;
 
         let highlightedCode = '';
+        
+        // if (selected instanceof RosettaLuaClass) {
+        //     this.previewCode = '--- @meta\n\n' + generateLuaClass(selected);
+        // } else if (selected instanceof RosettaJavaClass) {
+        //     this.previewCode = '--- @meta\n\n' + generateJavaClass(selected);
+        // }
+        // highlightedCode = hljs.default.highlightAuto(this.previewCode, ['lua']).value;
+       
         if (selected instanceof RosettaLuaClass) {
-            this.previewCode = '--- @meta\n\n' + generateLuaClass(selected);
-        } else if (selected instanceof RosettaJavaClass) {
-            this.previewCode = '--- @meta\n\n' + generateJavaClass(selected);
-        }
 
-        highlightedCode = hljs.default.highlightAuto(this.previewCode, ['lua']).value;
+        } else if(selected instanceof RosettaJavaClass) {
+            this.previewCode = javaClassToTS(selected, true, true);
+        }
+        highlightedCode = hljs.default.highlightAuto(this.previewCode, ['typescript']).value;
+        
         $renderPane.html(highlightedCode);
     }
 
@@ -255,7 +264,6 @@ export class App {
             this.toast.alert('Copied code.', 'info');
         });
     }
-
 
     copy(text: string) {
         navigator.clipboard.writeText(text);

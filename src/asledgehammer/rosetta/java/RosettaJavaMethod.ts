@@ -2,6 +2,7 @@ import { formatName } from '../RosettaUtils';
 import { RosettaEntity } from '../RosettaEntity';
 import { RosettaJavaParameter } from './RosettaJavaParameter';
 import { RosettaJavaReturns } from './RosettaJavaReturns';
+import { JavaVisibilityScope } from './Types';
 
 /**
  * **RosettaJavaMethod**
@@ -98,6 +99,26 @@ export class RosettaJavaMethod extends RosettaEntity {
   }
 
   isStatic(): boolean {
-    return this.modifiers != null && !!this.modifiers.length && this.modifiers.indexOf('static') !== -1;
+    return this.hasModifier('static');
+  }
+
+  isFinal(): boolean {
+    return this.hasModifier('final');
+  }
+
+  hasModifiers(): boolean {
+    return this.modifiers && !!this.modifiers.length;
+  }
+
+  hasModifier(modifier: string): boolean {
+    return this.hasModifiers() && this.modifiers.indexOf(modifier) !== -1;
+  }
+
+  getVisibilityScope(): JavaVisibilityScope {
+    if (!this.modifiers.length) return 'package';
+    if (this.hasModifier('public')) return 'public';
+    else if (this.hasModifier('protected')) return 'protected';
+    else if (this.hasModifier('private')) return 'private';
+    else return 'package';
   }
 }

@@ -1,6 +1,7 @@
 import * as Assert from '../../Assert';
 import { RosettaEntity } from '../RosettaEntity';
 import { RosettaJavaType } from './RosettaJavaType';
+import { JavaVisibilityScope } from './Types';
 
 /**
  * **RosettaJavaField**
@@ -51,8 +52,27 @@ export class RosettaJavaField extends RosettaEntity {
     return json;
   }
 
-  isStatic() {
-    return !!this.modifiers.length && this.modifiers.indexOf('static') !== -1;
+  isStatic(): boolean {
+    return this.hasModifier('static');
+  }
+
+  isFinal(): boolean {
+    return this.hasModifier('final');
+  }
+
+  hasModifiers(): boolean {
+    return this.modifiers && !!this.modifiers.length;
+  }
+
+  hasModifier(modifier: string): boolean {
+    return this.hasModifiers() && this.modifiers.indexOf(modifier) !== -1;
+  }
+
+  getVisibilityScope(): JavaVisibilityScope {
+    if (!this.modifiers.length) return 'package';
+    if (this.hasModifier('public')) return 'public';
+    else if (this.hasModifier('protected')) return 'protected';
+    else if (this.hasModifier('private')) return 'private';
+    else return 'package';
   }
 }
-
