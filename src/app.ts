@@ -23,7 +23,8 @@ import { ModalName } from './asledgehammer/mallet/modal/ModalName';
 import { ModalConfirm } from './asledgehammer/mallet/modal/ModalConfirm';
 import { Toast } from './asledgehammer/mallet/component/Toast';
 import { Catalog } from './asledgehammer/mallet/Catalog';
-import { javaClassToTS } from './asledgehammer/rosetta/typescript/TypeScriptGenerator';
+import { javaClassToTS } from './asledgehammer/rosetta/typescript/JavaTypeScriptGenerator';
+import { luaClassToTS } from './asledgehammer/rosetta/typescript/LuaTypeScriptGenerator';
 
 export class App {
 
@@ -194,7 +195,7 @@ export class App {
         // highlightedCode = hljs.default.highlightAuto(this.previewCode, ['lua']).value;
        
         if (selected instanceof RosettaLuaClass) {
-
+            this.previewCode = luaClassToTS(selected, true);
         } else if(selected instanceof RosettaJavaClass) {
             this.previewCode = javaClassToTS(selected, true, true);
         }

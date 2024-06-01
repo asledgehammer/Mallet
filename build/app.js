@@ -5792,7 +5792,7 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
     }
     exports.Catalog = Catalog;
 });
-define("src/asledgehammer/rosetta/typescript/TypeScriptGenerator", ["require", "exports"], function (require, exports) {
+define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.tsType = exports.applyTSDocumentation = exports.paginateNotes = exports.javaClassToTS = exports.javaMethodToTS = exports.javaMethodDocumentation = exports.javaConstructorDocumentation = exports.javaMethodClusterToTS = exports.javaConstructorsToTS = exports.javaConstructorToTS = exports.javaFieldToTS = exports.wrapAsTSNamespace = exports.wrapAsTSFile = void 0;
@@ -6190,7 +6190,335 @@ define("src/asledgehammer/rosetta/typescript/TypeScriptGenerator", ["require", "
     }
     exports.tsType = tsType;
 });
-define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/mallet/component/lua/LuaClassCard", "src/asledgehammer/mallet/component/java/JavaClassCard", "src/asledgehammer/mallet/component/Sidebar", "src/asledgehammer/mallet/component/lua/LuaConstructorCard", "src/asledgehammer/mallet/component/lua/LuaFieldCard", "src/asledgehammer/mallet/component/lua/LuaFunctionCard", "src/asledgehammer/mallet/component/java/JavaConstructorCard", "src/asledgehammer/mallet/component/java/JavaFieldCard", "src/asledgehammer/mallet/component/java/JavaMethodCard", "src/asledgehammer/mallet/modal/ModalName", "src/asledgehammer/mallet/modal/ModalConfirm", "src/asledgehammer/mallet/component/Toast", "src/asledgehammer/mallet/Catalog", "src/asledgehammer/rosetta/typescript/TypeScriptGenerator"], function (require, exports, hljs, RosettaLuaClass_4, RosettaLuaConstructor_2, util_19, RosettaJavaClass_4, LuaClassCard_1, JavaClassCard_1, Sidebar_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, JavaConstructorCard_1, JavaFieldCard_1, JavaMethodCard_1, ModalName_1, ModalConfirm_1, Toast_1, Catalog_1, TypeScriptGenerator_1) {
+define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.tsType = exports.applyTSDocumentation = exports.paginateNotes = exports.luaClassToTS = exports.luaFunctionToTS = exports.luaMethodDocumentation = exports.luaConstructorDocumentation = exports.luaConstructorToTS = exports.luaFieldToTS = exports.wrapAsTSNamespace = exports.wrapAsTSFile = void 0;
+    function wrapAsTSFile(text) {
+        let s = '';
+        s += `/** @noSelfInFile */\n`;
+        s += `declare module '@asledgehammer/pipewrench'`;
+        if (text.length) {
+            return `${s} {\n\n` + text.split('\n').map((a) => `    ${a}`).join('\n') + '\n}';
+        }
+        return `${s} {}\n`;
+    }
+    exports.wrapAsTSFile = wrapAsTSFile;
+    function wrapAsTSNamespace(namespace, text) {
+        const s = `export namespace ${namespace}`;
+        if (text.length) {
+            return `${s} {\n\n` + text.split('\n').map((a) => `    ${a}`).join('\n') + '\n}';
+        }
+        return `${s} {}\n`;
+    }
+    exports.wrapAsTSNamespace = wrapAsTSNamespace;
+    function luaFieldToTS(field, indent = 0, notesLength) {
+        const i = ' '.repeat(indent * 4);
+        let s = '';
+        /* Documentation */
+        let ds = [];
+        // if (field.deprecated) ds.push('@deprecated');
+        if (field.notes) {
+            const notes = paginateNotes(field.notes, notesLength);
+            if (ds.length)
+                ds.push('');
+            for (const line of notes) {
+                ds.push(line);
+            }
+        }
+        s = applyTSDocumentation(ds, s, indent);
+        s += i;
+        /* Definition-line */
+        s += `${field.name}: ${tsType(field.type)};`;
+        // Format documented variables as spaced for better legability.
+        if (ds.length)
+            s += '\n';
+        return s;
+    }
+    exports.luaFieldToTS = luaFieldToTS;
+    function luaConstructorToTS(con, indent, notesLength) {
+        const i = ' '.repeat(indent * 4);
+        const ds = luaConstructorDocumentation(con, notesLength);
+        let ps = '';
+        if (con.parameters && con.parameters.length) {
+            ps += '(';
+            for (const parameter of con.parameters) {
+                ps += `${parameter.name}: ${tsType(parameter.type)}, `;
+            }
+            ps = ps.substring(0, ps.length - 2) + ')';
+        }
+        else {
+            ps = '()';
+        }
+        let s = applyTSDocumentation(ds, '', indent);
+        s += `${i}`;
+        s += `constructor${ps};`;
+        // Format documented variables as spaced for better legability.
+        if (ds.length)
+            s += '\n';
+        return s;
+    }
+    exports.luaConstructorToTS = luaConstructorToTS;
+    function luaConstructorDocumentation(con, notesLength) {
+        const ds = [];
+        /* (Annotations) */
+        // if (con.deprecated) ds.push('@deprecated');
+        /* (Notes) */
+        if (con.notes && con.notes.length) {
+            if (ds.length)
+                ds.push('');
+            const notes = paginateNotes(con.notes, notesLength);
+            for (const line of notes)
+                ds.push(line);
+        }
+        /* (Parameters) */
+        if (con.parameters && con.parameters.length) {
+            if (ds.length)
+                ds.push('');
+            for (const param of con.parameters) {
+                if (param.notes && param.notes.length) {
+                    const notes = paginateNotes(`@param ${param.name} ${param.notes}`, notesLength);
+                    for (const line of notes)
+                        ds.push(line);
+                }
+                else {
+                    ds.push(`@param ${param.name}`);
+                }
+            }
+        }
+        return ds;
+    }
+    exports.luaConstructorDocumentation = luaConstructorDocumentation;
+    function luaMethodDocumentation(method, notesLength, overload = false) {
+        const ds = [];
+        /* (Annotations) */
+        if (overload)
+            ds.push('@overload');
+        if (method.deprecated)
+            ds.push('@deprecated');
+        /* (Notes) */
+        if (method.notes && method.notes.length) {
+            if (ds.length)
+                ds.push('');
+            const notes = paginateNotes(method.notes, notesLength);
+            for (const line of notes)
+                ds.push(line);
+        }
+        /* (Parameters) */
+        if (method.parameters && method.parameters.length) {
+            if (ds.length)
+                ds.push('');
+            for (const param of method.parameters) {
+                if (param.notes && param.notes.length) {
+                    const notes = paginateNotes(`@param ${param.name} ${param.notes}`, notesLength);
+                    for (const line of notes)
+                        ds.push(line);
+                }
+                else {
+                    ds.push(`@param ${param.name}`);
+                }
+            }
+        }
+        /* (Returns) */
+        if (method.returns && method.returns.notes && method.returns.notes.length) {
+            if (ds.length)
+                ds.push('');
+            const notes = paginateNotes(`@returns ${method.returns.notes}`, notesLength);
+            for (const line of notes)
+                ds.push(line);
+        }
+        return ds;
+    }
+    exports.luaMethodDocumentation = luaMethodDocumentation;
+    function luaFunctionToTS(method, indent = 0, notesLength) {
+        const i = ' '.repeat(indent * 4);
+        const ds = luaMethodDocumentation(method, notesLength, false);
+        let ps = '';
+        if (method.parameters && method.parameters.length) {
+            ps += '(';
+            for (const parameter of method.parameters) {
+                ps += `${parameter.name}: ${tsType(parameter.type)}, `;
+            }
+            ps = ps.substring(0, ps.length - 2) + ')';
+        }
+        else {
+            ps = '()';
+        }
+        let s = applyTSDocumentation(ds, '', indent);
+        s += `${i}`;
+        s += `${method.name}${ps}: ${tsType(method.returns.type)};`;
+        s += '\n';
+        return s;
+    }
+    exports.luaFunctionToTS = luaFunctionToTS;
+    function luaClassToTS(clazz, wrapFile = false) {
+        let s = '';
+        const valueNames = Object.keys(clazz.values);
+        valueNames.sort((a, b) => a.localeCompare(b));
+        const fieldNames = Object.keys(clazz.fields);
+        fieldNames.sort((a, b) => a.localeCompare(b));
+        const methodNames = Object.keys(clazz.methods);
+        methodNames.sort((a, b) => a.localeCompare(b));
+        const funcNames = Object.keys(clazz.functions);
+        funcNames.sort((a, b) => a.localeCompare(b));
+        const values = [];
+        const fields = [];
+        const funcs = [];
+        const methods = [];
+        /* (VALUES) */
+        for (const valueName of valueNames) {
+            const value = clazz.values[valueName];
+            values.push(value);
+        }
+        /* (FIELDS) */
+        for (const fieldName of fieldNames) {
+            const field = clazz.fields[fieldName];
+            fields.push(field);
+        }
+        /* (METHODS) */
+        for (const methodName of methodNames) {
+            const method = clazz.methods[methodName];
+            methods.push(method);
+        }
+        /* (FUNCTIONS) */
+        for (const funcName of funcNames) {
+            const func = clazz.functions[funcName];
+            funcs.push(func);
+        }
+        /** 100
+         * * -4 (module indent)
+         * * -3 (' * ')
+         */
+        let notesLength = 96;
+        if (wrapFile)
+            notesLength -= 4;
+        /* (Class Documentation) */
+        const ds = [];
+        ds.push(`@customConstructor ${clazz.name}:new`);
+        ds.push('');
+        ds.push(`Lua Class: ${clazz.name}`);
+        if (clazz.notes && clazz.notes.length) {
+            ds.push('');
+            const lines = paginateNotes(clazz.notes, notesLength);
+            for (const line of lines)
+                ds.push(line);
+        }
+        s = applyTSDocumentation(ds, s, 0);
+        s += `export class ${clazz.name} `;
+        let i = '    ';
+        let is = '';
+        if (values.length) {
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* -------------- VALUES -------------- */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            for (const value of values) {
+                is += `${luaFieldToTS(value, 1, notesLength)}\n`;
+            }
+            is = is.substring(0, is.length - 1);
+        }
+        if (fields.length) {
+            if (is.length)
+                is += '\n';
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* ------------- FIELDS --------------- */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            for (const field of fields) {
+                is += `${luaFieldToTS(field, 1, notesLength)}\n`;
+            }
+            is = is.substring(0, is.length - 1);
+        }
+        if (methods.length) {
+            if (is.length)
+                is += '\n';
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* ------------- METHODS -------------- */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            for (const method of methods) {
+                is += `${luaFunctionToTS(method, 1, notesLength)}\n`;
+            }
+            is = is.substring(0, is.length - 1);
+        }
+        if (funcs.length) {
+            if (is.length)
+                is += '\n';
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* ------------ FUNCTIONS ------------- */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            for (const func of funcs) {
+                is += `${luaFunctionToTS(func, 1, notesLength)}\n`;
+            }
+            is = is.substring(0, is.length - 1);
+        }
+        if (clazz.constructor) {
+            if (is.length)
+                is += '\n';
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* ----------- CONSTRUCTOR ------------ */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            is += `${luaConstructorToTS(clazz.conztructor, 1, notesLength)}\n`;
+            is = is.substring(0, is.length - 1);
+        }
+        if (is.length) {
+            s += `{\n\n${is}}`;
+        }
+        else {
+            s += `{}\n`;
+        }
+        if (wrapFile)
+            return wrapAsTSFile(s);
+        return s;
+    }
+    exports.luaClassToTS = luaClassToTS;
+    function paginateNotes(notes, length) {
+        const split = notes === null || notes === void 0 ? void 0 : notes.split(' ');
+        const result = [];
+        let s = split[0];
+        for (let i = 1; i < split.length; i++) {
+            let word = split[i];
+            if (s.length + word.length + 1 <= length)
+                s = s + ' ' + word;
+            else {
+                result.push(s);
+                s = word;
+            }
+        }
+        if (s.length)
+            result.push(s);
+        return result;
+    }
+    exports.paginateNotes = paginateNotes;
+    function applyTSDocumentation(ds, s, indent) {
+        const i = ' '.repeat(indent * 4);
+        if (ds.length) {
+            if (ds.length === 1) {
+                s += `${i}/** ${ds[0]} */\n`;
+            }
+            else {
+                s += `${i}/**\n`;
+                s += ds.map((a) => `${i} * ${a}`).join('\n');
+                s += `\n${i} */\n`;
+            }
+        }
+        return s;
+    }
+    exports.applyTSDocumentation = applyTSDocumentation;
+    function tsType(type) {
+        if (type.startsWith('fun(')) {
+            // FIXME: Nested function calls won't work here.
+            let t = type.substring(3);
+            t = t.replace('):', ')=>');
+            return t.trim();
+        }
+        return type;
+    }
+    exports.tsType = tsType;
+});
+define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/mallet/component/lua/LuaClassCard", "src/asledgehammer/mallet/component/java/JavaClassCard", "src/asledgehammer/mallet/component/Sidebar", "src/asledgehammer/mallet/component/lua/LuaConstructorCard", "src/asledgehammer/mallet/component/lua/LuaFieldCard", "src/asledgehammer/mallet/component/lua/LuaFunctionCard", "src/asledgehammer/mallet/component/java/JavaConstructorCard", "src/asledgehammer/mallet/component/java/JavaFieldCard", "src/asledgehammer/mallet/component/java/JavaMethodCard", "src/asledgehammer/mallet/modal/ModalName", "src/asledgehammer/mallet/modal/ModalConfirm", "src/asledgehammer/mallet/component/Toast", "src/asledgehammer/mallet/Catalog", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator"], function (require, exports, hljs, RosettaLuaClass_4, RosettaLuaConstructor_2, util_19, RosettaJavaClass_4, LuaClassCard_1, JavaClassCard_1, Sidebar_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, JavaConstructorCard_1, JavaFieldCard_1, JavaMethodCard_1, ModalName_1, ModalConfirm_1, Toast_1, Catalog_1, JavaTypeScriptGenerator_1, LuaTypeScriptGenerator_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.App = void 0;
@@ -6344,9 +6672,10 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             // }
             // highlightedCode = hljs.default.highlightAuto(this.previewCode, ['lua']).value;
             if (selected instanceof RosettaLuaClass_4.RosettaLuaClass) {
+                this.previewCode = (0, LuaTypeScriptGenerator_1.luaClassToTS)(selected, true);
             }
             else if (selected instanceof RosettaJavaClass_4.RosettaJavaClass) {
-                this.previewCode = (0, TypeScriptGenerator_1.javaClassToTS)(selected, true, true);
+                this.previewCode = (0, JavaTypeScriptGenerator_1.javaClassToTS)(selected, true, true);
             }
             highlightedCode = hljs.default.highlightAuto(this.previewCode, ['typescript']).value;
             $renderPane.html(highlightedCode);
