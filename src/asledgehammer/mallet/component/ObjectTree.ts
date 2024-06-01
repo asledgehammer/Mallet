@@ -10,7 +10,7 @@ function wrapFolderCount(count: number): string {
 }
 
 function wrapItem(text: string): string {
-    return `<span class="font-monospace" style="position: relative; top: -2px; font-size: 12px;">${text}</span>`;
+    return `<span class="font-monospace">${text}</span>`;
 }
 
 export class ObjectTree {

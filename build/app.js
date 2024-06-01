@@ -4190,7 +4190,7 @@ define("src/asledgehammer/mallet/component/ObjectTree", ["require", "exports", "
         return `<strong class="font-monospace text-white">(${count})</strong>`;
     }
     function wrapItem(text) {
-        return `<span class="font-monospace" style="position: relative; top: -2px; font-size: 12px;">${text}</span>`;
+        return `<span class="font-monospace">${text}</span>`;
     }
     class ObjectTree {
         constructor(app, sidebar) {
