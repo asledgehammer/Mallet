@@ -35,22 +35,6 @@ export type Delta = {
 
 export function toDelta(md: string, forcedAttributes: DeltaAttributes | undefined = undefined): any {
 
-    console.log(`md: ${md}`);
-
-    /* (Multi-line) */
-    // if (md.indexOf('\n') !== -1) {
-    //     const ops: Delta[] = [];
-    //     const split = md.split('\n');
-    //     for (const next of split) {
-    //         const nextOps = toDelta(next + '\n', forcedAttributes);
-    //         for (const nextOp of nextOps) {
-    //             ops.push(nextOp);
-    //         }
-    //     }
-    //     console.log(ops);
-    //     return ops;
-    // }
-
     const ops: Delta[] = [];
 
     let op: Delta = { insert: '' };
@@ -231,8 +215,6 @@ export function toDelta(md: string, forcedAttributes: DeltaAttributes | undefine
         if (!next.insert || !next.insert.length) continue;
         ops2.push(next);
     }
-
-    console.log(ops2);
 
     return ops2;
 }

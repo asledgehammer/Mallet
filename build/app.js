@@ -2708,20 +2708,6 @@ define("src/asledgehammer/Delta", ["require", "exports"], function (require, exp
     exports.fromDelta = fromDelta;
     function toDelta(md, forcedAttributes = undefined) {
         var _a;
-        console.log(`md: ${md}`);
-        /* (Multi-line) */
-        // if (md.indexOf('\n') !== -1) {
-        //     const ops: Delta[] = [];
-        //     const split = md.split('\n');
-        //     for (const next of split) {
-        //         const nextOps = toDelta(next + '\n', forcedAttributes);
-        //         for (const nextOp of nextOps) {
-        //             ops.push(nextOp);
-        //         }
-        //     }
-        //     console.log(ops);
-        //     return ops;
-        // }
         const ops = [];
         let op = { insert: '' };
         if (forcedAttributes)
@@ -2894,7 +2880,6 @@ define("src/asledgehammer/Delta", ["require", "exports"], function (require, exp
                 continue;
             ops2.push(next);
         }
-        console.log(ops2);
         return ops2;
     }
     exports.toDelta = toDelta;
