@@ -44,7 +44,7 @@ export class RosettaLuaParameter extends RosettaEntity {
     /* (Properties) */
     json.name = name;
     json.type = type;
-    json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+    json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
 
     return json;
   }

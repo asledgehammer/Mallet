@@ -271,7 +271,7 @@ export class RosettaLuaClass extends RosettaEntity {
 
     /* (Properties) */
     json.extends = this.extendz !== undefined && this.extendz !== '' ? this.extendz : undefined;
-    json.notes = this.notes !== undefined && this.notes !== '' ? this.notes : undefined;
+    json.notes = this.notes !== undefined && this.notes !== '' ? this.writeNotes(this.notes) : undefined;
     json.deprecated = this.deprecated ? true : undefined;
 
     /* (Static Fields) */

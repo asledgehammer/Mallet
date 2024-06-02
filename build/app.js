@@ -118,11 +118,15 @@ define("src/asledgehammer/rosetta/RosettaEntity", ["require", "exports", "src/as
                 return `${raw[id]}`;
             return;
         }
+        writeNotes(notes) {
+            if (!notes || !notes.length)
+                return undefined;
+            return notes.replace(/\n/g, '\\n');
+        }
         readNotes(raw = this.raw) {
             const notes = this.readString('notes', raw);
-            if (notes != null) {
-                return notes.replace(/\s/g, ' ').replace(/\s\s/g, ' ').trim();
-            }
+            if (notes != null)
+                return notes.replace(/\\n/g, '\n');
             return;
         }
         readRequiredString(id, raw = this.raw) {
@@ -188,7 +192,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaParameter", ["require", "exports
             /* (Properties) */
             json.name = name;
             json.type = type;
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
             return json;
         }
     }
@@ -228,7 +232,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaReturns", ["require", "exports",
             const json = {};
             /* (Properties) */
             json.type = type;
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            json.notes = notes !== undefined && this.writeNotes(notes) !== '' ? notes : undefined;
             return json;
         }
     }
@@ -307,7 +311,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaFunction", ["require", "exports"
             const json = {};
             /* (Properties) */
             json.deprecated = this.deprecated ? true : undefined;
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
             /* (Parameters) */
             if (parameters.length) {
                 json.parameters = [];
@@ -363,7 +367,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaField", ["require", "exports", "
             const json = {};
             /* (Properties) */
             json.type = type;
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
             json.defaultValue = defaultValue !== undefined && defaultValue !== '' ? defaultValue : undefined;
             return json;
         }
@@ -430,7 +434,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaConstructor", ["require", "expor
             const { notes, parameters } = this;
             const json = {};
             /* (Properties) */
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
             /* (Parameters) */
             if (parameters.length) {
                 json.parameters = [];
@@ -672,7 +676,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaClass", ["require", "exports", "
             const json = {};
             /* (Properties) */
             json.extends = this.extendz !== undefined && this.extendz !== '' ? this.extendz : undefined;
-            json.notes = this.notes !== undefined && this.notes !== '' ? this.notes : undefined;
+            json.notes = this.notes !== undefined && this.notes !== '' ? this.writeNotes(this.notes) : undefined;
             json.deprecated = this.deprecated ? true : undefined;
             /* (Static Fields) */
             let keys = Object.keys(values);
@@ -863,7 +867,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaTable", ["require", "exports", "
             const { fields, tables, functions, name, notes } = this;
             const json = {};
             /* (Properties) */
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
             /* (Fields) */
             let keys = Object.keys(fields);
             if (keys.length) {
@@ -1277,7 +1281,7 @@ define("src/asledgehammer/rosetta/java/RosettaJavaParameter", ["require", "expor
             if (!patch)
                 json.type = type.toJSON(patch);
             json.name = name;
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
             return json;
         }
     }
@@ -1336,7 +1340,7 @@ define("src/asledgehammer/rosetta/java/RosettaJavaConstructor", ["require", "exp
         toJSON(patch = false) {
             const { notes, deprecated, modifiers, parameters } = this;
             const json = {};
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
             /* (Properties) */
             if (!patch) {
                 json.deprecated = deprecated;
@@ -1401,7 +1405,7 @@ define("src/asledgehammer/rosetta/java/RosettaJavaReturns", ["require", "exports
             const { type, notes } = this;
             const json = {};
             json.type = type.toJSON(patch);
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
             return json;
         }
     }
@@ -1469,7 +1473,7 @@ define("src/asledgehammer/rosetta/java/RosettaJavaMethod", ["require", "exports"
                     json.modifiers = modifiers;
             }
             json.name = name;
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
             /* (Parameters) */
             if (parameters.length) {
                 json.parameters = [];
@@ -1581,7 +1585,7 @@ define("src/asledgehammer/rosetta/java/RosettaJavaField", ["require", "exports",
             const json = {};
             /* (Properties) */
             json.name = name;
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
             if (!patch) {
                 if (modifiers.length)
                     json.modifiers = modifiers;
@@ -1833,7 +1837,7 @@ define("src/asledgehammer/rosetta/java/RosettaJavaClass", ["require", "exports",
             const { extendz, modifiers, deprecated, javaType, notes, fields, constructors, methods } = this;
             const json = {};
             /* (Properties) */
-            json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+            json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
             if (!patch) {
                 if (extendz !== undefined)
                     json.extends = extendz;
@@ -2527,20 +2531,13 @@ define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require"
     }
     exports.luaClassToTS = luaClassToTS;
     function paginateNotes(notes, length) {
-        const split = notes === null || notes === void 0 ? void 0 : notes.split(' ');
-        const result = [];
-        let s = split[0];
-        for (let i = 1; i < split.length; i++) {
-            let word = split[i];
-            if (s.length + word.length + 1 <= length)
-                s = s + ' ' + word;
-            else {
-                result.push(s);
-                s = word;
-            }
+        let result;
+        if (notes.indexOf('\n') !== -1) {
+            result = notes.split('\n');
         }
-        if (s.length)
-            result.push(s);
+        else {
+            result = [notes];
+        }
         return result;
     }
     exports.paginateNotes = paginateNotes;
@@ -2552,7 +2549,11 @@ define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require"
             }
             else {
                 s += `${i}/**\n`;
-                s += ds.map((a) => `${i} * ${a}`).join('\n');
+                for (const next of ds) {
+                    s += `${i} * ${next}\n`;
+                }
+                s = s.substring(0, s.length - 1);
+                // s += ds.map((a) => `${i} * ${a}`).join('\n');
                 s += `\n${i} */\n`;
             }
         }
@@ -2707,6 +2708,20 @@ define("src/asledgehammer/Delta", ["require", "exports"], function (require, exp
     exports.fromDelta = fromDelta;
     function toDelta(md, forcedAttributes = undefined) {
         var _a;
+        console.log(`md: ${md}`);
+        /* (Multi-line) */
+        // if (md.indexOf('\n') !== -1) {
+        //     const ops: Delta[] = [];
+        //     const split = md.split('\n');
+        //     for (const next of split) {
+        //         const nextOps = toDelta(next + '\n', forcedAttributes);
+        //         for (const nextOp of nextOps) {
+        //             ops.push(nextOp);
+        //         }
+        //     }
+        //     console.log(ops);
+        //     return ops;
+        // }
         const ops = [];
         let op = { insert: '' };
         if (forcedAttributes)
@@ -2879,6 +2894,7 @@ define("src/asledgehammer/Delta", ["require", "exports"], function (require, exp
                 continue;
             ops2.push(next);
         }
+        console.log(ops2);
         return ops2;
     }
     exports.toDelta = toDelta;

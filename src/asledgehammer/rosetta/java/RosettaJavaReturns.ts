@@ -29,7 +29,7 @@ export class RosettaJavaReturns extends RosettaEntity {
     const { type, notes } = this;
     const json: any = {};
     json.type = type.toJSON(patch);
-    json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+    json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
     return json;
   }
 }

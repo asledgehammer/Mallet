@@ -70,7 +70,7 @@ export class RosettaJavaConstructor extends RosettaEntity {
     const { notes, deprecated, modifiers, parameters } = this;
 
     const json: any = {};
-    json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+    json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
 
     /* (Properties) */
     if (!patch) {

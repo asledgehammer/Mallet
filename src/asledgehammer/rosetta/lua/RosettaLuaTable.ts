@@ -111,7 +111,7 @@ export class RosettaLuaTable extends RosettaEntity {
     const json: any = {};
 
     /* (Properties) */
-    json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+    json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
 
     /* (Fields) */
     let keys = Object.keys(fields);

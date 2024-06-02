@@ -84,7 +84,7 @@ export class RosettaJavaMethod extends RosettaEntity {
       if (modifiers.length) json.modifiers = modifiers;
     }
     json.name = name;
-    json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+    json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
 
     /* (Parameters) */
     if (parameters.length) {

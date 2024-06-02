@@ -41,7 +41,7 @@ export class RosettaJavaField extends RosettaEntity {
 
     /* (Properties) */
     json.name = name;
-    json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+    json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
 
     if (!patch) {
       if (modifiers.length) json.modifiers = modifiers;

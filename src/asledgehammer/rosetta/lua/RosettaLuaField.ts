@@ -46,7 +46,7 @@ export class RosettaLuaField extends RosettaEntity {
 
     /* (Properties) */
     json.type = type;
-    json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+    json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
     json.defaultValue = defaultValue !== undefined && defaultValue !== '' ? defaultValue : undefined;
 
     return json;

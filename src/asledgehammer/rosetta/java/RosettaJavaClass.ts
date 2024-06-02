@@ -253,7 +253,7 @@ export class RosettaJavaClass extends RosettaEntity {
     const json: any = {};
 
     /* (Properties) */
-    json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+    json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
     if (!patch) {
       if (extendz !== undefined) json.extends = extendz;
       if (modifiers !== undefined) json.modifiers = modifiers;

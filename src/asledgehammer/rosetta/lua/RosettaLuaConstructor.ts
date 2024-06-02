@@ -77,7 +77,7 @@ export class RosettaLuaConstructor extends RosettaEntity {
     const json: any = {};
 
     /* (Properties) */
-    json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+    json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
 
     /* (Parameters) */
     if (parameters.length) {

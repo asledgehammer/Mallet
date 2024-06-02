@@ -36,7 +36,7 @@ export class RosettaLuaReturns extends RosettaEntity {
 
     /* (Properties) */
     json.type = type;
-    json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+    json.notes = notes !== undefined && this.writeNotes(notes) !== '' ? notes : undefined;
 
     return json;
   }

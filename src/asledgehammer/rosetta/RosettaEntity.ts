@@ -25,11 +25,14 @@ export abstract class RosettaEntity {
     return;
   }
 
+  writeNotes(notes: string | undefined): string | undefined {
+    if (!notes || !notes.length) return undefined;
+    return notes.replace(/\n/g, '\\n');
+  }
+
   readNotes(raw = this.raw): string | undefined {
     const notes = this.readString('notes', raw);
-    if (notes != null) {
-      return notes.replace(/\s/g, ' ').replace(/\s\s/g, ' ').trim();
-    }
+    if (notes != null) return notes.replace(/\\n/g, '\n');
     return;
   }
 

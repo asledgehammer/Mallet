@@ -319,19 +319,13 @@ export function luaClassToTS(
 }
 
 export function paginateNotes(notes: string, length: number): string[] {
-    const split = notes?.split(' ');
-    const result: string[] = [];
-    let s = split[0]
-    for (let i = 1; i < split.length; i++) {
-        let word = split[i];
-        if (s.length + word.length + 1 <= length) s = s + ' ' + word;
-        else {
-            result.push(s);
-            s = word;
-        }
+    let result: string[];
+    if(notes.indexOf('\n') !== -1) {
+        result = notes.split('\n');
+    } else {
+        result = [notes];
     }
-    if (s.length) result.push(s);
-    return result
+    return result;
 }
 
 export function applyTSDocumentation(ds: string[], s: string, indent: number): string {
@@ -341,7 +335,11 @@ export function applyTSDocumentation(ds: string[], s: string, indent: number): s
             s += `${i}/** ${ds[0]} */\n`;
         } else {
             s += `${i}/**\n`;
-            s += ds.map((a) => `${i} * ${a}`).join('\n');
+            for (const next of ds) {
+                s += `${i} * ${next}\n`;
+            }
+            s = s.substring(0, s.length - 1);
+            // s += ds.map((a) => `${i} * ${a}`).join('\n');
             s += `\n${i} */\n`;
         }
     }

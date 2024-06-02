@@ -90,12 +90,11 @@ export class RosettaLuaFunction extends RosettaEntity {
 
   toJSON(patch: boolean = false): any {
     const { notes, parameters, returns } = this;
-
     const json: any = {};
 
     /* (Properties) */
     json.deprecated = this.deprecated ? true : undefined;
-    json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+    json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
 
     /* (Parameters) */
     if (parameters.length) {
