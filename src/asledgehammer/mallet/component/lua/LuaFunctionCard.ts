@@ -1,5 +1,5 @@
 import { App } from '../../../../app';
-import { generateLuaMethod } from '../../../rosetta/lua/LuaGenerator';
+import { generateLuaMethod } from '../../../rosetta/lua/LuaLuaGenerator';
 import { RosettaLuaClass } from '../../../rosetta/lua/RosettaLuaClass';
 import { RosettaLuaFunction } from '../../../rosetta/lua/RosettaLuaFunction';
 import { luaFunctionToTS } from '../../../rosetta/typescript/LuaTypeScriptGenerator';

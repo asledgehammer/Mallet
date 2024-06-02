@@ -1,12 +1,12 @@
 import hljs = require('highlight.js');
-import { generateLuaClass } from './asledgehammer/rosetta/lua/LuaGenerator';
+import { generateLuaClass } from './asledgehammer/rosetta/lua/LuaLuaGenerator';
 import { RosettaLuaClass } from './asledgehammer/rosetta/lua/RosettaLuaClass';
 import { RosettaLuaConstructor } from './asledgehammer/rosetta/lua/RosettaLuaConstructor';
 import { RosettaLuaField } from './asledgehammer/rosetta/lua/RosettaLuaField';
 import { RosettaLuaFunction } from './asledgehammer/rosetta/lua/RosettaLuaFunction';
 import { $get } from './asledgehammer/rosetta/util';
 import { RosettaJavaClass, RosettaJavaNamespace } from './asledgehammer/rosetta/java/RosettaJavaClass';
-import { generateJavaClass } from './asledgehammer/rosetta/java/JavaGenerator';
+import { generateJavaClass } from './asledgehammer/rosetta/java/JavaLuaGenerator';
 import { RosettaJavaField } from './asledgehammer/rosetta/java/RosettaJavaField';
 import { RosettaJavaMethod } from './asledgehammer/rosetta/java/RosettaJavaMethod';
 import { RosettaJavaConstructor } from './asledgehammer/rosetta/java/RosettaJavaConstructor';

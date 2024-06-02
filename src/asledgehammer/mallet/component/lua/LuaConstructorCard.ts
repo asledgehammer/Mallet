@@ -1,5 +1,5 @@
 import { App } from '../../../../app';
-import { generateLuaConstructor } from '../../../rosetta/lua/LuaGenerator';
+import { generateLuaConstructor } from '../../../rosetta/lua/LuaLuaGenerator';
 import { RosettaLuaConstructor } from '../../../rosetta/lua/RosettaLuaConstructor';
 import { luaConstructorToTS } from '../../../rosetta/typescript/LuaTypeScriptGenerator';
 import { $get, html } from '../../../rosetta/util';

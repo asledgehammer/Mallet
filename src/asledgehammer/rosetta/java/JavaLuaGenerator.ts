@@ -1,12 +1,13 @@
 import { RosettaJavaClass } from "./RosettaJavaClass";
 import { RosettaJavaConstructor } from "./RosettaJavaConstructor";
 import { RosettaJavaField } from "./RosettaJavaField";
+import { RosettaJavaMethod } from "./RosettaJavaMethod";
 import { RosettaJavaMethodCluster } from "./RosettaJavaMethodCluster";
 import { RosettaJavaParameter } from "./RosettaJavaParameter";
 
 export function generateJavaField(field: RosettaJavaField): string {
     let s = '';
-
+    if (field.getVisibilityScope() !== 'public') return '';
     // Description
     if (field.notes && field.notes.length) {
         const notes = field.notes.split('\n').join(' ');
@@ -29,11 +30,12 @@ export function generateJavaParameterBody(params: RosettaJavaParameter[]): strin
     return `(${s})`;
 }
 
-export function generateJavaConstructor(className: string, methods: RosettaJavaConstructor[]): string {
+export function generateJavaConstructor(className: string, constructors: RosettaJavaConstructor[]): string {
 
-    if (!methods.length) return '';
+    if (!constructors.length) return '';
 
-    methods.sort((a, b) => a.parameters.length - b.parameters.length);
+    constructors = [...constructors].filter((a) => a.getVisibilityScope() === 'public');
+    constructors.sort((a, b) => a.parameters.length - b.parameters.length);
 
     let s = '';
 
@@ -43,7 +45,7 @@ export function generateJavaConstructor(className: string, methods: RosettaJavaC
     const _paramNames: string[] = [];
     const _paramTypes: string[] = [];
     const _overloads: string[] = [];
-    for (const method of methods) {
+    for (const method of constructors) {
         const { parameters } = method;
         if (parameters.length > maxParams) {
             maxParams = parameters.length;
@@ -59,7 +61,7 @@ export function generateJavaConstructor(className: string, methods: RosettaJavaC
         _overloads.push(_overload);
     }
 
-    const method0 = methods[0];
+    const method0 = constructors[0];
     if (method0.parameters && method0.parameters.length) {
         for (const param of method0.parameters) {
             _paramNames.push(param.name);
@@ -78,10 +80,10 @@ export function generateJavaConstructor(className: string, methods: RosettaJavaC
 
     // Documentation.
     let ds = '--- @public\n';
-    if (methods.length > 1) {
+    if (constructors.length > 1) {
 
-        for (let index = 0; index < methods.length; index++) {
-            const method = methods[index];
+        for (let index = 0; index < constructors.length; index++) {
+            const method = constructors[index];
             let mds = '';
             if (method.notes) {
                 mds += '--- ### Description:';
@@ -108,9 +110,9 @@ export function generateJavaConstructor(className: string, methods: RosettaJavaC
         ds += `--- \n`;
 
         // Apply first method's notes.
-        const method = methods[0];
+        const method = constructors[0];
         if (method.notes) {
-            ds += `--- ${methods[0].notes!.replace(/\n/g, '\n--- ')}\n--- \n`;
+            ds += `--- ${constructors[0].notes!.replace(/\n/g, '\n--- ')}\n--- \n`;
         }
 
         // Apply parameter(s).
@@ -123,14 +125,14 @@ export function generateJavaConstructor(className: string, methods: RosettaJavaC
         // Apply overload(s).
         if (_overloads.length > 1) {
             ds += '\n--- \n';
-            for (let oIndex = 1; oIndex < methods.length; oIndex++) {
+            for (let oIndex = 1; oIndex < constructors.length; oIndex++) {
                 ds += `--- @overload ${_overloads[oIndex]}\n`;
             }
         }
 
     } else {
         let vds = '';
-        const method = methods[0];
+        const method = constructors[0];
         if (method.notes) {
             vds += `--- ${method.notes.replace(/\n/g, '\n--- ')}`;
         }
@@ -156,11 +158,11 @@ export function generateJavaConstructor(className: string, methods: RosettaJavaC
     return s;
 }
 
-export function generateJavaMethod(className: string, cluster: RosettaJavaMethodCluster): string {
+export function generateJavaMethods(className: string, cluster: RosettaJavaMethod[]): string {
 
-    if (!cluster.methods.length) return '';
+    if (!cluster.length) return '';
 
-    const methods = [...cluster.methods];
+    const methods = [...cluster].filter((a) => a.getVisibilityScope() === 'public');
     methods.sort((a, b) => a.parameters.length - b.parameters.length);
     const isStatic = methods[0].isStatic();
 
@@ -294,7 +296,7 @@ export function generateJavaMethod(className: string, cluster: RosettaJavaMethod
         if (method.returns.notes) {
             vds += ` ${method.returns.notes.replace(/\n/g, ' ')}`;
         }
-        if(!vds.endsWith('\n')) vds += '\n';
+        if (!vds.endsWith('\n')) vds += '\n';
         ds += vds;
     }
 
@@ -302,7 +304,7 @@ export function generateJavaMethod(className: string, cluster: RosettaJavaMethod
         ds = ds.replace('\n\n', '\n--- \n');
     }
 
-    s += `${ds}function ${className}${isStatic ? '.' : ':'}${cluster.name}(${ps}) end`;
+    s += `${ds}function ${className}${isStatic ? '.' : ':'}${methods[0].name}(${ps}) end`;
 
     return s;
 }
@@ -333,17 +335,18 @@ export function generateJavaClass(clazz: RosettaJavaClass): string {
         // Static field(s) first.
         for (const fieldName of fieldNames) {
             const field = clazz.fields[fieldName];
+            if (field.getVisibilityScope() !== 'public') continue;
             if (field.isStatic()) {
                 s += generateJavaField(field) + '\n';
             }
         }
-        // Instance field(s) next.
-        for (const fieldName of fieldNames) {
-            const field = clazz.fields[fieldName];
-            if (!field.isStatic()) {
-                s += generateJavaField(field) + '\n';
-            }
-        }
+        // // Instance field(s) next.
+        // for (const fieldName of fieldNames) {
+        //     const field = clazz.fields[fieldName];
+        //     if (!field.isStatic()) {
+        //         s += generateJavaField(field) + '\n';
+        //     }
+        // }
     }
 
     const methodClusterNames = Object.keys(clazz.methods);
@@ -363,39 +366,45 @@ export function generateJavaClass(clazz: RosettaJavaClass): string {
         }
     }
 
+    let temp = '';
+
     if (staticMethods.length) {
-
-        s += `------------------------------------\n`;
-        s += `---------- STATIC METHODS ----------\n`;
-        s += `------------------------------------\n`;
-        s += '\n';
-
-        // Method Cluster(s)
+        temp = '';
         for (const cluster of staticMethods) {
-            s += `${generateJavaMethod(clazz.name, cluster)}\n\n`;
+            temp += `${generateJavaMethods(clazz.name, cluster.methods)}\n\n`;
+        }
+        if (temp.length) {
+            s += `------------------------------------\n`;
+            s += `---------- STATIC METHODS ----------\n`;
+            s += `------------------------------------\n`;
+            s += '\n';
+            s += temp;
         }
     }
 
     if (methods.length) {
-
-        s += '------------------------------------\n';
-        s += '------------- METHODS --------------\n';
-        s += '------------------------------------\n';
-        s += '\n';
-
-        // Method Cluster(s)
+        temp = '';
         for (const cluster of methods) {
-            s += `${generateJavaMethod(clazz.name, cluster)}\n\n`;
+            temp += `${generateJavaMethods(clazz.name, cluster.methods)}\n\n`;
+        }
+        if (temp.length) {
+            s += '------------------------------------\n';
+            s += '------------- METHODS --------------\n';
+            s += '------------------------------------\n';
+            s += '\n';
+            s += temp;
         }
     }
 
     if (clazz.constructors && clazz.constructors.length) {
-
-        s += `------------------------------------\n`;
-        s += `----------- CONSTRUCTOR ------------\n`;
-        s += `------------------------------------\n`;
-        s += '\n';
-        s += `${generateJavaConstructor(clazz.name, clazz.constructors)}\n`;
+        temp = `${generateJavaConstructor(clazz.name, clazz.constructors)}\n`;
+        if (temp.length) {
+            s += `------------------------------------\n`;
+            s += `----------- CONSTRUCTOR ------------\n`;
+            s += `------------------------------------\n`;
+            s += '\n';
+            s += temp;
+        }
     }
 
     return s;

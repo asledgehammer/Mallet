@@ -27,6 +27,9 @@ export function javaFieldToTS(
     indent: number = 0,
     notesLength: number
 ): string {
+
+    if (field.getVisibilityScope() !== 'public') return '';
+
     const i = ' '.repeat(indent * 4);
     let s = '';
 
@@ -60,6 +63,9 @@ export function javaConstructorToTS(
     indent: number,
     notesLength: number
 ): string {
+
+    if (con.getVisibilityScope() !== 'public') return '';
+
     const i = ' '.repeat(indent * 4);
     const ds: string[] = javaConstructorDocumentation(con, notesLength);
 
@@ -92,9 +98,11 @@ export function javaConstructorsToTS(
     const i = ' '.repeat(indent * 4);
     let s = '';
 
-
-    const cons = [...constructors];
-
+    const cons = [];
+    for (const c of constructors) {
+        if (c.getVisibilityScope() !== 'public') continue;
+        cons.push(c);
+    }
 
     if (cons.length) {
 
@@ -142,7 +150,12 @@ export function javaMethodClusterToTS(
 
     let s = '';
 
-    const methods = [...cluster.methods];
+    const methods = [];
+    for (const m of cluster.methods) {
+        if (m.getVisibilityScope() !== 'public') continue;
+        methods.push(m);
+    }
+
     if (methods.length) {
         methods.sort((a, b) => {
 
@@ -256,6 +269,9 @@ export function javaMethodToTS(
     indent: number = 0,
     notesLength: number
 ): string {
+
+    if (method.getVisibilityScope() !== 'public') return '';
+
     const i = ' '.repeat(indent * 4);
     const ds: string[] = javaMethodDocumentation(method, notesLength, false);
 
@@ -300,6 +316,7 @@ export function javaClassToTS(
     /* (STATIC FIELDS) */
     for (const fieldName of fieldNames) {
         const field = clazz.fields[fieldName];
+        if (field.getVisibilityScope() !== 'public') continue;
         if (field.isStatic()) staticFields.push(field);
         else fields.push(field);
     }
@@ -332,57 +349,77 @@ export function javaClassToTS(
     s += `export class ${clazz.name} `;
     let i = '    ';
     let is = '';
+    let temp = '';
     if (staticFields.length) {
-        is += `${i}/* ------------------------------------ */\n`;
-        is += `${i}/* ---------- STATIC FIELDS ----------- */\n`;
-        is += `${i}/* ------------------------------------ */\n`;
-        is += '\n';
+        temp = '';
         for (const field of staticFields) {
             if (field.getVisibilityScope() !== 'public') continue;
             else if (!field.isFinal()) continue;
-            is += `${javaFieldToTS(field, 1, notesLength)}\n`;
+            temp += `${javaFieldToTS(field, 1, notesLength)}\n`;
+        }
+        if (temp.length) {
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* ---------- STATIC FIELDS ----------- */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            is += temp;
         }
     }
 
     // if (fields.length) {
-    //     if (is.length) is += '\n';
-    //     is += `${i}/* ------------------------------------ */\n`;
-    //     is += `${i}/* ------------- FIELDS --------------- */\n`;
-    //     is += `${i}/* ------------------------------------ */\n`;
-    //     is += '\n';
+    //     temp = '';
     //     for (const field of fields) {
-    //         is += `${javaFieldToTS(field, 1, notesLength)}\n`;
+    //         temp += `${javaFieldToTS(field, 1, notesLength)}\n`;
+    //     }
+    //     if (temp.length) {
+    //         if (is.length) is += '\n';
+    //         is += `${i}/* ------------------------------------ */\n`;
+    //         is += `${i}/* ------------- FIELDS --------------- */\n`;
+    //         is += `${i}/* ------------------------------------ */\n`;
+    //         is += '\n';
+    //         is += temp;
     //     }
     // }
 
     if (clazz.constructors && clazz.constructors.length) {
-        if (is.length) is += '\n';
-        is += `${i}/* ------------------------------------ */\n`;
-        is += `${i}/* ----------- CONSTRUCTOR ------------ */\n`;
-        is += `${i}/* ------------------------------------ */\n`;
-        is += '\n';
-        is += `${javaConstructorsToTS(clazz.constructors, 1, notesLength)}\n`;
+        temp = `${javaConstructorsToTS(clazz.constructors, 1, notesLength)}\n`;
+        if (temp.length) {
+            if (is.length) is += '\n';
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* ----------- CONSTRUCTOR ------------ */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            is += temp;
+        }
     }
 
     if (methods.length) {
-        if (is.length) is += '\n';
-        is += `${i}/* ------------------------------------ */\n`;
-        is += `${i}/* ------------- METHODS -------------- */\n`;
-        is += `${i}/* ------------------------------------ */\n`;
-        is += '\n';
+        temp = '';
         for (const cluster of methods) {
-            is += `${javaMethodClusterToTS(cluster, 1, notesLength)}\n`;
+            temp += `${javaMethodClusterToTS(cluster, 1, notesLength)}\n`;
+        }
+        if (temp.length) {
+            if (is.length) is += '\n';
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* ------------- METHODS -------------- */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            is += temp;
         }
     }
 
     if (staticMethods.length) {
-        if (is.length) is += '\n';
-        is += `${i}/* ------------------------------------ */\n`;
-        is += `${i}/* ---------- STATIC METHODS ---------- */\n`;
-        is += `${i}/* ------------------------------------ */\n`;
-        is += '\n';
+        temp = '';
         for (const cluster of staticMethods) {
-            is += `${javaMethodClusterToTS(cluster, 1, notesLength)}\n`;
+            temp += `${javaMethodClusterToTS(cluster, 1, notesLength)}\n`;
+        }
+        if (temp.length) {
+            if (is.length) is += '\n';
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* ---------- STATIC METHODS ---------- */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            is += temp;
         }
     }
 

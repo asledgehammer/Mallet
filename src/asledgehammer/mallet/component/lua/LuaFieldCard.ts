@@ -1,5 +1,5 @@
 import { App } from '../../../../app';
-import { generateLuaField, generateLuaValue } from '../../../rosetta/lua/LuaGenerator';
+import { generateLuaField, generateLuaValue } from '../../../rosetta/lua/LuaLuaGenerator';
 import { RosettaLuaClass } from '../../../rosetta/lua/RosettaLuaClass';
 import { RosettaLuaField } from '../../../rosetta/lua/RosettaLuaField';
 import { luaFieldToTS } from '../../../rosetta/typescript/LuaTypeScriptGenerator';

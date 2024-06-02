@@ -893,7 +893,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaTable", ["require", "exports", "
     }
     exports.RosettaLuaTable = RosettaLuaTable;
 });
-define("src/asledgehammer/rosetta/lua/LuaGenerator", ["require", "exports"], function (require, exports) {
+define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.generateLuaTable = exports.generateLuaClass = exports.generateLuaConstructor = exports.generateLuaMethod = exports.generateLuaFunction = exports.generateLuaParameterBody = exports.generateLuaValue = exports.generateLuaField = void 0;
@@ -1873,12 +1873,14 @@ define("src/asledgehammer/rosetta/java/RosettaJavaClass", ["require", "exports",
     }
     exports.RosettaJavaClass = RosettaJavaClass;
 });
-define("src/asledgehammer/rosetta/java/JavaGenerator", ["require", "exports"], function (require, exports) {
+define("src/asledgehammer/rosetta/java/JavaLuaGenerator", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.generateJavaClass = exports.generateJavaMethod = exports.generateJavaConstructor = exports.generateJavaParameterBody = exports.generateJavaField = void 0;
+    exports.generateJavaClass = exports.generateJavaMethods = exports.generateJavaConstructor = exports.generateJavaParameterBody = exports.generateJavaField = void 0;
     function generateJavaField(field) {
         let s = '';
+        if (field.getVisibilityScope() !== 'public')
+            return '';
         // Description
         if (field.notes && field.notes.length) {
             const notes = field.notes.split('\n').join(' ');
@@ -1900,17 +1902,18 @@ define("src/asledgehammer/rosetta/java/JavaGenerator", ["require", "exports"], f
         return `(${s})`;
     }
     exports.generateJavaParameterBody = generateJavaParameterBody;
-    function generateJavaConstructor(className, methods) {
-        if (!methods.length)
+    function generateJavaConstructor(className, constructors) {
+        if (!constructors.length)
             return '';
-        methods.sort((a, b) => a.parameters.length - b.parameters.length);
+        constructors = [...constructors].filter((a) => a.getVisibilityScope() === 'public');
+        constructors.sort((a, b) => a.parameters.length - b.parameters.length);
         let s = '';
         // Parameter(s).
         let maxParams = 0;
         const _paramNames = [];
         const _paramTypes = [];
         const _overloads = [];
-        for (const method of methods) {
+        for (const method of constructors) {
             const { parameters } = method;
             if (parameters.length > maxParams) {
                 maxParams = parameters.length;
@@ -1925,7 +1928,7 @@ define("src/asledgehammer/rosetta/java/JavaGenerator", ["require", "exports"], f
             _overload += `${oParams}): ${className}`;
             _overloads.push(_overload);
         }
-        const method0 = methods[0];
+        const method0 = constructors[0];
         if (method0.parameters && method0.parameters.length) {
             for (const param of method0.parameters) {
                 _paramNames.push(param.name);
@@ -1942,9 +1945,9 @@ define("src/asledgehammer/rosetta/java/JavaGenerator", ["require", "exports"], f
         }
         // Documentation.
         let ds = '--- @public\n';
-        if (methods.length > 1) {
-            for (let index = 0; index < methods.length; index++) {
-                const method = methods[index];
+        if (constructors.length > 1) {
+            for (let index = 0; index < constructors.length; index++) {
+                const method = constructors[index];
                 let mds = '';
                 if (method.notes) {
                     mds += '--- ### Description:';
@@ -1972,9 +1975,9 @@ define("src/asledgehammer/rosetta/java/JavaGenerator", ["require", "exports"], f
             }
             ds += `--- \n`;
             // Apply first method's notes.
-            const method = methods[0];
+            const method = constructors[0];
             if (method.notes) {
-                ds += `--- ${methods[0].notes.replace(/\n/g, '\n--- ')}\n--- \n`;
+                ds += `--- ${constructors[0].notes.replace(/\n/g, '\n--- ')}\n--- \n`;
             }
             // Apply parameter(s).
             for (let index = 0; index < _paramNames.length; index++) {
@@ -1984,14 +1987,14 @@ define("src/asledgehammer/rosetta/java/JavaGenerator", ["require", "exports"], f
             // Apply overload(s).
             if (_overloads.length > 1) {
                 ds += '\n--- \n';
-                for (let oIndex = 1; oIndex < methods.length; oIndex++) {
+                for (let oIndex = 1; oIndex < constructors.length; oIndex++) {
                     ds += `--- @overload ${_overloads[oIndex]}\n`;
                 }
             }
         }
         else {
             let vds = '';
-            const method = methods[0];
+            const method = constructors[0];
             if (method.notes) {
                 vds += `--- ${method.notes.replace(/\n/g, '\n--- ')}`;
             }
@@ -2011,10 +2014,10 @@ define("src/asledgehammer/rosetta/java/JavaGenerator", ["require", "exports"], f
         return s;
     }
     exports.generateJavaConstructor = generateJavaConstructor;
-    function generateJavaMethod(className, cluster) {
-        if (!cluster.methods.length)
+    function generateJavaMethods(className, cluster) {
+        if (!cluster.length)
             return '';
-        const methods = [...cluster.methods];
+        const methods = [...cluster].filter((a) => a.getVisibilityScope() === 'public');
         methods.sort((a, b) => a.parameters.length - b.parameters.length);
         const isStatic = methods[0].isStatic();
         let s = '';
@@ -2144,10 +2147,10 @@ define("src/asledgehammer/rosetta/java/JavaGenerator", ["require", "exports"], f
         while (ds.indexOf('\n\n') !== -1) {
             ds = ds.replace('\n\n', '\n--- \n');
         }
-        s += `${ds}function ${className}${isStatic ? '.' : ':'}${cluster.name}(${ps}) end`;
+        s += `${ds}function ${className}${isStatic ? '.' : ':'}${methods[0].name}(${ps}) end`;
         return s;
     }
-    exports.generateJavaMethod = generateJavaMethod;
+    exports.generateJavaMethods = generateJavaMethods;
     function generateJavaClass(clazz) {
         let s = '';
         // If the class has a description.
@@ -2170,17 +2173,19 @@ define("src/asledgehammer/rosetta/java/JavaGenerator", ["require", "exports"], f
             // Static field(s) first.
             for (const fieldName of fieldNames) {
                 const field = clazz.fields[fieldName];
+                if (field.getVisibilityScope() !== 'public')
+                    continue;
                 if (field.isStatic()) {
                     s += generateJavaField(field) + '\n';
                 }
             }
-            // Instance field(s) next.
-            for (const fieldName of fieldNames) {
-                const field = clazz.fields[fieldName];
-                if (!field.isStatic()) {
-                    s += generateJavaField(field) + '\n';
-                }
-            }
+            // // Instance field(s) next.
+            // for (const fieldName of fieldNames) {
+            //     const field = clazz.fields[fieldName];
+            //     if (!field.isStatic()) {
+            //         s += generateJavaField(field) + '\n';
+            //     }
+            // }
         }
         const methodClusterNames = Object.keys(clazz.methods);
         methodClusterNames.sort((a, b) => a.localeCompare(b));
@@ -2196,32 +2201,42 @@ define("src/asledgehammer/rosetta/java/JavaGenerator", ["require", "exports"], f
                 methods.push(cluster);
             }
         }
+        let temp = '';
         if (staticMethods.length) {
-            s += `------------------------------------\n`;
-            s += `---------- STATIC METHODS ----------\n`;
-            s += `------------------------------------\n`;
-            s += '\n';
-            // Method Cluster(s)
+            temp = '';
             for (const cluster of staticMethods) {
-                s += `${generateJavaMethod(clazz.name, cluster)}\n\n`;
+                temp += `${generateJavaMethods(clazz.name, cluster.methods)}\n\n`;
+            }
+            if (temp.length) {
+                s += `------------------------------------\n`;
+                s += `---------- STATIC METHODS ----------\n`;
+                s += `------------------------------------\n`;
+                s += '\n';
+                s += temp;
             }
         }
         if (methods.length) {
-            s += '------------------------------------\n';
-            s += '------------- METHODS --------------\n';
-            s += '------------------------------------\n';
-            s += '\n';
-            // Method Cluster(s)
+            temp = '';
             for (const cluster of methods) {
-                s += `${generateJavaMethod(clazz.name, cluster)}\n\n`;
+                temp += `${generateJavaMethods(clazz.name, cluster.methods)}\n\n`;
+            }
+            if (temp.length) {
+                s += '------------------------------------\n';
+                s += '------------- METHODS --------------\n';
+                s += '------------------------------------\n';
+                s += '\n';
+                s += temp;
             }
         }
         if (clazz.constructors && clazz.constructors.length) {
-            s += `------------------------------------\n`;
-            s += `----------- CONSTRUCTOR ------------\n`;
-            s += `------------------------------------\n`;
-            s += '\n';
-            s += `${generateJavaConstructor(clazz.name, clazz.constructors)}\n`;
+            temp = `${generateJavaConstructor(clazz.name, clazz.constructors)}\n`;
+            if (temp.length) {
+                s += `------------------------------------\n`;
+                s += `----------- CONSTRUCTOR ------------\n`;
+                s += `------------------------------------\n`;
+                s += '\n';
+                s += temp;
+            }
         }
         return s;
     }
@@ -3431,7 +3446,7 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
     }
     exports.LuaCard = LuaCard;
 });
-define("src/asledgehammer/mallet/component/lua/LuaClassCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaGenerator_1, LuaTypeScriptGenerator_1, util_4, LuaCard_1) {
+define("src/asledgehammer/mallet/component/lua/LuaClassCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_1, LuaTypeScriptGenerator_1, util_4, LuaCard_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaClassCard = void 0;
@@ -3443,7 +3458,7 @@ define("src/asledgehammer/mallet/component/lua/LuaClassCard", ["require", "expor
                 case 'typescript':
                     return (0, LuaTypeScriptGenerator_1.luaClassToTS)(this.options.entity, true);
                 case 'lua':
-                    return '--- @meta\n\n' + (0, LuaGenerator_1.generateLuaClass)(this.options.entity);
+                    return '--- @meta\n\n' + (0, LuaLuaGenerator_1.generateLuaClass)(this.options.entity);
                 case 'json':
                     return JSON.stringify(this.options.entity.toJSON(), null, 2);
             }
@@ -3542,6 +3557,8 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
     }
     exports.wrapAsTSNamespace = wrapAsTSNamespace;
     function javaFieldToTS(field, indent = 0, notesLength) {
+        if (field.getVisibilityScope() !== 'public')
+            return '';
         const i = ' '.repeat(indent * 4);
         let s = '';
         /* Documentation */
@@ -3571,6 +3588,8 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
     }
     exports.javaFieldToTS = javaFieldToTS;
     function javaConstructorToTS(con, indent, notesLength) {
+        if (con.getVisibilityScope() !== 'public')
+            return '';
         const i = ' '.repeat(indent * 4);
         const ds = javaConstructorDocumentation(con, notesLength);
         let ps = '';
@@ -3596,7 +3615,12 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
     function javaConstructorsToTS(constructors, indent, notesLength) {
         const i = ' '.repeat(indent * 4);
         let s = '';
-        const cons = [...constructors];
+        const cons = [];
+        for (const c of constructors) {
+            if (c.getVisibilityScope() !== 'public')
+                continue;
+            cons.push(c);
+        }
         if (cons.length) {
             cons.sort((a, b) => {
                 // Smaller param count = first.
@@ -3631,7 +3655,12 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
             return javaMethodToTS(cluster.methods[0], indent, notesLength);
         }
         let s = '';
-        const methods = [...cluster.methods];
+        const methods = [];
+        for (const m of cluster.methods) {
+            if (m.getVisibilityScope() !== 'public')
+                continue;
+            methods.push(m);
+        }
         if (methods.length) {
             methods.sort((a, b) => {
                 // Smaller param count = first.
@@ -3734,6 +3763,8 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
     }
     exports.javaMethodDocumentation = javaMethodDocumentation;
     function javaMethodToTS(method, indent = 0, notesLength) {
+        if (method.getVisibilityScope() !== 'public')
+            return '';
         const i = ' '.repeat(indent * 4);
         const ds = javaMethodDocumentation(method, notesLength, false);
         let ps = '';
@@ -3771,6 +3802,8 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
         /* (STATIC FIELDS) */
         for (const fieldName of fieldNames) {
             const field = clazz.fields[fieldName];
+            if (field.getVisibilityScope() !== 'public')
+                continue;
             if (field.isStatic())
                 staticFields.push(field);
             else
@@ -3807,58 +3840,78 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
         s += `export class ${clazz.name} `;
         let i = '    ';
         let is = '';
+        let temp = '';
         if (staticFields.length) {
-            is += `${i}/* ------------------------------------ */\n`;
-            is += `${i}/* ---------- STATIC FIELDS ----------- */\n`;
-            is += `${i}/* ------------------------------------ */\n`;
-            is += '\n';
+            temp = '';
             for (const field of staticFields) {
                 if (field.getVisibilityScope() !== 'public')
                     continue;
                 else if (!field.isFinal())
                     continue;
-                is += `${javaFieldToTS(field, 1, notesLength)}\n`;
+                temp += `${javaFieldToTS(field, 1, notesLength)}\n`;
+            }
+            if (temp.length) {
+                is += `${i}/* ------------------------------------ */\n`;
+                is += `${i}/* ---------- STATIC FIELDS ----------- */\n`;
+                is += `${i}/* ------------------------------------ */\n`;
+                is += '\n';
+                is += temp;
             }
         }
         // if (fields.length) {
-        //     if (is.length) is += '\n';
-        //     is += `${i}/* ------------------------------------ */\n`;
-        //     is += `${i}/* ------------- FIELDS --------------- */\n`;
-        //     is += `${i}/* ------------------------------------ */\n`;
-        //     is += '\n';
+        //     temp = '';
         //     for (const field of fields) {
-        //         is += `${javaFieldToTS(field, 1, notesLength)}\n`;
+        //         temp += `${javaFieldToTS(field, 1, notesLength)}\n`;
+        //     }
+        //     if (temp.length) {
+        //         if (is.length) is += '\n';
+        //         is += `${i}/* ------------------------------------ */\n`;
+        //         is += `${i}/* ------------- FIELDS --------------- */\n`;
+        //         is += `${i}/* ------------------------------------ */\n`;
+        //         is += '\n';
+        //         is += temp;
         //     }
         // }
         if (clazz.constructors && clazz.constructors.length) {
-            if (is.length)
+            temp = `${javaConstructorsToTS(clazz.constructors, 1, notesLength)}\n`;
+            if (temp.length) {
+                if (is.length)
+                    is += '\n';
+                is += `${i}/* ------------------------------------ */\n`;
+                is += `${i}/* ----------- CONSTRUCTOR ------------ */\n`;
+                is += `${i}/* ------------------------------------ */\n`;
                 is += '\n';
-            is += `${i}/* ------------------------------------ */\n`;
-            is += `${i}/* ----------- CONSTRUCTOR ------------ */\n`;
-            is += `${i}/* ------------------------------------ */\n`;
-            is += '\n';
-            is += `${javaConstructorsToTS(clazz.constructors, 1, notesLength)}\n`;
+                is += temp;
+            }
         }
         if (methods.length) {
-            if (is.length)
-                is += '\n';
-            is += `${i}/* ------------------------------------ */\n`;
-            is += `${i}/* ------------- METHODS -------------- */\n`;
-            is += `${i}/* ------------------------------------ */\n`;
-            is += '\n';
+            temp = '';
             for (const cluster of methods) {
-                is += `${javaMethodClusterToTS(cluster, 1, notesLength)}\n`;
+                temp += `${javaMethodClusterToTS(cluster, 1, notesLength)}\n`;
+            }
+            if (temp.length) {
+                if (is.length)
+                    is += '\n';
+                is += `${i}/* ------------------------------------ */\n`;
+                is += `${i}/* ------------- METHODS -------------- */\n`;
+                is += `${i}/* ------------------------------------ */\n`;
+                is += '\n';
+                is += temp;
             }
         }
         if (staticMethods.length) {
-            if (is.length)
-                is += '\n';
-            is += `${i}/* ------------------------------------ */\n`;
-            is += `${i}/* ---------- STATIC METHODS ---------- */\n`;
-            is += `${i}/* ------------------------------------ */\n`;
-            is += '\n';
+            temp = '';
             for (const cluster of staticMethods) {
-                is += `${javaMethodClusterToTS(cluster, 1, notesLength)}\n`;
+                temp += `${javaMethodClusterToTS(cluster, 1, notesLength)}\n`;
+            }
+            if (temp.length) {
+                if (is.length)
+                    is += '\n';
+                is += `${i}/* ------------------------------------ */\n`;
+                is += `${i}/* ---------- STATIC METHODS ---------- */\n`;
+                is += `${i}/* ------------------------------------ */\n`;
+                is += '\n';
+                is += temp;
             }
         }
         if (is.length) {
@@ -4321,7 +4374,7 @@ define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports"
     }
     exports.JavaCard = JavaCard;
 });
-define("src/asledgehammer/mallet/component/java/JavaClassCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaGenerator_1, JavaTypeScriptGenerator_1, util_6, JavaCard_1) {
+define("src/asledgehammer/mallet/component/java/JavaClassCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaLuaGenerator_1, JavaTypeScriptGenerator_1, util_6, JavaCard_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.JavaClassCard = void 0;
@@ -4331,7 +4384,7 @@ define("src/asledgehammer/mallet/component/java/JavaClassCard", ["require", "exp
                 return '';
             switch (language) {
                 case 'lua':
-                    return '--- @meta\n\n' + (0, JavaGenerator_1.generateJavaClass)(this.options.entity);
+                    return '--- @meta\n\n' + (0, JavaLuaGenerator_1.generateJavaClass)(this.options.entity);
                 case 'typescript':
                     return (0, JavaTypeScriptGenerator_1.javaClassToTS)(this.options.entity, true, true);
                 case 'json':
@@ -5464,7 +5517,7 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
     exports.Sidebar = Sidebar;
     ;
 });
-define("src/asledgehammer/mallet/component/lua/LuaConstructorCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaGenerator_2, LuaTypeScriptGenerator_2, util_10, LuaCard_4) {
+define("src/asledgehammer/mallet/component/lua/LuaConstructorCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_2, LuaTypeScriptGenerator_2, util_10, LuaCard_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaConstructorCard = void 0;
@@ -5481,7 +5534,7 @@ define("src/asledgehammer/mallet/component/lua/LuaConstructorCard", ["require", 
                 case 'lua': {
                     const { entity } = this.options;
                     const classEntity = this.app.catalog.selectedCard.options.entity;
-                    return (0, LuaGenerator_2.generateLuaConstructor)(classEntity.name, entity);
+                    return (0, LuaLuaGenerator_2.generateLuaConstructor)(classEntity.name, entity);
                 }
                 case 'typescript': {
                     return (0, LuaTypeScriptGenerator_2.luaConstructorToTS)(this.options.entity, 0, 100);
@@ -5541,7 +5594,7 @@ define("src/asledgehammer/mallet/component/lua/LuaConstructorCard", ["require", 
     }
     exports.LuaConstructorCard = LuaConstructorCard;
 });
-define("src/asledgehammer/mallet/component/lua/LuaFieldCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaGenerator_3, LuaTypeScriptGenerator_3, util_11, LuaCard_5) {
+define("src/asledgehammer/mallet/component/lua/LuaFieldCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_3, LuaTypeScriptGenerator_3, util_11, LuaCard_5) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaFieldCard = void 0;
@@ -5565,9 +5618,9 @@ define("src/asledgehammer/mallet/component/lua/LuaFieldCard", ["require", "expor
                     const { defaultValue } = entity;
                     const name = (_b = (_a = app.catalog.selectedCard) === null || _a === void 0 ? void 0 : _a.options) === null || _b === void 0 ? void 0 : _b.entity.name;
                     if (isStatic) {
-                        return `${(0, LuaGenerator_3.generateLuaField)(entity)}\n\n${(0, LuaGenerator_3.generateLuaValue)(name, entity)}`;
+                        return `${(0, LuaLuaGenerator_3.generateLuaField)(entity)}\n\n${(0, LuaLuaGenerator_3.generateLuaValue)(name, entity)}`;
                     }
-                    let s = (0, LuaGenerator_3.generateLuaField)(entity);
+                    let s = (0, LuaLuaGenerator_3.generateLuaField)(entity);
                     if (defaultValue) {
                         s += `\n\n--- (Example of initialization of field) ---\nself.${entity.name} = ${defaultValue};`;
                     }
@@ -5660,7 +5713,7 @@ define("src/asledgehammer/mallet/component/lua/LuaFieldCard", ["require", "expor
     }
     exports.LuaFieldCard = LuaFieldCard;
 });
-define("src/asledgehammer/mallet/component/lua/LuaFunctionCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaGenerator_4, LuaTypeScriptGenerator_4, util_12, LuaCard_6) {
+define("src/asledgehammer/mallet/component/lua/LuaFunctionCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_4, LuaTypeScriptGenerator_4, util_12, LuaCard_6) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaFunctionCard = void 0;
@@ -5682,7 +5735,7 @@ define("src/asledgehammer/mallet/component/lua/LuaFunctionCard", ["require", "ex
                     const { entity } = this.options;
                     const classEntity = this.app.catalog.selectedCard.options.entity;
                     const className = classEntity.name;
-                    return (0, LuaGenerator_4.generateLuaMethod)(className, entity);
+                    return (0, LuaLuaGenerator_4.generateLuaMethod)(className, entity);
                 }
                 case 'typescript': {
                     return (0, LuaTypeScriptGenerator_4.luaFunctionToTS)(this.options.entity, 0, 100);
@@ -5781,7 +5834,7 @@ define("src/asledgehammer/mallet/component/lua/LuaFunctionCard", ["require", "ex
     }
     exports.LuaFunctionCard = LuaFunctionCard;
 });
-define("src/asledgehammer/mallet/component/java/JavaConstructorCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaGenerator_2, JavaTypeScriptGenerator_2, util_13, JavaCard_2) {
+define("src/asledgehammer/mallet/component/java/JavaConstructorCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaLuaGenerator_2, JavaTypeScriptGenerator_2, util_13, JavaCard_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.JavaConstructorCard = void 0;
@@ -5799,7 +5852,7 @@ define("src/asledgehammer/mallet/component/java/JavaConstructorCard", ["require"
                     const { entity } = this.options;
                     const classEntity = this.app.catalog.selectedCard.options.entity;
                     const className = classEntity.name;
-                    return (0, JavaGenerator_2.generateJavaConstructor)(className, [entity]);
+                    return (0, JavaLuaGenerator_2.generateJavaConstructor)(className, [entity]);
                 }
                 case 'typescript': {
                     return (0, JavaTypeScriptGenerator_2.javaConstructorToTS)(this.options.entity, 0, 100);
@@ -5866,7 +5919,7 @@ define("src/asledgehammer/mallet/component/java/JavaConstructorCard", ["require"
     }
     exports.JavaConstructorCard = JavaConstructorCard;
 });
-define("src/asledgehammer/mallet/component/java/JavaFieldCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaGenerator_3, JavaTypeScriptGenerator_3, util_14, JavaCard_3) {
+define("src/asledgehammer/mallet/component/java/JavaFieldCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaLuaGenerator_3, JavaTypeScriptGenerator_3, util_14, JavaCard_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.JavaFieldCard = void 0;
@@ -5885,7 +5938,7 @@ define("src/asledgehammer/mallet/component/java/JavaFieldCard", ["require", "exp
             switch (language) {
                 case 'lua': {
                     const { entity } = this.options;
-                    return (0, JavaGenerator_3.generateJavaField)(entity);
+                    return (0, JavaLuaGenerator_3.generateJavaField)(entity);
                 }
                 case 'typescript': {
                     return (0, JavaTypeScriptGenerator_3.javaFieldToTS)(this.options.entity, 0, 100);
@@ -5962,7 +6015,7 @@ define("src/asledgehammer/mallet/component/java/JavaFieldCard", ["require", "exp
     }
     exports.JavaFieldCard = JavaFieldCard;
 });
-define("src/asledgehammer/mallet/component/java/JavaMethodCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/java/RosettaJavaMethodCluster", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaGenerator_4, RosettaJavaMethodCluster_2, JavaTypeScriptGenerator_4, util_15, JavaCard_4) {
+define("src/asledgehammer/mallet/component/java/JavaMethodCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator", "src/asledgehammer/rosetta/java/RosettaJavaMethodCluster", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaLuaGenerator_4, RosettaJavaMethodCluster_2, JavaTypeScriptGenerator_4, util_15, JavaCard_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.JavaMethodCard = void 0;
@@ -5986,7 +6039,7 @@ define("src/asledgehammer/mallet/component/java/JavaMethodCard", ["require", "ex
                     const className = classEntity.name;
                     const cluster = new RosettaJavaMethodCluster_2.RosettaJavaMethodCluster(entity.name);
                     cluster.add(entity);
-                    return (0, JavaGenerator_4.generateJavaMethod)(className, cluster);
+                    return (0, JavaLuaGenerator_4.generateJavaMethods)(className, cluster.methods);
                 }
                 case 'typescript': {
                     return (0, JavaTypeScriptGenerator_4.javaMethodToTS)(this.options.entity, 0, 100);
@@ -6514,7 +6567,7 @@ define("src/asledgehammer/mallet/component/Toast", ["require", "exports", "src/a
     }
     exports.Toast = Toast;
 });
-define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass"], function (require, exports, JavaGenerator_5, RosettaJavaClass_3, LuaGenerator_5, RosettaLuaClass_3) {
+define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass"], function (require, exports, JavaLuaGenerator_5, RosettaJavaClass_3, LuaLuaGenerator_5, RosettaLuaClass_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Catalog = void 0;
@@ -6554,7 +6607,7 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
                 for (const name of Object.keys(this.javaClasses)) {
                     const javaClass = this.javaClasses[name];
                     s += `-- Java Class: ${javaClass.namespace.name}.${javaClass.name} --\n\n`;
-                    s += (0, JavaGenerator_5.generateJavaClass)(javaClass) + '\n';
+                    s += (0, JavaLuaGenerator_5.generateJavaClass)(javaClass) + '\n';
                 }
             }
             /* Lua Classes */
@@ -6564,7 +6617,7 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
                 for (const name of Object.keys(this.luaClasses)) {
                     const luaClass = this.luaClasses[name];
                     s += `-- Lua Class: ${luaClass.name} --\n\n`;
-                    s += (0, LuaGenerator_5.generateLuaClass)(luaClass) + '\n';
+                    s += (0, LuaLuaGenerator_5.generateLuaClass)(luaClass) + '\n';
                 }
             }
             /* Lua Tables */
@@ -6574,7 +6627,7 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
                 for (const name of Object.keys(this.luaTables)) {
                     const luaTable = this.luaTables[name];
                     s += `-- Lua Table: ${luaTable.name} --\n\n`;
-                    s += (0, LuaGenerator_5.generateLuaTable)(luaTable) + '\n';
+                    s += (0, LuaLuaGenerator_5.generateLuaTable)(luaTable) + '\n';
                 }
             }
             return s;
@@ -6641,7 +6694,7 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
     }
     exports.Catalog = Catalog;
 });
-define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/mallet/component/lua/LuaClassCard", "src/asledgehammer/mallet/component/java/JavaClassCard", "src/asledgehammer/mallet/component/Sidebar", "src/asledgehammer/mallet/component/lua/LuaConstructorCard", "src/asledgehammer/mallet/component/lua/LuaFieldCard", "src/asledgehammer/mallet/component/lua/LuaFunctionCard", "src/asledgehammer/mallet/component/java/JavaConstructorCard", "src/asledgehammer/mallet/component/java/JavaFieldCard", "src/asledgehammer/mallet/component/java/JavaMethodCard", "src/asledgehammer/mallet/modal/ModalName", "src/asledgehammer/mallet/modal/ModalConfirm", "src/asledgehammer/mallet/component/Toast", "src/asledgehammer/mallet/Catalog", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator"], function (require, exports, hljs, LuaGenerator_6, RosettaLuaClass_4, RosettaLuaConstructor_2, util_19, RosettaJavaClass_4, JavaGenerator_6, LuaClassCard_1, JavaClassCard_1, Sidebar_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, JavaConstructorCard_1, JavaFieldCard_1, JavaMethodCard_1, ModalName_1, ModalConfirm_1, Toast_1, Catalog_1, JavaTypeScriptGenerator_5, LuaTypeScriptGenerator_5) {
+define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/java/JavaLuaGenerator", "src/asledgehammer/mallet/component/lua/LuaClassCard", "src/asledgehammer/mallet/component/java/JavaClassCard", "src/asledgehammer/mallet/component/Sidebar", "src/asledgehammer/mallet/component/lua/LuaConstructorCard", "src/asledgehammer/mallet/component/lua/LuaFieldCard", "src/asledgehammer/mallet/component/lua/LuaFunctionCard", "src/asledgehammer/mallet/component/java/JavaConstructorCard", "src/asledgehammer/mallet/component/java/JavaFieldCard", "src/asledgehammer/mallet/component/java/JavaMethodCard", "src/asledgehammer/mallet/modal/ModalName", "src/asledgehammer/mallet/modal/ModalConfirm", "src/asledgehammer/mallet/component/Toast", "src/asledgehammer/mallet/Catalog", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator"], function (require, exports, hljs, LuaLuaGenerator_6, RosettaLuaClass_4, RosettaLuaConstructor_2, util_19, RosettaJavaClass_4, JavaLuaGenerator_6, LuaClassCard_1, JavaClassCard_1, Sidebar_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, JavaConstructorCard_1, JavaFieldCard_1, JavaMethodCard_1, ModalName_1, ModalConfirm_1, Toast_1, Catalog_1, JavaTypeScriptGenerator_5, LuaTypeScriptGenerator_5) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.App = void 0;
@@ -6795,7 +6848,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             if (selected instanceof RosettaLuaClass_4.RosettaLuaClass) {
                 switch (this.languageMode) {
                     case 'lua': {
-                        this.previewCode = '--- @meta\n\n' + (0, LuaGenerator_6.generateLuaClass)(selected);
+                        this.previewCode = '--- @meta\n\n' + (0, LuaLuaGenerator_6.generateLuaClass)(selected);
                         break;
                     }
                     case 'typescript': {
@@ -6811,7 +6864,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             else if (selected instanceof RosettaJavaClass_4.RosettaJavaClass) {
                 switch (this.languageMode) {
                     case 'lua': {
-                        this.previewCode = '--- @meta\n\n' + (0, JavaGenerator_6.generateJavaClass)(selected);
+                        this.previewCode = '--- @meta\n\n' + (0, JavaLuaGenerator_6.generateJavaClass)(selected);
                         break;
                     }
                     case 'typescript': {

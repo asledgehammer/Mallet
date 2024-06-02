@@ -1,5 +1,5 @@
 import { App } from '../../../../app';
-import { generateJavaMethod } from '../../../rosetta/java/JavaGenerator';
+import { generateJavaMethods } from '../../../rosetta/java/JavaLuaGenerator';
 import { RosettaJavaClass } from '../../../rosetta/java/RosettaJavaClass';
 import { RosettaJavaMethod } from '../../../rosetta/java/RosettaJavaMethod';
 import { RosettaJavaMethodCluster } from '../../../rosetta/java/RosettaJavaMethodCluster';
@@ -38,7 +38,7 @@ export class JavaMethodCard extends JavaCard<JavaMethodCardOptions> {
                 const className = classEntity.name;
                 const cluster = new RosettaJavaMethodCluster(entity.name);
                 cluster.add(entity);
-                return generateJavaMethod(className, cluster);
+                return generateJavaMethods(className, cluster.methods);
             }
             case 'typescript': {
                 return javaMethodToTS(this.options!.entity, 0, 100);

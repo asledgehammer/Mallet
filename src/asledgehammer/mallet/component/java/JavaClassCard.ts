@@ -1,5 +1,5 @@
 import { App } from '../../../../app';
-import { generateJavaClass } from '../../../rosetta/java/JavaGenerator';
+import { generateJavaClass } from '../../../rosetta/java/JavaLuaGenerator';
 import { RosettaJavaClass } from '../../../rosetta/java/RosettaJavaClass';
 import { javaClassToTS } from '../../../rosetta/typescript/JavaTypeScriptGenerator';
 import { html } from '../../../rosetta/util';
