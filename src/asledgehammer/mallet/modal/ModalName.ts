@@ -48,6 +48,18 @@ export class ModalName {
             setTimeout(() => this.$inputName.val(validateLuaVariableName(this.$inputName.val()!)), 1);
         });
 
+        const $modalName = $('#modal-name');
+
+        $modalName.on('shown.bs.modal', function () {
+            $inputName.trigger('focus');
+        });
+
+        $modalName.on('keydown', function (e) {
+            if (e.key === 'Enter') {
+                $btnName.trigger('click');
+            }
+        });
+
         this.$btnName.on('click', () => {
             const clazz = active.selectedCard?.options!.entity!;
             const name = validateLuaVariableName($inputName.val()!).trim();

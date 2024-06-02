@@ -38,7 +38,13 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
 
             $titleName.html(title);
 
-            if (mode === 'edit_class' || mode === 'edit_field' || mode === 'edit_function' || mode === 'edit_method' || mode === 'edit_value') {
+            if (mode === 'edit_parameter'
+                || mode === 'edit_class'
+                || mode === 'edit_field'
+                || mode === 'edit_function'
+                || mode === 'edit_method'
+                || mode === 'edit_value'
+            ) {
                 $btnName.html('Edit');
                 $btnName.removeClass('btn-success');
                 $btnName.addClass('btn-primary');

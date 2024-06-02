@@ -2964,7 +2964,12 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
             (0, util_3.$get)(idBtnEdit).on('click', () => {
                 const { modalName, $btnName, $titleName, $inputName } = this.app.modalName;
                 $titleName.html(title);
-                if (mode === 'edit_class' || mode === 'edit_field' || mode === 'edit_function' || mode === 'edit_method' || mode === 'edit_value') {
+                if (mode === 'edit_parameter'
+                    || mode === 'edit_class'
+                    || mode === 'edit_field'
+                    || mode === 'edit_function'
+                    || mode === 'edit_method'
+                    || mode === 'edit_value') {
                     $btnName.html('Edit');
                     $btnName.removeClass('btn-success');
                     $btnName.addClass('btn-primary');
@@ -6171,6 +6176,15 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
             const { catalog: active, sidebar, toast } = app;
             this.$inputName.on('input', () => {
                 setTimeout(() => this.$inputName.val((0, util_16.validateLuaVariableName)(this.$inputName.val())), 1);
+            });
+            const $modalName = $('#modal-name');
+            $modalName.on('shown.bs.modal', function () {
+                $inputName.trigger('focus');
+            });
+            $modalName.on('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    $btnName.trigger('click');
+                }
             });
             this.$btnName.on('click', () => {
                 var _a;
