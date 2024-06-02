@@ -3,8 +3,10 @@ import { generateJavaMethod } from '../../../rosetta/java/JavaGenerator';
 import { RosettaJavaClass } from '../../../rosetta/java/RosettaJavaClass';
 import { RosettaJavaMethod } from '../../../rosetta/java/RosettaJavaMethod';
 import { RosettaJavaMethodCluster } from '../../../rosetta/java/RosettaJavaMethodCluster';
+import { javaMethodToTS } from '../../../rosetta/typescript/JavaTypeScriptGenerator';
 import { $get, html } from '../../../rosetta/util';
 import { CardOptions } from '../CardComponent';
+import { CodeLanguage } from '../CodeLanguage';
 import { JavaCard } from './JavaCard';
 
 export class JavaMethodCard extends JavaCard<JavaMethodCardOptions> {
@@ -27,18 +29,24 @@ export class JavaMethodCard extends JavaCard<JavaMethodCardOptions> {
         this.idParamContainer = `${this.id}-parameter-container`;
     }
 
-    onRenderPreview(): string {
-
+    onRenderPreview(language: CodeLanguage): string {
         if (!this.options) return '';
-
-        const { entity } = this.options;
-        const classEntity = this.app.catalog.selectedCard!.options!.entity;
-        const className = classEntity.name;
-
-        const cluster = new RosettaJavaMethodCluster(entity.name);
-        cluster.add(entity);
-
-        return generateJavaMethod(className, cluster);
+        switch (language) {
+            case 'lua': {
+                const { entity } = this.options;
+                const classEntity = this.app.catalog.selectedCard!.options!.entity;
+                const className = classEntity.name;
+                const cluster = new RosettaJavaMethodCluster(entity.name);
+                cluster.add(entity);
+                return generateJavaMethod(className, cluster);
+            }
+            case 'typescript': {
+                return javaMethodToTS(this.options!.entity, 0, 100);
+            }
+            case 'json': {
+                return JSON.stringify(this.options!.entity.toJSON(), null, 2);
+            }
+        }
     }
 
     onHeaderHTML(): string | undefined {

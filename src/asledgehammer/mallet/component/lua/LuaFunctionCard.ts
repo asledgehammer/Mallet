@@ -2,8 +2,10 @@ import { App } from '../../../../app';
 import { generateLuaMethod } from '../../../rosetta/lua/LuaGenerator';
 import { RosettaLuaClass } from '../../../rosetta/lua/RosettaLuaClass';
 import { RosettaLuaFunction } from '../../../rosetta/lua/RosettaLuaFunction';
+import { luaFunctionToTS } from '../../../rosetta/typescript/LuaTypeScriptGenerator';
 import { $get, html } from '../../../rosetta/util';
 import { CardOptions } from '../CardComponent';
+import { CodeLanguage } from '../CodeLanguage';
 import { LuaCard } from './LuaCard';
 
 export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
@@ -26,15 +28,22 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
         this.idParamContainer = `${this.id}-parameter-container`;
     }
 
-    onRenderPreview(): string {
-
+    onRenderPreview(language: CodeLanguage): string {
         if (!this.options) return '';
-
-        const { entity } = this.options;
-        const classEntity = this.app.catalog.selectedCard!.options!.entity;
-        const className = classEntity.name;
-
-        return generateLuaMethod(className, entity);
+        switch (language) {
+            case 'lua': {
+                const { entity } = this.options;
+                const classEntity = this.app.catalog.selectedCard!.options!.entity;
+                const className = classEntity.name;
+                return generateLuaMethod(className, entity);
+            }
+            case 'typescript': {
+                return luaFunctionToTS(this.options!.entity, 0, 100);
+            }
+            case 'json': {
+                return JSON.stringify(this.options!.entity.toJSON(), null, 2);
+            }
+        }
     }
 
     onHeaderHTML(): string | undefined {

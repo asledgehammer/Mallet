@@ -25,6 +25,7 @@ import { Toast } from './asledgehammer/mallet/component/Toast';
 import { Catalog } from './asledgehammer/mallet/Catalog';
 import { javaClassToTS } from './asledgehammer/rosetta/typescript/JavaTypeScriptGenerator';
 import { luaClassToTS } from './asledgehammer/rosetta/typescript/LuaTypeScriptGenerator';
+import { CodeLanguage } from './asledgehammer/mallet/component/CodeLanguage';
 
 export class App {
 
@@ -38,8 +39,12 @@ export class App {
     readonly modalConfirm: ModalConfirm;
     previewCode: string = '';
 
-    constructor() {
+    readonly idBtnLanguageLua = `app-btn-language-lua`;
+    readonly idBtnLanguageTypeScript = `app-btn-language-typescript`;
+    readonly idBtnLanguageJSON = `app-btn-language-json`;
+    languageMode: CodeLanguage = 'lua';
 
+    constructor() {
         this.catalog = new Catalog(this);
         this.sidebar = new Sidebar(this);
         this.toast = new Toast(this);
@@ -186,21 +191,41 @@ export class App {
         const { selected } = this.catalog;
 
         let highlightedCode = '';
-        
-        // if (selected instanceof RosettaLuaClass) {
-        //     this.previewCode = '--- @meta\n\n' + generateLuaClass(selected);
-        // } else if (selected instanceof RosettaJavaClass) {
-        //     this.previewCode = '--- @meta\n\n' + generateJavaClass(selected);
-        // }
-        // highlightedCode = hljs.default.highlightAuto(this.previewCode, ['lua']).value;
-       
+
         if (selected instanceof RosettaLuaClass) {
-            this.previewCode = luaClassToTS(selected, true);
-        } else if(selected instanceof RosettaJavaClass) {
-            this.previewCode = javaClassToTS(selected, true, true);
+            switch (this.languageMode) {
+                case 'lua': {
+                    this.previewCode = '--- @meta\n\n' + generateLuaClass(selected);
+                    break;
+                }
+                case 'typescript': {
+                    this.previewCode = luaClassToTS(selected, true);
+                    break;
+                }
+                case 'json': {
+                    this.previewCode = JSON.stringify(selected.toJSON(), null, 2);
+                    break;
+                }
+            }
+        } else if (selected instanceof RosettaJavaClass) {
+            switch (this.languageMode) {
+                case 'lua': {
+                    this.previewCode = '--- @meta\n\n' + generateJavaClass(selected);
+                    break;
+                }
+                case 'typescript': {
+                    this.previewCode = javaClassToTS(selected, true, true);
+                    break;
+                }
+                case 'json': {
+                    this.previewCode = JSON.stringify(selected.toJSON(), null, 2);
+                    break;
+                }
+            }
         }
-        highlightedCode = hljs.default.highlightAuto(this.previewCode, ['typescript']).value;
-        
+
+       highlightedCode = hljs.default.highlightAuto(this.previewCode, [this.languageMode]).value;
+
         $renderPane.html(highlightedCode);
     }
 
@@ -225,6 +250,15 @@ export class App {
         const $iconCode = $get('icon-code');
 
         let mode: 'code' | 'card' = 'card';
+        let cog = false;
+        let hideCog = () => {
+            cog = false;
+            $('#btns-code-left').hide();
+        }
+        let showCog = () => {
+            cog = true;
+            $('#btns-code-left').show();
+        };
 
         $btnCardCode.on('click', () => {
             if (mode === 'card') {
@@ -237,6 +271,8 @@ export class App {
                 $iconCard.show();
                 $btnCardCode.css({ 'right': '2rem' });
                 $btnCopy.show(150);
+                $('#btn-code-preview-cog').show(150);
+
                 mode = 'code';
             } else if (mode === 'code') {
                 $container.removeClass('p-0');
@@ -251,9 +287,36 @@ export class App {
                 $iconCode.show();
                 $btnCardCode.css({ 'right': '1rem' });
                 $btnCopy.hide(150);
+                $('#btns-code-left').hide();
+                $('#btn-code-preview-cog').hide(150);
+                hideCog();
                 mode = 'card';
             }
         });
+
+        $('#btn-code-preview-cog').on('click', () => {
+            if (cog) {
+                hideCog();
+            } else {
+                showCog();
+            }
+        });
+
+        $('#app-btn-language-lua').on('click', () => {
+            this.languageMode = 'lua';
+            this.renderCode();
+        });
+
+        $('#app-btn-language-typescript').on('click', () => {
+            this.languageMode = 'typescript';
+            this.renderCode();
+        });
+
+        $('#app-btn-language-json').on('click', () => {
+            this.languageMode = 'json';
+            this.renderCode();
+        });
+
 
         /* (For copying the preview code) */
         $btnCopy.on('click', () => {

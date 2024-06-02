@@ -1,8 +1,10 @@
 import { App } from '../../../../app';
 import { generateJavaConstructor } from '../../../rosetta/java/JavaGenerator';
 import { RosettaJavaConstructor } from '../../../rosetta/java/RosettaJavaConstructor';
+import { javaConstructorToTS } from '../../../rosetta/typescript/JavaTypeScriptGenerator';
 import { $get, html } from '../../../rosetta/util';
 import { CardOptions } from '../CardComponent';
+import { CodeLanguage } from '../CodeLanguage';
 import { JavaCard } from './JavaCard';
 
 export class JavaConstructorCard extends JavaCard<JavaConstructorCardOptions> {
@@ -16,12 +18,22 @@ export class JavaConstructorCard extends JavaCard<JavaConstructorCardOptions> {
         this.idParamContainer = `${this.id}-parameter-container`;
     }
 
-    onRenderPreview(): string {
+    onRenderPreview(language: CodeLanguage): string {
         if (!this.options) return '';
-        const { entity } = this.options;
-        const classEntity = this.app.catalog.selectedCard!.options!.entity;
-        const className = classEntity.name;
-        return generateJavaConstructor(className, [entity]);
+        switch (language) {
+            case 'lua': {
+                const { entity } = this.options;
+                const classEntity = this.app.catalog.selectedCard!.options!.entity;
+                const className = classEntity.name;
+                return generateJavaConstructor(className, [entity]);
+            }
+            case 'typescript': {
+                return javaConstructorToTS(this.options!.entity, 0, 100);
+            }
+            case 'json': {
+                return JSON.stringify(this.options!.entity, null, 2);
+            }
+        }
     }
 
     onHeaderHTML(): string | undefined {

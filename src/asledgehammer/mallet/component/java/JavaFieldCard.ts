@@ -2,8 +2,10 @@ import { App } from '../../../../app';
 import { generateJavaField } from '../../../rosetta/java/JavaGenerator';
 import { RosettaJavaClass } from '../../../rosetta/java/RosettaJavaClass';
 import { RosettaJavaField } from '../../../rosetta/java/RosettaJavaField';
+import { javaFieldToTS } from '../../../rosetta/typescript/JavaTypeScriptGenerator';
 import { $get, html } from '../../../rosetta/util';
 import { CardOptions } from '../CardComponent';
+import { CodeLanguage } from '../CodeLanguage';
 import { JavaCard } from './JavaCard';
 
 export class JavaFieldCard extends JavaCard<JavaFieldCardOptions> {
@@ -24,10 +26,20 @@ export class JavaFieldCard extends JavaCard<JavaFieldCardOptions> {
         this.idBtnDelete = `${this.id}-btn-delete`;
     }
 
-    onRenderPreview(): string {
+    onRenderPreview(language: CodeLanguage): string {
         if (!this.options) return '';
-        const { entity } = this.options;
-        return generateJavaField(entity);
+        switch (language) {
+            case 'lua': {
+                const { entity } = this.options;
+                return generateJavaField(entity);
+            }
+            case 'typescript': {
+                return javaFieldToTS(this.options!.entity, 0, 100);
+            }
+            case 'json': {
+                return JSON.stringify(this.options!.entity, null, 2);
+            }
+        }
     }
 
     onHeaderHTML(): string | undefined {

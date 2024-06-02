@@ -2,8 +2,10 @@ import { App } from '../../../../app';
 import { generateLuaField, generateLuaValue } from '../../../rosetta/lua/LuaGenerator';
 import { RosettaLuaClass } from '../../../rosetta/lua/RosettaLuaClass';
 import { RosettaLuaField } from '../../../rosetta/lua/RosettaLuaField';
+import { luaFieldToTS } from '../../../rosetta/typescript/LuaTypeScriptGenerator';
 import { $get, html } from '../../../rosetta/util';
 import { CardOptions } from '../CardComponent';
+import { CodeLanguage } from '../CodeLanguage';
 import { LuaCard } from './LuaCard';
 
 export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
@@ -24,23 +26,34 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
         this.idBtnDelete = `${this.id}-btn-delete`;
     }
 
-    onRenderPreview(): string {
+    onRenderPreview(language: CodeLanguage): string {
 
         if (!this.options) return '';
 
-        const { app } = this;
-        const { entity, isStatic } = this.options;
-        const { defaultValue } = entity;
-        const name = app.catalog.selectedCard?.options?.entity.name!;
+        switch (language) {
+            case 'lua': {
+                const { app } = this;
+                const { entity, isStatic } = this.options;
+                const { defaultValue } = entity;
+                const name = app.catalog.selectedCard?.options?.entity.name!;
 
-        if (isStatic) {
-            return `${generateLuaField(entity)}\n\n${generateLuaValue(name, entity)}`;
+                if (isStatic) {
+                    return `${generateLuaField(entity)}\n\n${generateLuaValue(name, entity)}`;
+                }
+                let s = generateLuaField(entity);
+                if (defaultValue) {
+                    s += `\n\n--- (Example of initialization of field) ---\nself.${entity.name} = ${defaultValue};`;
+                }
+                return s;
+            }
+            case 'typescript': {
+                return luaFieldToTS(this.options!.entity, 0, 100);
+            }
+            case 'json': {
+                return JSON.stringify(this.options!.entity.toJSON(), null, 2);
+            }
         }
-        let s = generateLuaField(entity);
-        if (defaultValue) {
-            s += `\n\n--- (Example of initialization of field) ---\nself.${entity.name} = ${defaultValue};`;
-        }
-        return s;
+
     }
 
     onHeaderHTML(): string | undefined {

@@ -8,6 +8,7 @@ import { $get, html } from '../../../rosetta/util';
 import { RosettaLuaParameter } from '../../../rosetta/lua/RosettaLuaParameter';
 import { RosettaLuaReturns } from '../../../rosetta/lua/RosettaLuaReturns';
 import { RosettaEntity } from '../../../rosetta/RosettaEntity';
+import { CodeLanguage } from '../CodeLanguage';
 
 export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O> {
 
@@ -15,6 +16,10 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
     readonly idPreview: string;
     readonly idPreviewCode: string;
     readonly idBtnPreviewCopy: string;
+    readonly idBtnLanguageLua: string;
+    readonly idBtnLanguageTypeScript: string;
+    readonly idBtnLanguageJSON: string;
+    languageMode: CodeLanguage = 'lua';
 
     constructor(app: App, options: O) {
         super(options);
@@ -22,6 +27,9 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         this.idPreview = `${this.id}-preview`;
         this.idPreviewCode = `${this.id}-preview-code`;
         this.idBtnPreviewCopy = `${this.id}-preview-copy-btn`;
+        this.idBtnLanguageLua = `${this.id}-btn-language-lua`;
+        this.idBtnLanguageTypeScript = `${this.id}-btn-language-typescript`;
+        this.idBtnLanguageJSON = `${this.id}-btn-language-json`;
     }
 
     listenEdit(entity: { name: string }, idBtnEdit: string, mode: NameModeType, title: string, nameSelected: string | undefined = undefined) {
@@ -170,7 +178,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                     this.update();
 
                     // Implicit check for refreshability for parameters.
-                    if((this as any).refreshParameters) (this as any).refreshParameters();
+                    if ((this as any).refreshParameters) (this as any).refreshParameters();
 
                 }, `Delete Parameter ${param.name}?`);
             });
@@ -273,27 +281,44 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
 
         $pre.empty();
 
-        let text = this.onRenderPreview();
+        let text = this.onRenderPreview(this.languageMode);
         if (text.endsWith('\n')) text = text.substring(0, text.length - 1);
 
         // @ts-ignore
-        const highlightedCode = hljs.default.highlightAuto(text, ['lua']).value;
+        const highlightedCode = hljs.default.highlightAuto(text, [this.languageMode]).value;
 
         $pre.append(highlightedCode);
     }
 
     listenPreview() {
-        const { idBtnPreviewCopy } = this;
+        const { idBtnLanguageLua, idBtnLanguageTypeScript, idBtnLanguageJSON, idBtnPreviewCopy } = this;
 
         // Copy the code.
         $get(idBtnPreviewCopy).on('click', (event) => {
             event.stopPropagation();
-            navigator.clipboard.writeText(this.onRenderPreview());
+            navigator.clipboard.writeText(this.onRenderPreview('lua'));
         });
+
+        $get(idBtnLanguageLua).on('click', () => {
+            this.languageMode = 'lua';
+            this.update();
+        });
+
+        $get(idBtnLanguageTypeScript).on('click', () => {
+            this.languageMode = 'typescript';
+            this.update();
+        });
+
+
+        $get(idBtnLanguageJSON).on('click', () => {
+            this.languageMode = 'json';
+            this.update();
+        });
+
     }
 
     renderPreview(show: boolean): string {
-        const { idPreview, idPreviewCode, idBtnPreviewCopy } = this;
+        const { idPreview, idPreviewCode, idBtnPreviewCopy, idBtnLanguageLua, idBtnLanguageTypeScript, idBtnLanguageJSON } = this;
         return html`
             <div class="card responsive-subcard mt-3">
                 <div class="card-header">
@@ -308,8 +333,13 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                         </div>
                     </button>
                 </div>
-                <div id="${idPreview}" class="card-body mb-0 p-0 collapse${show ? ' show' : ''}" style="position: relative; max-height: 512px">
-                    <pre id="${idPreviewCode}" class="w-100 h-100 p-4 m-0" style="background-color: #111; overflow: scroll; max-height: 512px;"></pre>
+                <div id="${idPreview}" class="card-body mb-0 p-0 collapse${show ? ' show' : ''}" style="position: relative;">
+                    <div class="p-2">
+                        <button id="${idBtnLanguageLua}" class="btn btn-sm btn-primary" title="View Lua Code">Lua</button>
+                        <button id="${idBtnLanguageTypeScript}" class="btn btn-sm btn-primary" title="View Lua Code">TypeScript</button>
+                        <button id="${idBtnLanguageJSON}" class="btn btn-sm btn-primary" title="View Lua Code">Rosetta JSON</button>
+                    </div>
+                   <pre id="${idPreviewCode}" class="w-100 h-100 p-4 m-0" style="background-color: #111; overflow: scroll; max-height: 512px;"></pre>
                 </div>
             </div>
         `;
@@ -469,7 +499,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         `;
     }
 
-    abstract onRenderPreview(): string;
+    abstract onRenderPreview(language: CodeLanguage): string;
 
     static renderTypeSelect(idSelect: string, label: string = '', value: string = 'any', margin: boolean): string {
 

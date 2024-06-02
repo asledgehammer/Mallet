@@ -1,14 +1,24 @@
 import { App } from '../../../../app';
 import { generateLuaClass } from '../../../rosetta/lua/LuaGenerator';
 import { RosettaLuaClass } from '../../../rosetta/lua/RosettaLuaClass';
+import { luaClassToTS } from '../../../rosetta/typescript/LuaTypeScriptGenerator';
 import { $get, html } from '../../../rosetta/util';
 import { CardOptions } from '../CardComponent';
+import { CodeLanguage } from '../CodeLanguage';
 import { LuaCard } from './LuaCard';
 
 export class LuaClassCard extends LuaCard<LuaClassCardOptions> {
 
-    onRenderPreview(): string {
-        return '--- @meta\n\n' + generateLuaClass(this.options!.entity);
+    onRenderPreview(language: CodeLanguage): string {
+        if (!this.options) return '';
+        switch (language) {
+            case 'typescript':
+                return luaClassToTS(this.options!.entity, true);
+            case 'lua':
+                return '--- @meta\n\n' + generateLuaClass(this.options!.entity);
+            case 'json':
+                return JSON.stringify(this.options!.entity.toJSON(), null, 2);
+        }
     }
 
     readonly idAuthors: string;

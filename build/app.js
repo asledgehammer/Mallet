@@ -2227,6 +2227,334 @@ define("src/asledgehammer/rosetta/java/JavaGenerator", ["require", "exports"], f
     }
     exports.generateJavaClass = generateJavaClass;
 });
+define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.tsType = exports.applyTSDocumentation = exports.paginateNotes = exports.luaClassToTS = exports.luaFunctionToTS = exports.luaMethodDocumentation = exports.luaConstructorDocumentation = exports.luaConstructorToTS = exports.luaFieldToTS = exports.wrapAsTSNamespace = exports.wrapAsTSFile = void 0;
+    function wrapAsTSFile(text) {
+        let s = '';
+        s += `/** @noSelfInFile */\n`;
+        s += `declare module '@asledgehammer/pipewrench'`;
+        if (text.length) {
+            return `${s} {\n\n` + text.split('\n').map((a) => `    ${a}`).join('\n') + '\n}';
+        }
+        return `${s} {}\n`;
+    }
+    exports.wrapAsTSFile = wrapAsTSFile;
+    function wrapAsTSNamespace(namespace, text) {
+        const s = `export namespace ${namespace}`;
+        if (text.length) {
+            return `${s} {\n\n` + text.split('\n').map((a) => `    ${a}`).join('\n') + '\n}';
+        }
+        return `${s} {}\n`;
+    }
+    exports.wrapAsTSNamespace = wrapAsTSNamespace;
+    function luaFieldToTS(field, indent = 0, notesLength) {
+        const i = ' '.repeat(indent * 4);
+        let s = '';
+        /* Documentation */
+        let ds = [];
+        // if (field.deprecated) ds.push('@deprecated');
+        if (field.notes) {
+            const notes = paginateNotes(field.notes, notesLength);
+            if (ds.length)
+                ds.push('');
+            for (const line of notes) {
+                ds.push(line);
+            }
+        }
+        s = applyTSDocumentation(ds, s, indent);
+        s += i;
+        /* Definition-line */
+        s += `${field.name}: ${tsType(field.type)};`;
+        // Format documented variables as spaced for better legability.
+        if (ds.length)
+            s += '\n';
+        return s;
+    }
+    exports.luaFieldToTS = luaFieldToTS;
+    function luaConstructorToTS(con, indent, notesLength) {
+        const i = ' '.repeat(indent * 4);
+        const ds = luaConstructorDocumentation(con, notesLength);
+        let ps = '';
+        if (con.parameters && con.parameters.length) {
+            ps += '(';
+            for (const parameter of con.parameters) {
+                ps += `${parameter.name}: ${tsType(parameter.type)}, `;
+            }
+            ps = ps.substring(0, ps.length - 2) + ')';
+        }
+        else {
+            ps = '()';
+        }
+        let s = applyTSDocumentation(ds, '', indent);
+        s += `${i}`;
+        s += `constructor${ps};`;
+        // Format documented variables as spaced for better legability.
+        if (ds.length)
+            s += '\n';
+        return s;
+    }
+    exports.luaConstructorToTS = luaConstructorToTS;
+    function luaConstructorDocumentation(con, notesLength) {
+        const ds = [];
+        /* (Annotations) */
+        // if (con.deprecated) ds.push('@deprecated');
+        /* (Notes) */
+        if (con.notes && con.notes.length) {
+            if (ds.length)
+                ds.push('');
+            const notes = paginateNotes(con.notes, notesLength);
+            for (const line of notes)
+                ds.push(line);
+        }
+        /* (Parameters) */
+        if (con.parameters && con.parameters.length) {
+            if (ds.length)
+                ds.push('');
+            for (const param of con.parameters) {
+                if (param.notes && param.notes.length) {
+                    const notes = paginateNotes(`@param ${param.name} ${param.notes}`, notesLength);
+                    for (const line of notes)
+                        ds.push(line);
+                }
+                else {
+                    ds.push(`@param ${param.name}`);
+                }
+            }
+        }
+        return ds;
+    }
+    exports.luaConstructorDocumentation = luaConstructorDocumentation;
+    function luaMethodDocumentation(method, notesLength, overload = false) {
+        const ds = [];
+        /* (Annotations) */
+        if (overload)
+            ds.push('@overload');
+        if (method.deprecated)
+            ds.push('@deprecated');
+        /* (Notes) */
+        if (method.notes && method.notes.length) {
+            if (ds.length)
+                ds.push('');
+            const notes = paginateNotes(method.notes, notesLength);
+            for (const line of notes)
+                ds.push(line);
+        }
+        /* (Parameters) */
+        if (method.parameters && method.parameters.length) {
+            if (ds.length)
+                ds.push('');
+            for (const param of method.parameters) {
+                if (param.notes && param.notes.length) {
+                    const notes = paginateNotes(`@param ${param.name} ${param.notes}`, notesLength);
+                    for (const line of notes)
+                        ds.push(line);
+                }
+                else {
+                    ds.push(`@param ${param.name}`);
+                }
+            }
+        }
+        /* (Returns) */
+        if (method.returns && method.returns.notes && method.returns.notes.length) {
+            if (ds.length)
+                ds.push('');
+            const notes = paginateNotes(`@returns ${method.returns.notes}`, notesLength);
+            for (const line of notes)
+                ds.push(line);
+        }
+        return ds;
+    }
+    exports.luaMethodDocumentation = luaMethodDocumentation;
+    function luaFunctionToTS(method, indent = 0, notesLength) {
+        const i = ' '.repeat(indent * 4);
+        const ds = luaMethodDocumentation(method, notesLength, false);
+        let ps = '';
+        if (method.parameters && method.parameters.length) {
+            ps += '(';
+            for (const parameter of method.parameters) {
+                ps += `${parameter.name}: ${tsType(parameter.type)}, `;
+            }
+            ps = ps.substring(0, ps.length - 2) + ')';
+        }
+        else {
+            ps = '()';
+        }
+        let s = applyTSDocumentation(ds, '', indent);
+        s += `${i}`;
+        s += `${method.name}${ps}: ${tsType(method.returns.type)};`;
+        s += '\n';
+        return s;
+    }
+    exports.luaFunctionToTS = luaFunctionToTS;
+    function luaClassToTS(clazz, wrapFile = false) {
+        let s = '';
+        const valueNames = Object.keys(clazz.values);
+        valueNames.sort((a, b) => a.localeCompare(b));
+        const fieldNames = Object.keys(clazz.fields);
+        fieldNames.sort((a, b) => a.localeCompare(b));
+        const methodNames = Object.keys(clazz.methods);
+        methodNames.sort((a, b) => a.localeCompare(b));
+        const funcNames = Object.keys(clazz.functions);
+        funcNames.sort((a, b) => a.localeCompare(b));
+        const values = [];
+        const fields = [];
+        const funcs = [];
+        const methods = [];
+        /* (VALUES) */
+        for (const valueName of valueNames) {
+            const value = clazz.values[valueName];
+            values.push(value);
+        }
+        /* (FIELDS) */
+        for (const fieldName of fieldNames) {
+            const field = clazz.fields[fieldName];
+            fields.push(field);
+        }
+        /* (METHODS) */
+        for (const methodName of methodNames) {
+            const method = clazz.methods[methodName];
+            methods.push(method);
+        }
+        /* (FUNCTIONS) */
+        for (const funcName of funcNames) {
+            const func = clazz.functions[funcName];
+            funcs.push(func);
+        }
+        /** 100
+         * * -4 (module indent)
+         * * -3 (' * ')
+         */
+        let notesLength = 96;
+        if (wrapFile)
+            notesLength -= 4;
+        /* (Class Documentation) */
+        const ds = [];
+        ds.push(`@customConstructor ${clazz.name}:new`);
+        ds.push('');
+        ds.push(`Lua Class: ${clazz.name}`);
+        if (clazz.notes && clazz.notes.length) {
+            ds.push('');
+            const lines = paginateNotes(clazz.notes, notesLength);
+            for (const line of lines)
+                ds.push(line);
+        }
+        s = applyTSDocumentation(ds, s, 0);
+        s += `export class ${clazz.name} `;
+        let i = '    ';
+        let is = '';
+        if (values.length) {
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* -------------- VALUES -------------- */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            for (const value of values) {
+                is += `${luaFieldToTS(value, 1, notesLength)}\n`;
+            }
+            is = is.substring(0, is.length - 1);
+        }
+        if (fields.length) {
+            if (is.length)
+                is += '\n';
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* ------------- FIELDS --------------- */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            for (const field of fields) {
+                is += `${luaFieldToTS(field, 1, notesLength)}\n`;
+            }
+            is = is.substring(0, is.length - 1);
+        }
+        if (methods.length) {
+            if (is.length)
+                is += '\n';
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* ------------- METHODS -------------- */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            for (const method of methods) {
+                is += `${luaFunctionToTS(method, 1, notesLength)}\n`;
+            }
+            is = is.substring(0, is.length - 1);
+        }
+        if (funcs.length) {
+            if (is.length)
+                is += '\n';
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* ------------ FUNCTIONS ------------- */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            for (const func of funcs) {
+                is += `${luaFunctionToTS(func, 1, notesLength)}\n`;
+            }
+            is = is.substring(0, is.length - 1);
+        }
+        if (clazz.constructor) {
+            if (is.length)
+                is += '\n';
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* ----------- CONSTRUCTOR ------------ */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            is += `${luaConstructorToTS(clazz.conztructor, 1, notesLength)}\n`;
+            is = is.substring(0, is.length - 1);
+        }
+        if (is.length) {
+            s += `{\n\n${is}}`;
+        }
+        else {
+            s += `{}\n`;
+        }
+        if (wrapFile)
+            return wrapAsTSFile(s);
+        return s;
+    }
+    exports.luaClassToTS = luaClassToTS;
+    function paginateNotes(notes, length) {
+        const split = notes === null || notes === void 0 ? void 0 : notes.split(' ');
+        const result = [];
+        let s = split[0];
+        for (let i = 1; i < split.length; i++) {
+            let word = split[i];
+            if (s.length + word.length + 1 <= length)
+                s = s + ' ' + word;
+            else {
+                result.push(s);
+                s = word;
+            }
+        }
+        if (s.length)
+            result.push(s);
+        return result;
+    }
+    exports.paginateNotes = paginateNotes;
+    function applyTSDocumentation(ds, s, indent) {
+        const i = ' '.repeat(indent * 4);
+        if (ds.length) {
+            if (ds.length === 1) {
+                s += `${i}/** ${ds[0]} */\n`;
+            }
+            else {
+                s += `${i}/**\n`;
+                s += ds.map((a) => `${i} * ${a}`).join('\n');
+                s += `\n${i} */\n`;
+            }
+        }
+        return s;
+    }
+    exports.applyTSDocumentation = applyTSDocumentation;
+    function tsType(type) {
+        if (type.startsWith('fun(')) {
+            // FIXME: Nested function calls won't work here.
+            let t = type.substring(3);
+            t = t.replace('):', ')=>');
+            return t.trim();
+        }
+        return type;
+    }
+    exports.tsType = tsType;
+});
 define("src/asledgehammer/mallet/component/Component", ["require", "exports", "src/asledgehammer/rosetta/util"], function (require, exports, util_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -2322,6 +2650,10 @@ define("src/asledgehammer/mallet/component/CardComponent", ["require", "exports"
         }
     }
     exports.CardComponent = CardComponent;
+});
+define("src/asledgehammer/mallet/component/CodeLanguage", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
 });
 define("src/asledgehammer/mallet/component/NameModeType", ["require", "exports"], function (require, exports) {
     "use strict";
@@ -2588,10 +2920,14 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
     class LuaCard extends CardComponent_1.CardComponent {
         constructor(app, options) {
             super(options);
+            this.languageMode = 'lua';
             this.app = app;
             this.idPreview = `${this.id}-preview`;
             this.idPreviewCode = `${this.id}-preview-code`;
             this.idBtnPreviewCopy = `${this.id}-preview-copy-btn`;
+            this.idBtnLanguageLua = `${this.id}-btn-language-lua`;
+            this.idBtnLanguageTypeScript = `${this.id}-btn-language-typescript`;
+            this.idBtnLanguageJSON = `${this.id}-btn-language-json`;
         }
         listenEdit(entity, idBtnEdit, mode, title, nameSelected = undefined) {
             (0, util_3.$get)(idBtnEdit).on('click', () => {
@@ -2825,23 +3161,35 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
             const { idPreviewCode } = this;
             const $pre = (0, util_3.$get)(idPreviewCode);
             $pre.empty();
-            let text = this.onRenderPreview();
+            let text = this.onRenderPreview(this.languageMode);
             if (text.endsWith('\n'))
                 text = text.substring(0, text.length - 1);
             // @ts-ignore
-            const highlightedCode = hljs.default.highlightAuto(text, ['lua']).value;
+            const highlightedCode = hljs.default.highlightAuto(text, [this.languageMode]).value;
             $pre.append(highlightedCode);
         }
         listenPreview() {
-            const { idBtnPreviewCopy } = this;
+            const { idBtnLanguageLua, idBtnLanguageTypeScript, idBtnLanguageJSON, idBtnPreviewCopy } = this;
             // Copy the code.
             (0, util_3.$get)(idBtnPreviewCopy).on('click', (event) => {
                 event.stopPropagation();
-                navigator.clipboard.writeText(this.onRenderPreview());
+                navigator.clipboard.writeText(this.onRenderPreview('lua'));
+            });
+            (0, util_3.$get)(idBtnLanguageLua).on('click', () => {
+                this.languageMode = 'lua';
+                this.update();
+            });
+            (0, util_3.$get)(idBtnLanguageTypeScript).on('click', () => {
+                this.languageMode = 'typescript';
+                this.update();
+            });
+            (0, util_3.$get)(idBtnLanguageJSON).on('click', () => {
+                this.languageMode = 'json';
+                this.update();
             });
         }
         renderPreview(show) {
-            const { idPreview, idPreviewCode, idBtnPreviewCopy } = this;
+            const { idPreview, idPreviewCode, idBtnPreviewCopy, idBtnLanguageLua, idBtnLanguageTypeScript, idBtnLanguageJSON } = this;
             return (0, util_3.html) `
             <div class="card responsive-subcard mt-3">
                 <div class="card-header">
@@ -2856,8 +3204,13 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
                         </div>
                     </button>
                 </div>
-                <div id="${idPreview}" class="card-body mb-0 p-0 collapse${show ? ' show' : ''}" style="position: relative; max-height: 512px">
-                    <pre id="${idPreviewCode}" class="w-100 h-100 p-4 m-0" style="background-color: #111; overflow: scroll; max-height: 512px;"></pre>
+                <div id="${idPreview}" class="card-body mb-0 p-0 collapse${show ? ' show' : ''}" style="position: relative;">
+                    <div class="p-2">
+                        <button id="${idBtnLanguageLua}" class="btn btn-sm btn-primary" title="View Lua Code">Lua</button>
+                        <button id="${idBtnLanguageTypeScript}" class="btn btn-sm btn-primary" title="View Lua Code">TypeScript</button>
+                        <button id="${idBtnLanguageJSON}" class="btn btn-sm btn-primary" title="View Lua Code">Rosetta JSON</button>
+                    </div>
+                   <pre id="${idPreviewCode}" class="w-100 h-100 p-4 m-0" style="background-color: #111; overflow: scroll; max-height: 512px;"></pre>
                 </div>
             </div>
         `;
@@ -3078,13 +3431,22 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
     }
     exports.LuaCard = LuaCard;
 });
-define("src/asledgehammer/mallet/component/lua/LuaClassCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaGenerator_1, util_4, LuaCard_1) {
+define("src/asledgehammer/mallet/component/lua/LuaClassCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaGenerator_1, LuaTypeScriptGenerator_1, util_4, LuaCard_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaClassCard = void 0;
     class LuaClassCard extends LuaCard_1.LuaCard {
-        onRenderPreview() {
-            return '--- @meta\n\n' + (0, LuaGenerator_1.generateLuaClass)(this.options.entity);
+        onRenderPreview(language) {
+            if (!this.options)
+                return '';
+            switch (language) {
+                case 'typescript':
+                    return (0, LuaTypeScriptGenerator_1.luaClassToTS)(this.options.entity, true);
+                case 'lua':
+                    return '--- @meta\n\n' + (0, LuaGenerator_1.generateLuaClass)(this.options.entity);
+                case 'json':
+                    return JSON.stringify(this.options.entity.toJSON(), null, 2);
+            }
         }
         constructor(app, options) {
             super(app, options);
@@ -3157,6 +3519,404 @@ define("src/asledgehammer/mallet/component/lua/LuaClassCard", ["require", "expor
     }
     exports.LuaClassCard = LuaClassCard;
 });
+define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.tsType = exports.applyTSDocumentation = exports.paginateNotes = exports.javaClassToTS = exports.javaMethodToTS = exports.javaMethodDocumentation = exports.javaConstructorDocumentation = exports.javaMethodClusterToTS = exports.javaConstructorsToTS = exports.javaConstructorToTS = exports.javaFieldToTS = exports.wrapAsTSNamespace = exports.wrapAsTSFile = void 0;
+    function wrapAsTSFile(text) {
+        let s = '';
+        s += `/** @noSelfInFile */\n`;
+        s += `declare module '@asledgehammer/pipewrench'`;
+        if (text.length) {
+            return `${s} {\n` + text.split('\n').map((a) => `    ${a}`).join('\n') + '\n}';
+        }
+        return `${s} {}\n`;
+    }
+    exports.wrapAsTSFile = wrapAsTSFile;
+    function wrapAsTSNamespace(namespace, text) {
+        const s = `export namespace ${namespace}`;
+        if (text.length) {
+            return `${s} {\n\n` + text.split('\n').map((a) => `    ${a}`).join('\n') + '\n}';
+        }
+        return `${s} {}\n`;
+    }
+    exports.wrapAsTSNamespace = wrapAsTSNamespace;
+    function javaFieldToTS(field, indent = 0, notesLength) {
+        const i = ' '.repeat(indent * 4);
+        let s = '';
+        /* Documentation */
+        let ds = [];
+        if (field.deprecated)
+            ds.push('@deprecated');
+        if (field.notes) {
+            const notes = paginateNotes(field.notes, notesLength);
+            if (ds.length)
+                ds.push('');
+            for (const line of notes) {
+                ds.push(line);
+            }
+        }
+        s = applyTSDocumentation(ds, s, indent);
+        s += i;
+        /* Definition-line */
+        if (field.isStatic())
+            s += 'static ';
+        if (field.isFinal())
+            s += 'readonly ';
+        s += `${field.name}: ${tsType(field.type.basic)};`;
+        // Format documented variables as spaced for better legability.
+        if (ds.length)
+            s += '\n';
+        return s;
+    }
+    exports.javaFieldToTS = javaFieldToTS;
+    function javaConstructorToTS(con, indent, notesLength) {
+        const i = ' '.repeat(indent * 4);
+        const ds = javaConstructorDocumentation(con, notesLength);
+        let ps = '';
+        if (con.parameters && con.parameters.length) {
+            ps += '(';
+            for (const parameter of con.parameters) {
+                ps += `${parameter.name}: ${tsType(parameter.type.basic)}, `;
+            }
+            ps = ps.substring(0, ps.length - 2) + ')';
+        }
+        else {
+            ps = '()';
+        }
+        let s = applyTSDocumentation(ds, '', indent);
+        s += `${i}`;
+        s += `constructor${ps};`;
+        // Format documented variables as spaced for better legability.
+        if (ds.length)
+            s += '\n';
+        return s;
+    }
+    exports.javaConstructorToTS = javaConstructorToTS;
+    function javaConstructorsToTS(constructors, indent, notesLength) {
+        const i = ' '.repeat(indent * 4);
+        let s = '';
+        const cons = [...constructors];
+        if (cons.length) {
+            cons.sort((a, b) => {
+                // Smaller param count = first.
+                const apl = a.parameters ? a.parameters.length : 0;
+                const bpl = b.parameters ? b.parameters.length : 0;
+                let compare = apl - bpl;
+                // If same count, compare type strings. a < b.
+                if (compare === 0) {
+                    for (let index = 0; index < apl; index++) {
+                        const ap = a.parameters[index];
+                        const bp = b.parameters[index];
+                        compare = ap.type.basic.localeCompare(bp.type.basic);
+                        if (compare !== 0)
+                            break;
+                    }
+                }
+                return compare;
+            });
+            for (const con of cons) {
+                if (con.getVisibilityScope() !== 'public')
+                    continue;
+                s += javaConstructorToTS(con, indent, notesLength) + '\n\n';
+            }
+            // Remove trailing new-line.
+            s = s.substring(0, s.length - 3);
+        }
+        return s;
+    }
+    exports.javaConstructorsToTS = javaConstructorsToTS;
+    function javaMethodClusterToTS(cluster, indent = 0, notesLength) {
+        if (cluster.methods.length === 1) {
+            return javaMethodToTS(cluster.methods[0], indent, notesLength);
+        }
+        let s = '';
+        const methods = [...cluster.methods];
+        if (methods.length) {
+            methods.sort((a, b) => {
+                // Smaller param count = first.
+                const apl = a.parameters ? a.parameters.length : 0;
+                const bpl = b.parameters ? b.parameters.length : 0;
+                let compare = apl - bpl;
+                // If same count, compare type strings. a < b.
+                if (compare === 0) {
+                    for (let index = 0; index < apl; index++) {
+                        const ap = a.parameters[index];
+                        const bp = b.parameters[index];
+                        compare = ap.type.basic.localeCompare(bp.type.basic);
+                        if (compare !== 0)
+                            break;
+                    }
+                }
+                return compare;
+            });
+            for (const method of cluster.methods) {
+                if (method.getVisibilityScope() !== 'public')
+                    continue;
+                s += javaMethodToTS(method, indent, notesLength) + '\n';
+            }
+            // Remove trailing new-line.
+            s = s.substring(0, s.length - 1);
+        }
+        return s;
+    }
+    exports.javaMethodClusterToTS = javaMethodClusterToTS;
+    function javaConstructorDocumentation(con, notesLength) {
+        const ds = [];
+        /* (Annotations) */
+        if (con.deprecated)
+            ds.push('@deprecated');
+        /* (Notes) */
+        if (con.notes && con.notes.length) {
+            if (ds.length)
+                ds.push('');
+            const notes = paginateNotes(con.notes, notesLength);
+            for (const line of notes)
+                ds.push(line);
+        }
+        /* (Parameters) */
+        if (con.parameters && con.parameters.length) {
+            if (ds.length)
+                ds.push('');
+            for (const param of con.parameters) {
+                if (param.notes && param.notes.length) {
+                    const notes = paginateNotes(`@param ${param.name} ${param.notes}`, notesLength);
+                    for (const line of notes)
+                        ds.push(line);
+                }
+                else {
+                    ds.push(`@param ${param.name}`);
+                }
+            }
+        }
+        return ds;
+    }
+    exports.javaConstructorDocumentation = javaConstructorDocumentation;
+    function javaMethodDocumentation(method, notesLength, overload = false) {
+        const ds = [];
+        /* (Annotations) */
+        if (overload)
+            ds.push('@overload');
+        if (method.deprecated)
+            ds.push('@deprecated');
+        /* (Notes) */
+        if (method.notes && method.notes.length) {
+            if (ds.length)
+                ds.push('');
+            const notes = paginateNotes(method.notes, notesLength);
+            for (const line of notes)
+                ds.push(line);
+        }
+        /* (Parameters) */
+        if (method.parameters && method.parameters.length) {
+            if (ds.length)
+                ds.push('');
+            for (const param of method.parameters) {
+                if (param.notes && param.notes.length) {
+                    const notes = paginateNotes(`@param ${param.name} ${param.notes}`, notesLength);
+                    for (const line of notes)
+                        ds.push(line);
+                }
+                else {
+                    ds.push(`@param ${param.name}`);
+                }
+            }
+        }
+        /* (Returns) */
+        if (method.returns && method.returns.notes && method.returns.notes.length) {
+            if (ds.length)
+                ds.push('');
+            const notes = paginateNotes(`@returns ${method.returns.notes}`, notesLength);
+            for (const line of notes)
+                ds.push(line);
+        }
+        return ds;
+    }
+    exports.javaMethodDocumentation = javaMethodDocumentation;
+    function javaMethodToTS(method, indent = 0, notesLength) {
+        const i = ' '.repeat(indent * 4);
+        const ds = javaMethodDocumentation(method, notesLength, false);
+        let ps = '';
+        if (method.parameters && method.parameters.length) {
+            ps += '(';
+            for (const parameter of method.parameters) {
+                ps += `${parameter.name}: ${tsType(parameter.type.basic)}, `;
+            }
+            ps = ps.substring(0, ps.length - 2) + ')';
+        }
+        else {
+            ps = '()';
+        }
+        let s = applyTSDocumentation(ds, '', indent);
+        s += `${i}`;
+        if (method.isStatic())
+            s += 'static ';
+        if (method.isFinal())
+            s += 'readonly ';
+        s += `${method.name}${ps}: ${tsType(method.returns.type.basic)};`;
+        s += '\n';
+        return s;
+    }
+    exports.javaMethodToTS = javaMethodToTS;
+    function javaClassToTS(clazz, wrapNamespace = false, wrapFile = false) {
+        let s = '';
+        const fieldNames = Object.keys(clazz.fields);
+        fieldNames.sort((a, b) => a.localeCompare(b));
+        const methodNames = Object.keys(clazz.methods);
+        methodNames.sort((a, b) => a.localeCompare(b));
+        const staticFields = [];
+        const fields = [];
+        const staticMethods = [];
+        const methods = [];
+        /* (STATIC FIELDS) */
+        for (const fieldName of fieldNames) {
+            const field = clazz.fields[fieldName];
+            if (field.isStatic())
+                staticFields.push(field);
+            else
+                fields.push(field);
+        }
+        /* (INSTANCE METHODS) */
+        for (const methodName of methodNames) {
+            const cluster = clazz.methods[methodName];
+            if (!cluster.methods.length)
+                continue; // (Sanity-Check)
+            if (!cluster.methods[0].isStatic())
+                staticMethods.push(cluster);
+            else
+                methods.push(cluster);
+        }
+        /** 100 - 4 (module indent) - 4 (namespace indent) - 3 (' * ') */
+        let notesLength = 96;
+        if (wrapFile)
+            notesLength -= 4;
+        if (wrapNamespace)
+            notesLength -= 4;
+        /* (Class Documentation) */
+        const ds = [];
+        ds.push(`@customConstructor ${clazz.name}.new`);
+        ds.push('');
+        ds.push(`Class: ${clazz.namespace.name}.${clazz.name}`);
+        if (clazz.notes && clazz.notes.length) {
+            ds.push('');
+            const lines = paginateNotes(clazz.notes, notesLength);
+            for (const line of lines)
+                ds.push(line);
+        }
+        s = applyTSDocumentation(ds, s, 0);
+        s += `export class ${clazz.name} `;
+        let i = '    ';
+        let is = '';
+        if (staticFields.length) {
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* ---------- STATIC FIELDS ----------- */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            for (const field of staticFields) {
+                if (field.getVisibilityScope() !== 'public')
+                    continue;
+                else if (!field.isFinal())
+                    continue;
+                is += `${javaFieldToTS(field, 1, notesLength)}\n`;
+            }
+        }
+        // if (fields.length) {
+        //     if (is.length) is += '\n';
+        //     is += `${i}/* ------------------------------------ */\n`;
+        //     is += `${i}/* ------------- FIELDS --------------- */\n`;
+        //     is += `${i}/* ------------------------------------ */\n`;
+        //     is += '\n';
+        //     for (const field of fields) {
+        //         is += `${javaFieldToTS(field, 1, notesLength)}\n`;
+        //     }
+        // }
+        if (clazz.constructors && clazz.constructors.length) {
+            if (is.length)
+                is += '\n';
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* ----------- CONSTRUCTOR ------------ */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            is += `${javaConstructorsToTS(clazz.constructors, 1, notesLength)}\n`;
+        }
+        if (methods.length) {
+            if (is.length)
+                is += '\n';
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* ------------- METHODS -------------- */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            for (const cluster of methods) {
+                is += `${javaMethodClusterToTS(cluster, 1, notesLength)}\n`;
+            }
+        }
+        if (staticMethods.length) {
+            if (is.length)
+                is += '\n';
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* ---------- STATIC METHODS ---------- */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            for (const cluster of staticMethods) {
+                is += `${javaMethodClusterToTS(cluster, 1, notesLength)}\n`;
+            }
+        }
+        if (is.length) {
+            s += `{\n\n${is}}`;
+        }
+        else {
+            s += `{}\n`;
+        }
+        if (wrapNamespace)
+            s = wrapAsTSNamespace(clazz.namespace.name, s);
+        if (wrapFile)
+            return wrapAsTSFile(s);
+        return s;
+    }
+    exports.javaClassToTS = javaClassToTS;
+    function paginateNotes(notes, length) {
+        const split = notes === null || notes === void 0 ? void 0 : notes.split(' ');
+        const result = [];
+        let s = split[0];
+        for (let i = 1; i < split.length; i++) {
+            let word = split[i];
+            if (s.length + word.length + 1 <= length)
+                s = s + ' ' + word;
+            else {
+                result.push(s);
+                s = word;
+            }
+        }
+        if (s.length)
+            result.push(s);
+        return result;
+    }
+    exports.paginateNotes = paginateNotes;
+    function applyTSDocumentation(ds, s, indent) {
+        const i = ' '.repeat(indent * 4);
+        if (ds.length) {
+            if (ds.length === 1) {
+                s += `${i}/** ${ds[0]} */\n`;
+            }
+            else {
+                s += `${i}/**\n`;
+                s += ds.map((a) => `${i} * ${a}`).join('\n');
+                s += `\n${i} */\n`;
+            }
+        }
+        return s;
+    }
+    exports.applyTSDocumentation = applyTSDocumentation;
+    function tsType(type) {
+        console.log(`tsType(${type})`);
+        switch (type) {
+            case 'String': return 'string';
+            case 'KahluaTable': return 'any';
+            default: return type;
+        }
+    }
+    exports.tsType = tsType;
+});
 define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports", "highlight.js", "src/asledgehammer/mallet/component/CardComponent", "src/asledgehammer/Delta", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/java/RosettaJavaConstructor"], function (require, exports, hljs, CardComponent_2, Delta_2, util_5, RosettaJavaConstructor_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -3164,10 +3924,14 @@ define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports"
     class JavaCard extends CardComponent_2.CardComponent {
         constructor(app, options) {
             super(options);
+            this.languageMode = 'lua';
             this.app = app;
             this.idPreview = `${this.id}-preview`;
             this.idPreviewCode = `${this.id}-preview-code`;
             this.idBtnPreviewCopy = `${this.id}-preview-copy-btn`;
+            this.idBtnLanguageLua = `${this.id}-btn-language-lua`;
+            this.idBtnLanguageTypeScript = `${this.id}-btn-language-typescript`;
+            this.idBtnLanguageJSON = `${this.id}-btn-language-json`;
         }
         listenEdit(entity, idBtnEdit, mode, title, nameSelected = undefined) {
             (0, util_5.$get)(idBtnEdit).on('click', () => {
@@ -3336,23 +4100,35 @@ define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports"
             const { idPreviewCode } = this;
             const $pre = (0, util_5.$get)(idPreviewCode);
             $pre.empty();
-            let text = this.onRenderPreview();
+            let text = this.onRenderPreview(this.languageMode);
             if (text.endsWith('\n'))
                 text = text.substring(0, text.length - 1);
             // @ts-ignore
-            const highlightedCode = hljs.default.highlightAuto(text, ['lua']).value;
+            const highlightedCode = hljs.default.highlightAuto(text, [this.languageMode]).value;
             $pre.append(highlightedCode);
         }
         listenPreview() {
-            const { idBtnPreviewCopy } = this;
+            const { idBtnPreviewCopy, idBtnLanguageLua, idBtnLanguageTypeScript, idBtnLanguageJSON } = this;
             // Copy the code.
             (0, util_5.$get)(idBtnPreviewCopy).on('click', (event) => {
                 event.stopPropagation();
-                navigator.clipboard.writeText(this.onRenderPreview());
+                navigator.clipboard.writeText(this.onRenderPreview(this.languageMode));
+            });
+            (0, util_5.$get)(idBtnLanguageLua).on('click', () => {
+                this.languageMode = 'lua';
+                this.update();
+            });
+            (0, util_5.$get)(idBtnLanguageTypeScript).on('click', () => {
+                this.languageMode = 'typescript';
+                this.update();
+            });
+            (0, util_5.$get)(idBtnLanguageJSON).on('click', () => {
+                this.languageMode = 'json';
+                this.update();
             });
         }
         renderPreview(show) {
-            const { idPreview, idPreviewCode, idBtnPreviewCopy } = this;
+            const { idPreview, idPreviewCode, idBtnPreviewCopy, idBtnLanguageLua, idBtnLanguageTypeScript, idBtnLanguageJSON } = this;
             return (0, util_5.html) `
             <div class="card responsive-subcard mt-3">
                 <div class="card-header">
@@ -3367,7 +4143,12 @@ define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports"
                         </div>
                     </button>
                 </div>
-                <div id="${idPreview}" class="card-body mb-0 p-0 collapse${show ? ' show' : ''}" style="position: relative; max-height: 512px">
+                <div id="${idPreview}" class="card-body mb-0 p-0 collapse${show ? ' show' : ''}" style="position: relative;">
+                    <div class="p-2">
+                        <button id="${idBtnLanguageLua}" class="btn btn-sm btn-primary" title="View Lua Code">Lua</button>
+                        <button id="${idBtnLanguageTypeScript}" class="btn btn-sm btn-primary" title="View Lua Code">TypeScript</button>
+                        <button id="${idBtnLanguageJSON}" class="btn btn-sm btn-primary" title="View Lua Code">Rosetta JSON</button>
+                    </div>
                     <pre id="${idPreviewCode}" class="w-100 h-100 p-2 m-0" style="background-color: #111; overflow: scroll; max-height: 512px;"></pre>
                 </div>
             </div>
@@ -3540,13 +4321,22 @@ define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports"
     }
     exports.JavaCard = JavaCard;
 });
-define("src/asledgehammer/mallet/component/java/JavaClassCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaGenerator_1, util_6, JavaCard_1) {
+define("src/asledgehammer/mallet/component/java/JavaClassCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaGenerator_1, JavaTypeScriptGenerator_1, util_6, JavaCard_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.JavaClassCard = void 0;
     class JavaClassCard extends JavaCard_1.JavaCard {
-        onRenderPreview() {
-            return '--- @meta\n\n' + (0, JavaGenerator_1.generateJavaClass)(this.options.entity);
+        onRenderPreview(language) {
+            if (!this.options)
+                return '';
+            switch (language) {
+                case 'lua':
+                    return '--- @meta\n\n' + (0, JavaGenerator_1.generateJavaClass)(this.options.entity);
+                case 'typescript':
+                    return (0, JavaTypeScriptGenerator_1.javaClassToTS)(this.options.entity, true, true);
+                case 'json':
+                    return JSON.stringify(this.options.entity.toJSON(), null, 2);
+            }
         }
         constructor(app, options) {
             super(app, options);
@@ -4674,7 +5464,7 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
     exports.Sidebar = Sidebar;
     ;
 });
-define("src/asledgehammer/mallet/component/lua/LuaConstructorCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaGenerator_2, util_10, LuaCard_4) {
+define("src/asledgehammer/mallet/component/lua/LuaConstructorCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaGenerator_2, LuaTypeScriptGenerator_2, util_10, LuaCard_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaConstructorCard = void 0;
@@ -4684,13 +5474,22 @@ define("src/asledgehammer/mallet/component/lua/LuaConstructorCard", ["require", 
             this.idNotes = `${this.id}-notes`;
             this.idParamContainer = `${this.id}-parameter-container`;
         }
-        onRenderPreview() {
+        onRenderPreview(language) {
             if (!this.options)
                 return '';
-            const { entity } = this.options;
-            const classEntity = this.app.catalog.selectedCard.options.entity;
-            const className = classEntity.name;
-            return (0, LuaGenerator_2.generateLuaConstructor)(className, entity);
+            switch (language) {
+                case 'lua': {
+                    const { entity } = this.options;
+                    const classEntity = this.app.catalog.selectedCard.options.entity;
+                    return (0, LuaGenerator_2.generateLuaConstructor)(classEntity.name, entity);
+                }
+                case 'typescript': {
+                    return (0, LuaTypeScriptGenerator_2.luaConstructorToTS)(this.options.entity, 0, 100);
+                }
+                case 'json': {
+                    return JSON.stringify(this.options.entity.toJSON(), null, 2);
+                }
+            }
         }
         onHeaderHTML() {
             const classEntity = this.app.catalog.selectedCard.options.entity;
@@ -4742,7 +5541,7 @@ define("src/asledgehammer/mallet/component/lua/LuaConstructorCard", ["require", 
     }
     exports.LuaConstructorCard = LuaConstructorCard;
 });
-define("src/asledgehammer/mallet/component/lua/LuaFieldCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaGenerator_3, util_11, LuaCard_5) {
+define("src/asledgehammer/mallet/component/lua/LuaFieldCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaGenerator_3, LuaTypeScriptGenerator_3, util_11, LuaCard_5) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaFieldCard = void 0;
@@ -4755,22 +5554,32 @@ define("src/asledgehammer/mallet/component/lua/LuaFieldCard", ["require", "expor
             this.idBtnEdit = `${this.id}-btn-edit`;
             this.idBtnDelete = `${this.id}-btn-delete`;
         }
-        onRenderPreview() {
+        onRenderPreview(language) {
             var _a, _b;
             if (!this.options)
                 return '';
-            const { app } = this;
-            const { entity, isStatic } = this.options;
-            const { defaultValue } = entity;
-            const name = (_b = (_a = app.catalog.selectedCard) === null || _a === void 0 ? void 0 : _a.options) === null || _b === void 0 ? void 0 : _b.entity.name;
-            if (isStatic) {
-                return `${(0, LuaGenerator_3.generateLuaField)(entity)}\n\n${(0, LuaGenerator_3.generateLuaValue)(name, entity)}`;
+            switch (language) {
+                case 'lua': {
+                    const { app } = this;
+                    const { entity, isStatic } = this.options;
+                    const { defaultValue } = entity;
+                    const name = (_b = (_a = app.catalog.selectedCard) === null || _a === void 0 ? void 0 : _a.options) === null || _b === void 0 ? void 0 : _b.entity.name;
+                    if (isStatic) {
+                        return `${(0, LuaGenerator_3.generateLuaField)(entity)}\n\n${(0, LuaGenerator_3.generateLuaValue)(name, entity)}`;
+                    }
+                    let s = (0, LuaGenerator_3.generateLuaField)(entity);
+                    if (defaultValue) {
+                        s += `\n\n--- (Example of initialization of field) ---\nself.${entity.name} = ${defaultValue};`;
+                    }
+                    return s;
+                }
+                case 'typescript': {
+                    return (0, LuaTypeScriptGenerator_3.luaFieldToTS)(this.options.entity, 0, 100);
+                }
+                case 'json': {
+                    return JSON.stringify(this.options.entity.toJSON(), null, 2);
+                }
             }
-            let s = (0, LuaGenerator_3.generateLuaField)(entity);
-            if (defaultValue) {
-                s += `\n\n--- (Example of initialization of field) ---\nself.${entity.name} = ${defaultValue};`;
-            }
-            return s;
         }
         onHeaderHTML() {
             var _a;
@@ -4851,7 +5660,7 @@ define("src/asledgehammer/mallet/component/lua/LuaFieldCard", ["require", "expor
     }
     exports.LuaFieldCard = LuaFieldCard;
 });
-define("src/asledgehammer/mallet/component/lua/LuaFunctionCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaGenerator_4, util_12, LuaCard_6) {
+define("src/asledgehammer/mallet/component/lua/LuaFunctionCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaGenerator_4, LuaTypeScriptGenerator_4, util_12, LuaCard_6) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaFunctionCard = void 0;
@@ -4865,13 +5674,23 @@ define("src/asledgehammer/mallet/component/lua/LuaFunctionCard", ["require", "ex
             this.idBtnEdit = `${this.id}-btn-edit`;
             this.idParamContainer = `${this.id}-parameter-container`;
         }
-        onRenderPreview() {
+        onRenderPreview(language) {
             if (!this.options)
                 return '';
-            const { entity } = this.options;
-            const classEntity = this.app.catalog.selectedCard.options.entity;
-            const className = classEntity.name;
-            return (0, LuaGenerator_4.generateLuaMethod)(className, entity);
+            switch (language) {
+                case 'lua': {
+                    const { entity } = this.options;
+                    const classEntity = this.app.catalog.selectedCard.options.entity;
+                    const className = classEntity.name;
+                    return (0, LuaGenerator_4.generateLuaMethod)(className, entity);
+                }
+                case 'typescript': {
+                    return (0, LuaTypeScriptGenerator_4.luaFunctionToTS)(this.options.entity, 0, 100);
+                }
+                case 'json': {
+                    return JSON.stringify(this.options.entity.toJSON(), null, 2);
+                }
+            }
         }
         onHeaderHTML() {
             const { idBtnDelete, idBtnEdit } = this;
@@ -4962,7 +5781,7 @@ define("src/asledgehammer/mallet/component/lua/LuaFunctionCard", ["require", "ex
     }
     exports.LuaFunctionCard = LuaFunctionCard;
 });
-define("src/asledgehammer/mallet/component/java/JavaConstructorCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaGenerator_2, util_13, JavaCard_2) {
+define("src/asledgehammer/mallet/component/java/JavaConstructorCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaGenerator_2, JavaTypeScriptGenerator_2, util_13, JavaCard_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.JavaConstructorCard = void 0;
@@ -4972,13 +5791,23 @@ define("src/asledgehammer/mallet/component/java/JavaConstructorCard", ["require"
             this.idNotes = `${this.id}-notes`;
             this.idParamContainer = `${this.id}-parameter-container`;
         }
-        onRenderPreview() {
+        onRenderPreview(language) {
             if (!this.options)
                 return '';
-            const { entity } = this.options;
-            const classEntity = this.app.catalog.selectedCard.options.entity;
-            const className = classEntity.name;
-            return (0, JavaGenerator_2.generateJavaConstructor)(className, [entity]);
+            switch (language) {
+                case 'lua': {
+                    const { entity } = this.options;
+                    const classEntity = this.app.catalog.selectedCard.options.entity;
+                    const className = classEntity.name;
+                    return (0, JavaGenerator_2.generateJavaConstructor)(className, [entity]);
+                }
+                case 'typescript': {
+                    return (0, JavaTypeScriptGenerator_2.javaConstructorToTS)(this.options.entity, 0, 100);
+                }
+                case 'json': {
+                    return JSON.stringify(this.options.entity, null, 2);
+                }
+            }
         }
         onHeaderHTML() {
             const { entity } = this.options;
@@ -5037,7 +5866,7 @@ define("src/asledgehammer/mallet/component/java/JavaConstructorCard", ["require"
     }
     exports.JavaConstructorCard = JavaConstructorCard;
 });
-define("src/asledgehammer/mallet/component/java/JavaFieldCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaGenerator_3, util_14, JavaCard_3) {
+define("src/asledgehammer/mallet/component/java/JavaFieldCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaGenerator_3, JavaTypeScriptGenerator_3, util_14, JavaCard_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.JavaFieldCard = void 0;
@@ -5050,11 +5879,21 @@ define("src/asledgehammer/mallet/component/java/JavaFieldCard", ["require", "exp
             this.idBtnEdit = `${this.id}-btn-edit`;
             this.idBtnDelete = `${this.id}-btn-delete`;
         }
-        onRenderPreview() {
+        onRenderPreview(language) {
             if (!this.options)
                 return '';
-            const { entity } = this.options;
-            return (0, JavaGenerator_3.generateJavaField)(entity);
+            switch (language) {
+                case 'lua': {
+                    const { entity } = this.options;
+                    return (0, JavaGenerator_3.generateJavaField)(entity);
+                }
+                case 'typescript': {
+                    return (0, JavaTypeScriptGenerator_3.javaFieldToTS)(this.options.entity, 0, 100);
+                }
+                case 'json': {
+                    return JSON.stringify(this.options.entity, null, 2);
+                }
+            }
         }
         onHeaderHTML() {
             var _a;
@@ -5123,7 +5962,7 @@ define("src/asledgehammer/mallet/component/java/JavaFieldCard", ["require", "exp
     }
     exports.JavaFieldCard = JavaFieldCard;
 });
-define("src/asledgehammer/mallet/component/java/JavaMethodCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/java/RosettaJavaMethodCluster", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaGenerator_4, RosettaJavaMethodCluster_2, util_15, JavaCard_4) {
+define("src/asledgehammer/mallet/component/java/JavaMethodCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/rosetta/java/RosettaJavaMethodCluster", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaGenerator_4, RosettaJavaMethodCluster_2, JavaTypeScriptGenerator_4, util_15, JavaCard_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.JavaMethodCard = void 0;
@@ -5137,15 +5976,25 @@ define("src/asledgehammer/mallet/component/java/JavaMethodCard", ["require", "ex
             this.idBtnEdit = `${this.id}-btn-edit`;
             this.idParamContainer = `${this.id}-parameter-container`;
         }
-        onRenderPreview() {
+        onRenderPreview(language) {
             if (!this.options)
                 return '';
-            const { entity } = this.options;
-            const classEntity = this.app.catalog.selectedCard.options.entity;
-            const className = classEntity.name;
-            const cluster = new RosettaJavaMethodCluster_2.RosettaJavaMethodCluster(entity.name);
-            cluster.add(entity);
-            return (0, JavaGenerator_4.generateJavaMethod)(className, cluster);
+            switch (language) {
+                case 'lua': {
+                    const { entity } = this.options;
+                    const classEntity = this.app.catalog.selectedCard.options.entity;
+                    const className = classEntity.name;
+                    const cluster = new RosettaJavaMethodCluster_2.RosettaJavaMethodCluster(entity.name);
+                    cluster.add(entity);
+                    return (0, JavaGenerator_4.generateJavaMethod)(className, cluster);
+                }
+                case 'typescript': {
+                    return (0, JavaTypeScriptGenerator_4.javaMethodToTS)(this.options.entity, 0, 100);
+                }
+                case 'json': {
+                    return JSON.stringify(this.options.entity.toJSON(), null, 2);
+                }
+            }
         }
         onHeaderHTML() {
             const { entity, isStatic } = this.options;
@@ -5792,739 +6641,17 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
     }
     exports.Catalog = Catalog;
 });
-define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require", "exports"], function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.tsType = exports.applyTSDocumentation = exports.paginateNotes = exports.javaClassToTS = exports.javaMethodToTS = exports.javaMethodDocumentation = exports.javaConstructorDocumentation = exports.javaMethodClusterToTS = exports.javaConstructorsToTS = exports.javaConstructorToTS = exports.javaFieldToTS = exports.wrapAsTSNamespace = exports.wrapAsTSFile = void 0;
-    function wrapAsTSFile(text) {
-        let s = '';
-        s += `/** @noSelfInFile */\n`;
-        s += `declare module '@asledgehammer/pipewrench'`;
-        if (text.length) {
-            return `${s} {\n` + text.split('\n').map((a) => `    ${a}`).join('\n') + '\n}';
-        }
-        return `${s} {}\n`;
-    }
-    exports.wrapAsTSFile = wrapAsTSFile;
-    function wrapAsTSNamespace(namespace, text) {
-        const s = `export namespace ${namespace}`;
-        if (text.length) {
-            return `${s} {\n\n` + text.split('\n').map((a) => `    ${a}`).join('\n') + '\n}';
-        }
-        return `${s} {}\n`;
-    }
-    exports.wrapAsTSNamespace = wrapAsTSNamespace;
-    function javaFieldToTS(field, indent = 0, notesLength) {
-        const i = ' '.repeat(indent * 4);
-        let s = '';
-        /* Documentation */
-        let ds = [];
-        if (field.deprecated)
-            ds.push('@deprecated');
-        if (field.notes) {
-            const notes = paginateNotes(field.notes, notesLength);
-            if (ds.length)
-                ds.push('');
-            for (const line of notes) {
-                ds.push(line);
-            }
-        }
-        s = applyTSDocumentation(ds, s, indent);
-        s += i;
-        /* Definition-line */
-        if (field.isStatic())
-            s += 'static ';
-        if (field.isFinal())
-            s += 'readonly ';
-        s += `${field.name}: ${tsType(field.type.basic)};`;
-        // Format documented variables as spaced for better legability.
-        if (ds.length)
-            s += '\n';
-        return s;
-    }
-    exports.javaFieldToTS = javaFieldToTS;
-    function javaConstructorToTS(con, indent, notesLength) {
-        const i = ' '.repeat(indent * 4);
-        const ds = javaConstructorDocumentation(con, notesLength);
-        let ps = '';
-        if (con.parameters && con.parameters.length) {
-            ps += '(';
-            for (const parameter of con.parameters) {
-                ps += `${parameter.name}: ${tsType(parameter.type.basic)}, `;
-            }
-            ps = ps.substring(0, ps.length - 2) + ')';
-        }
-        else {
-            ps = '()';
-        }
-        let s = applyTSDocumentation(ds, '', indent);
-        s += `${i}`;
-        s += `constructor${ps};`;
-        // Format documented variables as spaced for better legability.
-        if (ds.length)
-            s += '\n';
-        return s;
-    }
-    exports.javaConstructorToTS = javaConstructorToTS;
-    function javaConstructorsToTS(constructors, indent, notesLength) {
-        const i = ' '.repeat(indent * 4);
-        let s = '';
-        const cons = [...constructors];
-        if (cons.length) {
-            cons.sort((a, b) => {
-                // Smaller param count = first.
-                const apl = a.parameters ? a.parameters.length : 0;
-                const bpl = b.parameters ? b.parameters.length : 0;
-                let compare = apl - bpl;
-                // If same count, compare type strings. a < b.
-                if (compare === 0) {
-                    for (let index = 0; index < apl; index++) {
-                        const ap = a.parameters[index];
-                        const bp = b.parameters[index];
-                        compare = ap.type.basic.localeCompare(bp.type.basic);
-                        if (compare !== 0)
-                            break;
-                    }
-                }
-                return compare;
-            });
-            for (const con of cons) {
-                if (con.getVisibilityScope() !== 'public')
-                    continue;
-                s += javaConstructorToTS(con, indent, notesLength) + '\n\n';
-            }
-            // Remove trailing new-line.
-            s = s.substring(0, s.length - 3);
-        }
-        return s;
-    }
-    exports.javaConstructorsToTS = javaConstructorsToTS;
-    function javaMethodClusterToTS(cluster, indent = 0, notesLength) {
-        if (cluster.methods.length === 1) {
-            return javaMethodToTS(cluster.methods[0], indent, notesLength);
-        }
-        let s = '';
-        const methods = [...cluster.methods];
-        if (methods.length) {
-            methods.sort((a, b) => {
-                // Smaller param count = first.
-                const apl = a.parameters ? a.parameters.length : 0;
-                const bpl = b.parameters ? b.parameters.length : 0;
-                let compare = apl - bpl;
-                // If same count, compare type strings. a < b.
-                if (compare === 0) {
-                    for (let index = 0; index < apl; index++) {
-                        const ap = a.parameters[index];
-                        const bp = b.parameters[index];
-                        compare = ap.type.basic.localeCompare(bp.type.basic);
-                        if (compare !== 0)
-                            break;
-                    }
-                }
-                return compare;
-            });
-            for (const method of cluster.methods) {
-                if (method.getVisibilityScope() !== 'public')
-                    continue;
-                s += javaMethodToTS(method, indent, notesLength) + '\n';
-            }
-            // Remove trailing new-line.
-            s = s.substring(0, s.length - 1);
-        }
-        return s;
-    }
-    exports.javaMethodClusterToTS = javaMethodClusterToTS;
-    function javaConstructorDocumentation(con, notesLength) {
-        const ds = [];
-        /* (Annotations) */
-        if (con.deprecated)
-            ds.push('@deprecated');
-        /* (Notes) */
-        if (con.notes && con.notes.length) {
-            if (ds.length)
-                ds.push('');
-            const notes = paginateNotes(con.notes, notesLength);
-            for (const line of notes)
-                ds.push(line);
-        }
-        /* (Parameters) */
-        if (con.parameters && con.parameters.length) {
-            if (ds.length)
-                ds.push('');
-            for (const param of con.parameters) {
-                if (param.notes && param.notes.length) {
-                    const notes = paginateNotes(`@param ${param.name} ${param.notes}`, notesLength);
-                    for (const line of notes)
-                        ds.push(line);
-                }
-                else {
-                    ds.push(`@param ${param.name}`);
-                }
-            }
-        }
-        return ds;
-    }
-    exports.javaConstructorDocumentation = javaConstructorDocumentation;
-    function javaMethodDocumentation(method, notesLength, overload = false) {
-        const ds = [];
-        /* (Annotations) */
-        if (overload)
-            ds.push('@overload');
-        if (method.deprecated)
-            ds.push('@deprecated');
-        /* (Notes) */
-        if (method.notes && method.notes.length) {
-            if (ds.length)
-                ds.push('');
-            const notes = paginateNotes(method.notes, notesLength);
-            for (const line of notes)
-                ds.push(line);
-        }
-        /* (Parameters) */
-        if (method.parameters && method.parameters.length) {
-            if (ds.length)
-                ds.push('');
-            for (const param of method.parameters) {
-                if (param.notes && param.notes.length) {
-                    const notes = paginateNotes(`@param ${param.name} ${param.notes}`, notesLength);
-                    for (const line of notes)
-                        ds.push(line);
-                }
-                else {
-                    ds.push(`@param ${param.name}`);
-                }
-            }
-        }
-        /* (Returns) */
-        if (method.returns && method.returns.notes && method.returns.notes.length) {
-            if (ds.length)
-                ds.push('');
-            const notes = paginateNotes(`@returns ${method.returns.notes}`, notesLength);
-            for (const line of notes)
-                ds.push(line);
-        }
-        return ds;
-    }
-    exports.javaMethodDocumentation = javaMethodDocumentation;
-    function javaMethodToTS(method, indent = 0, notesLength) {
-        const i = ' '.repeat(indent * 4);
-        const ds = javaMethodDocumentation(method, notesLength, false);
-        let ps = '';
-        if (method.parameters && method.parameters.length) {
-            ps += '(';
-            for (const parameter of method.parameters) {
-                ps += `${parameter.name}: ${tsType(parameter.type.basic)}, `;
-            }
-            ps = ps.substring(0, ps.length - 2) + ')';
-        }
-        else {
-            ps = '()';
-        }
-        let s = applyTSDocumentation(ds, '', indent);
-        s += `${i}`;
-        if (method.isStatic())
-            s += 'static ';
-        if (method.isFinal())
-            s += 'readonly ';
-        s += `${method.name}${ps}: ${tsType(method.returns.type.basic)};`;
-        s += '\n';
-        return s;
-    }
-    exports.javaMethodToTS = javaMethodToTS;
-    function javaClassToTS(clazz, wrapNamespace = false, wrapFile = false) {
-        let s = '';
-        const fieldNames = Object.keys(clazz.fields);
-        fieldNames.sort((a, b) => a.localeCompare(b));
-        const methodNames = Object.keys(clazz.methods);
-        methodNames.sort((a, b) => a.localeCompare(b));
-        const staticFields = [];
-        const fields = [];
-        const staticMethods = [];
-        const methods = [];
-        /* (STATIC FIELDS) */
-        for (const fieldName of fieldNames) {
-            const field = clazz.fields[fieldName];
-            if (field.isStatic())
-                staticFields.push(field);
-            else
-                fields.push(field);
-        }
-        /* (INSTANCE METHODS) */
-        for (const methodName of methodNames) {
-            const cluster = clazz.methods[methodName];
-            if (!cluster.methods.length)
-                continue; // (Sanity-Check)
-            if (!cluster.methods[0].isStatic())
-                staticMethods.push(cluster);
-            else
-                methods.push(cluster);
-        }
-        /** 100 - 4 (module indent) - 4 (namespace indent) - 3 (' * ') */
-        let notesLength = 96;
-        if (wrapFile)
-            notesLength -= 4;
-        if (wrapNamespace)
-            notesLength -= 4;
-        /* (Class Documentation) */
-        const ds = [];
-        ds.push(`@customConstructor ${clazz.name}.new`);
-        ds.push('');
-        ds.push(`Class: ${clazz.namespace.name}.${clazz.name}`);
-        if (clazz.notes && clazz.notes.length) {
-            ds.push('');
-            const lines = paginateNotes(clazz.notes, notesLength);
-            for (const line of lines)
-                ds.push(line);
-        }
-        s = applyTSDocumentation(ds, s, 0);
-        s += `export class ${clazz.name} `;
-        let i = '    ';
-        let is = '';
-        if (staticFields.length) {
-            is += `${i}/* ------------------------------------ */\n`;
-            is += `${i}/* ---------- STATIC FIELDS ----------- */\n`;
-            is += `${i}/* ------------------------------------ */\n`;
-            is += '\n';
-            for (const field of staticFields) {
-                if (field.getVisibilityScope() !== 'public')
-                    continue;
-                else if (!field.isFinal())
-                    continue;
-                is += `${javaFieldToTS(field, 1, notesLength)}\n`;
-            }
-        }
-        // if (fields.length) {
-        //     if (is.length) is += '\n';
-        //     is += `${i}/* ------------------------------------ */\n`;
-        //     is += `${i}/* ------------- FIELDS --------------- */\n`;
-        //     is += `${i}/* ------------------------------------ */\n`;
-        //     is += '\n';
-        //     for (const field of fields) {
-        //         is += `${javaFieldToTS(field, 1, notesLength)}\n`;
-        //     }
-        // }
-        if (clazz.constructors && clazz.constructors.length) {
-            if (is.length)
-                is += '\n';
-            is += `${i}/* ------------------------------------ */\n`;
-            is += `${i}/* ----------- CONSTRUCTOR ------------ */\n`;
-            is += `${i}/* ------------------------------------ */\n`;
-            is += '\n';
-            is += `${javaConstructorsToTS(clazz.constructors, 1, notesLength)}\n`;
-        }
-        if (methods.length) {
-            if (is.length)
-                is += '\n';
-            is += `${i}/* ------------------------------------ */\n`;
-            is += `${i}/* ------------- METHODS -------------- */\n`;
-            is += `${i}/* ------------------------------------ */\n`;
-            is += '\n';
-            for (const cluster of methods) {
-                is += `${javaMethodClusterToTS(cluster, 1, notesLength)}\n`;
-            }
-        }
-        if (staticMethods.length) {
-            if (is.length)
-                is += '\n';
-            is += `${i}/* ------------------------------------ */\n`;
-            is += `${i}/* ---------- STATIC METHODS ---------- */\n`;
-            is += `${i}/* ------------------------------------ */\n`;
-            is += '\n';
-            for (const cluster of staticMethods) {
-                is += `${javaMethodClusterToTS(cluster, 1, notesLength)}\n`;
-            }
-        }
-        if (is.length) {
-            s += `{\n\n${is}}`;
-        }
-        else {
-            s += `{}\n`;
-        }
-        if (wrapNamespace)
-            s = wrapAsTSNamespace(clazz.namespace.name, s);
-        if (wrapFile)
-            return wrapAsTSFile(s);
-        return s;
-    }
-    exports.javaClassToTS = javaClassToTS;
-    function paginateNotes(notes, length) {
-        const split = notes === null || notes === void 0 ? void 0 : notes.split(' ');
-        const result = [];
-        let s = split[0];
-        for (let i = 1; i < split.length; i++) {
-            let word = split[i];
-            if (s.length + word.length + 1 <= length)
-                s = s + ' ' + word;
-            else {
-                result.push(s);
-                s = word;
-            }
-        }
-        if (s.length)
-            result.push(s);
-        return result;
-    }
-    exports.paginateNotes = paginateNotes;
-    function applyTSDocumentation(ds, s, indent) {
-        const i = ' '.repeat(indent * 4);
-        if (ds.length) {
-            if (ds.length === 1) {
-                s += `${i}/** ${ds[0]} */\n`;
-            }
-            else {
-                s += `${i}/**\n`;
-                s += ds.map((a) => `${i} * ${a}`).join('\n');
-                s += `\n${i} */\n`;
-            }
-        }
-        return s;
-    }
-    exports.applyTSDocumentation = applyTSDocumentation;
-    function tsType(type) {
-        console.log(`tsType(${type})`);
-        switch (type) {
-            case 'String': return 'string';
-            case 'KahluaTable': return 'any';
-            default: return type;
-        }
-    }
-    exports.tsType = tsType;
-});
-define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require", "exports"], function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.tsType = exports.applyTSDocumentation = exports.paginateNotes = exports.luaClassToTS = exports.luaFunctionToTS = exports.luaMethodDocumentation = exports.luaConstructorDocumentation = exports.luaConstructorToTS = exports.luaFieldToTS = exports.wrapAsTSNamespace = exports.wrapAsTSFile = void 0;
-    function wrapAsTSFile(text) {
-        let s = '';
-        s += `/** @noSelfInFile */\n`;
-        s += `declare module '@asledgehammer/pipewrench'`;
-        if (text.length) {
-            return `${s} {\n\n` + text.split('\n').map((a) => `    ${a}`).join('\n') + '\n}';
-        }
-        return `${s} {}\n`;
-    }
-    exports.wrapAsTSFile = wrapAsTSFile;
-    function wrapAsTSNamespace(namespace, text) {
-        const s = `export namespace ${namespace}`;
-        if (text.length) {
-            return `${s} {\n\n` + text.split('\n').map((a) => `    ${a}`).join('\n') + '\n}';
-        }
-        return `${s} {}\n`;
-    }
-    exports.wrapAsTSNamespace = wrapAsTSNamespace;
-    function luaFieldToTS(field, indent = 0, notesLength) {
-        const i = ' '.repeat(indent * 4);
-        let s = '';
-        /* Documentation */
-        let ds = [];
-        // if (field.deprecated) ds.push('@deprecated');
-        if (field.notes) {
-            const notes = paginateNotes(field.notes, notesLength);
-            if (ds.length)
-                ds.push('');
-            for (const line of notes) {
-                ds.push(line);
-            }
-        }
-        s = applyTSDocumentation(ds, s, indent);
-        s += i;
-        /* Definition-line */
-        s += `${field.name}: ${tsType(field.type)};`;
-        // Format documented variables as spaced for better legability.
-        if (ds.length)
-            s += '\n';
-        return s;
-    }
-    exports.luaFieldToTS = luaFieldToTS;
-    function luaConstructorToTS(con, indent, notesLength) {
-        const i = ' '.repeat(indent * 4);
-        const ds = luaConstructorDocumentation(con, notesLength);
-        let ps = '';
-        if (con.parameters && con.parameters.length) {
-            ps += '(';
-            for (const parameter of con.parameters) {
-                ps += `${parameter.name}: ${tsType(parameter.type)}, `;
-            }
-            ps = ps.substring(0, ps.length - 2) + ')';
-        }
-        else {
-            ps = '()';
-        }
-        let s = applyTSDocumentation(ds, '', indent);
-        s += `${i}`;
-        s += `constructor${ps};`;
-        // Format documented variables as spaced for better legability.
-        if (ds.length)
-            s += '\n';
-        return s;
-    }
-    exports.luaConstructorToTS = luaConstructorToTS;
-    function luaConstructorDocumentation(con, notesLength) {
-        const ds = [];
-        /* (Annotations) */
-        // if (con.deprecated) ds.push('@deprecated');
-        /* (Notes) */
-        if (con.notes && con.notes.length) {
-            if (ds.length)
-                ds.push('');
-            const notes = paginateNotes(con.notes, notesLength);
-            for (const line of notes)
-                ds.push(line);
-        }
-        /* (Parameters) */
-        if (con.parameters && con.parameters.length) {
-            if (ds.length)
-                ds.push('');
-            for (const param of con.parameters) {
-                if (param.notes && param.notes.length) {
-                    const notes = paginateNotes(`@param ${param.name} ${param.notes}`, notesLength);
-                    for (const line of notes)
-                        ds.push(line);
-                }
-                else {
-                    ds.push(`@param ${param.name}`);
-                }
-            }
-        }
-        return ds;
-    }
-    exports.luaConstructorDocumentation = luaConstructorDocumentation;
-    function luaMethodDocumentation(method, notesLength, overload = false) {
-        const ds = [];
-        /* (Annotations) */
-        if (overload)
-            ds.push('@overload');
-        if (method.deprecated)
-            ds.push('@deprecated');
-        /* (Notes) */
-        if (method.notes && method.notes.length) {
-            if (ds.length)
-                ds.push('');
-            const notes = paginateNotes(method.notes, notesLength);
-            for (const line of notes)
-                ds.push(line);
-        }
-        /* (Parameters) */
-        if (method.parameters && method.parameters.length) {
-            if (ds.length)
-                ds.push('');
-            for (const param of method.parameters) {
-                if (param.notes && param.notes.length) {
-                    const notes = paginateNotes(`@param ${param.name} ${param.notes}`, notesLength);
-                    for (const line of notes)
-                        ds.push(line);
-                }
-                else {
-                    ds.push(`@param ${param.name}`);
-                }
-            }
-        }
-        /* (Returns) */
-        if (method.returns && method.returns.notes && method.returns.notes.length) {
-            if (ds.length)
-                ds.push('');
-            const notes = paginateNotes(`@returns ${method.returns.notes}`, notesLength);
-            for (const line of notes)
-                ds.push(line);
-        }
-        return ds;
-    }
-    exports.luaMethodDocumentation = luaMethodDocumentation;
-    function luaFunctionToTS(method, indent = 0, notesLength) {
-        const i = ' '.repeat(indent * 4);
-        const ds = luaMethodDocumentation(method, notesLength, false);
-        let ps = '';
-        if (method.parameters && method.parameters.length) {
-            ps += '(';
-            for (const parameter of method.parameters) {
-                ps += `${parameter.name}: ${tsType(parameter.type)}, `;
-            }
-            ps = ps.substring(0, ps.length - 2) + ')';
-        }
-        else {
-            ps = '()';
-        }
-        let s = applyTSDocumentation(ds, '', indent);
-        s += `${i}`;
-        s += `${method.name}${ps}: ${tsType(method.returns.type)};`;
-        s += '\n';
-        return s;
-    }
-    exports.luaFunctionToTS = luaFunctionToTS;
-    function luaClassToTS(clazz, wrapFile = false) {
-        let s = '';
-        const valueNames = Object.keys(clazz.values);
-        valueNames.sort((a, b) => a.localeCompare(b));
-        const fieldNames = Object.keys(clazz.fields);
-        fieldNames.sort((a, b) => a.localeCompare(b));
-        const methodNames = Object.keys(clazz.methods);
-        methodNames.sort((a, b) => a.localeCompare(b));
-        const funcNames = Object.keys(clazz.functions);
-        funcNames.sort((a, b) => a.localeCompare(b));
-        const values = [];
-        const fields = [];
-        const funcs = [];
-        const methods = [];
-        /* (VALUES) */
-        for (const valueName of valueNames) {
-            const value = clazz.values[valueName];
-            values.push(value);
-        }
-        /* (FIELDS) */
-        for (const fieldName of fieldNames) {
-            const field = clazz.fields[fieldName];
-            fields.push(field);
-        }
-        /* (METHODS) */
-        for (const methodName of methodNames) {
-            const method = clazz.methods[methodName];
-            methods.push(method);
-        }
-        /* (FUNCTIONS) */
-        for (const funcName of funcNames) {
-            const func = clazz.functions[funcName];
-            funcs.push(func);
-        }
-        /** 100
-         * * -4 (module indent)
-         * * -3 (' * ')
-         */
-        let notesLength = 96;
-        if (wrapFile)
-            notesLength -= 4;
-        /* (Class Documentation) */
-        const ds = [];
-        ds.push(`@customConstructor ${clazz.name}:new`);
-        ds.push('');
-        ds.push(`Lua Class: ${clazz.name}`);
-        if (clazz.notes && clazz.notes.length) {
-            ds.push('');
-            const lines = paginateNotes(clazz.notes, notesLength);
-            for (const line of lines)
-                ds.push(line);
-        }
-        s = applyTSDocumentation(ds, s, 0);
-        s += `export class ${clazz.name} `;
-        let i = '    ';
-        let is = '';
-        if (values.length) {
-            is += `${i}/* ------------------------------------ */\n`;
-            is += `${i}/* -------------- VALUES -------------- */\n`;
-            is += `${i}/* ------------------------------------ */\n`;
-            is += '\n';
-            for (const value of values) {
-                is += `${luaFieldToTS(value, 1, notesLength)}\n`;
-            }
-            is = is.substring(0, is.length - 1);
-        }
-        if (fields.length) {
-            if (is.length)
-                is += '\n';
-            is += `${i}/* ------------------------------------ */\n`;
-            is += `${i}/* ------------- FIELDS --------------- */\n`;
-            is += `${i}/* ------------------------------------ */\n`;
-            is += '\n';
-            for (const field of fields) {
-                is += `${luaFieldToTS(field, 1, notesLength)}\n`;
-            }
-            is = is.substring(0, is.length - 1);
-        }
-        if (methods.length) {
-            if (is.length)
-                is += '\n';
-            is += `${i}/* ------------------------------------ */\n`;
-            is += `${i}/* ------------- METHODS -------------- */\n`;
-            is += `${i}/* ------------------------------------ */\n`;
-            is += '\n';
-            for (const method of methods) {
-                is += `${luaFunctionToTS(method, 1, notesLength)}\n`;
-            }
-            is = is.substring(0, is.length - 1);
-        }
-        if (funcs.length) {
-            if (is.length)
-                is += '\n';
-            is += `${i}/* ------------------------------------ */\n`;
-            is += `${i}/* ------------ FUNCTIONS ------------- */\n`;
-            is += `${i}/* ------------------------------------ */\n`;
-            is += '\n';
-            for (const func of funcs) {
-                is += `${luaFunctionToTS(func, 1, notesLength)}\n`;
-            }
-            is = is.substring(0, is.length - 1);
-        }
-        if (clazz.constructor) {
-            if (is.length)
-                is += '\n';
-            is += `${i}/* ------------------------------------ */\n`;
-            is += `${i}/* ----------- CONSTRUCTOR ------------ */\n`;
-            is += `${i}/* ------------------------------------ */\n`;
-            is += '\n';
-            is += `${luaConstructorToTS(clazz.conztructor, 1, notesLength)}\n`;
-            is = is.substring(0, is.length - 1);
-        }
-        if (is.length) {
-            s += `{\n\n${is}}`;
-        }
-        else {
-            s += `{}\n`;
-        }
-        if (wrapFile)
-            return wrapAsTSFile(s);
-        return s;
-    }
-    exports.luaClassToTS = luaClassToTS;
-    function paginateNotes(notes, length) {
-        const split = notes === null || notes === void 0 ? void 0 : notes.split(' ');
-        const result = [];
-        let s = split[0];
-        for (let i = 1; i < split.length; i++) {
-            let word = split[i];
-            if (s.length + word.length + 1 <= length)
-                s = s + ' ' + word;
-            else {
-                result.push(s);
-                s = word;
-            }
-        }
-        if (s.length)
-            result.push(s);
-        return result;
-    }
-    exports.paginateNotes = paginateNotes;
-    function applyTSDocumentation(ds, s, indent) {
-        const i = ' '.repeat(indent * 4);
-        if (ds.length) {
-            if (ds.length === 1) {
-                s += `${i}/** ${ds[0]} */\n`;
-            }
-            else {
-                s += `${i}/**\n`;
-                s += ds.map((a) => `${i} * ${a}`).join('\n');
-                s += `\n${i} */\n`;
-            }
-        }
-        return s;
-    }
-    exports.applyTSDocumentation = applyTSDocumentation;
-    function tsType(type) {
-        if (type.startsWith('fun(')) {
-            // FIXME: Nested function calls won't work here.
-            let t = type.substring(3);
-            t = t.replace('):', ')=>');
-            return t.trim();
-        }
-        return type;
-    }
-    exports.tsType = tsType;
-});
-define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/mallet/component/lua/LuaClassCard", "src/asledgehammer/mallet/component/java/JavaClassCard", "src/asledgehammer/mallet/component/Sidebar", "src/asledgehammer/mallet/component/lua/LuaConstructorCard", "src/asledgehammer/mallet/component/lua/LuaFieldCard", "src/asledgehammer/mallet/component/lua/LuaFunctionCard", "src/asledgehammer/mallet/component/java/JavaConstructorCard", "src/asledgehammer/mallet/component/java/JavaFieldCard", "src/asledgehammer/mallet/component/java/JavaMethodCard", "src/asledgehammer/mallet/modal/ModalName", "src/asledgehammer/mallet/modal/ModalConfirm", "src/asledgehammer/mallet/component/Toast", "src/asledgehammer/mallet/Catalog", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator"], function (require, exports, hljs, RosettaLuaClass_4, RosettaLuaConstructor_2, util_19, RosettaJavaClass_4, LuaClassCard_1, JavaClassCard_1, Sidebar_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, JavaConstructorCard_1, JavaFieldCard_1, JavaMethodCard_1, ModalName_1, ModalConfirm_1, Toast_1, Catalog_1, JavaTypeScriptGenerator_1, LuaTypeScriptGenerator_1) {
+define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/lua/LuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/java/JavaGenerator", "src/asledgehammer/mallet/component/lua/LuaClassCard", "src/asledgehammer/mallet/component/java/JavaClassCard", "src/asledgehammer/mallet/component/Sidebar", "src/asledgehammer/mallet/component/lua/LuaConstructorCard", "src/asledgehammer/mallet/component/lua/LuaFieldCard", "src/asledgehammer/mallet/component/lua/LuaFunctionCard", "src/asledgehammer/mallet/component/java/JavaConstructorCard", "src/asledgehammer/mallet/component/java/JavaFieldCard", "src/asledgehammer/mallet/component/java/JavaMethodCard", "src/asledgehammer/mallet/modal/ModalName", "src/asledgehammer/mallet/modal/ModalConfirm", "src/asledgehammer/mallet/component/Toast", "src/asledgehammer/mallet/Catalog", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator"], function (require, exports, hljs, LuaGenerator_6, RosettaLuaClass_4, RosettaLuaConstructor_2, util_19, RosettaJavaClass_4, JavaGenerator_6, LuaClassCard_1, JavaClassCard_1, Sidebar_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, JavaConstructorCard_1, JavaFieldCard_1, JavaMethodCard_1, ModalName_1, ModalConfirm_1, Toast_1, Catalog_1, JavaTypeScriptGenerator_5, LuaTypeScriptGenerator_5) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.App = void 0;
     class App {
         constructor() {
             this.previewCode = '';
+            this.idBtnLanguageLua = `app-btn-language-lua`;
+            this.idBtnLanguageTypeScript = `app-btn-language-typescript`;
+            this.idBtnLanguageJSON = `app-btn-language-json`;
+            this.languageMode = 'lua';
             this.catalog = new Catalog_1.Catalog(this);
             this.sidebar = new Sidebar_1.Sidebar(this);
             this.toast = new Toast_1.Toast(this);
@@ -6665,19 +6792,39 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             }
             const { selected } = this.catalog;
             let highlightedCode = '';
-            // if (selected instanceof RosettaLuaClass) {
-            //     this.previewCode = '--- @meta\n\n' + generateLuaClass(selected);
-            // } else if (selected instanceof RosettaJavaClass) {
-            //     this.previewCode = '--- @meta\n\n' + generateJavaClass(selected);
-            // }
-            // highlightedCode = hljs.default.highlightAuto(this.previewCode, ['lua']).value;
             if (selected instanceof RosettaLuaClass_4.RosettaLuaClass) {
-                this.previewCode = (0, LuaTypeScriptGenerator_1.luaClassToTS)(selected, true);
+                switch (this.languageMode) {
+                    case 'lua': {
+                        this.previewCode = '--- @meta\n\n' + (0, LuaGenerator_6.generateLuaClass)(selected);
+                        break;
+                    }
+                    case 'typescript': {
+                        this.previewCode = (0, LuaTypeScriptGenerator_5.luaClassToTS)(selected, true);
+                        break;
+                    }
+                    case 'json': {
+                        this.previewCode = JSON.stringify(selected.toJSON(), null, 2);
+                        break;
+                    }
+                }
             }
             else if (selected instanceof RosettaJavaClass_4.RosettaJavaClass) {
-                this.previewCode = (0, JavaTypeScriptGenerator_1.javaClassToTS)(selected, true, true);
+                switch (this.languageMode) {
+                    case 'lua': {
+                        this.previewCode = '--- @meta\n\n' + (0, JavaGenerator_6.generateJavaClass)(selected);
+                        break;
+                    }
+                    case 'typescript': {
+                        this.previewCode = (0, JavaTypeScriptGenerator_5.javaClassToTS)(selected, true, true);
+                        break;
+                    }
+                    case 'json': {
+                        this.previewCode = JSON.stringify(selected.toJSON(), null, 2);
+                        break;
+                    }
+                }
             }
-            highlightedCode = hljs.default.highlightAuto(this.previewCode, ['typescript']).value;
+            highlightedCode = hljs.default.highlightAuto(this.previewCode, [this.languageMode]).value;
             $renderPane.html(highlightedCode);
         }
         createSidebar() {
@@ -6697,6 +6844,15 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             const $iconCard = (0, util_19.$get)('icon-card');
             const $iconCode = (0, util_19.$get)('icon-code');
             let mode = 'card';
+            let cog = false;
+            let hideCog = () => {
+                cog = false;
+                $('#btns-code-left').hide();
+            };
+            let showCog = () => {
+                cog = true;
+                $('#btns-code-left').show();
+            };
             $btnCardCode.on('click', () => {
                 if (mode === 'card') {
                     $container.removeClass('p-4');
@@ -6708,6 +6864,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                     $iconCard.show();
                     $btnCardCode.css({ 'right': '2rem' });
                     $btnCopy.show(150);
+                    $('#btn-code-preview-cog').show(150);
                     mode = 'code';
                 }
                 else if (mode === 'code') {
@@ -6723,8 +6880,31 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                     $iconCode.show();
                     $btnCardCode.css({ 'right': '1rem' });
                     $btnCopy.hide(150);
+                    $('#btns-code-left').hide();
+                    $('#btn-code-preview-cog').hide(150);
+                    hideCog();
                     mode = 'card';
                 }
+            });
+            $('#btn-code-preview-cog').on('click', () => {
+                if (cog) {
+                    hideCog();
+                }
+                else {
+                    showCog();
+                }
+            });
+            $('#app-btn-language-lua').on('click', () => {
+                this.languageMode = 'lua';
+                this.renderCode();
+            });
+            $('#app-btn-language-typescript').on('click', () => {
+                this.languageMode = 'typescript';
+                this.renderCode();
+            });
+            $('#app-btn-language-json').on('click', () => {
+                this.languageMode = 'json';
+                this.renderCode();
             });
             /* (For copying the preview code) */
             $btnCopy.on('click', () => {

@@ -38,7 +38,7 @@
         <!-- [Screen] - Sidebar -->
         <div id="screen-sidebar-container" class="screen-sidebar-start"></div>
         <!-- [Screen] - Content -->
-        <div id="screen-content-container" class="screen-content-end p-4" style="overflow-y: auto;">
+        <div id="screen-content-container" class="screen-content-end p-4" style="position: relative; overflow-y: auto;">
             <img class="img-logo" src="assets/media/logo_544.png" />
             <div id="screen-content-end-container" class="justify-content-center" style="display: flex;"></div>
 
@@ -149,6 +149,21 @@
                     <i class="fa-solid fa-copy"></i>
                 </div>
             </button>
+            <button id="btn-code-preview-cog" class="btn btn-sm responsive-btn"
+                style="display: none; position: absolute; top: 1rem; right: 7rem; z-index: 5" title="Copy Code">
+                <div class="btn-pane">
+                    <i class="fa-solid fa-language"></i>
+                </div>
+            </button>
+
+            <div id="btns-code-left" class="p-0"
+                style="display: none; z-index: 5; position: absolute; top: 1rem; left: 1rem;">
+                <button id="app-btn-language-lua" class="btn btn-sm btn-primary" title="View Lua Code">Lua</button>
+                <button id="app-btn-language-typescript" class="btn btn-sm btn-primary"
+                    title="View Lua Code">TypeScript</button>
+                <button id="app-btn-language-json" class="btn btn-sm btn-primary" title="View Lua Code">Rosetta
+                    JSON</button>
+            </div>
 
             <pre id="code-preview" class="w-100 h-100 p-4 m-0"
                 style="display: none; position: absolute; background-color: black; overflow: scroll;"></pre>

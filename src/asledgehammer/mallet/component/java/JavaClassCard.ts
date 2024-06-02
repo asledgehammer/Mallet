@@ -1,14 +1,24 @@
 import { App } from '../../../../app';
 import { generateJavaClass } from '../../../rosetta/java/JavaGenerator';
 import { RosettaJavaClass } from '../../../rosetta/java/RosettaJavaClass';
+import { javaClassToTS } from '../../../rosetta/typescript/JavaTypeScriptGenerator';
 import { html } from '../../../rosetta/util';
 import { CardOptions } from '../CardComponent';
+import { CodeLanguage } from '../CodeLanguage';
 import { JavaCard } from './JavaCard';
 
 export class JavaClassCard extends JavaCard<JavaClassCardOptions> {
 
-    onRenderPreview(): string {
-        return '--- @meta\n\n' + generateJavaClass(this.options!.entity);
+    onRenderPreview(language: CodeLanguage): string {
+        if (!this.options) return '';
+        switch (language) {
+            case 'lua':
+                return '--- @meta\n\n' + generateJavaClass(this.options!.entity);
+            case 'typescript':
+                return javaClassToTS(this.options!.entity, true, true);
+            case 'json':
+                return JSON.stringify(this.options!.entity.toJSON(), null, 2);
+        }
     }
 
     readonly idAuthors: string;
