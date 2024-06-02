@@ -375,6 +375,14 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
             this.app.renderCode();
         });
 
+        $customInput.on('change', () => {
+            const val = $customInput.val();
+            if (val === '') returns.type = 'any';
+            else returns.type = val;
+            this.update();
+            this.app.renderCode();
+        });
+
         $customInput.on('focusout', () => {
             const value = $customInput.val().trim();
             switch (value.toLowerCase()) {
