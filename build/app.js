@@ -970,7 +970,7 @@ define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports"], 
                 s += ` ${func.returns.notes.split('\n').join(' ')}\n`;
             }
         }
-        if (s.length)
+        if (s.length && !s.endsWith('\n'))
             s += '\n';
         s += `function ${className}.${func.name}${(0, exports.generateLuaParameterBody)(func.parameters)} end`;
         return s;
@@ -1006,7 +1006,7 @@ define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports"], 
                 s += ` ${func.returns.notes.split('\n').join(' ')}\n`;
             }
         }
-        if (s.length)
+        if (s.length && !s.endsWith('\n'))
             s += '\n';
         s += `function ${className}:${func.name}${(0, exports.generateLuaParameterBody)(func.parameters)} end`;
         return s;
@@ -1037,7 +1037,7 @@ define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports"], 
         }
         // Class Returns Documentation
         s += `--- @return ${className}`;
-        if (s.length)
+        if (s.length && !s.endsWith('\n'))
             s += '\n';
         s += `function ${className}:new${(0, exports.generateLuaParameterBody)(conzstructor.parameters)} end`;
         return s;

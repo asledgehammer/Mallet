@@ -96,7 +96,7 @@ export const generateLuaFunction = (className: string, func: RosettaLuaFunction)
         }
     }
 
-    if (s.length) s += '\n';
+    if (s.length && !s.endsWith('\n')) s += '\n';
     s += `function ${className}.${func.name}${generateLuaParameterBody(func.parameters)} end`;
     return s;
 };
@@ -140,7 +140,7 @@ export const generateLuaMethod = (className: string, func: RosettaLuaFunction): 
         }
     }
 
-    if (s.length) s += '\n';
+    if (s.length && !s.endsWith('\n')) s += '\n';
     s += `function ${className}:${func.name}${generateLuaParameterBody(func.parameters)} end`;
     return s;
 };
@@ -179,7 +179,7 @@ export const generateLuaConstructor = (className: string, conzstructor: RosettaL
     // Class Returns Documentation
     s += `--- @return ${className}`;
 
-    if (s.length) s += '\n';
+    if (s.length && !s.endsWith('\n')) s += '\n';
     s += `function ${className}:new${generateLuaParameterBody(conzstructor.parameters)} end`;
     return s;
 };
