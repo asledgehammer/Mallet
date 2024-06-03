@@ -6,7 +6,7 @@ import { RosettaLuaParameter } from "./RosettaLuaParameter";
 import { RosettaLuaTable } from "./RosettaLuaTable";
 
 export const generateLuaField = (field: RosettaLuaField): string => {
-    const notes = field.notes && field.notes.length ? field.notes.replace(/\n/g, '\\n') : '';
+    const notes = field.notes && field.notes.length ? field.notes.replace(/\n/g, '<br>') : '';
     return `--- @field ${field.name} ${field.type} ${notes}`;
 };
 

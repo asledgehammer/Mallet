@@ -47,7 +47,7 @@ export class ObjectTree {
             $('.object-tree-item.selected').removeClass('selected');
             $this.addClass('selected');
             _this.selectedID = this.id;
-            console.log(`Selected object: ${_this.selectedID}`);
+            // console.log(`Selected object: ${_this.selectedID}`);
         });
 
         // Apply jQuery listeners next.

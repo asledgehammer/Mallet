@@ -1,8 +1,7 @@
 import { App } from '../../../../app';
-import { generateJavaMethods } from '../../../rosetta/java/JavaLuaGenerator';
+import { generateJavaMethod } from '../../../rosetta/java/JavaLuaGenerator2';
 import { RosettaJavaClass } from '../../../rosetta/java/RosettaJavaClass';
 import { RosettaJavaMethod } from '../../../rosetta/java/RosettaJavaMethod';
-import { RosettaJavaMethodCluster } from '../../../rosetta/java/RosettaJavaMethodCluster';
 import { javaMethodToTS } from '../../../rosetta/typescript/JavaTypeScriptGenerator';
 import { $get, html } from '../../../rosetta/util';
 import { CardOptions } from '../CardComponent';
@@ -36,9 +35,7 @@ export class JavaMethodCard extends JavaCard<JavaMethodCardOptions> {
                 const { entity } = this.options;
                 const classEntity = this.app.catalog.selectedCard!.options!.entity;
                 const className = classEntity.name;
-                const cluster = new RosettaJavaMethodCluster(entity.name);
-                cluster.add(entity);
-                return generateJavaMethods(className, cluster.methods);
+                return generateJavaMethod(className, entity.isStatic() ? '.' : ':', entity);
             }
             case 'typescript': {
                 return javaMethodToTS(this.options!.entity, 0, 100);

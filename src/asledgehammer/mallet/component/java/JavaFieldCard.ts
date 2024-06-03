@@ -1,5 +1,5 @@
 import { App } from '../../../../app';
-import { generateJavaField } from '../../../rosetta/java/JavaLuaGenerator';
+import { generateJavaField } from '../../../rosetta/java/JavaLuaGenerator2';
 import { RosettaJavaClass } from '../../../rosetta/java/RosettaJavaClass';
 import { RosettaJavaField } from '../../../rosetta/java/RosettaJavaField';
 import { javaFieldToTS } from '../../../rosetta/typescript/JavaTypeScriptGenerator';

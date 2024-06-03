@@ -1,5 +1,5 @@
 import { App } from '../../../../app';
-import { generateJavaConstructor } from '../../../rosetta/java/JavaLuaGenerator';
+import { generateJavaConstructor } from '../../../rosetta/java/JavaLuaGenerator2';
 import { RosettaJavaConstructor } from '../../../rosetta/java/RosettaJavaConstructor';
 import { javaConstructorToTS } from '../../../rosetta/typescript/JavaTypeScriptGenerator';
 import { $get, html } from '../../../rosetta/util';
@@ -25,7 +25,7 @@ export class JavaConstructorCard extends JavaCard<JavaConstructorCardOptions> {
                 const { entity } = this.options;
                 const classEntity = this.app.catalog.selectedCard!.options!.entity;
                 const className = classEntity.name;
-                return generateJavaConstructor(className, [entity]);
+                return generateJavaConstructor(className, entity);
             }
             case 'typescript': {
                 return javaConstructorToTS(this.options!.entity, 0, 100);

@@ -432,7 +432,6 @@ export function javaClassToTS(
 }
 
 export function tsType(type: string): string {
-    console.log(`tsType(${type})`);
     switch (type) {
         case 'String': return 'string';
         case 'KahluaTable': return 'any';

@@ -78,7 +78,7 @@ export class ItemTree {
             $('.item-tree-item.selected').removeClass('selected');
             $this.addClass('selected');
             _this.selectedID = this.id;
-            console.log(`Selected item: ${_this.selectedID}`);
+            // console.log(`Selected item: ${_this.selectedID}`);
         });
 
         this.listenLuaClass();
@@ -213,8 +213,6 @@ export class ItemTree {
 
         $doc.on('click', '.java-class-constructor-item', function () {
             const signature = this.id.split('constructor-')[1].trim();
-
-            console.log(`signature: ${signature}`);
 
             // Prevent wasteful selection code executions here.
             if (_this.selected === signature) return;
@@ -437,7 +435,7 @@ export class ItemTree {
 
         const staticFields: any[] = [];
         const staticMethods: any[] = [];
-        const fields: any[] = [];
+        // const fields: any[] = [];
         const methods: any[] = [];
         const constructors: any[] = [];
 
@@ -455,6 +453,9 @@ export class ItemTree {
             const cluster = entity.methods[clusterName];
 
             for (const method of cluster.methods) {
+
+                if (method.getVisibilityScope() !== 'public') continue;
+
                 let signature = `${method.name}`;
                 if (method.parameters && method.parameters.length) {
                     signature += '_';
@@ -472,6 +473,9 @@ export class ItemTree {
         }
 
         for (const cons of entity.constructors) {
+
+            if (cons.getVisibilityScope() !== 'public') continue;
+
             let signature = `constructor`;
             if (cons.parameters && cons.parameters.length) {
                 signature += '_';
@@ -514,38 +518,41 @@ export class ItemTree {
         // Static field(s)
         for (const name of fieldNames) {
             const field = entity.fields[name];
-            if (field.isStatic()) {
-                const id = `java-class-${entity.name}-field-${field.name}`;
 
-                const classes: string[] = ['item-tree-item', 'java-class-field-item'];
-                if (id === this.selectedID) classes.push('selected');
+            if (field.getVisibilityScope() !== 'public') continue;
+            else if (!field.isStatic()) continue;
+            else if (!field.isFinal()) continue;
 
-                staticFields.push({
-                    text: wrapItem(field.name),
-                    icon: LuaCard.getTypeIcon(field.type.basic),
-                    id,
-                    class: classes
-                });
-            }
+            const id = `java-class-${entity.name}-field-${field.name}`;
+
+            const classes: string[] = ['item-tree-item', 'java-class-field-item'];
+            if (id === this.selectedID) classes.push('selected');
+
+            staticFields.push({
+                text: wrapItem(field.name),
+                icon: LuaCard.getTypeIcon(field.type.basic),
+                id,
+                class: classes
+            });
         }
 
         // Instance field(s)
-        for (const name of fieldNames) {
-            const field = entity.fields[name];
-            if (!field.isStatic()) {
-                const id = `java-class-${entity.name}-field-${field.name}`;
+        // for (const name of fieldNames) {
+        //     const field = entity.fields[name];
+        //     if (!field.isStatic()) {
+        //         const id = `java-class-${entity.name}-field-${field.name}`;
 
-                const classes: string[] = ['item-tree-item', 'java-class-field-item'];
-                if (id === this.selectedID) classes.push('selected');
+        //         const classes: string[] = ['item-tree-item', 'java-class-field-item'];
+        //         if (id === this.selectedID) classes.push('selected');
 
-                fields.push({
-                    text: wrapItem(field.name),
-                    icon: LuaCard.getTypeIcon(field.type.basic),
-                    id,
-                    class: classes
-                });
-            }
-        }
+        //         fields.push({
+        //             text: wrapItem(field.name),
+        //             icon: LuaCard.getTypeIcon(field.type.basic),
+        //             id,
+        //             class: classes
+        //         });
+        //     }
+        // }
 
         // Static method(s)
 
@@ -626,14 +633,14 @@ export class ItemTree {
             nodes: staticMethods
         };
 
-        const folderFields = {
-            text: `${wrapFolderCount(`(${fields.length})`)} Field(s)`,
-            icon: "fa-solid fa-folder text-light mx-2",
-            class: ['item-tree-folder', 'bg-secondary'],
-            id: _this.idFolderJavaClassField,
-            expanded: _this.folderJavaClassFieldOpen,
-            nodes: fields
-        };
+        // const folderFields = {
+        //     text: `${wrapFolderCount(`(${fields.length})`)} Field(s)`,
+        //     icon: "fa-solid fa-folder text-light mx-2",
+        //     class: ['item-tree-folder', 'bg-secondary'],
+        //     id: _this.idFolderJavaClassField,
+        //     expanded: _this.folderJavaClassFieldOpen,
+        //     nodes: fields
+        // };
 
         const folderMethods = {
             text: `${wrapFolderCount(`(${methods.length})`)} Method(s)`,
@@ -649,7 +656,7 @@ export class ItemTree {
         if (constructors.length) data.push(folderConstructors);
         if (staticFields.length) data.push(folderStaticFields);
         if (staticMethods.length) data.push(folderStaticMethods);
-        if (fields.length) data.push(folderFields);
+        // if (fields.length) data.push(folderFields);
         if (methods.length) data.push(folderMethods);
 
         // @ts-ignore

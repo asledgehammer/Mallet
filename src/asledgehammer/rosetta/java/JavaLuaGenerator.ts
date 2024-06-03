@@ -5,20 +5,14 @@ import { RosettaJavaMethod } from "./RosettaJavaMethod";
 import { RosettaJavaMethodCluster } from "./RosettaJavaMethodCluster";
 import { RosettaJavaParameter } from "./RosettaJavaParameter";
 
+/** @deprecated Use JavaLuaGenerator2. */
 export function generateJavaField(field: RosettaJavaField): string {
-    let s = '';
     if (field.getVisibilityScope() !== 'public') return '';
-    // Description
-    if (field.notes && field.notes.length) {
-        const notes = field.notes.split('\n').join(' ');
-        s += `${notes}\n`;
-    }
-
-    while (s.endsWith('\n')) s = s.substring(0, s.length - 1);
-
-    return `--- @field ${field.name} ${field.type.basic} ${s.trim()}`;
+    const notes = field.notes && field.notes.length ? field.notes.replace(/\n/g, '<br>') : '';
+    return `--- @field ${field.name} ${field.type.basic} ${notes}`;
 }
 
+/** @deprecated Use JavaLuaGenerator2. */
 export function generateJavaParameterBody(params: RosettaJavaParameter[]): string {
     let s = '';
     if (params.length) {
@@ -30,6 +24,7 @@ export function generateJavaParameterBody(params: RosettaJavaParameter[]): strin
     return `(${s})`;
 }
 
+/** @deprecated Use JavaLuaGenerator2. */
 export function generateJavaConstructor(className: string, constructors: RosettaJavaConstructor[]): string {
 
     if (!constructors.length) return '';
@@ -158,6 +153,7 @@ export function generateJavaConstructor(className: string, constructors: Rosetta
     return s;
 }
 
+/** @deprecated Use JavaLuaGenerator2. */
 export function generateJavaMethods(className: string, cluster: RosettaJavaMethod[]): string {
 
     if (!cluster.length) return '';
@@ -309,6 +305,7 @@ export function generateJavaMethods(className: string, cluster: RosettaJavaMetho
     return s;
 }
 
+/** @deprecated Use JavaLuaGenerator2. */
 export function generateJavaClass(clazz: RosettaJavaClass): string {
     let s = '';
 

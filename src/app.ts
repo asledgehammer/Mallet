@@ -5,8 +5,8 @@ import { RosettaLuaConstructor } from './asledgehammer/rosetta/lua/RosettaLuaCon
 import { RosettaLuaField } from './asledgehammer/rosetta/lua/RosettaLuaField';
 import { RosettaLuaFunction } from './asledgehammer/rosetta/lua/RosettaLuaFunction';
 import { $get } from './asledgehammer/rosetta/util';
-import { RosettaJavaClass, RosettaJavaNamespace } from './asledgehammer/rosetta/java/RosettaJavaClass';
-import { generateJavaClass } from './asledgehammer/rosetta/java/JavaLuaGenerator';
+import { RosettaJavaClass } from './asledgehammer/rosetta/java/RosettaJavaClass';
+import { generateJavaClass } from './asledgehammer/rosetta/java/JavaLuaGenerator2';
 import { RosettaJavaField } from './asledgehammer/rosetta/java/RosettaJavaField';
 import { RosettaJavaMethod } from './asledgehammer/rosetta/java/RosettaJavaMethod';
 import { RosettaJavaConstructor } from './asledgehammer/rosetta/java/RosettaJavaConstructor';
@@ -141,11 +141,8 @@ export class App {
 
     public showJavaClassConstructor(entity: RosettaJavaConstructor | undefined): JavaConstructorCard | null {
         const { selected } = this.catalog;
-        console.log(`showJavaClassConstructor(${entity})`);
         if (!(selected instanceof RosettaJavaClass)) return null;
-        console.log('a');
         if (!entity) return null;
-        console.log('b');
 
         this.$screenContent.empty();
         const card = new JavaConstructorCard(this, { entity });
