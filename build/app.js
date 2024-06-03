@@ -900,25 +900,20 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaTable", ["require", "exports", "
 define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.generateLuaTable = exports.generateLuaClass = exports.generateLuaConstructor = exports.generateLuaMethod = exports.generateLuaFunction = exports.generateLuaParameterBody = exports.generateLuaValue = exports.generateLuaField = void 0;
+    exports.applyLuaDocumentation = exports.paginateNotes = exports.generateLuaTable = exports.generateLuaClass = exports.generateLuaConstructor = exports.generateLuaFunction = exports.generateLuaParameterBody = exports.generateLuaValue = exports.generateLuaField = void 0;
     const generateLuaField = (field) => {
-        let s = '';
-        // Function Description
-        if (field.notes && field.notes.length) {
-            const notes = field.notes.split('\n').join(' ');
-            s += `${notes}\n`;
-        }
-        while (s.endsWith('\n'))
-            s = s.substring(0, s.length - 1);
-        return `--- @field ${field.name} ${field.type} ${s.trim()}`;
+        const notes = field.notes && field.notes.length ? field.notes.replace(/\n/g, '\\n') : '';
+        return `--- @field ${field.name} ${field.type} ${notes}`;
     };
     exports.generateLuaField = generateLuaField;
     const generateLuaValue = (containerName, field) => {
         let s = '';
         // Function Description
         if (field.notes && field.notes.length) {
-            const notes = field.notes.split('\n').join('\n--- ');
-            s += `--- ${notes}\n`;
+            const notes = paginateNotes(field.notes, 100);
+            for (const line of notes) {
+                s += `--- ${line}\n`;
+            }
         }
         let q = `${s}${containerName}.${field.name}`;
         if (field.defaultValue) {
@@ -944,126 +939,116 @@ define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports"], 
         return `(${s})`;
     };
     exports.generateLuaParameterBody = generateLuaParameterBody;
-    const generateLuaFunction = (className, func) => {
-        let s = '';
+    const generateLuaFunction = (className, operator, func) => {
+        let ds = [];
         // Function Description
         if (func.notes && func.notes.length) {
-            const notes = func.notes.split('\n').join('\n--- ');
-            s += `--- ${notes}\n--- \n`;
+            const notes = paginateNotes(func.notes, 100);
+            for (const line of notes) {
+                ds.push(line);
+            }
         }
         // Parameter Documentation
         if (func.parameters && func.parameters.length) {
+            if (ds.length)
+                ds.push('');
             for (const param of func.parameters) {
-                s += `--- @param ${param.name}`;
-                if (param.type && param.type.trim().length) {
-                    s += ` ${param.type}`;
-                }
+                const pps = `@param ${param.name} ${param.type}`;
                 if (param.notes && param.notes.trim().length) {
-                    s += ` ${param.notes}`;
+                    const notes = paginateNotes(pps + ' ' + param.notes.trim(), 100);
+                    for (const line of notes) {
+                        ds.push(line);
+                    }
                 }
-                s += `\n`;
+                else {
+                    ds.push(pps);
+                }
             }
-        }
-        if (func.parameters && func.parameters.length && func.returns) {
-            s += '--- \n';
         }
         // Returns Documentation
         if (func.returns) {
-            s += `--- @return ${func.returns.type}`;
+            if (ds.length)
+                ds.push('');
+            let rs = `@return ${func.returns.type}`;
             if (func.returns.notes && func.returns.notes.length) {
-                s += ` ${func.returns.notes.split('\n').join(' ')}\n`;
+                rs += ' result';
+                const notes = paginateNotes(rs + ' ' + func.returns.notes.trim(), 100);
+                for (const line of notes) {
+                    ds.push(line);
+                }
+            }
+            else {
+                ds.push(rs);
             }
         }
-        if (s.length && !s.endsWith('\n'))
-            s += '\n';
-        s += `function ${className}.${func.name}${(0, exports.generateLuaParameterBody)(func.parameters)} end`;
-        return s;
+        let fs = `function ${className}${operator}${func.name}${(0, exports.generateLuaParameterBody)(func.parameters)} end`;
+        if (fs.length > 100) {
+            fs = `function ${className}${operator}${func.name}(\n`;
+            for (const parameter of func.parameters) {
+                fs += `    ${parameter.name},\n`;
+            }
+            fs = fs.substring(0, fs.length - 2);
+            fs += `\n) end`;
+        }
+        return `${applyLuaDocumentation(ds, 0)}${fs}`;
     };
     exports.generateLuaFunction = generateLuaFunction;
-    const generateLuaMethod = (className, func) => {
-        let s = '';
+    const generateLuaConstructor = (className, con) => {
+        let ds = [];
         // Function Description
-        if (func.notes && func.notes.length) {
-            const notes = func.notes.split('\n').join('\n--- ');
-            s += `--- ${notes}\n--- \n`;
+        if (con.notes && con.notes.length) {
+            const notes = paginateNotes(con.notes, 100);
+            for (const line of notes) {
+                ds.push(line);
+            }
         }
         // Parameter Documentation
-        if (func.parameters && func.parameters.length) {
-            for (const param of func.parameters) {
-                s += `--- @param ${param.name}`;
-                if (param.type && param.type.trim().length) {
-                    s += ` ${param.type}`;
-                }
+        if (con.parameters && con.parameters.length) {
+            if (ds.length)
+                ds.push('');
+            for (const param of con.parameters) {
+                const pps = `@param ${param.name} ${param.type}`;
                 if (param.notes && param.notes.trim().length) {
-                    s += ` ${param.notes}`;
+                    const notes = paginateNotes(pps + ' ' + param.notes.trim(), 100);
+                    for (const line of notes) {
+                        ds.push(line);
+                    }
                 }
-                s += `\n`;
+                else {
+                    ds.push(pps);
+                }
             }
         }
-        if (func.parameters && func.parameters.length && func.returns) {
-            s += '--- \n';
-        }
-        // Returns Documentation
-        if (func.returns) {
-            s += `--- @return ${func.returns.type}`;
-            if (func.returns.notes && func.returns.notes.length) {
-                s += ` ${func.returns.notes.split('\n').join(' ')}\n`;
+        let fs = `function ${className}:new${(0, exports.generateLuaParameterBody)(con.parameters)} end`;
+        if (fs.length > 100) {
+            fs = `${className}:new(\n`;
+            for (const parameter of con.parameters) {
+                fs += `    ${parameter.name},\n`;
             }
+            fs = fs.substring(0, fs.length - 2);
+            fs += `\n) end`;
         }
-        if (s.length && !s.endsWith('\n'))
-            s += '\n';
-        s += `function ${className}:${func.name}${(0, exports.generateLuaParameterBody)(func.parameters)} end`;
-        return s;
-    };
-    exports.generateLuaMethod = generateLuaMethod;
-    const generateLuaConstructor = (className, conzstructor) => {
-        let s = '';
-        // Function Description
-        if (conzstructor.notes && conzstructor.notes.length) {
-            const notes = conzstructor.notes.split('\n').join('\n--- ');
-            s += `--- ${notes}\n--- \n`;
-        }
-        // Parameter Documentation
-        if (conzstructor.parameters && conzstructor.parameters.length) {
-            for (const param of conzstructor.parameters) {
-                s += `--- @param ${param.name}`;
-                if (param.type && param.type.trim().length) {
-                    s += ` ${param.type}`;
-                }
-                if (param.notes && param.notes.trim().length) {
-                    s += ` ${param.notes}`;
-                }
-                s += `\n`;
-            }
-        }
-        if (conzstructor.parameters && conzstructor.parameters.length) {
-            s += '--- \n';
-        }
-        // Class Returns Documentation
-        s += `--- @return ${className}`;
-        if (s.length && !s.endsWith('\n'))
-            s += '\n';
-        s += `function ${className}:new${(0, exports.generateLuaParameterBody)(conzstructor.parameters)} end`;
-        return s;
+        return `${applyLuaDocumentation(ds, 0)}${fs}`;
     };
     exports.generateLuaConstructor = generateLuaConstructor;
     const generateLuaClass = (clazz) => {
+        const ds = [];
         let s = '';
         // If the class has a description.
         if (clazz.notes && clazz.notes.length > 0) {
-            const notes = clazz.notes.split('\n').join('\n--- ');
-            s += `--- ${notes}\n`;
-            if (notes.endsWith('\n'))
-                s += '--- \n';
+            const notes = paginateNotes(clazz.notes, 100);
+            for (const line of notes) {
+                ds.push(line);
+            }
         }
-        s += `--- @class ${clazz.name}\n`;
+        ds.push(`@class ${clazz.name}`);
         // Generate any value-comments in the class here.
         const valueNames = Object.keys(clazz.values);
         if (valueNames.length) {
             valueNames.sort((a, b) => a.localeCompare(b));
             for (const valueName of valueNames) {
                 const value = clazz.values[valueName];
-                s += (0, exports.generateLuaField)(value) + '\n';
+                ds.push((0, exports.generateLuaField)(value));
             }
         }
         // Generate any fields in the class here.
@@ -1072,13 +1057,14 @@ define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports"], 
             fieldNames.sort((a, b) => a.localeCompare(b));
             for (const fieldName of fieldNames) {
                 const field = clazz.fields[fieldName];
-                s += (0, exports.generateLuaField)(field) + '\n';
+                ds.push((0, exports.generateLuaField)(field));
             }
         }
         // NOTE: This is to keep flexability in Lua for adding custom properties to existing classes.
         if (clazz.mutable) {
-            s += '--- @field [any] any\n';
+            ds.push('@field [any] any');
         }
+        s = applyLuaDocumentation(ds, 0);
         let sClass = 'ISBaseObject';
         if (clazz.extendz && clazz.extendz.length) {
             sClass = clazz.extendz.trim();
@@ -1101,7 +1087,7 @@ define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports"], 
             methodNames.sort((a, b) => a.localeCompare(b));
             for (const methodName of methodNames) {
                 const method = clazz.methods[methodName];
-                s += (0, exports.generateLuaMethod)(clazz.name, method) + '\n\n';
+                s += (0, exports.generateLuaFunction)(clazz.name, ':', method) + '\n\n';
             }
         }
         // Generate any functions in the class here.
@@ -1110,7 +1096,7 @@ define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports"], 
             functionNames.sort((a, b) => a.localeCompare(b));
             for (const functionName of functionNames) {
                 const func = clazz.functions[functionName];
-                s += (0, exports.generateLuaFunction)(clazz.name, func) + '\n\n';
+                s += (0, exports.generateLuaFunction)(clazz.name, '.', func) + '\n\n';
             }
         }
         return s;
@@ -1121,6 +1107,49 @@ define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports"], 
         return '';
     };
     exports.generateLuaTable = generateLuaTable;
+    function paginateNotes(notes, length) {
+        function _line(line) {
+            const split = line === null || line === void 0 ? void 0 : line.trim().split(' ');
+            const result = [];
+            let s = split[0];
+            for (let i = 1; i < split.length; i++) {
+                let word = split[i];
+                if (s.length + word.length + 1 <= length) {
+                    s = s + ' ' + word;
+                }
+                else {
+                    result.push(s);
+                    s = word;
+                }
+            }
+            if (s.length)
+                result.push(s);
+            return result;
+        }
+        const res = [];
+        const lines = notes.split('\n');
+        for (const line of lines) {
+            const subLines = _line(line);
+            for (const subLine of subLines) {
+                res.push(subLine);
+            }
+        }
+        return res;
+    }
+    exports.paginateNotes = paginateNotes;
+    function applyLuaDocumentation(ds, indent) {
+        const i = ' '.repeat(indent * 4);
+        let s = '';
+        if (ds.length) {
+            for (const next of ds) {
+                if (!next.trim().startsWith('--- '))
+                    s += `${i}--- `;
+                s += `${next}\n`;
+            }
+        }
+        return s;
+    }
+    exports.applyLuaDocumentation = applyLuaDocumentation;
 });
 define("src/asledgehammer/rosetta/util", ["require", "exports"], function (require, exports) {
     "use strict";
@@ -2246,10 +2275,59 @@ define("src/asledgehammer/rosetta/java/JavaLuaGenerator", ["require", "exports"]
     }
     exports.generateJavaClass = generateJavaClass;
 });
-define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require", "exports"], function (require, exports) {
+define("src/asledgehammer/rosetta/typescript/TSUtils", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.tsType = exports.applyTSDocumentation = exports.paginateNotes = exports.luaClassToTS = exports.luaFunctionToTS = exports.luaMethodDocumentation = exports.luaConstructorDocumentation = exports.luaConstructorToTS = exports.luaFieldToTS = exports.wrapAsTSNamespace = exports.wrapAsTSFile = void 0;
+    exports.wrapAsTSNamespace = exports.wrapAsTSFile = exports.applyTSDocumentation = exports.paginateNotes = void 0;
+    function paginateNotes(notes, length) {
+        function _line(line) {
+            const split = line === null || line === void 0 ? void 0 : line.trim().split(' ');
+            const result = [];
+            let s = split[0];
+            for (let i = 1; i < split.length; i++) {
+                let word = split[i];
+                if (s.length + word.length + 1 <= length) {
+                    s = s + ' ' + word;
+                }
+                else {
+                    result.push(s);
+                    s = word;
+                }
+            }
+            if (s.length)
+                result.push(s);
+            return result;
+        }
+        const res = [];
+        const lines = notes.split('\n');
+        for (const line of lines) {
+            const subLines = _line(line);
+            for (const subLine of subLines) {
+                res.push(subLine);
+            }
+        }
+        return res;
+    }
+    exports.paginateNotes = paginateNotes;
+    function applyTSDocumentation(ds, s, indent) {
+        const i = ' '.repeat(indent * 4);
+        if (ds.length) {
+            if (ds.length === 1) {
+                s += `${i}/** ${ds[0]} */\n`;
+            }
+            else {
+                s += `${i}/**\n`;
+                for (const next of ds) {
+                    s += `${i} * ${next}\n`;
+                }
+                s = s.substring(0, s.length - 1);
+                // s += ds.map((a) => `${i} * ${a}`).join('\n');
+                s += `\n${i} */\n`;
+            }
+        }
+        return s;
+    }
+    exports.applyTSDocumentation = applyTSDocumentation;
     function wrapAsTSFile(text) {
         let s = '';
         s += `/** @noSelfInFile */\n`;
@@ -2268,6 +2346,11 @@ define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require"
         return `${s} {}\n`;
     }
     exports.wrapAsTSNamespace = wrapAsTSNamespace;
+});
+define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require", "exports", "src/asledgehammer/rosetta/typescript/TSUtils"], function (require, exports, TSUtils_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.tsType = exports.luaClassToTS = exports.luaFunctionToTS = exports.luaMethodDocumentation = exports.luaConstructorDocumentation = exports.luaConstructorToTS = exports.luaFieldToTS = void 0;
     function luaFieldToTS(field, indent = 0, notesLength) {
         const i = ' '.repeat(indent * 4);
         let s = '';
@@ -2275,14 +2358,14 @@ define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require"
         let ds = [];
         // if (field.deprecated) ds.push('@deprecated');
         if (field.notes) {
-            const notes = paginateNotes(field.notes, notesLength);
+            const notes = (0, TSUtils_1.paginateNotes)(field.notes, notesLength);
             if (ds.length)
                 ds.push('');
             for (const line of notes) {
                 ds.push(line);
             }
         }
-        s = applyTSDocumentation(ds, s, indent);
+        s = (0, TSUtils_1.applyTSDocumentation)(ds, s, indent);
         s += i;
         /* Definition-line */
         s += `${field.name}: ${tsType(field.type)};`;
@@ -2306,13 +2389,21 @@ define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require"
         else {
             ps = '()';
         }
-        let s = applyTSDocumentation(ds, '', indent);
-        s += `${i}`;
-        s += `constructor${ps};`;
-        // Format documented variables as spaced for better legability.
-        if (ds.length)
-            s += '\n';
-        return s;
+        let fs = `${i}constructor${ps};`;
+        if (fs.length > notesLength) {
+            fs = `${i}constructor(\n`;
+            for (const parameter of con.parameters) {
+                fs += `${i}    ${parameter.name}: ${tsType(parameter.type)}, \n`;
+            }
+            fs += `${i});`;
+        }
+        return (0, TSUtils_1.applyTSDocumentation)(ds, '', indent) + fs + '\n';
+        // let s = applyTSDocumentation(ds, '', indent);
+        // s += `${i}`;
+        // s += `constructor${ps};`;
+        // // Format documented variables as spaced for better legability.
+        // if (ds.length) s += '\n';
+        // return s;
     }
     exports.luaConstructorToTS = luaConstructorToTS;
     function luaConstructorDocumentation(con, notesLength) {
@@ -2323,7 +2414,7 @@ define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require"
         if (con.notes && con.notes.length) {
             if (ds.length)
                 ds.push('');
-            const notes = paginateNotes(con.notes, notesLength);
+            const notes = (0, TSUtils_1.paginateNotes)(con.notes, notesLength);
             for (const line of notes)
                 ds.push(line);
         }
@@ -2333,7 +2424,7 @@ define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require"
                 ds.push('');
             for (const param of con.parameters) {
                 if (param.notes && param.notes.length) {
-                    const notes = paginateNotes(`@param ${param.name} ${param.notes}`, notesLength);
+                    const notes = (0, TSUtils_1.paginateNotes)(`@param ${param.name} ${param.notes}`, notesLength);
                     for (const line of notes)
                         ds.push(line);
                 }
@@ -2356,7 +2447,7 @@ define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require"
         if (method.notes && method.notes.length) {
             if (ds.length)
                 ds.push('');
-            const notes = paginateNotes(method.notes, notesLength);
+            const notes = (0, TSUtils_1.paginateNotes)(method.notes, notesLength);
             for (const line of notes)
                 ds.push(line);
         }
@@ -2366,7 +2457,7 @@ define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require"
                 ds.push('');
             for (const param of method.parameters) {
                 if (param.notes && param.notes.length) {
-                    const notes = paginateNotes(`@param ${param.name} ${param.notes}`, notesLength);
+                    const notes = (0, TSUtils_1.paginateNotes)(`@param ${param.name} ${param.notes}`, notesLength);
                     for (const line of notes)
                         ds.push(line);
                 }
@@ -2379,7 +2470,7 @@ define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require"
         if (method.returns && method.returns.notes && method.returns.notes.length) {
             if (ds.length)
                 ds.push('');
-            const notes = paginateNotes(`@returns ${method.returns.notes}`, notesLength);
+            const notes = (0, TSUtils_1.paginateNotes)(`@returns ${method.returns.notes}`, notesLength);
             for (const line of notes)
                 ds.push(line);
         }
@@ -2400,11 +2491,16 @@ define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require"
         else {
             ps = '()';
         }
-        let s = applyTSDocumentation(ds, '', indent);
-        s += `${i}`;
-        s += `${method.name}${ps}: ${tsType(method.returns.type)};`;
-        s += '\n';
-        return s;
+        const rs = tsType(method.returns.type);
+        let fs = `${i}${method.name}${ps}: ${rs};`;
+        if (fs.length > notesLength) {
+            fs = `${i}${method.name}(\n`;
+            for (const parameter of method.parameters) {
+                fs += `${i}    ${parameter.name}: ${tsType(parameter.type)}, \n`;
+            }
+            fs += `${i}): ${rs};`;
+        }
+        return (0, TSUtils_1.applyTSDocumentation)(ds, '', indent) + fs + '\n';
     }
     exports.luaFunctionToTS = luaFunctionToTS;
     function luaClassToTS(clazz, wrapFile = false) {
@@ -2455,11 +2551,11 @@ define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require"
         ds.push(`Lua Class: ${clazz.name}`);
         if (clazz.notes && clazz.notes.length) {
             ds.push('');
-            const lines = paginateNotes(clazz.notes, notesLength);
+            const lines = (0, TSUtils_1.paginateNotes)(clazz.notes, notesLength);
             for (const line of lines)
                 ds.push(line);
         }
-        s = applyTSDocumentation(ds, s, 0);
+        s = (0, TSUtils_1.applyTSDocumentation)(ds, s, 0);
         s += `export class ${clazz.name} `;
         let i = '    ';
         let is = '';
@@ -2526,40 +2622,10 @@ define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require"
             s += `{}\n`;
         }
         if (wrapFile)
-            return wrapAsTSFile(s);
+            return (0, TSUtils_1.wrapAsTSFile)(s);
         return s;
     }
     exports.luaClassToTS = luaClassToTS;
-    function paginateNotes(notes, length) {
-        let result;
-        if (notes.indexOf('\n') !== -1) {
-            result = notes.split('\n');
-        }
-        else {
-            result = [notes];
-        }
-        return result;
-    }
-    exports.paginateNotes = paginateNotes;
-    function applyTSDocumentation(ds, s, indent) {
-        const i = ' '.repeat(indent * 4);
-        if (ds.length) {
-            if (ds.length === 1) {
-                s += `${i}/** ${ds[0]} */\n`;
-            }
-            else {
-                s += `${i}/**\n`;
-                for (const next of ds) {
-                    s += `${i} * ${next}\n`;
-                }
-                s = s.substring(0, s.length - 1);
-                // s += ds.map((a) => `${i} * ${a}`).join('\n');
-                s += `\n${i} */\n`;
-            }
-        }
-        return s;
-    }
-    exports.applyTSDocumentation = applyTSDocumentation;
     function tsType(type) {
         if (type.startsWith('fun(')) {
             // FIXME: Nested function calls won't work here.
@@ -3549,28 +3615,10 @@ define("src/asledgehammer/mallet/component/lua/LuaClassCard", ["require", "expor
     }
     exports.LuaClassCard = LuaClassCard;
 });
-define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require", "exports"], function (require, exports) {
+define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require", "exports", "src/asledgehammer/rosetta/typescript/TSUtils"], function (require, exports, TSUtils_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.tsType = exports.applyTSDocumentation = exports.paginateNotes = exports.javaClassToTS = exports.javaMethodToTS = exports.javaMethodDocumentation = exports.javaConstructorDocumentation = exports.javaMethodClusterToTS = exports.javaConstructorsToTS = exports.javaConstructorToTS = exports.javaFieldToTS = exports.wrapAsTSNamespace = exports.wrapAsTSFile = void 0;
-    function wrapAsTSFile(text) {
-        let s = '';
-        s += `/** @noSelfInFile */\n`;
-        s += `declare module '@asledgehammer/pipewrench'`;
-        if (text.length) {
-            return `${s} {\n` + text.split('\n').map((a) => `    ${a}`).join('\n') + '\n}';
-        }
-        return `${s} {}\n`;
-    }
-    exports.wrapAsTSFile = wrapAsTSFile;
-    function wrapAsTSNamespace(namespace, text) {
-        const s = `export namespace ${namespace}`;
-        if (text.length) {
-            return `${s} {\n\n` + text.split('\n').map((a) => `    ${a}`).join('\n') + '\n}';
-        }
-        return `${s} {}\n`;
-    }
-    exports.wrapAsTSNamespace = wrapAsTSNamespace;
+    exports.tsType = exports.javaClassToTS = exports.javaMethodToTS = exports.javaMethodDocumentation = exports.javaConstructorDocumentation = exports.javaMethodClusterToTS = exports.javaConstructorsToTS = exports.javaConstructorToTS = exports.javaFieldToTS = void 0;
     function javaFieldToTS(field, indent = 0, notesLength) {
         if (field.getVisibilityScope() !== 'public')
             return '';
@@ -3581,14 +3629,14 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
         if (field.deprecated)
             ds.push('@deprecated');
         if (field.notes) {
-            const notes = paginateNotes(field.notes, notesLength);
+            const notes = (0, TSUtils_2.paginateNotes)(field.notes, notesLength);
             if (ds.length)
                 ds.push('');
             for (const line of notes) {
                 ds.push(line);
             }
         }
-        s = applyTSDocumentation(ds, s, indent);
+        s = (0, TSUtils_2.applyTSDocumentation)(ds, s, indent);
         s += i;
         /* Definition-line */
         if (field.isStatic())
@@ -3618,13 +3666,16 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
         else {
             ps = '()';
         }
-        let s = applyTSDocumentation(ds, '', indent);
-        s += `${i}`;
-        s += `constructor${ps};`;
-        // Format documented variables as spaced for better legability.
-        if (ds.length)
-            s += '\n';
-        return s;
+        let fs = `${i}constructor${ps};`;
+        if (fs.length > notesLength) {
+            fs = `${i}`;
+            fs += `constructor(\n`;
+            for (const parameter of con.parameters) {
+                fs += `${i}    ${parameter.name}: ${tsType(parameter.type.basic)}, \n`;
+            }
+            fs += `${i});`;
+        }
+        return (0, TSUtils_2.applyTSDocumentation)(ds, '', indent) + fs + '\n';
     }
     exports.javaConstructorToTS = javaConstructorToTS;
     function javaConstructorsToTS(constructors, indent, notesLength) {
@@ -3714,7 +3765,7 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
         if (con.notes && con.notes.length) {
             if (ds.length)
                 ds.push('');
-            const notes = paginateNotes(con.notes, notesLength);
+            const notes = (0, TSUtils_2.paginateNotes)(con.notes, notesLength);
             for (const line of notes)
                 ds.push(line);
         }
@@ -3724,7 +3775,7 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
                 ds.push('');
             for (const param of con.parameters) {
                 if (param.notes && param.notes.length) {
-                    const notes = paginateNotes(`@param ${param.name} ${param.notes}`, notesLength);
+                    const notes = (0, TSUtils_2.paginateNotes)(`@param ${param.name} ${param.notes}`, notesLength);
                     for (const line of notes)
                         ds.push(line);
                 }
@@ -3747,7 +3798,7 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
         if (method.notes && method.notes.length) {
             if (ds.length)
                 ds.push('');
-            const notes = paginateNotes(method.notes, notesLength);
+            const notes = (0, TSUtils_2.paginateNotes)(method.notes, notesLength);
             for (const line of notes)
                 ds.push(line);
         }
@@ -3757,7 +3808,7 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
                 ds.push('');
             for (const param of method.parameters) {
                 if (param.notes && param.notes.length) {
-                    const notes = paginateNotes(`@param ${param.name} ${param.notes}`, notesLength);
+                    const notes = (0, TSUtils_2.paginateNotes)(`@param ${param.name} ${param.notes}`, notesLength);
                     for (const line of notes)
                         ds.push(line);
                 }
@@ -3770,7 +3821,7 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
         if (method.returns && method.returns.notes && method.returns.notes.length) {
             if (ds.length)
                 ds.push('');
-            const notes = paginateNotes(`@returns ${method.returns.notes}`, notesLength);
+            const notes = (0, TSUtils_2.paginateNotes)(`@returns ${method.returns.notes}`, notesLength);
             for (const line of notes)
                 ds.push(line);
         }
@@ -3793,15 +3844,26 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
         else {
             ps = '()';
         }
-        let s = applyTSDocumentation(ds, '', indent);
-        s += `${i}`;
+        const rs = tsType(method.returns.type.basic);
+        let fs = `${i}`;
         if (method.isStatic())
-            s += 'static ';
+            fs += 'static ';
         if (method.isFinal())
-            s += 'readonly ';
-        s += `${method.name}${ps}: ${tsType(method.returns.type.basic)};`;
-        s += '\n';
-        return s;
+            fs += 'readonly ';
+        fs += `${method.name}${ps}: ${rs};\n`;
+        if (fs.length > notesLength) {
+            fs = `${i}`;
+            if (method.isStatic())
+                fs += 'static ';
+            if (method.isFinal())
+                fs += 'readonly ';
+            fs += `${method.name}(\n`;
+            for (const parameter of method.parameters) {
+                fs += `${i}    ${parameter.name}: ${tsType(parameter.type.basic)}, \n`;
+            }
+            fs += `${i}): ${rs}\n`;
+        }
+        return (0, TSUtils_2.applyTSDocumentation)(ds, '', indent) + fs;
     }
     exports.javaMethodToTS = javaMethodToTS;
     function javaClassToTS(clazz, wrapNamespace = false, wrapFile = false) {
@@ -3847,11 +3909,11 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
         ds.push(`Class: ${clazz.namespace.name}.${clazz.name}`);
         if (clazz.notes && clazz.notes.length) {
             ds.push('');
-            const lines = paginateNotes(clazz.notes, notesLength);
+            const lines = (0, TSUtils_2.paginateNotes)(clazz.notes, notesLength);
             for (const line of lines)
                 ds.push(line);
         }
-        s = applyTSDocumentation(ds, s, 0);
+        s = (0, TSUtils_2.applyTSDocumentation)(ds, s, 0);
         s += `export class ${clazz.name} `;
         let i = '    ';
         let is = '';
@@ -3936,45 +3998,12 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
             s += `{}\n`;
         }
         if (wrapNamespace)
-            s = wrapAsTSNamespace(clazz.namespace.name, s);
+            s = (0, TSUtils_2.wrapAsTSNamespace)(clazz.namespace.name, s);
         if (wrapFile)
-            return wrapAsTSFile(s);
+            return (0, TSUtils_2.wrapAsTSFile)(s);
         return s;
     }
     exports.javaClassToTS = javaClassToTS;
-    function paginateNotes(notes, length) {
-        const split = notes === null || notes === void 0 ? void 0 : notes.split(' ');
-        const result = [];
-        let s = split[0];
-        for (let i = 1; i < split.length; i++) {
-            let word = split[i];
-            if (s.length + word.length + 1 <= length)
-                s = s + ' ' + word;
-            else {
-                result.push(s);
-                s = word;
-            }
-        }
-        if (s.length)
-            result.push(s);
-        return result;
-    }
-    exports.paginateNotes = paginateNotes;
-    function applyTSDocumentation(ds, s, indent) {
-        const i = ' '.repeat(indent * 4);
-        if (ds.length) {
-            if (ds.length === 1) {
-                s += `${i}/** ${ds[0]} */\n`;
-            }
-            else {
-                s += `${i}/**\n`;
-                s += ds.map((a) => `${i} * ${a}`).join('\n');
-                s += `\n${i} */\n`;
-            }
-        }
-        return s;
-    }
-    exports.applyTSDocumentation = applyTSDocumentation;
     function tsType(type) {
         console.log(`tsType(${type})`);
         switch (type) {
@@ -5750,7 +5779,7 @@ define("src/asledgehammer/mallet/component/lua/LuaFunctionCard", ["require", "ex
                     const { entity } = this.options;
                     const classEntity = this.app.catalog.selectedCard.options.entity;
                     const className = classEntity.name;
-                    return (0, LuaLuaGenerator_4.generateLuaMethod)(className, entity);
+                    return (0, LuaLuaGenerator_4.generateLuaFunction)(className, ':', entity);
                 }
                 case 'typescript': {
                     return (0, LuaTypeScriptGenerator_4.luaFunctionToTS)(this.options.entity, 0, 100);

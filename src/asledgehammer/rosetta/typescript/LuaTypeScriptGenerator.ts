@@ -2,24 +2,7 @@ import { RosettaLuaClass } from "../lua/RosettaLuaClass";
 import { RosettaLuaConstructor } from "../lua/RosettaLuaConstructor";
 import { RosettaLuaField } from "../lua/RosettaLuaField";
 import { RosettaLuaFunction } from "../lua/RosettaLuaFunction";
-
-export function wrapAsTSFile(text: string): string {
-    let s = '';
-    s += `/** @noSelfInFile */\n`;
-    s += `declare module '@asledgehammer/pipewrench'`;
-    if (text.length) {
-        return `${s} {\n\n` + text.split('\n').map((a) => `    ${a}`).join('\n') + '\n}';
-    }
-    return `${s} {}\n`;
-}
-
-export function wrapAsTSNamespace(namespace: string, text: string): string {
-    const s = `export namespace ${namespace}`;
-    if (text.length) {
-        return `${s} {\n\n` + text.split('\n').map((a) => `    ${a}`).join('\n') + '\n}';
-    }
-    return `${s} {}\n`;
-}
+import { applyTSDocumentation, paginateNotes, wrapAsTSFile } from "./TSUtils";
 
 export function luaFieldToTS(
     field: RosettaLuaField,
@@ -71,14 +54,26 @@ export function luaConstructorToTS(
         ps = '()';
     }
 
-    let s = applyTSDocumentation(ds, '', indent);
-    s += `${i}`;
-    s += `constructor${ps};`;
+    let fs = `${i}constructor${ps};`;
+    if (fs.length > notesLength) {
+        fs = `${i}constructor(\n`;
+        for (const parameter of con.parameters) {
+            fs += `${i}    ${parameter.name}: ${tsType(parameter.type)}, \n`;
+        }
+        fs += `${i});`;
+    }
 
-    // Format documented variables as spaced for better legability.
-    if (ds.length) s += '\n';
+    return applyTSDocumentation(ds, '', indent) + fs + '\n';
 
-    return s;
+
+    // let s = applyTSDocumentation(ds, '', indent);
+    // s += `${i}`;
+    // s += `constructor${ps};`;
+
+    // // Format documented variables as spaced for better legability.
+    // if (ds.length) s += '\n';
+
+    // return s;
 }
 
 export function luaConstructorDocumentation(
@@ -175,11 +170,18 @@ export function luaFunctionToTS(
         ps = '()';
     }
 
-    let s = applyTSDocumentation(ds, '', indent);
-    s += `${i}`;
-    s += `${method.name}${ps}: ${tsType(method.returns.type)};`;
-    s += '\n';
-    return s;
+    const rs = tsType(method.returns.type);
+
+    let fs = `${i}${method.name}${ps}: ${rs};`;
+    if (fs.length > notesLength) {
+        fs = `${i}${method.name}(\n`;
+        for (const parameter of method.parameters) {
+            fs += `${i}    ${parameter.name}: ${tsType(parameter.type)}, \n`;
+        }
+        fs += `${i}): ${rs};`;
+    }
+
+    return applyTSDocumentation(ds, '', indent) + fs + '\n';
 }
 
 export function luaClassToTS(
@@ -315,34 +317,6 @@ export function luaClassToTS(
     }
 
     if (wrapFile) return wrapAsTSFile(s);
-    return s;
-}
-
-export function paginateNotes(notes: string, length: number): string[] {
-    let result: string[];
-    if(notes.indexOf('\n') !== -1) {
-        result = notes.split('\n');
-    } else {
-        result = [notes];
-    }
-    return result;
-}
-
-export function applyTSDocumentation(ds: string[], s: string, indent: number): string {
-    const i = ' '.repeat(indent * 4);
-    if (ds.length) {
-        if (ds.length === 1) {
-            s += `${i}/** ${ds[0]} */\n`;
-        } else {
-            s += `${i}/**\n`;
-            for (const next of ds) {
-                s += `${i} * ${next}\n`;
-            }
-            s = s.substring(0, s.length - 1);
-            // s += ds.map((a) => `${i} * ${a}`).join('\n');
-            s += `\n${i} */\n`;
-        }
-    }
     return s;
 }
 

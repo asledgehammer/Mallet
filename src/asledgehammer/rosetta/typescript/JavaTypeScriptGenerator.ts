@@ -3,24 +3,7 @@ import { RosettaJavaConstructor } from "../java/RosettaJavaConstructor";
 import { RosettaJavaField } from "../java/RosettaJavaField";
 import { RosettaJavaMethod } from "../java/RosettaJavaMethod";
 import { RosettaJavaMethodCluster } from "../java/RosettaJavaMethodCluster";
-
-export function wrapAsTSFile(text: string): string {
-    let s = '';
-    s += `/** @noSelfInFile */\n`;
-    s += `declare module '@asledgehammer/pipewrench'`;
-    if (text.length) {
-        return `${s} {\n` + text.split('\n').map((a) => `    ${a}`).join('\n') + '\n}';
-    }
-    return `${s} {}\n`;
-}
-
-export function wrapAsTSNamespace(namespace: string, text: string): string {
-    const s = `export namespace ${namespace}`;
-    if (text.length) {
-        return `${s} {\n\n` + text.split('\n').map((a) => `    ${a}`).join('\n') + '\n}';
-    }
-    return `${s} {}\n`;
-}
+import { applyTSDocumentation, paginateNotes, wrapAsTSFile, wrapAsTSNamespace } from "./TSUtils";
 
 export function javaFieldToTS(
     field: RosettaJavaField,
@@ -80,14 +63,17 @@ export function javaConstructorToTS(
         ps = '()';
     }
 
-    let s = applyTSDocumentation(ds, '', indent);
-    s += `${i}`;
-    s += `constructor${ps};`;
-
-    // Format documented variables as spaced for better legability.
-    if (ds.length) s += '\n';
-
-    return s;
+    let fs = `${i}constructor${ps};`;
+    if(fs.length > notesLength) {
+        fs = `${i}`;
+        fs += `constructor(\n`;
+        for (const parameter of con.parameters) {
+            fs += `${i}    ${parameter.name}: ${tsType(parameter.type.basic)}, \n`;
+        }
+        fs += `${i});`;
+    }
+    
+    return applyTSDocumentation(ds, '', indent) + fs + '\n';
 }
 
 export function javaConstructorsToTS(
@@ -286,13 +272,24 @@ export function javaMethodToTS(
         ps = '()';
     }
 
-    let s = applyTSDocumentation(ds, '', indent);
-    s += `${i}`;
-    if (method.isStatic()) s += 'static ';
-    if (method.isFinal()) s += 'readonly ';
-    s += `${method.name}${ps}: ${tsType(method.returns.type.basic)};`;
-    s += '\n';
-    return s;
+    const rs = tsType(method.returns.type.basic);
+
+    let fs = `${i}`;
+    if (method.isStatic()) fs += 'static ';
+    if (method.isFinal()) fs += 'readonly ';
+    fs += `${method.name}${ps}: ${rs};\n`;
+    if (fs.length > notesLength) {
+        fs = `${i}`;
+        if (method.isStatic()) fs += 'static ';
+        if (method.isFinal()) fs += 'readonly ';
+        fs += `${method.name}(\n`;
+        for (const parameter of method.parameters) {
+            fs += `${i}    ${parameter.name}: ${tsType(parameter.type.basic)}, \n`;
+        }
+        fs += `${i}): ${rs}\n`;
+    }
+
+    return applyTSDocumentation(ds, '', indent) + fs;
 }
 
 export function javaClassToTS(
@@ -431,36 +428,6 @@ export function javaClassToTS(
 
     if (wrapNamespace) s = wrapAsTSNamespace(clazz.namespace.name, s);
     if (wrapFile) return wrapAsTSFile(s);
-    return s;
-}
-
-export function paginateNotes(notes: string, length: number): string[] {
-    const split = notes?.split(' ');
-    const result: string[] = [];
-    let s = split[0]
-    for (let i = 1; i < split.length; i++) {
-        let word = split[i];
-        if (s.length + word.length + 1 <= length) s = s + ' ' + word;
-        else {
-            result.push(s);
-            s = word;
-        }
-    }
-    if (s.length) result.push(s);
-    return result
-}
-
-export function applyTSDocumentation(ds: string[], s: string, indent: number): string {
-    const i = ' '.repeat(indent * 4);
-    if (ds.length) {
-        if (ds.length === 1) {
-            s += `${i}/** ${ds[0]} */\n`;
-        } else {
-            s += `${i}/**\n`;
-            s += ds.map((a) => `${i} * ${a}`).join('\n');
-            s += `\n${i} */\n`;
-        }
-    }
     return s;
 }
 

@@ -1,5 +1,5 @@
 import { App } from '../../../../app';
-import { generateLuaMethod } from '../../../rosetta/lua/LuaLuaGenerator';
+import { generateLuaFunction } from '../../../rosetta/lua/LuaLuaGenerator';
 import { RosettaLuaClass } from '../../../rosetta/lua/RosettaLuaClass';
 import { RosettaLuaFunction } from '../../../rosetta/lua/RosettaLuaFunction';
 import { luaFunctionToTS } from '../../../rosetta/typescript/LuaTypeScriptGenerator';
@@ -35,7 +35,7 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
                 const { entity } = this.options;
                 const classEntity = this.app.catalog.selectedCard!.options!.entity;
                 const className = classEntity.name;
-                return generateLuaMethod(className, entity);
+                return generateLuaFunction(className, ':', entity);
             }
             case 'typescript': {
                 return luaFunctionToTS(this.options!.entity, 0, 100);

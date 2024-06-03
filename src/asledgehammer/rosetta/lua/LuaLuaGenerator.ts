@@ -5,20 +5,9 @@ import { RosettaLuaFunction } from "./RosettaLuaFunction";
 import { RosettaLuaParameter } from "./RosettaLuaParameter";
 import { RosettaLuaTable } from "./RosettaLuaTable";
 
-
 export const generateLuaField = (field: RosettaLuaField): string => {
-
-    let s = '';
-
-    // Function Description
-    if (field.notes && field.notes.length) {
-        const notes = field.notes.split('\n').join(' ');
-        s += `${notes}\n`;
-    }
-
-    while (s.endsWith('\n')) s = s.substring(0, s.length - 1);
-
-    return `--- @field ${field.name} ${field.type} ${s.trim()}`;
+    const notes = field.notes && field.notes.length ? field.notes.replace(/\n/g, '\\n') : '';
+    return `--- @field ${field.name} ${field.type} ${notes}`;
 };
 
 export const generateLuaValue = (containerName: string, field: RosettaLuaField): string => {
@@ -27,8 +16,10 @@ export const generateLuaValue = (containerName: string, field: RosettaLuaField):
 
     // Function Description
     if (field.notes && field.notes.length) {
-        const notes = field.notes.split('\n').join('\n--- ');
-        s += `--- ${notes}\n`;
+        const notes = paginateNotes(field.notes, 100);
+        for (const line of notes) {
+            s += `--- ${line}\n`;
+        }
     }
 
     let q = `${s}${containerName}.${field.name}`;
@@ -57,144 +48,116 @@ export const generateLuaParameterBody = (params: RosettaLuaParameter[]): string 
     return `(${s})`;
 };
 
-export const generateLuaFunction = (className: string, func: RosettaLuaFunction): string => {
+export const generateLuaFunction = (className: string, operator: ':' | '.', func: RosettaLuaFunction): string => {
 
-    let s = '';
+    let ds: string[] = [];
 
     // Function Description
     if (func.notes && func.notes.length) {
-        const notes = func.notes.split('\n').join('\n--- ');
-        s += `--- ${notes}\n--- \n`;
+        const notes = paginateNotes(func.notes, 100);
+        for (const line of notes) {
+            ds.push(line);
+        }
     }
 
     // Parameter Documentation
     if (func.parameters && func.parameters.length) {
+        if (ds.length) ds.push('');
         for (const param of func.parameters) {
-            s += `--- @param ${param.name}`;
-
-            if (param.type && param.type.trim().length) {
-                s += ` ${param.type}`;
-            }
-
+            const pps = `@param ${param.name} ${param.type}`;
             if (param.notes && param.notes.trim().length) {
-                s += ` ${param.notes}`;
+                const notes = paginateNotes(pps + ' ' + param.notes.trim(), 100);
+                for (const line of notes) {
+                    ds.push(line);
+                }
+            } else {
+                ds.push(pps);
             }
-
-            s += `\n`;
         }
-    }
-
-    if (func.parameters && func.parameters.length && func.returns) {
-        s += '--- \n';
     }
 
     // Returns Documentation
     if (func.returns) {
-        s += `--- @return ${func.returns.type}`;
+        if (ds.length) ds.push('');
+        let rs = `@return ${func.returns.type}`;
         if (func.returns.notes && func.returns.notes.length) {
-            s += ` ${func.returns.notes.split('\n').join(' ')}\n`;
+            rs += ' result';
+            const notes = paginateNotes(rs + ' ' + func.returns.notes.trim(), 100);
+            for (const line of notes) {
+                ds.push(line);
+            }
+        } else {
+            ds.push(rs);
         }
     }
 
-    if (s.length && !s.endsWith('\n')) s += '\n';
-    s += `function ${className}.${func.name}${generateLuaParameterBody(func.parameters)} end`;
-    return s;
+    let fs = `function ${className}${operator}${func.name}${generateLuaParameterBody(func.parameters)} end`;
+    if (fs.length > 100) {
+        fs = `function ${className}${operator}${func.name}(\n`;
+        for (const parameter of func.parameters) {
+            fs += `    ${parameter.name},\n`;
+        }
+        fs = fs.substring(0, fs.length - 2);
+        fs += `\n) end`;
+    }
+
+    return `${applyLuaDocumentation(ds, 0)}${fs}`;
 };
 
-export const generateLuaMethod = (className: string, func: RosettaLuaFunction): string => {
+export const generateLuaConstructor = (className: string, con: RosettaLuaConstructor): string => {
 
-    let s = '';
+    let ds: string[] = [];
 
     // Function Description
-    if (func.notes && func.notes.length) {
-        const notes = func.notes.split('\n').join('\n--- ');
-        s += `--- ${notes}\n--- \n`;
+    if (con.notes && con.notes.length) {
+        const notes = paginateNotes(con.notes, 100);
+        for (const line of notes) {
+            ds.push(line);
+        }
     }
 
     // Parameter Documentation
-    if (func.parameters && func.parameters.length) {
-        for (const param of func.parameters) {
-            s += `--- @param ${param.name}`;
-
-            if (param.type && param.type.trim().length) {
-                s += ` ${param.type}`;
-            }
-
+    if (con.parameters && con.parameters.length) {
+        if (ds.length) ds.push('');
+        for (const param of con.parameters) {
+            const pps = `@param ${param.name} ${param.type}`;
             if (param.notes && param.notes.trim().length) {
-                s += ` ${param.notes}`;
+                const notes = paginateNotes(pps + ' ' + param.notes.trim(), 100);
+                for (const line of notes) {
+                    ds.push(line);
+                }
+            } else {
+                ds.push(pps);
             }
-
-            s += `\n`;
         }
     }
 
-    if (func.parameters && func.parameters.length && func.returns) {
-        s += '--- \n';
-    }
-
-    // Returns Documentation
-    if (func.returns) {
-        s += `--- @return ${func.returns.type}`;
-        if (func.returns.notes && func.returns.notes.length) {
-            s += ` ${func.returns.notes.split('\n').join(' ')}\n`;
+    let fs = `function ${className}:new${generateLuaParameterBody(con.parameters)} end`;
+    if (fs.length > 100) {
+        fs = `${className}:new(\n`;
+        for (const parameter of con.parameters) {
+            fs += `    ${parameter.name},\n`;
         }
+        fs = fs.substring(0, fs.length - 2);
+        fs += `\n) end`;
     }
 
-    if (s.length && !s.endsWith('\n')) s += '\n';
-    s += `function ${className}:${func.name}${generateLuaParameterBody(func.parameters)} end`;
-    return s;
-};
-
-export const generateLuaConstructor = (className: string, conzstructor: RosettaLuaConstructor): string => {
-
-    let s = '';
-
-    // Function Description
-    if (conzstructor.notes && conzstructor.notes.length) {
-        const notes = conzstructor.notes.split('\n').join('\n--- ');
-        s += `--- ${notes}\n--- \n`;
-    }
-
-    // Parameter Documentation
-    if (conzstructor.parameters && conzstructor.parameters.length) {
-        for (const param of conzstructor.parameters) {
-            s += `--- @param ${param.name}`;
-
-            if (param.type && param.type.trim().length) {
-                s += ` ${param.type}`;
-            }
-
-            if (param.notes && param.notes.trim().length) {
-                s += ` ${param.notes}`;
-            }
-
-            s += `\n`;
-        }
-    }
-
-    if (conzstructor.parameters && conzstructor.parameters.length) {
-        s += '--- \n';
-    }
-
-    // Class Returns Documentation
-    s += `--- @return ${className}`;
-
-    if (s.length && !s.endsWith('\n')) s += '\n';
-    s += `function ${className}:new${generateLuaParameterBody(conzstructor.parameters)} end`;
-    return s;
+    return `${applyLuaDocumentation(ds, 0)}${fs}`;
 };
 
 export const generateLuaClass = (clazz: RosettaLuaClass): string => {
+    const ds: string[] = [];
     let s = '';
 
     // If the class has a description.
     if (clazz.notes && clazz.notes.length > 0) {
-        const notes = clazz.notes.split('\n').join('\n--- ');
-        s += `--- ${notes}\n`;
-        if (notes.endsWith('\n')) s += '--- \n';
+        const notes = paginateNotes(clazz.notes, 100);
+        for (const line of notes) {
+            ds.push(line);
+        }
     }
 
-    s += `--- @class ${clazz.name}\n`;
+    ds.push(`@class ${clazz.name}`);
 
     // Generate any value-comments in the class here.
     const valueNames = Object.keys(clazz.values);
@@ -202,7 +165,7 @@ export const generateLuaClass = (clazz: RosettaLuaClass): string => {
         valueNames.sort((a, b) => a.localeCompare(b));
         for (const valueName of valueNames) {
             const value = clazz.values[valueName];
-            s += generateLuaField(value) + '\n';
+            ds.push(generateLuaField(value));
         }
     }
 
@@ -212,20 +175,21 @@ export const generateLuaClass = (clazz: RosettaLuaClass): string => {
         fieldNames.sort((a, b) => a.localeCompare(b));
         for (const fieldName of fieldNames) {
             const field = clazz.fields[fieldName];
-            s += generateLuaField(field) + '\n';
+            ds.push(generateLuaField(field));
         }
     }
 
     // NOTE: This is to keep flexability in Lua for adding custom properties to existing classes.
     if (clazz.mutable) {
-        s += '--- @field [any] any\n';
+        ds.push('@field [any] any');
     }
+
+    s = applyLuaDocumentation(ds, 0);
 
     let sClass = 'ISBaseObject';
     if (clazz.extendz && clazz.extendz.length) {
         sClass = clazz.extendz.trim();
     }
-
 
     s += `${clazz.name} = ${sClass}:derive("${clazz.name}");\n\n`;
 
@@ -249,7 +213,7 @@ export const generateLuaClass = (clazz: RosettaLuaClass): string => {
         methodNames.sort((a, b) => a.localeCompare(b));
         for (const methodName of methodNames) {
             const method = clazz.methods[methodName];
-            s += generateLuaMethod(clazz.name, method) + '\n\n';
+            s += generateLuaFunction(clazz.name, ':', method) + '\n\n';
         }
     }
 
@@ -259,7 +223,7 @@ export const generateLuaClass = (clazz: RosettaLuaClass): string => {
         functionNames.sort((a, b) => a.localeCompare(b));
         for (const functionName of functionNames) {
             const func = clazz.functions[functionName];
-            s += generateLuaFunction(clazz.name, func) + '\n\n';
+            s += generateLuaFunction(clazz.name, '.', func) + '\n\n';
         }
     }
 
@@ -270,3 +234,45 @@ export const generateLuaTable = (table: RosettaLuaTable): string => {
     // TODO: Implement.
     return '';
 };
+
+export function paginateNotes(notes: string, length: number): string[] {
+
+    function _line(line: string): string[] {
+        const split = line?.trim().split(' ');
+        const result: string[] = [];
+        let s = split[0];
+        for (let i = 1; i < split.length; i++) {
+            let word = split[i];
+            if (s.length + word.length + 1 <= length) {
+                s = s + ' ' + word;
+            } else {
+                result.push(s);
+                s = word;
+            }
+        }
+        if (s.length) result.push(s);
+        return result;
+    }
+
+    const res: string[] = [];
+    const lines = notes.split('\n');
+    for (const line of lines) {
+        const subLines = _line(line);
+        for (const subLine of subLines) {
+            res.push(subLine);
+        }
+    }
+    return res;
+}
+
+export function applyLuaDocumentation(ds: string[], indent: number): string {
+    const i = ' '.repeat(indent * 4);
+    let s = '';
+    if (ds.length) {
+        for (const next of ds) {
+            if (!next.trim().startsWith('--- ')) s += `${i}--- `;
+            s += `${next}\n`;
+        }
+    }
+    return s;
+}
