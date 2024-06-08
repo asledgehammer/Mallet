@@ -27,6 +27,8 @@ import { javaClassToTS } from './asledgehammer/rosetta/typescript/JavaTypeScript
 import { luaClassToTS, luaTableToTS } from './asledgehammer/rosetta/typescript/LuaTypeScriptGenerator';
 import { CodeLanguage } from './asledgehammer/mallet/component/CodeLanguage';
 import { RosettaLuaTable } from './asledgehammer/rosetta/lua/RosettaLuaTable';
+import { LuaTableCard } from './asledgehammer/mallet/component/lua/LuaTableCard';
+import { RosettaLuaTableField } from './asledgehammer/rosetta/lua/RosettaLuaTableField';
 
 export class App {
 
@@ -61,7 +63,6 @@ export class App {
 
     public showLuaClass(entity: RosettaLuaClass): LuaClassCard {
         this.$screenContent.empty();
-        // this.selected = entity.name;
         this.catalog.selected = entity;
         this.catalog.selectedCard = new LuaClassCard(this, { entity });
         this.$screenContent.append(this.catalog.selectedCard.render());
@@ -128,9 +129,41 @@ export class App {
         return card;
     }
 
+    public showLuaTable(entity: RosettaLuaTable): LuaTableCard {
+        this.$screenContent.empty();
+        this.catalog.selected = entity;
+        this.catalog.selectedCard = new LuaTableCard(this, { entity });
+        this.$screenContent.append(this.catalog.selectedCard.render());
+        this.catalog.selectedCard.listen();
+        this.catalog.selectedCard.update();
+        this.renderCode();
+        return this.catalog.selectedCard;
+    }
+
+    public showLuaTableField(entity: RosettaLuaTableField): LuaFieldCard | null {
+        const { selected } = this.catalog;
+        if (!(selected instanceof RosettaLuaTable)) return null;
+        this.$screenContent.empty();
+        const card = new LuaFieldCard(this, { entity, isStatic: true });
+        this.$screenContent.append(card.render());
+        card.listen();
+        card.update();
+        return card;
+    }
+
+    public showLuaTableFunction(entity: RosettaLuaFunction): LuaFunctionCard | null {
+        const { selected } = this.catalog;
+        if (!(selected instanceof RosettaLuaTable)) return null;
+        this.$screenContent.empty();
+        const card = new LuaFunctionCard(this, { entity, isStatic: true });
+        this.$screenContent.append(card.render());
+        card.listen();
+        card.update();
+        return card;
+    }
+
     public showJavaClass(entity: RosettaJavaClass): JavaClassCard {
         this.$screenContent.empty();
-        // this.selected = entity.name;
         this.catalog.selected = entity;
         this.catalog.selectedCard = new JavaClassCard(this, { entity });
         this.$screenContent.append(this.catalog.selectedCard.render());

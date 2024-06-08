@@ -62,6 +62,17 @@ export class ObjectTree {
             $(`#${_this.sidebar.idLuaClassDropdown}`).show();
         });
 
+        $doc.on('click', '.object-tree-lua-table', function () {
+            const name = this.id.substring('object-lua-table-'.length);
+            _this.app.showLuaTable(_this.app.catalog.luaTables[name]);
+            // Update the class properties tree.
+            const { itemTree } = _this.sidebar;
+            itemTree.selected = undefined;
+            itemTree.selectedID = undefined;
+            itemTree.populate();
+            $(`#${_this.sidebar.idLuaClassDropdown}`).show();
+        });
+
         $doc.on('click', '.object-tree-java-class', function () {
             const name = this.id.substring('object-java-class-'.length);
             _this.app.showJavaClass(_this.app.catalog.javaClasses[name]);

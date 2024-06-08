@@ -34,9 +34,9 @@ export class ItemTree {
 
     /* Lua Table Folders */
 
-    readonly idFolderLuaTableValue = `item-tree-folder-lua-table-value`;
+    readonly idFolderLuaTableField = `item-tree-folder-lua-table-value`;
     readonly idFolderLuaTableFunction = `item-tree-folder-lua-table-function`;
-    folderLuaTableValueOpen = true;
+    folderLuaTableFieldOpen = true;
     folderLuaTableFunctionOpen = true;
 
     /* Java Class Folders */
@@ -93,7 +93,7 @@ export class ItemTree {
         const _this = this;
         const $doc = $(document);
 
-        $doc.on('click', '.lua-constructor-item', function () {
+        $doc.on('click', '.lua-class-constructor-item', function () {
             // Prevent wasteful selection code executions here.
             if (_this.selected === 'constructor') return;
             const entity = _this.app.catalog.selected as RosettaLuaClass;
@@ -102,7 +102,7 @@ export class ItemTree {
             _this.selected = 'constructor';
         });
 
-        $doc.on('click', '.lua-field-item', function () {
+        $doc.on('click', '.lua-class-field-item', function () {
             const fieldName = this.id.split('field-')[1].trim();
             // Prevent wasteful selection code executions here.
             if (_this.selected === fieldName) return;
@@ -114,7 +114,7 @@ export class ItemTree {
             _this.selected = fieldName;
         });
 
-        $doc.on('click', '.lua-value-item', function () {
+        $doc.on('click', '.lua-class-value-item', function () {
             const valueName = this.id.split('value-')[1].trim();
             // Prevent wasteful selection code executions here.
             if (_this.selected === valueName) return;
@@ -126,7 +126,7 @@ export class ItemTree {
             _this.selected = valueName;
         });
 
-        $doc.on('click', '.lua-method-item', function () {
+        $doc.on('click', '.lua-class-method-item', function () {
             const methodName = this.id.split('method-')[1].trim();
             // Prevent wasteful selection code executions here.
             if (_this.selected === methodName) return;
@@ -138,7 +138,7 @@ export class ItemTree {
             _this.selected = methodName;
         });
 
-        $doc.on('click', '.lua-function-item', function () {
+        $doc.on('click', '.lua-class-function-item', function () {
             const functionName = this.id.split('function-')[1].trim();
             // Prevent wasteful selection code executions here.
             if (_this.selected === functionName) return;
@@ -170,8 +170,36 @@ export class ItemTree {
         const _this = this;
         const $doc = $(document);
 
-        $doc.on('click', '#' + this.idFolderLuaTableValue, () => {
-            this.folderLuaTableValueOpen = !this.folderLuaTableValueOpen;
+        $doc.on('click', '.lua-table-field-item', function () {
+            const fieldName = this.id.split('field-')[1].trim();
+            console.log(this.id);
+            console.log(fieldName);
+            // Prevent wasteful selection code executions here.
+            if (_this.selected === fieldName) return;
+            const entity = _this.app.catalog.selected as RosettaLuaTable;
+            const field = entity.fields[fieldName];
+            console.log(field);
+            if (!field) return;
+            _this.app.showLuaTableField(field);
+            // Let the editor know we last selected the field.
+            _this.selected = fieldName;
+        });
+
+        $doc.on('click', '.lua-table-function-item', function () {
+            const functionName = this.id.split('function-')[1].trim();
+            // Prevent wasteful selection code executions here.
+            if (_this.selected === functionName) return;
+            const entity = _this.app.catalog.selected as RosettaLuaTable;
+            const func = entity.functions[functionName];
+            if (!func) return;
+            _this.app.showLuaTableFunction(func);
+            // Let the editor know we last selected the function.
+            _this.selected = functionName;
+        });
+
+        // Preserve the state of folders.
+        $doc.on('click', '#' + this.idFolderLuaTableField, () => {
+            this.folderLuaTableFieldOpen = !this.folderLuaTableFieldOpen;
         });
         $doc.on('click', '#' + this.idFolderLuaTableFunction, () => {
             this.folderLuaTableFunctionOpen = !this.folderLuaTableFunctionOpen;
@@ -265,7 +293,7 @@ export class ItemTree {
             const field = entity.fields[fieldName];
             const id = `lua-class-${entity.name}-field-${field.name}`;
 
-            const classes: string[] = ['item-tree-item', 'lua-field-item'];
+            const classes: string[] = ['item-tree-item', 'lua-class-field-item'];
             if (id === this.selectedID) classes.push('selected');
 
             fields.push({
@@ -283,7 +311,7 @@ export class ItemTree {
             const value = entity.values[valueName];
             const id = `lua-class-${entity.name}-value-${value.name}`;
 
-            const classes: string[] = ['item-tree-item', 'lua-value-item'];
+            const classes: string[] = ['item-tree-item', 'lua-class-value-item'];
             if (id === this.selectedID) classes.push('selected');
 
             values.push({
@@ -301,7 +329,7 @@ export class ItemTree {
             const method = entity.methods[methodName];
             const id = `lua-class-${entity.name}-method-${method.name}`;
 
-            const classes: string[] = ['item-tree-item', 'lua-method-item'];
+            const classes: string[] = ['item-tree-item', 'lua-class-method-item'];
             if (id === this.selectedID) classes.push('selected');
 
             methods.push({
@@ -319,7 +347,7 @@ export class ItemTree {
             const func = entity.functions[functionName];
             const id = `lua-class-${entity.name}-function-${func.name}`;
 
-            const classes: string[] = ['item-tree-item', 'lua-function-item'];
+            const classes: string[] = ['item-tree-item', 'lua-class-function-item'];
             if (id === this.selectedID) classes.push('selected');
 
             functions.push({
@@ -338,7 +366,7 @@ export class ItemTree {
         $treeLower = $get('tree-lower');
 
         const conzID = `lua-class-${entity.name}-constructor`;
-        const conzClasses: string[] = ['item-tree-item', 'lua-constructor-item'];
+        const conzClasses: string[] = ['item-tree-item', 'lua-class-constructor-item'];
         if (conzID === this.selectedID) conzClasses.push('selected');
 
         const folderFields = {
@@ -396,18 +424,60 @@ export class ItemTree {
         const _this = this;
 
         const funcs: any[] = [];
-        const values: any[] = [];
+
+        const fieldNames = Object.keys(entity.fields);
+        fieldNames.sort((a, b) => a.localeCompare(b));
+        const fields = [];
+        for (const fieldName of fieldNames) {
+            const field = entity.fields[fieldName];
+            const id = `lua-table-${entity.name}-field-${field.name}`;
+
+            const classes: string[] = ['item-tree-item', 'lua-table-field-item'];
+            if (id === this.selectedID) classes.push('selected');
+
+            fields.push({
+                text: field.name,
+                icon: LuaCard.getTypeIcon(field.type),
+                id,
+                class: classes
+            });
+        }
+
+        const functionNames = Object.keys(entity.functions);
+        functionNames.sort((a, b) => a.localeCompare(b));
+        const functions = [];
+        for (const functionName of functionNames) {
+            const func = entity.functions[functionName];
+            const id = `lua-table-${entity.name}-function-${func.name}`;
+
+            const classes: string[] = ['item-tree-item', 'lua-table-function-item'];
+            if (id === this.selectedID) classes.push('selected');
+
+            functions.push({
+                text: html`<i class="fa-solid fa-xmark me-2" title="${func.returns.type}"></i>${func.name}`,
+                icon: 'fa-solid fa-terminal text-success mx-2',
+                id,
+                class: classes
+            });
+        }
+
+        let $treeLower = $get('tree-lower');
+        $treeLower.remove();
+
+        const $sidebarContentLower = $get('sidebar-content-lower');
+        $sidebarContentLower.append('<div id="tree-lower" class="rounded-0 bg-dark text-white"></div>');
+        $treeLower = $get('tree-lower');
 
         // @ts-ignore
         $treeLower.bstreeview({
             data: [
                 {
-                    text: "Values",
+                    text: "Fields",
                     icon: "fa-solid fa-folder text-light mx-2",
                     class: ['item-tree-folder', 'bg-secondary'],
-                    id: _this.idFolderLuaTableValue,
-                    expanded: _this.folderLuaTableValueOpen,
-                    nodes: values
+                    id: _this.idFolderLuaTableField,
+                    expanded: _this.folderLuaTableFieldOpen,
+                    nodes: fields
                 },
                 {
                     text: "Functions",

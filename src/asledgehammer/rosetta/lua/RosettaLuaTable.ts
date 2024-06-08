@@ -140,4 +140,48 @@ export class RosettaLuaTable extends RosettaEntity {
 
     return json;
   }
+
+  /**
+   * Creates a field in the Lua class.
+   *
+   * @param name The name of the new field.
+   * @returns The new field.
+   *
+   * @throws Error Thrown if:
+   * - A field already exists with the same name in the Lua class.
+   */
+  createField(name: string): RosettaLuaTableField {
+    const field = new RosettaLuaTableField(name);
+
+    // (Only check for the file instance)
+    if (this.fields[field.name]) {
+      throw new Error(`A field already exists: ${field.name}`);
+    }
+
+    this.fields[field.name] = field;
+
+    return field;
+  }
+
+  /**
+   * Creates a function in the Lua class.
+   *
+   * @param name The name of the new function.
+   * @returns The new function.
+   *
+   * @throws Error Thrown if:
+   * - A method already exists with the same name in the Lua class.
+   */
+  createFunction(name: string): RosettaLuaFunction {
+    const func = new RosettaLuaFunction(name, { returns: { type: 'void', notes: '' } });
+
+    // (Only check for the file instance)
+    if (this.functions[func.name]) {
+      throw new Error(`A function already exists: ${func.name}`);
+    }
+
+    this.functions[func.name] = func;
+
+    return func;
+  }
 }

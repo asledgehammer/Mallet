@@ -13,29 +13,28 @@ export const generateLuaField = (field: RosettaLuaField | RosettaLuaTableField):
 
 export const generateLuaValue = (containerName: string, field: RosettaLuaField | RosettaLuaTableField): string => {
 
-    let s = '';
-
-    // Function Description
-    if (field.notes && field.notes.length) {
-        const notes = paginateNotes(field.notes, 100);
-        for (const line of notes) {
-            s += `--- ${line}\n`;
-        }
-    }
-
-    let q = `${s}${containerName}.${field.name}`;
     if (field.defaultValue) {
+        let s = '';
+        // Function Description
+        if (field.notes && field.notes.length) {
+            const notes = paginateNotes(field.notes, 100);
+            for (const line of notes) {
+                s += `--- ${line}\n`;
+            }
+        }
+        let q = `${s}${containerName}.${field.name}`;
         let d = field.defaultValue;
 
         // Try parsing as a int.
-        if (!parseInt(d) && !parseFloat(d)) {
+        if (parseInt(d) == null && parseFloat(d) == null) {
             // String-wrapping with escaped double-quotes.
             d = `"${d.replace(/"/g, '\\"').replace(/\n/g, '\\n')}"`;
         }
         q += ` = ${d}`;
+        return `${q};`;
     }
 
-    return `${q};`;
+    return '';
 };
 
 export const generateLuaParameterBody = (params: RosettaLuaParameter[]): string => {
@@ -199,9 +198,9 @@ export const generateLuaClass = (clazz: RosettaLuaClass): string => {
         valueNames.sort((a, b) => a.localeCompare(b));
         for (const valueName of valueNames) {
             const value = clazz.values[valueName];
-            s += generateLuaValue(clazz.name, value) + '\n';
+            const ss = generateLuaValue(clazz.name, value);
+            if (ss.length) s += ss + '\n';
         }
-
         s += '\n';
     }
 
@@ -231,57 +230,57 @@ export const generateLuaClass = (clazz: RosettaLuaClass): string => {
     return s;
 }
 
-export const generateLuaTable = (clazz: RosettaLuaTable): string => {
+export const generateLuaTable = (table: RosettaLuaTable): string => {
     const ds: string[] = [];
     let s = '';
 
     // If the class has a description.
-    if (clazz.notes && clazz.notes.length > 0) {
-        const notes = paginateNotes(clazz.notes, 100);
+    if (table.notes && table.notes.length > 0) {
+        const notes = paginateNotes(table.notes, 100);
         for (const line of notes) {
             ds.push(line);
         }
     }
 
-    ds.push(`@class ${clazz.name}: table<string, any>`);
+    ds.push(`@class ${table.name}: table<string, any>`);
 
     // Generate any value-comments in the class here.
-    const valueNames = Object.keys(clazz.fields);
+    const valueNames = Object.keys(table.fields);
     if (valueNames.length) {
         valueNames.sort((a, b) => a.localeCompare(b));
         for (const valueName of valueNames) {
-            const field = clazz.fields[valueName];
+            const field = table.fields[valueName];
             ds.push(generateLuaField(field));
         }
     }
 
     // NOTE: This is to keep flexability in Lua for adding custom properties to existing classes.
-    if (clazz.mutable) {
+    if (table.mutable) {
         ds.push('@field [any] any');
     }
 
     s = applyLuaDocumentation(ds, 0);
 
-    s += `${clazz.name} = {};\n\n`;
+    s += `${table.name} = {};\n\n`;
 
     // Generate any values in the class here.
     if (valueNames.length) {
         valueNames.sort((a, b) => a.localeCompare(b));
         for (const valueName of valueNames) {
-            const value = clazz.fields[valueName];
-            s += generateLuaValue(clazz.name, value) + '\n';
+            const value = table.fields[valueName];
+            const ss = generateLuaValue(table.name, value);
+            if (ss.length) s += ss + '\n';
         }
-
         s += '\n';
     }
 
     // Generate any functions in the class here.
-    const functionNames = Object.keys(clazz.functions);
+    const functionNames = Object.keys(table.functions);
     if (functionNames.length) {
         functionNames.sort((a, b) => a.localeCompare(b));
         for (const functionName of functionNames) {
-            const func = clazz.functions[functionName];
-            s += generateLuaFunction(clazz.name, '.', func) + '\n\n';
+            const func = table.functions[functionName];
+            s += generateLuaFunction(table.name, '.', func) + '\n\n';
         }
     }
 

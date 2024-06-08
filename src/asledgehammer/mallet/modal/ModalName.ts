@@ -6,6 +6,7 @@ import { RosettaJavaParameter } from "../../rosetta/java/RosettaJavaParameter";
 import { RosettaLuaClass } from "../../rosetta/lua/RosettaLuaClass";
 import { RosettaLuaConstructor } from "../../rosetta/lua/RosettaLuaConstructor";
 import { RosettaLuaFunction } from "../../rosetta/lua/RosettaLuaFunction";
+import { RosettaLuaTable } from "../../rosetta/lua/RosettaLuaTable";
 import { $get, validateLuaVariableName } from "../../rosetta/util";
 import { NameModeType } from "../component/NameModeType";
 
@@ -41,7 +42,7 @@ export class ModalName {
 
     listen() {
 
-        const { app, $inputName, $titleName, $btnName } = this;
+        const { app, $inputName, $btnName } = this;
         const { catalog: active, sidebar, toast } = app;
 
         this.$inputName.on('input', () => {
@@ -61,7 +62,7 @@ export class ModalName {
         });
 
         this.$btnName.on('click', () => {
-            const clazz = active.selectedCard?.options!.entity!;
+            const entity = active.selectedCard?.options!.entity!;
             const name = validateLuaVariableName($inputName.val()!).trim();
             const nameOld = this.nameSelected!;
             switch (this.nameMode) {
@@ -78,65 +79,88 @@ export class ModalName {
                     break;
                 }
                 case 'edit_class': {
-                    if (clazz instanceof RosettaLuaClass) {
+                    if (entity instanceof RosettaLuaClass) {
                         try {
 
                             // Modify the dictionary.
-                            delete active.luaClasses[clazz.name];
-                            clazz.name = name;
-                            active.luaClasses[name] = clazz;
+                            delete active.luaClasses[entity.name];
+                            entity.name = name;
+                            active.luaClasses[name] = entity;
 
-                            app.showLuaClass(clazz);
+                            app.showLuaClass(entity);
                             sidebar.populateTrees();
                             toast.alert('Edited Lua Class.');
                         } catch (e) {
                             toast.alert(`Failed to edit Lua Class.`, 'error');
                             console.error(e);
                         }
-                    } else if (clazz instanceof RosettaJavaClass) {
+                    } else if (entity instanceof RosettaJavaClass) {
                         throw new Error('Cannot modify name of Java class. (Read-Only)');
                     }
                     break;
                 }
                 case 'new_field': {
-                    if (clazz instanceof RosettaLuaClass) {
+                    if (entity instanceof RosettaLuaClass) {
                         try {
-                            const field = clazz.createField(name);
+                            const field = entity.createField(name);
                             app.showLuaClassField(field);
                             sidebar.populateTrees();
-                            toast.alert('Created Lua Field.', 'success');
+                            toast.alert('Created Lua Class Field.', 'success');
                         } catch (e) {
-                            toast.alert(`Failed to create Lua Field.`, 'error');
+                            toast.alert(`Failed to create Lua Class Field.`, 'error');
                             console.error(e);
                         }
-                    } else if (clazz instanceof RosettaJavaClass) {
+                    } else if (entity instanceof RosettaLuaTable) {
+                        try {
+                            const field = entity.createField(name);
+                            app.showLuaTableField(field);
+                            sidebar.populateTrees();
+                            toast.alert('Created Lua Table Field.', 'success');
+                        } catch (e) {
+                            toast.alert(`Failed to create Lua Table Field.`, 'error');
+                            console.error(e);
+                        }
+                    } else if (entity instanceof RosettaJavaClass) {
                         throw new Error('Cannot add field in Java class. (Not implemented)');
                     }
                     break;
                 }
                 case 'edit_field': {
-                    if (clazz instanceof RosettaLuaClass) {
+                    if (entity instanceof RosettaLuaClass) {
                         try {
-                            const field = clazz.fields[nameOld];
+                            const field = entity.fields[nameOld];
                             field.name = name;
-                            clazz.fields[name] = field;
-                            delete clazz.fields[nameOld];
+                            entity.fields[name] = field;
+                            delete entity.fields[nameOld];
                             app.showLuaClassField(field);
                             sidebar.populateTrees();
-                            toast.alert('Edited Lua Field.');
+                            toast.alert('Edited Lua Class Field.');
                         } catch (e) {
-                            toast.alert(`Failed to edit Lua Field.`, 'error');
+                            toast.alert(`Failed to edit Lua Class Field.`, 'error');
                             console.error(e);
                         }
-                    } else if (clazz instanceof RosettaJavaClass) {
+                    } else if (entity instanceof RosettaLuaTable) {
+                        try {
+                            const field = entity.fields[nameOld];
+                            field.name = name;
+                            entity.fields[name] = field;
+                            delete entity.fields[nameOld];
+                            app.showLuaTableField(field);
+                            sidebar.populateTrees();
+                            toast.alert('Edited Lua Table Field.');
+                        } catch (e) {
+                            toast.alert(`Failed to edit Lua Table Field.`, 'error');
+                            console.error(e);
+                        }
+                    } else if (entity instanceof RosettaJavaClass) {
                         throw new Error('Cannot modify name of Java field. (Read-Only)');
                     }
                     break;
                 }
                 case 'new_value': {
-                    if (clazz instanceof RosettaLuaClass) {
+                    if (entity instanceof RosettaLuaClass) {
                         try {
-                            const value = clazz.createValue(name);
+                            const value = entity.createValue(name);
                             app.showLuaClassValue(value);
                             sidebar.populateTrees();
                             toast.alert('Created Lua Value.', 'success');
@@ -144,18 +168,20 @@ export class ModalName {
                             toast.alert(`Failed to create Lua Value.`, 'error');
                             console.error(e);
                         }
-                    } else if (clazz instanceof RosettaJavaClass) {
+                    } else if (entity instanceof RosettaLuaTable) {
+                        throw new Error('Values are not supported in Lua Tables.');
+                    } else if (entity instanceof RosettaJavaClass) {
                         throw new Error('Values are not supported in Java.');
                     }
                     break;
                 }
                 case 'edit_value': {
-                    if (clazz instanceof RosettaLuaClass) {
+                    if (entity instanceof RosettaLuaClass) {
                         try {
-                            const value = clazz.values[nameOld];
+                            const value = entity.values[nameOld];
                             value.name = name;
-                            clazz.values[name] = value;
-                            delete clazz.values[nameOld];
+                            entity.values[name] = value;
+                            delete entity.values[nameOld];
                             app.showLuaClassValue(value);
                             sidebar.populateTrees();
                             toast.alert('Edited Lua value.');
@@ -163,13 +189,17 @@ export class ModalName {
                             toast.alert(`Failed to edit Lua Value.`, 'error');
                             console.error(e);
                         }
+                    } else if (entity instanceof RosettaLuaTable) {
+                        throw new Error('Values are not supported in Lua Tables.');
+                    } else if (entity instanceof RosettaJavaClass) {
+                        throw new Error('Values are not supported in Java.');
                     }
                     break;
                 }
                 case 'new_function': {
-                    if (clazz instanceof RosettaLuaClass) {
+                    if (entity instanceof RosettaLuaClass) {
                         try {
-                            const func = clazz.createFunction(name);
+                            const func = entity.createFunction(name);
                             app.showLuaClassFunction(func);
                             sidebar.populateTrees();
                             toast.alert('Created Lua Function.', 'success');
@@ -177,30 +207,57 @@ export class ModalName {
                             toast.alert(`Failed to create Lua Function.`, 'error');
                             console.error(e);
                         }
+                    } else if (entity instanceof RosettaLuaTable) {
+                        try {
+                            const func = entity.createFunction(name);
+                            app.showLuaClassFunction(func);
+                            sidebar.populateTrees();
+                            toast.alert('Created Lua Function.', 'success');
+                        } catch (e) {
+                            toast.alert(`Failed to create Lua Function.`, 'error');
+                            console.error(e);
+                        }
+                    } else if (entity instanceof RosettaJavaClass) {
+                        throw new Error('Functions are not supported in Java.');
                     }
                     break;
                 }
                 case 'edit_function': {
-                    if (clazz instanceof RosettaLuaClass) {
+                    if (entity instanceof RosettaLuaClass) {
                         try {
-                            const func = clazz.functions[nameOld];
+                            const func = entity.functions[nameOld];
                             func.name = name;
-                            clazz.functions[name] = func;
-                            delete clazz.functions[nameOld];
+                            entity.functions[name] = func;
+                            delete entity.functions[nameOld];
                             app.showLuaClassFunction(func);
                             sidebar.populateTrees();
-                            toast.alert('Edited Lua Function.');
+                            toast.alert('Edited Lua Class Function.');
                         } catch (e) {
-                            toast.alert(`Failed to edit Lua Function.`, 'error');
+                            toast.alert(`Failed to edit Lua Class Function.`, 'error');
                             console.error(e);
                         }
+                    } else if (entity instanceof RosettaLuaTable) {
+                        try {
+                            const func = entity.functions[nameOld];
+                            func.name = name;
+                            entity.functions[name] = func;
+                            delete entity.functions[nameOld];
+                            app.showLuaClassFunction(func);
+                            sidebar.populateTrees();
+                            toast.alert('Edited Lua Table Function.');
+                        } catch (e) {
+                            toast.alert(`Failed to edit Lua Table Function.`, 'error');
+                            console.error(e);
+                        }
+                    } else if (entity instanceof RosettaJavaClass) {
+                        throw new Error('Functions are not supported in Java.');
                     }
                     break;
                 }
                 case 'new_method': {
-                    if (clazz instanceof RosettaLuaClass) {
+                    if (entity instanceof RosettaLuaClass) {
                         try {
-                            const method = clazz.createMethod(name);
+                            const method = entity.createMethod(name);
                             app.showLuaClassMethod(method);
                             sidebar.populateTrees();
                             toast.alert('Created Lua Method.', 'success');
@@ -208,16 +265,20 @@ export class ModalName {
                             toast.alert(`Failed to create Lua Method.`, 'error');
                             console.error(e);
                         }
+                    } else if (entity instanceof RosettaLuaTable) {
+                        throw new Error('Methods are not supported in Lua Tables.');
+                    } else if (entity instanceof RosettaJavaClass) {
+                        throw new Error('Adding Methods are not supported in Java.');
                     }
                     break;
                 }
                 case 'edit_method': {
-                    if (clazz instanceof RosettaLuaClass) {
+                    if (entity instanceof RosettaLuaClass) {
                         try {
-                            const method = clazz.methods[nameOld];
+                            const method = entity.methods[nameOld];
                             method.name = name;
-                            clazz.methods[name] = method;
-                            delete clazz.methods[nameOld];
+                            entity.methods[name] = method;
+                            delete entity.methods[nameOld];
                             app.showLuaClassMethod(method);
                             sidebar.populateTrees();
                             toast.alert('Edited Lua Method.');
@@ -225,11 +286,15 @@ export class ModalName {
                             toast.alert(`Failed to edit Lua Method.`, 'error');
                             console.error(e);
                         }
+                    } else if (entity instanceof RosettaLuaTable) {
+                        throw new Error('Methods are not supported in Lua Tables.');
+                    } else if (entity instanceof RosettaJavaClass) {
+                        throw new Error('Editing Methods are not supported in Java.');
                     }
                     break;
                 }
                 case 'new_parameter': {
-                    if (clazz instanceof RosettaLuaClass) {
+                    if (entity instanceof RosettaLuaClass) {
                         try {
                             const split = nameOld.split('-');
                             const type = split[0];
@@ -237,11 +302,11 @@ export class ModalName {
 
                             let func: RosettaLuaConstructor | RosettaLuaFunction | null = null;
                             if (type === 'constructor') {
-                                func = clazz.conztructor;
+                                func = entity.conztructor;
                             } else if (type === 'function') {
-                                func = clazz.functions[funcName];
+                                func = entity.functions[funcName];
                             } else {
-                                func = clazz.methods[funcName];
+                                func = entity.methods[funcName];
                             }
 
                             func!.addParameter(name, 'any');
@@ -259,11 +324,38 @@ export class ModalName {
                             toast.alert(`Failed to create Lua Parameter.`, 'error');
                             console.error(e);
                         }
+                    } else if (entity instanceof RosettaLuaTable) {
+                        try {
+                            const split = nameOld.split('-');
+                            const type = split[0];
+                            const funcName = split[1];
+
+                            let func: RosettaLuaConstructor | RosettaLuaFunction | null = null;
+                            if (type === 'constructor') {
+                                throw new Error('Constructors are not supported in Lua Tables.');
+                            } else if (type === 'function') {
+                                func = entity.functions[funcName];
+                            } else {
+                                throw new Error('Methods are not supported in Lua Tables.');
+                            }
+
+                            func!.addParameter(name, 'any');
+
+                            app.showLuaClassFunction(func as RosettaLuaFunction);
+                            app.renderCode();
+
+                            toast.alert('Created Lua Parameter.', 'success');
+                        } catch (e) {
+                            toast.alert(`Failed to create Lua Parameter.`, 'error');
+                            console.error(e);
+                        }
+                    } else if (entity instanceof RosettaJavaClass) {
+                        throw new Error('Adding parameters are not supported in Java.');
                     }
                     break;
                 }
                 case 'edit_parameter': {
-                    if (clazz instanceof RosettaLuaClass) {
+                    if (entity instanceof RosettaLuaClass) {
                         try {
                             const split = nameOld.split('-');
                             const funcName = split[0];
@@ -273,22 +365,22 @@ export class ModalName {
                             let param = null;
                             // Could be the constructor.
                             if (funcName === 'new') {
-                                func = clazz.conztructor;
+                                func = entity.conztructor;
                                 type = 'constructor';
                             } else {
                                 // First, check methods.
-                                for (const methodName of Object.keys(clazz.methods)) {
+                                for (const methodName of Object.keys(entity.methods)) {
                                     if (methodName === funcName) {
-                                        func = clazz.methods[methodName];
+                                        func = entity.methods[methodName];
                                         type = 'method';
                                         break;
                                     }
                                 }
                                 // Second, check functions.
                                 if (!func) {
-                                    for (const methodName of Object.keys(clazz.functions)) {
+                                    for (const methodName of Object.keys(entity.functions)) {
                                         if (methodName === funcName) {
-                                            func = clazz.functions[methodName];
+                                            func = entity.functions[methodName];
                                             type = 'function';
                                             break;
                                         }
@@ -296,7 +388,7 @@ export class ModalName {
                                 }
                             }
                             if (!func) {
-                                console.warn(`Unknown function / method / constructor: ${clazz.name}.${funcName}!`);
+                                console.warn(`Unknown function / method / constructor: ${entity.name}.${funcName}!`);
                                 break;
                             }
                             for (const next of func.parameters) {
@@ -306,7 +398,7 @@ export class ModalName {
                                 }
                             }
                             if (!param) {
-                                console.warn(`Unknown parameter: ${clazz.name}.${funcName}#${paramName}!`);
+                                console.warn(`Unknown parameter: ${entity.name}.${funcName}#${paramName}!`);
                                 break;
                             }
                             param.name = name;
@@ -324,7 +416,44 @@ export class ModalName {
                             toast.alert(`Failed to edit Lua Parameter.`, 'error');
                             console.error(e);
                         }
-                    } else if (clazz instanceof RosettaJavaClass) {
+                    } else if (entity instanceof RosettaLuaTable) {
+                        try {
+                            const split = nameOld.split('-');
+                            const funcName = split[0];
+                            const paramName = split[1];
+                            let func = null;
+                            let param = null;
+                            for (const methodName of Object.keys(entity.functions)) {
+                                if (methodName === funcName) {
+                                    func = entity.functions[methodName];
+                                    break;
+                                }
+                            }
+                            if (!func) {
+                                console.warn(`Unknown function: ${entity.name}.${funcName}!`);
+                                break;
+                            }
+                            for (const next of func.parameters) {
+                                if (next.name === paramName) {
+                                    param = next;
+                                    break;
+                                }
+                            }
+                            if (!param) {
+                                console.warn(`Unknown parameter: ${entity.name}.${funcName}#${paramName}!`);
+                                break;
+                            }
+                            param.name = name;
+
+                            app.showLuaClassFunction(func as RosettaLuaFunction);
+                            app.renderCode();
+                            sidebar.populateTrees();
+                            toast.alert('Edited Lua Parameter.');
+                        } catch (e) {
+                            toast.alert(`Failed to edit Lua Parameter.`, 'error');
+                            console.error(e);
+                        }
+                    } else if (entity instanceof RosettaJavaClass) {
                         try {
                             const split = nameOld.split('-');
                             const funcName = split[0];
@@ -339,11 +468,11 @@ export class ModalName {
                                 method = this.javaMethod;
                             }
                             if (!method) {
-                                console.warn(`Unknown function / method / constructor: ${clazz.name}.${funcName}!`);
+                                console.warn(`Unknown function / method / constructor: ${entity.name}.${funcName}!`);
                                 break;
                             }
                             if (!param) {
-                                console.warn(`Unknown parameter: ${clazz.name}.${funcName}#${paramName}!`);
+                                console.warn(`Unknown parameter: ${entity.name}.${funcName}#${paramName}!`);
                                 break;
                             }
                             param.name = name;

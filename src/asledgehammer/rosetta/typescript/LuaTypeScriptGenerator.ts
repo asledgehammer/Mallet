@@ -357,9 +357,7 @@ export function luaTableToTS(
 
     /* (Class Documentation) */
     const ds: string[] = [];
-    ds.push(`@customConstructor ${table.name}:new`);
-    ds.push('');
-    ds.push(`Lua Class: ${table.name}`);
+    ds.push(`Lua Table: ${table.name}`);
     if (table.notes && table.notes.length) {
         ds.push('');
         const lines = paginateNotes(table.notes, notesLength);

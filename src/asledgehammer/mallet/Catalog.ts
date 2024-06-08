@@ -9,6 +9,7 @@ import { luaClassToTS, luaTableToTS } from "../rosetta/typescript/LuaTypeScriptG
 import { wrapAsTSFile, wrapAsTSNamespace } from "../rosetta/typescript/TSUtils";
 import { JavaClassCard } from "./component/java/JavaClassCard";
 import { LuaClassCard } from "./component/lua/LuaClassCard";
+import { LuaTableCard } from "./component/lua/LuaTableCard";
 
 export class Catalog {
 
@@ -19,7 +20,7 @@ export class Catalog {
     readonly javaClasses: { [name: string]: RosettaJavaClass } = {};
 
     selected: RosettaLuaClass | RosettaLuaTable | RosettaJavaClass | undefined = undefined;
-    selectedCard: LuaClassCard | JavaClassCard | undefined = undefined;
+    selectedCard: LuaClassCard | LuaTableCard | JavaClassCard | undefined = undefined;
 
     constructor(app: App) {
         this.app = app;
@@ -136,9 +137,9 @@ export class Catalog {
             }
         }
 
-        if (json.luaTables) {
-            for (const name of Object.keys(json.luaTables)) {
-                const entity = new RosettaLuaTable(name, json.luaTables[name]);
+        if (json.tables) {
+            for (const name of Object.keys(json.tables)) {
+                const entity = new RosettaLuaTable(name, json.tables[name]);
                 this.luaTables[name] = entity;
             }
         }
