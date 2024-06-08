@@ -4,6 +4,9 @@ import { RosettaJavaClass, RosettaJavaNamespace } from "../rosetta/java/RosettaJ
 import { generateLuaClass, generateLuaTable } from "../rosetta/lua/LuaLuaGenerator";
 import { RosettaLuaClass } from "../rosetta/lua/RosettaLuaClass";
 import { RosettaLuaTable } from "../rosetta/lua/RosettaLuaTable";
+import { javaClassToTS } from "../rosetta/typescript/JavaTypeScriptGenerator";
+import { luaClassToTS } from "../rosetta/typescript/LuaTypeScriptGenerator";
+import { wrapAsTSFile, wrapAsTSNamespace } from "../rosetta/typescript/TSUtils";
 import { JavaClassCard } from "./component/java/JavaClassCard";
 import { LuaClassCard } from "./component/lua/LuaClassCard";
 
@@ -41,6 +44,45 @@ export class Catalog {
 
         // Clear the screen container.
         this.app.$screenContent.empty();
+    }
+
+    toTypeScript(): string {
+        let keys: string[];
+        let s = '';
+
+        /* Java Classes */
+        keys = Object.keys(this.javaClasses);
+        if (keys.length) {
+            keys.sort((a, b) => a.localeCompare(b));
+            for (const name of Object.keys(this.javaClasses)) {
+                const javaClass = this.javaClasses[name];
+                s += `// Java Class: ${javaClass.namespace.name}.${javaClass.name} \n\n`;
+                s += javaClassToTS(javaClass, false, false) + '\n\n';
+            }
+        }
+
+        /* Lua Classes */
+        keys = Object.keys(this.luaClasses);
+        if (keys.length) {
+            keys.sort((a, b) => a.localeCompare(b));
+            for (const name of Object.keys(this.luaClasses)) {
+                const luaClass = this.luaClasses[name];
+                s += `// Lua Class: ${luaClass.name} \n\n`;
+                s += luaClassToTS(luaClass, false) + '\n\n';
+            }
+        }
+
+        /* Lua Tables */
+        // keys = Object.keys(this.luaTables);
+        // if (keys.length) {
+        //     keys.sort((a, b) => a.localeCompare(b));
+        //     for (const name of Object.keys(this.luaTables)) {
+        //         const luaTable = this.luaTables[name];
+        //         // TODO - Implement TS generator for tables.
+        //     }
+        // }
+
+        return wrapAsTSFile(s);
     }
 
     toLuaTypings(): string {

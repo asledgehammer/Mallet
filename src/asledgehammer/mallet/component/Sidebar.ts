@@ -68,7 +68,9 @@ export class Sidebar extends Component<SidebarOptions> {
                         </button>
                         <ul class="dropdown-menu dropdown-menu-dark">
                             <li><a id="btn-save-json" class="dropdown-item" href="#">JSON Catalog</a></li>
+                            <li><a id="btn-save-json-compressed" class="dropdown-item" href="#">JSON Catalog (Compressed)</a></li>
                             <li><a id="btn-save-lua" class="dropdown-item" href="#">Lua Typings</a></li>
+                            <li><a id="btn-save-typescript" class="dropdown-item" href="#">TypeScript Declarations</a></li>
                         </ul>
                     </div>
 
@@ -95,7 +97,9 @@ export class Sidebar extends Component<SidebarOptions> {
                         </button>
                         <ul class="dropdown-menu dropdown-menu-dark">
                             <li><a id="btn-save-object-json" class="dropdown-item" href="#">JSON Object</a></li>
+                            <li><a id="btn-save-object-json-compressed" class="dropdown-item" href="#">JSON Object (Compressed)</a></li>
                             <li><a id="btn-save-object-lua" class="dropdown-item" href="#">Lua Typings</a></li>
+                            <li><a id="btn-save-object-typescript" class="dropdown-item" href="#">TypeScript Declarations</a></li>
                         </ul>
                     </div>
                     
@@ -214,10 +218,38 @@ export class Sidebar extends Component<SidebarOptions> {
             }
         });
 
+        $doc.on('click', '#btn-save-typescript', async () => {
+            try {
+                // @ts-ignore
+                const result = await showSaveFilePicker({
+                    id: 'mallet-save-typescript',
+                    types: [
+                        {
+                            description: "TypeScript Declarations file",
+                            accept: { "application/typescript": [".d.ts"] },
+                        },
+                    ],
+                });
+                const { catalog } = this.app;
+                const lua = catalog.toTypeScript();
+
+                const writable = await result.createWritable();
+                await writable.write(lua);
+                await writable.close();
+
+                app.toast.alert(`Saved Lua typings file.`, 'info');
+            } catch (e) {
+                /* (Ignore aborted dialogs) */
+                if (e instanceof DOMException && e.name === 'AbortError') return;
+                app.toast.alert(`Failed to save Lua typings.`, 'error');
+                console.error(e);
+            }
+        });
+
         $doc.on('click', '#btn-save-object-lua', async () => {
             try {
 
-                if(!this.app.catalog.selected) {
+                if (!this.app.catalog.selected) {
                     return;
                 }
 
@@ -267,6 +299,35 @@ export class Sidebar extends Component<SidebarOptions> {
 
                 const writable = await result.createWritable();
                 await writable.write(JSON.stringify(json, null, 2));
+                await writable.close();
+
+                app.toast.alert(`Saved JSON file.`, 'info');
+
+            } catch (e) {
+                /* (Ignore aborted dialogs) */
+                if (e instanceof DOMException && e.name === 'AbortError') return;
+                app.toast.alert(`Failed to save JSON file.`, 'error');
+                console.error(e);
+            }
+        });
+
+        $doc.on('click', '#btn-save-json-compressed', async () => {
+            try {
+                // @ts-ignore
+                const result = await showSaveFilePicker({
+                    id: 'mallet-save-json',
+                    types: [
+                        {
+                            description: "JSON file",
+                            accept: { "application/json": [".json"] },
+                        }
+                    ],
+                });
+                const { catalog } = this.app;
+                const json = catalog.toJSON();
+
+                const writable = await result.createWritable();
+                await writable.write(JSON.stringify(json));
                 await writable.close();
 
                 app.toast.alert(`Saved JSON file.`, 'info');

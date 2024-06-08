@@ -5149,7 +5149,9 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
                         </button>
                         <ul class="dropdown-menu dropdown-menu-dark">
                             <li><a id="btn-save-json" class="dropdown-item" href="#">JSON Catalog</a></li>
+                            <li><a id="btn-save-json-compressed" class="dropdown-item" href="#">JSON Catalog (Compressed)</a></li>
                             <li><a id="btn-save-lua" class="dropdown-item" href="#">Lua Typings</a></li>
+                            <li><a id="btn-save-typescript" class="dropdown-item" href="#">TypeScript Declarations</a></li>
                         </ul>
                     </div>
 
@@ -5176,7 +5178,9 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
                         </button>
                         <ul class="dropdown-menu dropdown-menu-dark">
                             <li><a id="btn-save-object-json" class="dropdown-item" href="#">JSON Object</a></li>
+                            <li><a id="btn-save-object-json-compressed" class="dropdown-item" href="#">JSON Object (Compressed)</a></li>
                             <li><a id="btn-save-object-lua" class="dropdown-item" href="#">Lua Typings</a></li>
+                            <li><a id="btn-save-object-typescript" class="dropdown-item" href="#">TypeScript Declarations</a></li>
                         </ul>
                     </div>
                     
@@ -5290,6 +5294,33 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
                     console.error(e);
                 }
             });
+            $doc.on('click', '#btn-save-typescript', async () => {
+                try {
+                    // @ts-ignore
+                    const result = await showSaveFilePicker({
+                        id: 'mallet-save-typescript',
+                        types: [
+                            {
+                                description: "TypeScript Declarations file",
+                                accept: { "application/typescript": [".d.ts"] },
+                            },
+                        ],
+                    });
+                    const { catalog } = this.app;
+                    const lua = catalog.toTypeScript();
+                    const writable = await result.createWritable();
+                    await writable.write(lua);
+                    await writable.close();
+                    app.toast.alert(`Saved Lua typings file.`, 'info');
+                }
+                catch (e) {
+                    /* (Ignore aborted dialogs) */
+                    if (e instanceof DOMException && e.name === 'AbortError')
+                        return;
+                    app.toast.alert(`Failed to save Lua typings.`, 'error');
+                    console.error(e);
+                }
+            });
             $doc.on('click', '#btn-save-object-lua', async () => {
                 try {
                     if (!this.app.catalog.selected) {
@@ -5338,6 +5369,33 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
                     const json = catalog.toJSON();
                     const writable = await result.createWritable();
                     await writable.write(JSON.stringify(json, null, 2));
+                    await writable.close();
+                    app.toast.alert(`Saved JSON file.`, 'info');
+                }
+                catch (e) {
+                    /* (Ignore aborted dialogs) */
+                    if (e instanceof DOMException && e.name === 'AbortError')
+                        return;
+                    app.toast.alert(`Failed to save JSON file.`, 'error');
+                    console.error(e);
+                }
+            });
+            $doc.on('click', '#btn-save-json-compressed', async () => {
+                try {
+                    // @ts-ignore
+                    const result = await showSaveFilePicker({
+                        id: 'mallet-save-json',
+                        types: [
+                            {
+                                description: "JSON file",
+                                accept: { "application/json": [".json"] },
+                            }
+                        ],
+                    });
+                    const { catalog } = this.app;
+                    const json = catalog.toJSON();
+                    const writable = await result.createWritable();
+                    await writable.write(JSON.stringify(json));
                     await writable.close();
                     app.toast.alert(`Saved JSON file.`, 'info');
                 }
@@ -6855,7 +6913,7 @@ define("src/asledgehammer/rosetta/java/JavaLuaGenerator", ["require", "exports"]
     }
     exports.generateJavaClass = generateJavaClass;
 });
-define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass"], function (require, exports, JavaLuaGenerator_1, RosettaJavaClass_3, LuaLuaGenerator_6, RosettaLuaClass_3) {
+define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/TSUtils"], function (require, exports, JavaLuaGenerator_1, RosettaJavaClass_3, LuaLuaGenerator_6, RosettaLuaClass_3, JavaTypeScriptGenerator_5, LuaTypeScriptGenerator_5, TSUtils_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Catalog = void 0;
@@ -6884,6 +6942,40 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
             this.selectedCard = undefined;
             // Clear the screen container.
             this.app.$screenContent.empty();
+        }
+        toTypeScript() {
+            let keys;
+            let s = '';
+            /* Java Classes */
+            keys = Object.keys(this.javaClasses);
+            if (keys.length) {
+                keys.sort((a, b) => a.localeCompare(b));
+                for (const name of Object.keys(this.javaClasses)) {
+                    const javaClass = this.javaClasses[name];
+                    s += `// Java Class: ${javaClass.namespace.name}.${javaClass.name} \n\n`;
+                    s += (0, JavaTypeScriptGenerator_5.javaClassToTS)(javaClass, false, false) + '\n\n';
+                }
+            }
+            /* Lua Classes */
+            keys = Object.keys(this.luaClasses);
+            if (keys.length) {
+                keys.sort((a, b) => a.localeCompare(b));
+                for (const name of Object.keys(this.luaClasses)) {
+                    const luaClass = this.luaClasses[name];
+                    s += `// Lua Class: ${luaClass.name} \n\n`;
+                    s += (0, LuaTypeScriptGenerator_5.luaClassToTS)(luaClass, false) + '\n\n';
+                }
+            }
+            /* Lua Tables */
+            // keys = Object.keys(this.luaTables);
+            // if (keys.length) {
+            //     keys.sort((a, b) => a.localeCompare(b));
+            //     for (const name of Object.keys(this.luaTables)) {
+            //         const luaTable = this.luaTables[name];
+            //         // TODO - Implement TS generator for tables.
+            //     }
+            // }
+            return (0, TSUtils_3.wrapAsTSFile)(s);
         }
         toLuaTypings() {
             let keys;
@@ -6982,7 +7074,7 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
     }
     exports.Catalog = Catalog;
 });
-define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/mallet/component/lua/LuaClassCard", "src/asledgehammer/mallet/component/java/JavaClassCard", "src/asledgehammer/mallet/component/Sidebar", "src/asledgehammer/mallet/component/lua/LuaConstructorCard", "src/asledgehammer/mallet/component/lua/LuaFieldCard", "src/asledgehammer/mallet/component/lua/LuaFunctionCard", "src/asledgehammer/mallet/component/java/JavaConstructorCard", "src/asledgehammer/mallet/component/java/JavaFieldCard", "src/asledgehammer/mallet/component/java/JavaMethodCard", "src/asledgehammer/mallet/modal/ModalName", "src/asledgehammer/mallet/modal/ModalConfirm", "src/asledgehammer/mallet/component/Toast", "src/asledgehammer/mallet/Catalog", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator"], function (require, exports, hljs, LuaLuaGenerator_7, RosettaLuaClass_4, RosettaLuaConstructor_2, util_19, RosettaJavaClass_4, JavaLuaGenerator2_5, LuaClassCard_1, JavaClassCard_1, Sidebar_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, JavaConstructorCard_1, JavaFieldCard_1, JavaMethodCard_1, ModalName_1, ModalConfirm_1, Toast_1, Catalog_1, JavaTypeScriptGenerator_5, LuaTypeScriptGenerator_5) {
+define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/mallet/component/lua/LuaClassCard", "src/asledgehammer/mallet/component/java/JavaClassCard", "src/asledgehammer/mallet/component/Sidebar", "src/asledgehammer/mallet/component/lua/LuaConstructorCard", "src/asledgehammer/mallet/component/lua/LuaFieldCard", "src/asledgehammer/mallet/component/lua/LuaFunctionCard", "src/asledgehammer/mallet/component/java/JavaConstructorCard", "src/asledgehammer/mallet/component/java/JavaFieldCard", "src/asledgehammer/mallet/component/java/JavaMethodCard", "src/asledgehammer/mallet/modal/ModalName", "src/asledgehammer/mallet/modal/ModalConfirm", "src/asledgehammer/mallet/component/Toast", "src/asledgehammer/mallet/Catalog", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator"], function (require, exports, hljs, LuaLuaGenerator_7, RosettaLuaClass_4, RosettaLuaConstructor_2, util_19, RosettaJavaClass_4, JavaLuaGenerator2_5, LuaClassCard_1, JavaClassCard_1, Sidebar_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, JavaConstructorCard_1, JavaFieldCard_1, JavaMethodCard_1, ModalName_1, ModalConfirm_1, Toast_1, Catalog_1, JavaTypeScriptGenerator_6, LuaTypeScriptGenerator_6) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.App = void 0;
@@ -7137,7 +7229,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                         break;
                     }
                     case 'typescript': {
-                        this.previewCode = (0, LuaTypeScriptGenerator_5.luaClassToTS)(selected, true);
+                        this.previewCode = (0, LuaTypeScriptGenerator_6.luaClassToTS)(selected, true);
                         break;
                     }
                     case 'json': {
@@ -7153,7 +7245,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                         break;
                     }
                     case 'typescript': {
-                        this.previewCode = (0, JavaTypeScriptGenerator_5.javaClassToTS)(selected, true, true);
+                        this.previewCode = (0, JavaTypeScriptGenerator_6.javaClassToTS)(selected, true, true);
                         break;
                     }
                     case 'json': {
