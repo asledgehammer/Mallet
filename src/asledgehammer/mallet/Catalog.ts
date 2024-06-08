@@ -5,7 +5,7 @@ import { generateLuaClass, generateLuaTable } from "../rosetta/lua/LuaLuaGenerat
 import { RosettaLuaClass } from "../rosetta/lua/RosettaLuaClass";
 import { RosettaLuaTable } from "../rosetta/lua/RosettaLuaTable";
 import { javaClassToTS } from "../rosetta/typescript/JavaTypeScriptGenerator";
-import { luaClassToTS } from "../rosetta/typescript/LuaTypeScriptGenerator";
+import { luaClassToTS, luaTableToTS } from "../rosetta/typescript/LuaTypeScriptGenerator";
 import { wrapAsTSFile, wrapAsTSNamespace } from "../rosetta/typescript/TSUtils";
 import { JavaClassCard } from "./component/java/JavaClassCard";
 import { LuaClassCard } from "./component/lua/LuaClassCard";
@@ -73,14 +73,15 @@ export class Catalog {
         }
 
         /* Lua Tables */
-        // keys = Object.keys(this.luaTables);
-        // if (keys.length) {
-        //     keys.sort((a, b) => a.localeCompare(b));
-        //     for (const name of Object.keys(this.luaTables)) {
-        //         const luaTable = this.luaTables[name];
-        //         // TODO - Implement TS generator for tables.
-        //     }
-        // }
+        keys = Object.keys(this.luaTables);
+        if (keys.length) {
+            keys.sort((a, b) => a.localeCompare(b));
+            for (const name of Object.keys(this.luaTables)) {
+                const luaTable = this.luaTables[name];
+                s += `// Lua Table: ${luaTable.name} \n\n`;
+                s += luaTableToTS(luaTable, false) + '\n\n';
+            }
+        }
 
         return wrapAsTSFile(s);
     }
@@ -132,6 +133,13 @@ export class Catalog {
             for (const name of Object.keys(json.luaClasses)) {
                 const entity = new RosettaLuaClass(name, json.luaClasses[name]);
                 this.luaClasses[name] = entity;
+            }
+        }
+
+        if (json.luaTables) {
+            for (const name of Object.keys(json.luaTables)) {
+                const entity = new RosettaLuaTable(name, json.luaTables[name]);
+                this.luaTables[name] = entity;
             }
         }
 

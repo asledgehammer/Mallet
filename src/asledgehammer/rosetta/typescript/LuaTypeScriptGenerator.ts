@@ -2,6 +2,7 @@ import { RosettaLuaClass } from "../lua/RosettaLuaClass";
 import { RosettaLuaConstructor } from "../lua/RosettaLuaConstructor";
 import { RosettaLuaField } from "../lua/RosettaLuaField";
 import { RosettaLuaFunction } from "../lua/RosettaLuaFunction";
+import { RosettaLuaTable } from "../lua/RosettaLuaTable";
 import { applyTSDocumentation, paginateNotes, wrapAsTSFile } from "./TSUtils";
 
 export function luaFieldToTS(
@@ -317,6 +318,15 @@ export function luaClassToTS(
     }
 
     if (wrapFile) return wrapAsTSFile(s);
+    return s;
+}
+
+export function luaTableToTS(
+    luaTable: RosettaLuaTable,
+    wrapFile: boolean = false
+): string {
+    let s = '';
+    // TODO: Implement.
     return s;
 }
 
