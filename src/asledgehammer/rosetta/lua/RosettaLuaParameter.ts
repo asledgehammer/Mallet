@@ -11,6 +11,7 @@ import { formatName } from '../RosettaUtils';
 export class RosettaLuaParameter extends RosettaEntity {
   name: string;
   type: string;
+  optional: boolean = false;
   notes: string | undefined;
 
   constructor(raw: { [key: string]: any }) {
@@ -27,6 +28,7 @@ export class RosettaLuaParameter extends RosettaEntity {
       this.type = 'any';
     }
     this.notes = this.readNotes();
+    this.optional = this.readBoolean('optional') || false;
   }
 
   parse(raw: { [key: string]: any }) {
@@ -34,10 +36,11 @@ export class RosettaLuaParameter extends RosettaEntity {
     if (raw.type !== undefined) {
       this.type = this.readRequiredString('type', raw);
     }
+    this.optional = this.readBoolean('optional', raw) || false;
   }
 
   toJSON(patch: boolean = false): any {
-    const { name, type, notes } = this;
+    const { name, type, notes, optional } = this;
 
     const json: any = {};
 
@@ -45,6 +48,7 @@ export class RosettaLuaParameter extends RosettaEntity {
     json.name = name;
     json.type = type;
     json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
+    json.optional = optional !== undefined ? optional : undefined;
 
     return json;
   }

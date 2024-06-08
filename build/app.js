@@ -167,6 +167,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaParameter", ["require", "exports
     class RosettaLuaParameter extends RosettaEntity_1.RosettaEntity {
         constructor(raw) {
             super(raw);
+            this.optional = false;
             Assert.assertNonNull(raw.type, 'raw.type');
             this.name = (0, RosettaUtils_1.formatName)(this.readRequiredString('name'));
             if (raw.type !== undefined) {
@@ -179,20 +180,23 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaParameter", ["require", "exports
                 this.type = 'any';
             }
             this.notes = this.readNotes();
+            this.optional = this.readBoolean('optional') || false;
         }
         parse(raw) {
             this.notes = this.readNotes(raw);
             if (raw.type !== undefined) {
                 this.type = this.readRequiredString('type', raw);
             }
+            this.optional = this.readBoolean('optional', raw) || false;
         }
         toJSON(patch = false) {
-            const { name, type, notes } = this;
+            const { name, type, notes, optional } = this;
             const json = {};
             /* (Properties) */
             json.name = name;
             json.type = type;
             json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
+            json.optional = optional !== undefined ? optional : undefined;
             return json;
         }
     }
@@ -210,6 +214,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaReturns", ["require", "exports",
     class RosettaLuaReturns extends RosettaEntity_2.RosettaEntity {
         constructor(raw) {
             super(raw);
+            this.optional = false;
             if (raw.type !== undefined) {
                 let type = this.readString('type');
                 if (type === undefined)
@@ -220,19 +225,22 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaReturns", ["require", "exports",
                 this.type = 'any';
             }
             this.notes = this.readNotes();
+            this.optional = this.readBoolean('optional') || false;
         }
         parse(raw) {
             this.notes = this.readNotes(raw);
             if (raw.type !== undefined) {
                 this.type = this.readRequiredString('type', raw);
             }
+            this.optional = this.readBoolean('optional', raw) || false;
         }
         toJSON(patch = false) {
-            const { type, notes } = this;
+            const { type, notes, optional } = this;
             const json = {};
             /* (Properties) */
             json.type = type;
             json.notes = notes !== undefined && this.writeNotes(notes) !== '' ? notes : undefined;
+            json.optional = optional !== undefined ? optional : undefined;
             return json;
         }
     }
@@ -337,6 +345,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaField", ["require", "exports", "
     class RosettaLuaField extends RosettaEntity_4.RosettaEntity {
         constructor(name, raw = {}) {
             super(raw);
+            this.optional = false;
             Assert.assertNonEmptyString(name, 'name');
             this.name = name;
             if (raw.type !== undefined) {
@@ -352,6 +361,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaField", ["require", "exports", "
                 this.defaultValue = this.readString('defaultValue');
             }
             this.notes = this.readNotes();
+            this.optional = this.readBoolean('optional') || false;
         }
         parse(raw) {
             this.notes = this.readNotes(raw);
@@ -361,14 +371,16 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaField", ["require", "exports", "
             if (raw.defaultValue !== undefined) {
                 this.defaultValue = this.readRequiredString('defaultValue', raw);
             }
+            this.optional = this.readBoolean('optional', raw) || false;
         }
         toJSON(patch = false) {
-            const { defaultValue, type, notes } = this;
+            const { defaultValue, type, notes, optional } = this;
             const json = {};
             /* (Properties) */
             json.type = type;
             json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
             json.defaultValue = defaultValue !== undefined && defaultValue !== '' ? defaultValue : undefined;
+            json.optional = optional !== undefined ? optional : undefined;
             return json;
         }
     }
@@ -733,6 +745,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaTableField", ["require", "export
     class RosettaLuaTableField extends RosettaEntity_7.RosettaEntity {
         constructor(name, raw = {}) {
             super(raw);
+            this.optional = false;
             Assert.assertNonEmptyString(name, 'name');
             this.name = (0, RosettaUtils_4.formatName)(name);
             if (raw.type !== undefined) {
@@ -746,6 +759,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaTableField", ["require", "export
             }
             this.notes = this.readNotes();
             this.defaultValue = this.readString('defaultValue');
+            this.optional = this.readBoolean('optional') || false;
         }
         parse(raw) {
             /* (Properties) */
@@ -754,6 +768,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaTableField", ["require", "export
                 this.type = this.readRequiredString('type', raw);
             }
             this.defaultValue = this.readString('defaultValue', raw);
+            this.optional = this.readBoolean('optional', raw) || false;
         }
         /**
          * @param patch If true, the exported JSON object will only contain Patch-specific information.
@@ -761,12 +776,13 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaTableField", ["require", "export
          * @returns The JSON of the Rosetta entity.
          */
         toJSON(patch = false) {
-            const { type, notes, defaultValue } = this;
+            const { type, notes, defaultValue, optional } = this;
             const json = {};
             /* (Properties) */
             json.type = type;
             json.notes = notes !== undefined && notes !== '' ? notes : undefined;
             json.defaultValue = defaultValue !== undefined ? defaultValue : undefined;
+            json.optional = optional !== undefined ? optional : undefined;
             return json;
         }
     }
@@ -940,10 +956,18 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaTable", ["require", "exports", "
 define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.applyLuaDocumentation = exports.paginateNotes = exports.generateLuaTable = exports.generateLuaClass = exports.generateLuaConstructor = exports.generateLuaFunction = exports.generateLuaParameterBody = exports.generateLuaValue = exports.generateLuaField = void 0;
+    exports.applyLuaDocumentation = exports.paginateNotes = exports.generateLuaTable = exports.generateLuaClass = exports.generateLuaConstructor = exports.generateLuaFunction = exports.generateLuaParameterBody = exports.generateLuaValue = exports.generateLuaField = exports.luaType = void 0;
+    function luaType(type, optional) {
+        let result = type;
+        if (optional) {
+            result += ' | nil';
+        }
+        return result;
+    }
+    exports.luaType = luaType;
     const generateLuaField = (field) => {
         const notes = field.notes && field.notes.length ? field.notes.replace(/\n/g, '<br>') : '';
-        return `--- @field ${field.name} ${field.type} ${notes}`;
+        return `--- @field ${field.name} ${luaType(field.type, field.optional)} ${notes}`;
     };
     exports.generateLuaField = generateLuaField;
     const generateLuaValue = (containerName, field) => {
@@ -994,7 +1018,7 @@ define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports"], 
             if (ds.length)
                 ds.push('');
             for (const param of func.parameters) {
-                const pps = `@param ${param.name} ${param.type}`;
+                const pps = `@param ${param.name} ${luaType(param.type, param.optional)}`;
                 if (param.notes && param.notes.trim().length) {
                     const notes = paginateNotes(pps + ' ' + param.notes.trim(), 100);
                     for (const line of notes) {
@@ -1010,7 +1034,7 @@ define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports"], 
         if (func.returns) {
             if (ds.length)
                 ds.push('');
-            let rs = `@return ${func.returns.type}`;
+            let rs = `@return ${luaType(func.returns.type, func.returns.optional)}`;
             if (func.returns.notes && func.returns.notes.length) {
                 rs += ' result';
                 const notes = paginateNotes(rs + ' ' + func.returns.notes.trim(), 100);
@@ -1048,7 +1072,7 @@ define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports"], 
             if (ds.length)
                 ds.push('');
             for (const param of con.parameters) {
-                const pps = `@param ${param.name} ${param.type}`;
+                const pps = `@param ${param.name} ${luaType(param.type, param.optional)}`;
                 if (param.notes && param.notes.trim().length) {
                     const notes = paginateNotes(pps + ' ' + param.notes.trim(), 100);
                     for (const line of notes) {
@@ -1349,6 +1373,7 @@ define("src/asledgehammer/rosetta/java/RosettaJavaType", ["require", "exports", 
     class RosettaJavaType extends RosettaEntity_9.RosettaEntity {
         constructor(raw) {
             super(raw);
+            this.optional = true;
             const basic = this.readRequiredString('basic');
             this.rawBasic = basic;
             if (basic.indexOf('.') !== -1) {
@@ -1358,14 +1383,38 @@ define("src/asledgehammer/rosetta/java/RosettaJavaType", ["require", "exports", 
             else {
                 this.basic = basic;
             }
+            this.optional = this.readBoolean('optional') || true;
+            this.checkOptionalFlag();
             this.full = this.readString('full');
         }
         toJSON(patch = false) {
-            const { rawBasic: basic, full } = this;
+            const { rawBasic: basic, full, optional } = this;
             const json = {};
             json.basic = basic;
             json.full = full;
+            json.optional = optional != null ? optional : undefined;
+            this.checkOptionalFlag();
             return json;
+        }
+        checkOptionalFlag() {
+            switch (this.basic) {
+                case 'boolean':
+                case 'byte':
+                case 'short':
+                case 'int':
+                case 'float':
+                case 'double':
+                case 'long':
+                case 'char':
+                case 'null':
+                case 'void': {
+                    this.optional = false;
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
         }
     }
     exports.RosettaJavaType = RosettaJavaType;
@@ -2001,7 +2050,7 @@ define("src/asledgehammer/rosetta/java/JavaLuaGenerator2", ["require", "exports"
         if (field.getVisibilityScope() !== 'public')
             return '';
         const notes = field.notes && field.notes.length ? field.notes.replace(/\n/g, '<br>') : '';
-        return `@field ${field.name} ${luaType(field.type.basic)} ${notes}`;
+        return `@field ${field.name} ${luaType(field.type.basic, field.type.optional)} ${notes}`;
     }
     exports.generateJavaField = generateJavaField;
     function generateJavaConstructor(className, con) {
@@ -2018,7 +2067,7 @@ define("src/asledgehammer/rosetta/java/JavaLuaGenerator2", ["require", "exports"
             if (ds.length)
                 ds.push('');
             for (const param of con.parameters) {
-                let line = `@param ${param.name} ${luaType(param.type.basic)}`;
+                let line = `@param ${param.name} ${luaType(param.type.basic, param.type.optional)}`;
                 if (param.notes && param.notes.trim().length) {
                     const notes = (0, LuaLuaGenerator_1.paginateNotes)(line + ' ' + param.notes.trim(), 96);
                     for (const line of notes)
@@ -2073,7 +2122,7 @@ define("src/asledgehammer/rosetta/java/JavaLuaGenerator2", ["require", "exports"
             if (ds.length)
                 ds.push('');
             for (const param of method.parameters) {
-                let line = `@param ${param.name} ${luaType(param.type.basic)}`;
+                let line = `@param ${param.name} ${luaType(param.type.basic, param.type.optional)}`;
                 if (param.notes && param.notes.trim().length) {
                     const notes = (0, LuaLuaGenerator_1.paginateNotes)(line + ' ' + param.notes.trim(), 96);
                     for (const line of notes)
@@ -2088,7 +2137,7 @@ define("src/asledgehammer/rosetta/java/JavaLuaGenerator2", ["require", "exports"
         if (method.returns) {
             if (ds.length)
                 ds.push('');
-            let line = `@return ${luaType(method.returns.type.basic)}`;
+            let line = `@return ${luaType(method.returns.type.basic, method.returns.type.optional)}`;
             if (method.returns.notes && method.returns.notes.trim().length) {
                 const notes = (0, LuaLuaGenerator_1.paginateNotes)(line + ' result ' + method.returns.notes.trim(), 96);
                 for (const line of notes)
@@ -2219,12 +2268,27 @@ define("src/asledgehammer/rosetta/java/JavaLuaGenerator2", ["require", "exports"
         return (0, LuaLuaGenerator_1.applyLuaDocumentation)(ds, 0) + cs.join('\n');
     }
     exports.generateJavaClass = generateJavaClass;
-    function luaType(type) {
+    function luaType(type, optional) {
+        let result = type;
         switch (type) {
-            case 'String': return 'string'; // Internal Strings are transformed to Lua's 'string' type.
-            case 'KahluaTable': return 'any'; // Internal reference to tables.
-            default: return type;
+            // Internal Strings are transformed to Lua's 'string' type.
+            case 'String': {
+                result = 'string';
+                break;
+            }
+            // Internal reference to tables.
+            case 'KahluaTable': {
+                result = 'any';
+                break;
+            }
+            default: {
+                break;
+            }
         }
+        if (optional) {
+            result += ' | nil';
+        }
+        return result;
     }
     exports.luaType = luaType;
 });
@@ -2321,7 +2385,7 @@ define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require"
         s = (0, TSUtils_1.applyTSDocumentation)(ds, s, indent);
         s += i;
         /* Definition-line */
-        s += `${field.name}: ${tsType(field.type)};`;
+        s += `${field.name}: ${tsType(field.type, field.optional)};`;
         // Format documented variables as spaced for better legability.
         if (ds.length)
             s += '\n';
@@ -2335,7 +2399,7 @@ define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require"
         if (con.parameters && con.parameters.length) {
             ps += '(';
             for (const parameter of con.parameters) {
-                ps += `${parameter.name}: ${tsType(parameter.type)}, `;
+                ps += `${parameter.name}: ${tsType(parameter.type, parameter.optional)}, `;
             }
             ps = ps.substring(0, ps.length - 2) + ')';
         }
@@ -2346,7 +2410,7 @@ define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require"
         if (fs.length > notesLength) {
             fs = `${i}constructor(\n`;
             for (const parameter of con.parameters) {
-                fs += `${i}    ${parameter.name}: ${tsType(parameter.type)}, \n`;
+                fs += `${i}    ${parameter.name}: ${tsType(parameter.type, parameter.optional)}, \n`;
             }
             fs += `${i});`;
         }
@@ -2437,19 +2501,19 @@ define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require"
         if (method.parameters && method.parameters.length) {
             ps += '(';
             for (const parameter of method.parameters) {
-                ps += `${parameter.name}: ${tsType(parameter.type)}, `;
+                ps += `${parameter.name}: ${tsType(parameter.type, parameter.optional)}, `;
             }
             ps = ps.substring(0, ps.length - 2) + ')';
         }
         else {
             ps = '()';
         }
-        const rs = tsType(method.returns.type);
+        const rs = tsType(method.returns.type, method.returns.optional);
         let fs = `${i}${method.name}${ps}: ${rs};`;
         if (fs.length > notesLength) {
             fs = `${i}${method.name}(\n`;
             for (const parameter of method.parameters) {
-                fs += `${i}    ${parameter.name}: ${tsType(parameter.type)}, \n`;
+                fs += `${i}    ${parameter.name}: ${tsType(parameter.type, parameter.optional)}, \n`;
             }
             fs += `${i}): ${rs};`;
         }
@@ -2652,14 +2716,18 @@ define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require"
         return s;
     }
     exports.luaTableToTS = luaTableToTS;
-    function tsType(type) {
+    function tsType(type, optional) {
+        let result = type;
         if (type.startsWith('fun(')) {
             // FIXME: Nested function calls won't work here.
             let t = type.substring(3);
             t = t.replace('):', ')=>');
-            return t.trim();
+            result = '(' + t.trim() + ')';
         }
-        return type;
+        if (optional) {
+            result = result + ' | null';
+        }
+        return result;
     }
     exports.tsType = tsType;
 });
@@ -3669,7 +3737,7 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
             s += 'static ';
         if (field.isFinal())
             s += 'readonly ';
-        s += `${field.name}: ${tsType(field.type.basic)};`;
+        s += `${field.name}: ${tsType(field.type.basic, field.type.optional)};`;
         // Format documented variables as spaced for better legability.
         if (ds.length)
             s += '\n';
@@ -3685,7 +3753,7 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
         if (con.parameters && con.parameters.length) {
             ps += '(';
             for (const parameter of con.parameters) {
-                ps += `${parameter.name}: ${tsType(parameter.type.basic)}, `;
+                ps += `${parameter.name}: ${tsType(parameter.type.basic, parameter.type.optional)}, `;
             }
             ps = ps.substring(0, ps.length - 2) + ')';
         }
@@ -3697,7 +3765,7 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
             fs = `${i}`;
             fs += `constructor(\n`;
             for (const parameter of con.parameters) {
-                fs += `${i}    ${parameter.name}: ${tsType(parameter.type.basic)}, \n`;
+                fs += `${i}    ${parameter.name}: ${tsType(parameter.type.basic, parameter.type.optional)}, \n`;
             }
             fs += `${i});`;
         }
@@ -3863,14 +3931,14 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
         if (method.parameters && method.parameters.length) {
             ps += '(';
             for (const parameter of method.parameters) {
-                ps += `${parameter.name}: ${tsType(parameter.type.basic)}, `;
+                ps += `${parameter.name}: ${tsType(parameter.type.basic, parameter.type.optional)}, `;
             }
             ps = ps.substring(0, ps.length - 2) + ')';
         }
         else {
             ps = '()';
         }
-        const rs = tsType(method.returns.type.basic);
+        const rs = tsType(method.returns.type.basic, method.returns.type.optional);
         let fs = `${i}`;
         if (method.isStatic())
             fs += 'static ';
@@ -3885,7 +3953,7 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
                 fs += 'readonly ';
             fs += `${method.name}(\n`;
             for (const parameter of method.parameters) {
-                fs += `${i}    ${parameter.name}: ${tsType(parameter.type.basic)}, \n`;
+                fs += `${i}    ${parameter.name}: ${tsType(parameter.type.basic, parameter.type.optional)}, \n`;
             }
             fs += `${i}): ${rs}\n`;
         }
@@ -3961,20 +4029,6 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
                 is += temp;
             }
         }
-        // if (fields.length) {
-        //     temp = '';
-        //     for (const field of fields) {
-        //         temp += `${javaFieldToTS(field, 1, notesLength)}\n`;
-        //     }
-        //     if (temp.length) {
-        //         if (is.length) is += '\n';
-        //         is += `${i}/* ------------------------------------ */\n`;
-        //         is += `${i}/* ------------- FIELDS --------------- */\n`;
-        //         is += `${i}/* ------------------------------------ */\n`;
-        //         is += '\n';
-        //         is += temp;
-        //     }
-        // }
         if (clazz.constructors && clazz.constructors.length) {
             temp = `${javaConstructorsToTS(clazz.constructors, 1, notesLength)}\n`;
             if (temp.length) {
@@ -4030,12 +4084,25 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
         return s;
     }
     exports.javaClassToTS = javaClassToTS;
-    function tsType(type) {
+    function tsType(type, optional) {
+        let result = type;
         switch (type) {
-            case 'String': return 'string';
-            case 'KahluaTable': return 'any';
-            default: return type;
+            case 'String': {
+                result = 'string';
+                break;
+            }
+            case 'KahluaTable': {
+                result = 'any';
+                break;
+            }
+            default: {
+                break;
+            }
         }
+        if (optional) {
+            result += ' | null';
+        }
+        return result;
     }
     exports.tsType = tsType;
 });
@@ -6929,373 +6996,6 @@ define("src/asledgehammer/mallet/component/Toast", ["require", "exports", "src/a
     }
     exports.Toast = Toast;
 });
-define("src/asledgehammer/rosetta/java/JavaLuaGenerator", ["require", "exports"], function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.generateJavaClass = exports.generateJavaMethods = exports.generateJavaConstructor = exports.generateJavaParameterBody = exports.generateJavaField = void 0;
-    /** @deprecated Use JavaLuaGenerator2. */
-    function generateJavaField(field) {
-        if (field.getVisibilityScope() !== 'public')
-            return '';
-        const notes = field.notes && field.notes.length ? field.notes.replace(/\n/g, '<br>') : '';
-        return `--- @field ${field.name} ${field.type.basic} ${notes}`;
-    }
-    exports.generateJavaField = generateJavaField;
-    /** @deprecated Use JavaLuaGenerator2. */
-    function generateJavaParameterBody(params) {
-        let s = '';
-        if (params.length) {
-            for (const param of params) {
-                s += `${param.name}, `;
-            }
-            s = s.substring(0, s.length - 2);
-        }
-        return `(${s})`;
-    }
-    exports.generateJavaParameterBody = generateJavaParameterBody;
-    /** @deprecated Use JavaLuaGenerator2. */
-    function generateJavaConstructor(className, constructors) {
-        if (!constructors.length)
-            return '';
-        constructors = [...constructors].filter((a) => a.getVisibilityScope() === 'public');
-        constructors.sort((a, b) => a.parameters.length - b.parameters.length);
-        let s = '';
-        // Parameter(s).
-        let maxParams = 0;
-        const _paramNames = [];
-        const _paramTypes = [];
-        const _overloads = [];
-        for (const method of constructors) {
-            const { parameters } = method;
-            if (parameters.length > maxParams) {
-                maxParams = parameters.length;
-            }
-            let _overload = `fun(`;
-            let oParams = '';
-            for (const param of method.parameters) {
-                oParams += `${param.name}: ${param.type.basic}, `;
-            }
-            if (oParams.length)
-                oParams = oParams.substring(0, oParams.length - 2);
-            _overload += `${oParams}): ${className}`;
-            _overloads.push(_overload);
-        }
-        const method0 = constructors[0];
-        if (method0.parameters && method0.parameters.length) {
-            for (const param of method0.parameters) {
-                _paramNames.push(param.name);
-                _paramTypes.push(param.type.basic);
-            }
-        }
-        // Parameter(s).
-        let ps = '';
-        for (let index = 0; index < _paramNames.length; index++) {
-            ps += `${_paramNames[index]}, `;
-        }
-        if (ps.length) {
-            ps = ps.substring(0, ps.length - 2);
-        }
-        // Documentation.
-        let ds = '--- @public\n';
-        if (constructors.length > 1) {
-            for (let index = 0; index < constructors.length; index++) {
-                const method = constructors[index];
-                let mds = '';
-                if (method.notes) {
-                    mds += '--- ### Description:';
-                    mds += `\n--- ${method.notes.replace(/\n/g, '\n--- ')}`;
-                }
-                if (mds.length)
-                    mds += '\n';
-                mds += '--- ### Parameter(s):';
-                if (method.parameters.length) {
-                    for (let pIndex = 0; pIndex < method.parameters.length; pIndex++) {
-                        const parameter = method.parameters[pIndex];
-                        mds += `\n---   * **${parameter.type.basic}** *${parameter.name}*`;
-                        if (parameter.notes) {
-                            mds += ` - ${parameter.notes.replace(/\n/g, ' ')}`;
-                        }
-                    }
-                }
-                else {
-                    mds += '\n--- * **(None)**';
-                }
-                if (mds.length) {
-                    mds += '\n--- ---\n';
-                    ds += mds;
-                }
-            }
-            ds += `--- \n`;
-            // Apply first method's notes.
-            const method = constructors[0];
-            if (method.notes) {
-                ds += `--- ${constructors[0].notes.replace(/\n/g, '\n--- ')}\n--- \n`;
-            }
-            // Apply parameter(s).
-            for (let index = 0; index < _paramNames.length; index++) {
-                ds += `--- @param ${_paramNames[index]} ${_paramTypes[index]}\n`;
-            }
-            ds += `--- @return ${className}`;
-            // Apply overload(s).
-            if (_overloads.length > 1) {
-                ds += '\n--- \n';
-                for (let oIndex = 1; oIndex < constructors.length; oIndex++) {
-                    ds += `--- @overload ${_overloads[oIndex]}\n`;
-                }
-            }
-        }
-        else {
-            let vds = '';
-            const method = constructors[0];
-            if (method.notes) {
-                vds += `--- ${method.notes.replace(/\n/g, '\n--- ')}`;
-            }
-            for (let index = 0; index < _paramNames.length; index++) {
-                vds += `\n--- @param ${_paramNames[index]} ${_paramTypes[index]}`;
-                if (method.parameters[index].notes) {
-                    vds += ` ${method.parameters[index].notes.replace(/\n/g, ' ')}`;
-                }
-            }
-            vds += `\n--- @return ${className}\n`;
-            ds += vds;
-        }
-        while (ds.indexOf('\n\n') !== -1) {
-            ds = ds.replace('\n\n', '\n--- \n');
-        }
-        s += `${ds}function ${className}.new(${ps}) end`;
-        return s;
-    }
-    exports.generateJavaConstructor = generateJavaConstructor;
-    /** @deprecated Use JavaLuaGenerator2. */
-    function generateJavaMethods(className, cluster) {
-        if (!cluster.length)
-            return '';
-        const methods = [...cluster].filter((a) => a.getVisibilityScope() === 'public');
-        methods.sort((a, b) => a.parameters.length - b.parameters.length);
-        const isStatic = methods[0].isStatic();
-        let s = '';
-        // Parameter(s).
-        let maxParams = 0;
-        const _returns = [];
-        const _paramNames = [];
-        const _paramTypes = [];
-        const _overloads = [];
-        for (const method of methods) {
-            const { parameters, returns } = method;
-            if (parameters.length > maxParams) {
-                maxParams = parameters.length;
-            }
-            if (_returns.indexOf(returns.type.basic) === -1) {
-                _returns.push(returns.type.basic);
-            }
-            let _overload = `fun(`;
-            let oParams = '';
-            for (const param of method.parameters) {
-                oParams += `${param.name}: ${param.type.basic}, `;
-            }
-            if (oParams.length)
-                oParams = oParams.substring(0, oParams.length - 2);
-            _overload += `${oParams}): ${method.returns.type.basic}`;
-            _overloads.push(_overload);
-        }
-        _returns.sort((a, b) => a.localeCompare(b));
-        const method0 = methods[0];
-        if (method0.parameters && method0.parameters.length) {
-            for (const param of method0.parameters) {
-                _paramNames.push(param.name);
-                _paramTypes.push(param.type.basic);
-            }
-        }
-        // Parameter(s).
-        let ps = '';
-        for (let index = 0; index < _paramNames.length; index++) {
-            ps += `${_paramNames[index]}, `;
-        }
-        if (ps.length) {
-            ps = ps.substring(0, ps.length - 2);
-        }
-        // Return Type(s).
-        let rs = '';
-        for (let index = 0; index < _returns.length; index++) {
-            rs += `${_returns[index]} | `;
-        }
-        if (rs.length)
-            rs = rs.substring(0, rs.length - 3);
-        // Documentation.
-        let ds = '--- @public\n';
-        if (isStatic)
-            ds += '--- @static\n';
-        if (methods.length > 1) {
-            for (let index = 0; index < methods.length; index++) {
-                const method = methods[index];
-                let mds = '';
-                if (method.notes) {
-                    mds += '--- ### Description:';
-                    mds += `\n--- ${method.notes.replace(/\n/g, '\n--- ')}`;
-                }
-                if (mds.length)
-                    mds += '\n';
-                mds += '--- ### Parameter(s):';
-                if (method.parameters.length) {
-                    for (let pIndex = 0; pIndex < method.parameters.length; pIndex++) {
-                        const parameter = method.parameters[pIndex];
-                        mds += `\n---   * **${parameter.type.basic}** *${parameter.name}*`;
-                        if (parameter.notes) {
-                            mds += ` - ${parameter.notes.replace(/\n/g, ' ')}`;
-                        }
-                    }
-                }
-                else {
-                    mds += '\n--- * **(None)**';
-                }
-                mds += '\n--- ### Returns:';
-                const returns = method.returns;
-                mds += `\n---   * ${returns.type.basic}`;
-                if (returns.notes)
-                    mds += ` ${returns.notes.replace(/\n/g, ' ')}`;
-                if (mds.length) {
-                    mds += '\n--- ---\n';
-                    ds += mds;
-                }
-            }
-            ds += `--- \n`;
-            // Apply first method's notes.
-            const method = methods[0];
-            if (method.notes) {
-                ds += `--- ${method.notes.replace(/\n/g, '\n--- ')}\n--- \n`;
-            }
-            // Apply parameter(s).
-            for (let index = 0; index < _paramNames.length; index++) {
-                ds += `--- @param ${_paramNames[index]} ${_paramTypes[index]}\n`;
-            }
-            if (ds.length)
-                ds += '--- \n';
-            // Apply return.
-            ds += `--- @return ${rs}\n--- \n`;
-            // Apply overload(s).
-            for (let oIndex = 1; oIndex < methods.length; oIndex++) {
-                ds += `--- @overload ${_overloads[oIndex]}\n`;
-            }
-        }
-        else {
-            let vds = '';
-            const method = methods[0];
-            if (method.notes) {
-                vds += `--- ${method.notes.replace(/\n/g, '\n--- ')}`;
-            }
-            for (let index = 0; index < _paramNames.length; index++) {
-                vds += `\n--- @param ${_paramNames[index]} ${_paramTypes[index]}`;
-                if (method.parameters[index].notes) {
-                    vds += ` ${method.parameters[index].notes.replace(/\n/g, ' ')}`;
-                }
-            }
-            vds += `\n--- @return ${rs}`;
-            if (method.returns.notes) {
-                vds += ` ${method.returns.notes.replace(/\n/g, ' ')}`;
-            }
-            if (!vds.endsWith('\n'))
-                vds += '\n';
-            ds += vds;
-        }
-        while (ds.indexOf('\n\n') !== -1) {
-            ds = ds.replace('\n\n', '\n--- \n');
-        }
-        s += `${ds}function ${className}${isStatic ? '.' : ':'}${methods[0].name}(${ps}) end`;
-        return s;
-    }
-    exports.generateJavaMethods = generateJavaMethods;
-    /** @deprecated Use JavaLuaGenerator2. */
-    function generateJavaClass(clazz) {
-        let s = '';
-        // If the class has a description.
-        if (clazz.notes && clazz.notes.length > 0) {
-            const notes = clazz.notes.split('\n').join('\n--- ');
-            s += `--- ${notes}\n`;
-            if (notes.endsWith('\n'))
-                s += '--- \n';
-        }
-        s += `--- @class ${clazz.name}`;
-        // Super-class.
-        if (clazz.extendz && clazz.extendz.length && clazz.extendz !== 'Object') {
-            s += `: ${clazz.extendz}`;
-        }
-        s += '\n';
-        // Field(s)
-        const fieldNames = Object.keys(clazz.fields);
-        if (fieldNames.length) {
-            fieldNames.sort((a, b) => a.localeCompare(b));
-            // Static field(s) first.
-            for (const fieldName of fieldNames) {
-                const field = clazz.fields[fieldName];
-                if (field.getVisibilityScope() !== 'public')
-                    continue;
-                if (field.isStatic()) {
-                    s += generateJavaField(field) + '\n';
-                }
-            }
-            // // Instance field(s) next.
-            // for (const fieldName of fieldNames) {
-            //     const field = clazz.fields[fieldName];
-            //     if (!field.isStatic()) {
-            //         s += generateJavaField(field) + '\n';
-            //     }
-            // }
-        }
-        const methodClusterNames = Object.keys(clazz.methods);
-        methodClusterNames.sort((a, b) => a.localeCompare(b));
-        s += `${clazz.name} = {};\n\n`;
-        const staticMethods = [];
-        const methods = [];
-        for (const clusterName of methodClusterNames) {
-            const cluster = clazz.methods[clusterName];
-            if (cluster.methods[0].isStatic()) {
-                staticMethods.push(cluster);
-            }
-            else {
-                methods.push(cluster);
-            }
-        }
-        let temp = '';
-        if (staticMethods.length) {
-            temp = '';
-            for (const cluster of staticMethods) {
-                temp += `${generateJavaMethods(clazz.name, cluster.methods)}\n\n`;
-            }
-            if (temp.length) {
-                s += `------------------------------------\n`;
-                s += `---------- STATIC METHODS ----------\n`;
-                s += `------------------------------------\n`;
-                s += '\n';
-                s += temp;
-            }
-        }
-        if (methods.length) {
-            temp = '';
-            for (const cluster of methods) {
-                temp += `${generateJavaMethods(clazz.name, cluster.methods)}\n\n`;
-            }
-            if (temp.length) {
-                s += '------------------------------------\n';
-                s += '------------- METHODS --------------\n';
-                s += '------------------------------------\n';
-                s += '\n';
-                s += temp;
-            }
-        }
-        if (clazz.constructors && clazz.constructors.length) {
-            temp = `${generateJavaConstructor(clazz.name, clazz.constructors)}\n`;
-            if (temp.length) {
-                s += `------------------------------------\n`;
-                s += `----------- CONSTRUCTOR ------------\n`;
-                s += `------------------------------------\n`;
-                s += '\n';
-                s += temp;
-            }
-        }
-        return s;
-    }
-    exports.generateJavaClass = generateJavaClass;
-});
 define("src/asledgehammer/mallet/component/lua/LuaTableCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_6, LuaTypeScriptGenerator_5, util_19, LuaCard_7) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -7371,7 +7071,7 @@ define("src/asledgehammer/mallet/component/lua/LuaTableCard", ["require", "expor
     }
     exports.LuaTableCard = LuaTableCard;
 });
-define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/TSUtils"], function (require, exports, JavaLuaGenerator_1, RosettaJavaClass_3, LuaLuaGenerator_7, RosettaLuaClass_3, RosettaLuaTable_3, JavaTypeScriptGenerator_5, LuaTypeScriptGenerator_6, TSUtils_3) {
+define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/TSUtils"], function (require, exports, JavaLuaGenerator2_5, RosettaJavaClass_3, LuaLuaGenerator_7, RosettaLuaClass_3, RosettaLuaTable_3, JavaTypeScriptGenerator_5, LuaTypeScriptGenerator_6, TSUtils_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Catalog = void 0;
@@ -7446,7 +7146,7 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
                 for (const name of Object.keys(this.javaClasses)) {
                     const javaClass = this.javaClasses[name];
                     s += `-- Java Class: ${javaClass.namespace.name}.${javaClass.name} --\n\n`;
-                    s += (0, JavaLuaGenerator_1.generateJavaClass)(javaClass) + '\n';
+                    s += (0, JavaLuaGenerator2_5.generateJavaClass)(javaClass) + '\n';
                 }
             }
             /* Lua Classes */
@@ -7539,7 +7239,7 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
     }
     exports.Catalog = Catalog;
 });
-define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/mallet/component/lua/LuaClassCard", "src/asledgehammer/mallet/component/java/JavaClassCard", "src/asledgehammer/mallet/component/Sidebar", "src/asledgehammer/mallet/component/lua/LuaConstructorCard", "src/asledgehammer/mallet/component/lua/LuaFieldCard", "src/asledgehammer/mallet/component/lua/LuaFunctionCard", "src/asledgehammer/mallet/component/java/JavaConstructorCard", "src/asledgehammer/mallet/component/java/JavaFieldCard", "src/asledgehammer/mallet/component/java/JavaMethodCard", "src/asledgehammer/mallet/modal/ModalName", "src/asledgehammer/mallet/modal/ModalConfirm", "src/asledgehammer/mallet/component/Toast", "src/asledgehammer/mallet/Catalog", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/mallet/component/lua/LuaTableCard"], function (require, exports, hljs, LuaLuaGenerator_8, RosettaLuaClass_4, RosettaLuaConstructor_2, util_20, RosettaJavaClass_4, JavaLuaGenerator2_5, LuaClassCard_1, JavaClassCard_1, Sidebar_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, JavaConstructorCard_1, JavaFieldCard_1, JavaMethodCard_1, ModalName_1, ModalConfirm_1, Toast_1, Catalog_1, JavaTypeScriptGenerator_6, LuaTypeScriptGenerator_7, RosettaLuaTable_4, LuaTableCard_1) {
+define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/mallet/component/lua/LuaClassCard", "src/asledgehammer/mallet/component/java/JavaClassCard", "src/asledgehammer/mallet/component/Sidebar", "src/asledgehammer/mallet/component/lua/LuaConstructorCard", "src/asledgehammer/mallet/component/lua/LuaFieldCard", "src/asledgehammer/mallet/component/lua/LuaFunctionCard", "src/asledgehammer/mallet/component/java/JavaConstructorCard", "src/asledgehammer/mallet/component/java/JavaFieldCard", "src/asledgehammer/mallet/component/java/JavaMethodCard", "src/asledgehammer/mallet/modal/ModalName", "src/asledgehammer/mallet/modal/ModalConfirm", "src/asledgehammer/mallet/component/Toast", "src/asledgehammer/mallet/Catalog", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/mallet/component/lua/LuaTableCard"], function (require, exports, hljs, LuaLuaGenerator_8, RosettaLuaClass_4, RosettaLuaConstructor_2, util_20, RosettaJavaClass_4, JavaLuaGenerator2_6, LuaClassCard_1, JavaClassCard_1, Sidebar_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, JavaConstructorCard_1, JavaFieldCard_1, JavaMethodCard_1, ModalName_1, ModalConfirm_1, Toast_1, Catalog_1, JavaTypeScriptGenerator_6, LuaTypeScriptGenerator_7, RosettaLuaTable_4, LuaTableCard_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.App = void 0;
@@ -7752,7 +7452,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             else if (selected instanceof RosettaJavaClass_4.RosettaJavaClass) {
                 switch (this.languageMode) {
                     case 'lua': {
-                        this.previewCode = '--- @meta\n\n' + (0, JavaLuaGenerator2_5.generateJavaClass)(selected);
+                        this.previewCode = '--- @meta\n\n' + (0, JavaLuaGenerator2_6.generateJavaClass)(selected);
                         break;
                     }
                     case 'typescript': {

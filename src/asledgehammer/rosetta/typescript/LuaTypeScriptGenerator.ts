@@ -3,6 +3,7 @@ import { RosettaLuaConstructor } from "../lua/RosettaLuaConstructor";
 import { RosettaLuaField } from "../lua/RosettaLuaField";
 import { RosettaLuaFunction } from "../lua/RosettaLuaFunction";
 import { RosettaLuaTable } from "../lua/RosettaLuaTable";
+import { RosettaLuaTableField } from "../lua/RosettaLuaTableField";
 import { applyTSDocumentation, paginateNotes, wrapAsTSFile } from "./TSUtils";
 
 export function luaFieldToTS(
@@ -28,7 +29,7 @@ export function luaFieldToTS(
     s += i;
 
     /* Definition-line */
-    s += `${field.name}: ${tsType(field.type)};`;
+    s += `${field.name}: ${tsType(field.type, field.optional)};`;
 
     // Format documented variables as spaced for better legability.
     if (ds.length) s += '\n';
@@ -48,7 +49,7 @@ export function luaConstructorToTS(
     if (con.parameters && con.parameters.length) {
         ps += '(';
         for (const parameter of con.parameters) {
-            ps += `${parameter.name}: ${tsType(parameter.type)}, `;
+            ps += `${parameter.name}: ${tsType(parameter.type, parameter.optional)}, `;
         }
         ps = ps.substring(0, ps.length - 2) + ')';
     } else {
@@ -59,7 +60,7 @@ export function luaConstructorToTS(
     if (fs.length > notesLength) {
         fs = `${i}constructor(\n`;
         for (const parameter of con.parameters) {
-            fs += `${i}    ${parameter.name}: ${tsType(parameter.type)}, \n`;
+            fs += `${i}    ${parameter.name}: ${tsType(parameter.type, parameter.optional)}, \n`;
         }
         fs += `${i});`;
     }
@@ -164,20 +165,20 @@ export function luaFunctionToTS(
     if (method.parameters && method.parameters.length) {
         ps += '(';
         for (const parameter of method.parameters) {
-            ps += `${parameter.name}: ${tsType(parameter.type)}, `;
+            ps += `${parameter.name}: ${tsType(parameter.type, parameter.optional)}, `;
         }
         ps = ps.substring(0, ps.length - 2) + ')';
     } else {
         ps = '()';
     }
 
-    const rs = tsType(method.returns.type);
+    const rs = tsType(method.returns.type, method.returns.optional);
 
     let fs = `${i}${method.name}${ps}: ${rs};`;
     if (fs.length > notesLength) {
         fs = `${i}${method.name}(\n`;
         for (const parameter of method.parameters) {
-            fs += `${i}    ${parameter.name}: ${tsType(parameter.type)}, \n`;
+            fs += `${i}    ${parameter.name}: ${tsType(parameter.type, parameter.optional)}, \n`;
         }
         fs += `${i}): ${rs};`;
     }
@@ -333,7 +334,7 @@ export function luaTableToTS(
     const funcNames = Object.keys(table.functions);
     funcNames.sort((a, b) => a.localeCompare(b));
 
-    const fields: RosettaLuaField[] = [];
+    const fields: RosettaLuaField | RosettaLuaTableField[] = [];
     const funcs: RosettaLuaFunction[] = [];
 
     /* (FIELDS) */
@@ -403,12 +404,18 @@ export function luaTableToTS(
     return s;
 }
 
-export function tsType(type: string): string {
+export function tsType(type: string, optional: boolean): string {
+    let result = type;
     if (type.startsWith('fun(')) {
         // FIXME: Nested function calls won't work here.
         let t = type.substring(3);
         t = t.replace('):', ')=>');
-        return t.trim();
+        result = '(' + t.trim() + ')';
     }
-    return type;
+
+    if (optional) {
+        result = result + ' | null';
+    }
+
+    return result;
 }

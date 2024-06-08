@@ -6,9 +6,17 @@ import { RosettaLuaParameter } from "./RosettaLuaParameter";
 import { RosettaLuaTable } from "./RosettaLuaTable";
 import { RosettaLuaTableField } from "./RosettaLuaTableField";
 
+export function luaType(type: string, optional: boolean): string {
+    let result = type;
+    if (optional) {
+        result += ' | nil';
+    }
+    return result;
+}
+
 export const generateLuaField = (field: RosettaLuaField | RosettaLuaTableField): string => {
     const notes = field.notes && field.notes.length ? field.notes.replace(/\n/g, '<br>') : '';
-    return `--- @field ${field.name} ${field.type} ${notes}`;
+    return `--- @field ${field.name} ${luaType(field.type, field.optional)} ${notes}`;
 };
 
 export const generateLuaValue = (containerName: string, field: RosettaLuaField | RosettaLuaTableField): string => {
@@ -64,7 +72,7 @@ export const generateLuaFunction = (className: string, operator: ':' | '.', func
     if (func.parameters && func.parameters.length) {
         if (ds.length) ds.push('');
         for (const param of func.parameters) {
-            const pps = `@param ${param.name} ${param.type}`;
+            const pps = `@param ${param.name} ${luaType(param.type, param.optional)}`;
             if (param.notes && param.notes.trim().length) {
                 const notes = paginateNotes(pps + ' ' + param.notes.trim(), 100);
                 for (const line of notes) {
@@ -79,7 +87,7 @@ export const generateLuaFunction = (className: string, operator: ':' | '.', func
     // Returns Documentation
     if (func.returns) {
         if (ds.length) ds.push('');
-        let rs = `@return ${func.returns.type}`;
+        let rs = `@return ${luaType(func.returns.type, func.returns.optional)}`;
         if (func.returns.notes && func.returns.notes.length) {
             rs += ' result';
             const notes = paginateNotes(rs + ' ' + func.returns.notes.trim(), 100);
@@ -120,7 +128,7 @@ export const generateLuaConstructor = (className: string, con: RosettaLuaConstru
     if (con.parameters && con.parameters.length) {
         if (ds.length) ds.push('');
         for (const param of con.parameters) {
-            const pps = `@param ${param.name} ${param.type}`;
+            const pps = `@param ${param.name} ${luaType(param.type, param.optional)}`;
             if (param.notes && param.notes.trim().length) {
                 const notes = paginateNotes(pps + ' ' + param.notes.trim(), 100);
                 for (const line of notes) {

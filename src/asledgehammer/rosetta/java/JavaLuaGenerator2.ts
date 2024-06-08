@@ -7,7 +7,7 @@ import { RosettaJavaMethod } from "./RosettaJavaMethod";
 export function generateJavaField(field: RosettaJavaField): string {
     if (field.getVisibilityScope() !== 'public') return '';
     const notes = field.notes && field.notes.length ? field.notes.replace(/\n/g, '<br>') : '';
-    return `@field ${field.name} ${luaType(field.type.basic)} ${notes}`;
+    return `@field ${field.name} ${luaType(field.type.basic, field.type.optional)} ${notes}`;
 }
 
 export function generateJavaConstructor(className: string, con: RosettaJavaConstructor): string {
@@ -24,7 +24,7 @@ export function generateJavaConstructor(className: string, con: RosettaJavaConst
     if (con.parameters && con.parameters.length) {
         if (ds.length) ds.push('');
         for (const param of con.parameters) {
-            let line = `@param ${param.name} ${luaType(param.type.basic)}`;
+            let line = `@param ${param.name} ${luaType(param.type.basic, param.type.optional)}`;
             if (param.notes && param.notes.trim().length) {
                 const notes = paginateNotes(line + ' ' + param.notes.trim(), 96);
                 for (const line of notes) ds.push(line);
@@ -79,7 +79,7 @@ export function generateJavaMethod(className: string, operator: ':' | '.', metho
     if (method.parameters && method.parameters.length) {
         if (ds.length) ds.push('');
         for (const param of method.parameters) {
-            let line = `@param ${param.name} ${luaType(param.type.basic)}`;
+            let line = `@param ${param.name} ${luaType(param.type.basic, param.type.optional)}`;
             if (param.notes && param.notes.trim().length) {
                 const notes = paginateNotes(line + ' ' + param.notes.trim(), 96);
                 for (const line of notes) ds.push(line);
@@ -92,7 +92,7 @@ export function generateJavaMethod(className: string, operator: ':' | '.', metho
     // Returns.
     if (method.returns) {
         if (ds.length) ds.push('');
-        let line = `@return ${luaType(method.returns.type.basic)}`;
+        let line = `@return ${luaType(method.returns.type.basic, method.returns.type.optional)}`;
         if (method.returns.notes && method.returns.notes.trim().length) {
             const notes = paginateNotes(line + ' result ' + method.returns.notes.trim(), 96);
             for (const line of notes) ds.push(line);
@@ -227,10 +227,25 @@ export function generateJavaClass(clazz: RosettaJavaClass): string {
     return applyLuaDocumentation(ds, 0) + cs.join('\n');
 }
 
-export function luaType(type: string): string {
+export function luaType(type: string, optional: boolean): string {
+    let result = type;
     switch (type) {
-        case 'String': return 'string'; // Internal Strings are transformed to Lua's 'string' type.
-        case 'KahluaTable': return 'any'; // Internal reference to tables.
-        default: return type;
+        // Internal Strings are transformed to Lua's 'string' type.
+        case 'String': {
+            result = 'string';
+            break;
+        }
+        // Internal reference to tables.
+        case 'KahluaTable': {
+            result = 'any';
+            break;
+        }
+        default: {
+            break;
+        }
     }
+    if (optional) {
+        result += ' | nil';
+    }
+    return result;
 }

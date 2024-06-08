@@ -33,7 +33,7 @@ export function javaFieldToTS(
     /* Definition-line */
     if (field.isStatic()) s += 'static ';
     if (field.isFinal()) s += 'readonly ';
-    s += `${field.name}: ${tsType(field.type.basic)};`;
+    s += `${field.name}: ${tsType(field.type.basic, field.type.optional)};`;
 
     // Format documented variables as spaced for better legability.
     if (ds.length) s += '\n';
@@ -56,7 +56,7 @@ export function javaConstructorToTS(
     if (con.parameters && con.parameters.length) {
         ps += '(';
         for (const parameter of con.parameters) {
-            ps += `${parameter.name}: ${tsType(parameter.type.basic)}, `;
+            ps += `${parameter.name}: ${tsType(parameter.type.basic, parameter.type.optional)}, `;
         }
         ps = ps.substring(0, ps.length - 2) + ')';
     } else {
@@ -64,15 +64,15 @@ export function javaConstructorToTS(
     }
 
     let fs = `${i}constructor${ps};`;
-    if(fs.length > notesLength) {
+    if (fs.length > notesLength) {
         fs = `${i}`;
         fs += `constructor(\n`;
         for (const parameter of con.parameters) {
-            fs += `${i}    ${parameter.name}: ${tsType(parameter.type.basic)}, \n`;
+            fs += `${i}    ${parameter.name}: ${tsType(parameter.type.basic, parameter.type.optional)}, \n`;
         }
         fs += `${i});`;
     }
-    
+
     return applyTSDocumentation(ds, '', indent) + fs + '\n';
 }
 
@@ -265,14 +265,14 @@ export function javaMethodToTS(
     if (method.parameters && method.parameters.length) {
         ps += '(';
         for (const parameter of method.parameters) {
-            ps += `${parameter.name}: ${tsType(parameter.type.basic)}, `;
+            ps += `${parameter.name}: ${tsType(parameter.type.basic, parameter.type.optional)}, `;
         }
         ps = ps.substring(0, ps.length - 2) + ')';
     } else {
         ps = '()';
     }
 
-    const rs = tsType(method.returns.type.basic);
+    const rs = tsType(method.returns.type.basic, method.returns.type.optional);
 
     let fs = `${i}`;
     if (method.isStatic()) fs += 'static ';
@@ -284,7 +284,7 @@ export function javaMethodToTS(
         if (method.isFinal()) fs += 'readonly ';
         fs += `${method.name}(\n`;
         for (const parameter of method.parameters) {
-            fs += `${i}    ${parameter.name}: ${tsType(parameter.type.basic)}, \n`;
+            fs += `${i}    ${parameter.name}: ${tsType(parameter.type.basic, parameter.type.optional)}, \n`;
         }
         fs += `${i}): ${rs}\n`;
     }
@@ -363,21 +363,6 @@ export function javaClassToTS(
         }
     }
 
-    // if (fields.length) {
-    //     temp = '';
-    //     for (const field of fields) {
-    //         temp += `${javaFieldToTS(field, 1, notesLength)}\n`;
-    //     }
-    //     if (temp.length) {
-    //         if (is.length) is += '\n';
-    //         is += `${i}/* ------------------------------------ */\n`;
-    //         is += `${i}/* ------------- FIELDS --------------- */\n`;
-    //         is += `${i}/* ------------------------------------ */\n`;
-    //         is += '\n';
-    //         is += temp;
-    //     }
-    // }
-
     if (clazz.constructors && clazz.constructors.length) {
         temp = `${javaConstructorsToTS(clazz.constructors, 1, notesLength)}\n`;
         if (temp.length) {
@@ -431,10 +416,25 @@ export function javaClassToTS(
     return s;
 }
 
-export function tsType(type: string): string {
+export function tsType(type: string, optional: boolean): string {
+    let result = type;
     switch (type) {
-        case 'String': return 'string';
-        case 'KahluaTable': return 'any';
-        default: return type;
+        case 'String': {
+            result = 'string';
+            break;
+        }
+        case 'KahluaTable': {
+            result = 'any';
+            break;
+        }
+        default: {
+            break;
+        }
     }
+
+    if (optional) {
+        result += ' | null';
+    }
+
+    return result;
 }

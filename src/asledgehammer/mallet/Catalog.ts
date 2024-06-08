@@ -1,5 +1,5 @@
 import { App } from "../../app";
-import { generateJavaClass } from "../rosetta/java/JavaLuaGenerator";
+import { generateJavaClass } from "../rosetta/java/JavaLuaGenerator2";
 import { RosettaJavaClass, RosettaJavaNamespace } from "../rosetta/java/RosettaJavaClass";
 import { generateLuaClass, generateLuaTable } from "../rosetta/lua/LuaLuaGenerator";
 import { RosettaLuaClass } from "../rosetta/lua/RosettaLuaClass";
