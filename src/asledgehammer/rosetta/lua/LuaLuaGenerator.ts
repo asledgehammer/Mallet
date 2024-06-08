@@ -4,13 +4,14 @@ import { RosettaLuaField } from "./RosettaLuaField";
 import { RosettaLuaFunction } from "./RosettaLuaFunction";
 import { RosettaLuaParameter } from "./RosettaLuaParameter";
 import { RosettaLuaTable } from "./RosettaLuaTable";
+import { RosettaLuaTableField } from "./RosettaLuaTableField";
 
-export const generateLuaField = (field: RosettaLuaField): string => {
+export const generateLuaField = (field: RosettaLuaField | RosettaLuaTableField): string => {
     const notes = field.notes && field.notes.length ? field.notes.replace(/\n/g, '<br>') : '';
     return `--- @field ${field.name} ${field.type} ${notes}`;
 };
 
-export const generateLuaValue = (containerName: string, field: RosettaLuaField): string => {
+export const generateLuaValue = (containerName: string, field: RosettaLuaField | RosettaLuaTableField): string => {
 
     let s = '';
 
@@ -230,9 +231,61 @@ export const generateLuaClass = (clazz: RosettaLuaClass): string => {
     return s;
 }
 
-export const generateLuaTable = (table: RosettaLuaTable): string => {
-    // TODO: Implement.
-    return '';
+export const generateLuaTable = (clazz: RosettaLuaTable): string => {
+    const ds: string[] = [];
+    let s = '';
+
+    // If the class has a description.
+    if (clazz.notes && clazz.notes.length > 0) {
+        const notes = paginateNotes(clazz.notes, 100);
+        for (const line of notes) {
+            ds.push(line);
+        }
+    }
+
+    ds.push(`@class ${clazz.name}: table<string, any>`);
+
+    // Generate any value-comments in the class here.
+    const valueNames = Object.keys(clazz.fields);
+    if (valueNames.length) {
+        valueNames.sort((a, b) => a.localeCompare(b));
+        for (const valueName of valueNames) {
+            const field = clazz.fields[valueName];
+            ds.push(generateLuaField(field));
+        }
+    }
+
+    // NOTE: This is to keep flexability in Lua for adding custom properties to existing classes.
+    if (clazz.mutable) {
+        ds.push('@field [any] any');
+    }
+
+    s = applyLuaDocumentation(ds, 0);
+
+    s += `${clazz.name} = {};\n\n`;
+
+    // Generate any values in the class here.
+    if (valueNames.length) {
+        valueNames.sort((a, b) => a.localeCompare(b));
+        for (const valueName of valueNames) {
+            const value = clazz.fields[valueName];
+            s += generateLuaValue(clazz.name, value) + '\n';
+        }
+
+        s += '\n';
+    }
+
+    // Generate any functions in the class here.
+    const functionNames = Object.keys(clazz.functions);
+    if (functionNames.length) {
+        functionNames.sort((a, b) => a.localeCompare(b));
+        for (const functionName of functionNames) {
+            const func = clazz.functions[functionName];
+            s += generateLuaFunction(clazz.name, '.', func) + '\n\n';
+        }
+    }
+
+    return s;
 };
 
 export function paginateNotes(notes: string, length: number): string[] {

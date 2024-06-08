@@ -12,6 +12,7 @@ export class RosettaLuaTableField extends RosettaEntity {
   readonly name: string;
   type: string;
   notes: string | undefined;
+  defaultValue: string | undefined;
 
   constructor(name: string, raw: { [key: string]: any } = {}) {
     super(raw);
@@ -28,6 +29,7 @@ export class RosettaLuaTableField extends RosettaEntity {
     }
 
     this.notes = this.readNotes();
+    this.defaultValue = this.readString('defaultValue');
   }
 
   parse(raw: { [key: string]: any }) {
@@ -36,6 +38,7 @@ export class RosettaLuaTableField extends RosettaEntity {
     if (raw.type !== undefined) {
       this.type = this.readRequiredString('type', raw);
     }
+    this.defaultValue = this.readString('defaultValue', raw);
   }
 
   /**
@@ -44,13 +47,14 @@ export class RosettaLuaTableField extends RosettaEntity {
    * @returns The JSON of the Rosetta entity.
    */
   toJSON(patch: boolean = false): any {
-    const { name, type, notes } = this;
+    const { type, notes, defaultValue } = this;
 
     const json: any = {};
 
     /* (Properties) */
     json.type = type;
     json.notes = notes !== undefined && notes !== '' ? notes : undefined;
+    json.defaultValue = defaultValue !== undefined ? defaultValue : undefined;
 
     return json;
   }

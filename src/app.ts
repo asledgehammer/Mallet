@@ -1,5 +1,5 @@
 import hljs = require('highlight.js');
-import { generateLuaClass } from './asledgehammer/rosetta/lua/LuaLuaGenerator';
+import { generateLuaClass, generateLuaTable } from './asledgehammer/rosetta/lua/LuaLuaGenerator';
 import { RosettaLuaClass } from './asledgehammer/rosetta/lua/RosettaLuaClass';
 import { RosettaLuaConstructor } from './asledgehammer/rosetta/lua/RosettaLuaConstructor';
 import { RosettaLuaField } from './asledgehammer/rosetta/lua/RosettaLuaField';
@@ -24,8 +24,9 @@ import { ModalConfirm } from './asledgehammer/mallet/modal/ModalConfirm';
 import { Toast } from './asledgehammer/mallet/component/Toast';
 import { Catalog } from './asledgehammer/mallet/Catalog';
 import { javaClassToTS } from './asledgehammer/rosetta/typescript/JavaTypeScriptGenerator';
-import { luaClassToTS } from './asledgehammer/rosetta/typescript/LuaTypeScriptGenerator';
+import { luaClassToTS, luaTableToTS } from './asledgehammer/rosetta/typescript/LuaTypeScriptGenerator';
 import { CodeLanguage } from './asledgehammer/mallet/component/CodeLanguage';
+import { RosettaLuaTable } from './asledgehammer/rosetta/lua/RosettaLuaTable';
 
 export class App {
 
@@ -197,6 +198,21 @@ export class App {
                 }
                 case 'typescript': {
                     this.previewCode = luaClassToTS(selected, true);
+                    break;
+                }
+                case 'json': {
+                    this.previewCode = JSON.stringify(selected.toJSON(), null, 2);
+                    break;
+                }
+            }
+        } else if (selected instanceof RosettaLuaTable) {
+            switch (this.languageMode) {
+                case 'lua': {
+                    this.previewCode = '--- @meta\n\n' + generateLuaTable(selected);
+                    break;
+                }
+                case 'typescript': {
+                    this.previewCode = luaTableToTS(selected, true);
                     break;
                 }
                 case 'json': {

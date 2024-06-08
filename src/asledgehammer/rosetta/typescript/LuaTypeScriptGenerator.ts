@@ -322,11 +322,86 @@ export function luaClassToTS(
 }
 
 export function luaTableToTS(
-    luaTable: RosettaLuaTable,
+    table: RosettaLuaTable,
     wrapFile: boolean = false
 ): string {
     let s = '';
-    // TODO: Implement.
+
+    const fieldNames = Object.keys(table.fields);
+    fieldNames.sort((a, b) => a.localeCompare(b));
+
+    const funcNames = Object.keys(table.functions);
+    funcNames.sort((a, b) => a.localeCompare(b));
+
+    const fields: RosettaLuaField[] = [];
+    const funcs: RosettaLuaFunction[] = [];
+
+    /* (FIELDS) */
+    for (const fieldName of fieldNames) {
+        const field = table.fields[fieldName];
+        fields.push(field);
+    }
+
+    /* (FUNCTIONS) */
+    for (const funcName of funcNames) {
+        const func = table.functions[funcName];
+        funcs.push(func);
+    }
+
+    /** 100 
+     * * -4 (module indent)
+     * * -3 (' * ')
+     */
+    let notesLength = 96;
+    if (wrapFile) notesLength -= 4;
+
+    /* (Class Documentation) */
+    const ds: string[] = [];
+    ds.push(`@customConstructor ${table.name}:new`);
+    ds.push('');
+    ds.push(`Lua Class: ${table.name}`);
+    if (table.notes && table.notes.length) {
+        ds.push('');
+        const lines = paginateNotes(table.notes, notesLength);
+        for (const line of lines) ds.push(line);
+    }
+    s = applyTSDocumentation(ds, s, 0);
+
+    s += `export class ${table.name} `;
+    let i = '    ';
+    let is = '';
+
+    if (fields.length) {
+        if (is.length) is += '\n';
+        is += `${i}/* ------------------------------------ */\n`;
+        is += `${i}/* ------------- FIELDS --------------- */\n`;
+        is += `${i}/* ------------------------------------ */\n`;
+        is += '\n';
+        for (const field of fields) {
+            is += `${luaFieldToTS(field, 1, notesLength)}\n`;
+        }
+        is = is.substring(0, is.length - 1);
+    }
+
+    if (funcs.length) {
+        if (is.length) is += '\n';
+        is += `${i}/* ------------------------------------ */\n`;
+        is += `${i}/* ------------ FUNCTIONS ------------- */\n`;
+        is += `${i}/* ------------------------------------ */\n`;
+        is += '\n';
+        for (const func of funcs) {
+            is += `${luaFunctionToTS(func, 1, notesLength)}\n`;
+        }
+        is = is.substring(0, is.length - 1);
+    }
+
+    if (is.length) {
+        s += `{\n\n${is}}`;
+    } else {
+        s += `{}\n`;
+    }
+
+    if (wrapFile) return wrapAsTSFile(s);
     return s;
 }
 
