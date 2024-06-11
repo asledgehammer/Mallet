@@ -3142,7 +3142,7 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
                 if (!nameSelected)
                     nameSelected = entity.name;
                 this.app.modalName.nameSelected = nameSelected;
-                modalName.show();
+                this.app.modalName.show(true);
             });
         }
         renderEdit(idBtnEdit) {
@@ -3287,7 +3287,7 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
                 this.app.modalName.nameSelected = `${type}-${entity.name}`;
                 $titleName.html('Add Parameter');
                 $inputName.val('');
-                modalName.show();
+                this.app.modalName.show(true);
             });
         }
         renderParameters(entity, show = false) {
@@ -4204,7 +4204,7 @@ define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports"
                 if (!nameSelected)
                     nameSelected = entity.name;
                 this.app.modalName.nameSelected = nameSelected;
-                modalName.show();
+                this.app.modalName.show(true);
             });
         }
         renderEdit(idBtnEdit) {
@@ -4285,7 +4285,7 @@ define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports"
                     this.app.modalName.javaCallback = (nameNew) => {
                         $(`#${name}_${index}_name`).html(nameNew);
                     };
-                    modalName.show();
+                    this.app.modalName.show(true);
                 });
                 this.listenType(param);
             }
@@ -5435,7 +5435,7 @@ define("src/asledgehammer/mallet/component/ObjectTree", ["require", "exports", "
     }
     exports.ObjectTree = ObjectTree;
 });
-define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/Component", "src/asledgehammer/mallet/component/ItemTree", "src/asledgehammer/mallet/component/ObjectTree"], function (require, exports, util_9, Component_2, ItemTree_1, ObjectTree_1) {
+define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/Component", "src/asledgehammer/mallet/component/ItemTree", "src/asledgehammer/mallet/component/ObjectTree"], function (require, exports, JavaLuaGenerator2_2, RosettaJavaClass_2, LuaLuaGenerator_3, RosettaLuaClass_2, RosettaLuaTable_2, util_9, Component_2, ItemTree_1, ObjectTree_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Sidebar = void 0;
@@ -5574,7 +5574,7 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
                     $btnName.addClass('btn-success');
                     $inputName.val('');
                     app.modalName.nameMode = 'new_lua_class';
-                    modalName.show();
+                    app.modalName.show(true);
                 }
                 catch (e) {
                     app.toast.alert(`Failed to create LuaClass.`, 'error');
@@ -5589,7 +5589,7 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
                     $btnName.addClass('btn-success');
                     $inputName.val('');
                     app.modalName.nameMode = 'new_lua_table';
-                    modalName.show();
+                    app.modalName.show(true);
                 }
                 catch (e) {
                     app.toast.alert(`Failed to create LuaTable.`, 'error');
@@ -5639,6 +5639,42 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
                     });
                     const { catalog } = this.app;
                     const lua = catalog.toLuaTypings();
+                    const writable = await result.createWritable();
+                    await writable.write(lua);
+                    await writable.close();
+                    app.toast.alert(`Saved Lua typings file.`, 'info');
+                }
+                catch (e) {
+                    /* (Ignore aborted dialogs) */
+                    if (e instanceof DOMException && e.name === 'AbortError')
+                        return;
+                    app.toast.alert(`Failed to save Lua typings.`, 'error');
+                    console.error(e);
+                }
+            });
+            $doc.on('click', '#btn-save-object-lua', async () => {
+                try {
+                    // @ts-ignore
+                    const result = await showSaveFilePicker({
+                        id: 'mallet-save-lua',
+                        types: [
+                            {
+                                description: "Lua file",
+                                accept: { "text/x-lua": [".lua"] },
+                            },
+                        ],
+                    });
+                    const { selected } = this.app.catalog;
+                    let lua = '--- @meta\n\n';
+                    if (selected instanceof RosettaLuaClass_2.RosettaLuaClass) {
+                        lua += (0, LuaLuaGenerator_3.generateLuaClass)(selected);
+                    }
+                    else if (selected instanceof RosettaLuaTable_2.RosettaLuaTable) {
+                        lua += (0, LuaLuaGenerator_3.generateLuaTable)(selected);
+                    }
+                    else if (selected instanceof RosettaJavaClass_2.RosettaJavaClass) {
+                        lua += (0, JavaLuaGenerator2_2.generateJavaClass)(selected);
+                    }
                     const writable = await result.createWritable();
                     await writable.write(lua);
                     await writable.close();
@@ -5777,7 +5813,7 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
                     $titleName.html('Create Lua Value');
                     $inputName.val('');
                     $btnName.val('Create');
-                    modalName.show();
+                    this.app.modalName.show(true);
                 }
                 catch (e) {
                     app.toast.alert(`Failed to create Lua Value.`, 'error');
@@ -5796,7 +5832,7 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
                     $titleName.html('Create Lua Field');
                     $inputName.val('');
                     $btnName.val('Create');
-                    modalName.show();
+                    this.app.modalName.show(true);
                 }
                 catch (e) {
                     app.toast.alert(`Failed to create Lua Field.`, 'error');
@@ -5815,7 +5851,7 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
                     $titleName.html('Create Lua Function');
                     $inputName.val('');
                     $btnName.val('Create');
-                    modalName.show();
+                    this.app.modalName.show(true);
                 }
                 catch (e) {
                     app.toast.alert(`Failed to create Lua Function.`, 'error');
@@ -5834,7 +5870,7 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
                     $titleName.html('Create Lua Method');
                     $inputName.val('');
                     $btnName.val('Create');
-                    modalName.show();
+                    this.app.modalName.show(true);
                 }
                 catch (e) {
                     app.toast.alert(`Failed to create Lua Method.`, 'error');
@@ -5851,7 +5887,7 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
     exports.Sidebar = Sidebar;
     ;
 });
-define("src/asledgehammer/mallet/component/lua/LuaConstructorCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_3, LuaTypeScriptGenerator_2, util_10, LuaCard_4) {
+define("src/asledgehammer/mallet/component/lua/LuaConstructorCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_4, LuaTypeScriptGenerator_2, util_10, LuaCard_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaConstructorCard = void 0;
@@ -5868,7 +5904,7 @@ define("src/asledgehammer/mallet/component/lua/LuaConstructorCard", ["require", 
                 case 'lua': {
                     const { entity } = this.options;
                     const classEntity = this.app.catalog.selectedCard.options.entity;
-                    return (0, LuaLuaGenerator_3.generateLuaConstructor)(classEntity.name, entity);
+                    return (0, LuaLuaGenerator_4.generateLuaConstructor)(classEntity.name, entity);
                 }
                 case 'typescript': {
                     return (0, LuaTypeScriptGenerator_2.luaConstructorToTS)(this.options.entity, 0, 100);
@@ -5928,7 +5964,7 @@ define("src/asledgehammer/mallet/component/lua/LuaConstructorCard", ["require", 
     }
     exports.LuaConstructorCard = LuaConstructorCard;
 });
-define("src/asledgehammer/mallet/component/lua/LuaFieldCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_4, LuaTypeScriptGenerator_3, util_11, LuaCard_5) {
+define("src/asledgehammer/mallet/component/lua/LuaFieldCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_5, LuaTypeScriptGenerator_3, util_11, LuaCard_5) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaFieldCard = void 0;
@@ -5952,9 +5988,9 @@ define("src/asledgehammer/mallet/component/lua/LuaFieldCard", ["require", "expor
                     const { defaultValue } = entity;
                     const name = (_b = (_a = app.catalog.selectedCard) === null || _a === void 0 ? void 0 : _a.options) === null || _b === void 0 ? void 0 : _b.entity.name;
                     if (isStatic) {
-                        return `${(0, LuaLuaGenerator_4.generateLuaField)(entity)}\n\n${(0, LuaLuaGenerator_4.generateLuaValue)(name, entity)}`;
+                        return `${(0, LuaLuaGenerator_5.generateLuaField)(entity)}\n\n${(0, LuaLuaGenerator_5.generateLuaValue)(name, entity)}`;
                     }
-                    let s = (0, LuaLuaGenerator_4.generateLuaField)(entity);
+                    let s = (0, LuaLuaGenerator_5.generateLuaField)(entity);
                     if (defaultValue) {
                         s += `\n\n--- (Example of initialization of field) ---\nself.${entity.name} = ${defaultValue};`;
                     }
@@ -6047,7 +6083,7 @@ define("src/asledgehammer/mallet/component/lua/LuaFieldCard", ["require", "expor
     }
     exports.LuaFieldCard = LuaFieldCard;
 });
-define("src/asledgehammer/mallet/component/lua/LuaFunctionCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_5, LuaTypeScriptGenerator_4, util_12, LuaCard_6) {
+define("src/asledgehammer/mallet/component/lua/LuaFunctionCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_6, LuaTypeScriptGenerator_4, util_12, LuaCard_6) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaFunctionCard = void 0;
@@ -6069,7 +6105,7 @@ define("src/asledgehammer/mallet/component/lua/LuaFunctionCard", ["require", "ex
                     const { entity } = this.options;
                     const classEntity = this.app.catalog.selectedCard.options.entity;
                     const className = classEntity.name;
-                    return (0, LuaLuaGenerator_5.generateLuaFunction)(className, ':', entity);
+                    return (0, LuaLuaGenerator_6.generateLuaFunction)(className, ':', entity);
                 }
                 case 'typescript': {
                     return (0, LuaTypeScriptGenerator_4.luaFunctionToTS)(this.options.entity, 0, 100);
@@ -6168,7 +6204,7 @@ define("src/asledgehammer/mallet/component/lua/LuaFunctionCard", ["require", "ex
     }
     exports.LuaFunctionCard = LuaFunctionCard;
 });
-define("src/asledgehammer/mallet/component/java/JavaConstructorCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaLuaGenerator2_2, JavaTypeScriptGenerator_2, util_13, JavaCard_2) {
+define("src/asledgehammer/mallet/component/java/JavaConstructorCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaLuaGenerator2_3, JavaTypeScriptGenerator_2, util_13, JavaCard_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.JavaConstructorCard = void 0;
@@ -6186,7 +6222,7 @@ define("src/asledgehammer/mallet/component/java/JavaConstructorCard", ["require"
                     const { entity } = this.options;
                     const classEntity = this.app.catalog.selectedCard.options.entity;
                     const className = classEntity.name;
-                    return (0, JavaLuaGenerator2_2.generateJavaConstructor)(className, entity);
+                    return (0, JavaLuaGenerator2_3.generateJavaConstructor)(className, entity);
                 }
                 case 'typescript': {
                     return (0, JavaTypeScriptGenerator_2.javaConstructorToTS)(this.options.entity, 0, 100);
@@ -6253,7 +6289,7 @@ define("src/asledgehammer/mallet/component/java/JavaConstructorCard", ["require"
     }
     exports.JavaConstructorCard = JavaConstructorCard;
 });
-define("src/asledgehammer/mallet/component/java/JavaFieldCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaLuaGenerator2_3, JavaTypeScriptGenerator_3, util_14, JavaCard_3) {
+define("src/asledgehammer/mallet/component/java/JavaFieldCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaLuaGenerator2_4, JavaTypeScriptGenerator_3, util_14, JavaCard_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.JavaFieldCard = void 0;
@@ -6272,7 +6308,7 @@ define("src/asledgehammer/mallet/component/java/JavaFieldCard", ["require", "exp
             switch (language) {
                 case 'lua': {
                     const { entity } = this.options;
-                    return (0, JavaLuaGenerator2_3.generateJavaField)(entity);
+                    return (0, JavaLuaGenerator2_4.generateJavaField)(entity);
                 }
                 case 'typescript': {
                     return (0, JavaTypeScriptGenerator_3.javaFieldToTS)(this.options.entity, 0, 100);
@@ -6350,7 +6386,7 @@ define("src/asledgehammer/mallet/component/java/JavaFieldCard", ["require", "exp
     }
     exports.JavaFieldCard = JavaFieldCard;
 });
-define("src/asledgehammer/mallet/component/java/JavaMethodCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaLuaGenerator2_4, JavaTypeScriptGenerator_4, util_15, JavaCard_4) {
+define("src/asledgehammer/mallet/component/java/JavaMethodCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaLuaGenerator2_5, JavaTypeScriptGenerator_4, util_15, JavaCard_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.JavaMethodCard = void 0;
@@ -6372,7 +6408,7 @@ define("src/asledgehammer/mallet/component/java/JavaMethodCard", ["require", "ex
                     const { entity } = this.options;
                     const classEntity = this.app.catalog.selectedCard.options.entity;
                     const className = classEntity.name;
-                    return (0, JavaLuaGenerator2_4.generateJavaMethod)(className, entity.isStatic() ? '.' : ':', entity);
+                    return (0, JavaLuaGenerator2_5.generateJavaMethod)(className, entity.isStatic() ? '.' : ':', entity);
                 }
                 case 'typescript': {
                     return (0, JavaTypeScriptGenerator_4.javaMethodToTS)(this.options.entity, 0, 100);
@@ -6464,7 +6500,7 @@ define("src/asledgehammer/mallet/component/java/JavaMethodCard", ["require", "ex
     }
     exports.JavaMethodCard = JavaMethodCard;
 });
-define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/util"], function (require, exports, RosettaJavaClass_2, RosettaLuaClass_2, RosettaLuaTable_2, util_16) {
+define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/util"], function (require, exports, RosettaJavaClass_3, RosettaLuaClass_3, RosettaLuaTable_3, util_16) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ModalName = void 0;
@@ -6516,7 +6552,7 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                 switch (this.nameMode) {
                     case 'new_lua_class': {
                         try {
-                            const entity = new RosettaLuaClass_2.RosettaLuaClass((0, util_16.validateLuaVariableName)($inputName.val()).trim());
+                            const entity = new RosettaLuaClass_3.RosettaLuaClass((0, util_16.validateLuaVariableName)($inputName.val()).trim());
                             app.catalog.luaClasses[entity.name] = entity;
                             app.showLuaClass(entity);
                             app.sidebar.populateTrees();
@@ -6530,7 +6566,7 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                     }
                     case 'new_lua_table': {
                         try {
-                            const entity = new RosettaLuaTable_2.RosettaLuaTable((0, util_16.validateLuaVariableName)($inputName.val()).trim());
+                            const entity = new RosettaLuaTable_3.RosettaLuaTable((0, util_16.validateLuaVariableName)($inputName.val()).trim());
                             app.catalog.luaTables[entity.name] = entity;
                             app.showLuaTable(entity);
                             app.sidebar.populateTrees();
@@ -6543,7 +6579,7 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                         break;
                     }
                     case 'edit_class': {
-                        if (entity instanceof RosettaLuaClass_2.RosettaLuaClass) {
+                        if (entity instanceof RosettaLuaClass_3.RosettaLuaClass) {
                             try {
                                 // Modify the dictionary.
                                 delete active.luaClasses[entity.name];
@@ -6558,13 +6594,13 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 console.error(e);
                             }
                         }
-                        else if (entity instanceof RosettaJavaClass_2.RosettaJavaClass) {
+                        else if (entity instanceof RosettaJavaClass_3.RosettaJavaClass) {
                             throw new Error('Cannot modify name of Java class. (Read-Only)');
                         }
                         break;
                     }
                     case 'new_field': {
-                        if (entity instanceof RosettaLuaClass_2.RosettaLuaClass) {
+                        if (entity instanceof RosettaLuaClass_3.RosettaLuaClass) {
                             try {
                                 const field = entity.createField(name);
                                 app.showLuaClassField(field);
@@ -6576,7 +6612,7 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 console.error(e);
                             }
                         }
-                        else if (entity instanceof RosettaLuaTable_2.RosettaLuaTable) {
+                        else if (entity instanceof RosettaLuaTable_3.RosettaLuaTable) {
                             try {
                                 const field = entity.createField(name);
                                 app.showLuaTableField(field);
@@ -6588,13 +6624,13 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 console.error(e);
                             }
                         }
-                        else if (entity instanceof RosettaJavaClass_2.RosettaJavaClass) {
+                        else if (entity instanceof RosettaJavaClass_3.RosettaJavaClass) {
                             throw new Error('Cannot add field in Java class. (Not implemented)');
                         }
                         break;
                     }
                     case 'edit_field': {
-                        if (entity instanceof RosettaLuaClass_2.RosettaLuaClass) {
+                        if (entity instanceof RosettaLuaClass_3.RosettaLuaClass) {
                             try {
                                 const field = entity.fields[nameOld];
                                 field.name = name;
@@ -6609,7 +6645,7 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 console.error(e);
                             }
                         }
-                        else if (entity instanceof RosettaLuaTable_2.RosettaLuaTable) {
+                        else if (entity instanceof RosettaLuaTable_3.RosettaLuaTable) {
                             try {
                                 const field = entity.fields[nameOld];
                                 field.name = name;
@@ -6624,13 +6660,13 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 console.error(e);
                             }
                         }
-                        else if (entity instanceof RosettaJavaClass_2.RosettaJavaClass) {
+                        else if (entity instanceof RosettaJavaClass_3.RosettaJavaClass) {
                             throw new Error('Cannot modify name of Java field. (Read-Only)');
                         }
                         break;
                     }
                     case 'new_value': {
-                        if (entity instanceof RosettaLuaClass_2.RosettaLuaClass) {
+                        if (entity instanceof RosettaLuaClass_3.RosettaLuaClass) {
                             try {
                                 const value = entity.createValue(name);
                                 app.showLuaClassValue(value);
@@ -6642,16 +6678,16 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 console.error(e);
                             }
                         }
-                        else if (entity instanceof RosettaLuaTable_2.RosettaLuaTable) {
+                        else if (entity instanceof RosettaLuaTable_3.RosettaLuaTable) {
                             throw new Error('Values are not supported in Lua Tables.');
                         }
-                        else if (entity instanceof RosettaJavaClass_2.RosettaJavaClass) {
+                        else if (entity instanceof RosettaJavaClass_3.RosettaJavaClass) {
                             throw new Error('Values are not supported in Java.');
                         }
                         break;
                     }
                     case 'edit_value': {
-                        if (entity instanceof RosettaLuaClass_2.RosettaLuaClass) {
+                        if (entity instanceof RosettaLuaClass_3.RosettaLuaClass) {
                             try {
                                 const value = entity.values[nameOld];
                                 value.name = name;
@@ -6666,16 +6702,16 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 console.error(e);
                             }
                         }
-                        else if (entity instanceof RosettaLuaTable_2.RosettaLuaTable) {
+                        else if (entity instanceof RosettaLuaTable_3.RosettaLuaTable) {
                             throw new Error('Values are not supported in Lua Tables.');
                         }
-                        else if (entity instanceof RosettaJavaClass_2.RosettaJavaClass) {
+                        else if (entity instanceof RosettaJavaClass_3.RosettaJavaClass) {
                             throw new Error('Values are not supported in Java.');
                         }
                         break;
                     }
                     case 'new_function': {
-                        if (entity instanceof RosettaLuaClass_2.RosettaLuaClass) {
+                        if (entity instanceof RosettaLuaClass_3.RosettaLuaClass) {
                             try {
                                 const func = entity.createFunction(name);
                                 app.showLuaClassFunction(func);
@@ -6687,7 +6723,7 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 console.error(e);
                             }
                         }
-                        else if (entity instanceof RosettaLuaTable_2.RosettaLuaTable) {
+                        else if (entity instanceof RosettaLuaTable_3.RosettaLuaTable) {
                             try {
                                 const func = entity.createFunction(name);
                                 app.showLuaClassFunction(func);
@@ -6699,13 +6735,13 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 console.error(e);
                             }
                         }
-                        else if (entity instanceof RosettaJavaClass_2.RosettaJavaClass) {
+                        else if (entity instanceof RosettaJavaClass_3.RosettaJavaClass) {
                             throw new Error('Functions are not supported in Java.');
                         }
                         break;
                     }
                     case 'edit_function': {
-                        if (entity instanceof RosettaLuaClass_2.RosettaLuaClass) {
+                        if (entity instanceof RosettaLuaClass_3.RosettaLuaClass) {
                             try {
                                 const func = entity.functions[nameOld];
                                 func.name = name;
@@ -6720,7 +6756,7 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 console.error(e);
                             }
                         }
-                        else if (entity instanceof RosettaLuaTable_2.RosettaLuaTable) {
+                        else if (entity instanceof RosettaLuaTable_3.RosettaLuaTable) {
                             try {
                                 const func = entity.functions[nameOld];
                                 func.name = name;
@@ -6735,13 +6771,13 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 console.error(e);
                             }
                         }
-                        else if (entity instanceof RosettaJavaClass_2.RosettaJavaClass) {
+                        else if (entity instanceof RosettaJavaClass_3.RosettaJavaClass) {
                             throw new Error('Functions are not supported in Java.');
                         }
                         break;
                     }
                     case 'new_method': {
-                        if (entity instanceof RosettaLuaClass_2.RosettaLuaClass) {
+                        if (entity instanceof RosettaLuaClass_3.RosettaLuaClass) {
                             try {
                                 const method = entity.createMethod(name);
                                 app.showLuaClassMethod(method);
@@ -6753,16 +6789,16 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 console.error(e);
                             }
                         }
-                        else if (entity instanceof RosettaLuaTable_2.RosettaLuaTable) {
+                        else if (entity instanceof RosettaLuaTable_3.RosettaLuaTable) {
                             throw new Error('Methods are not supported in Lua Tables.');
                         }
-                        else if (entity instanceof RosettaJavaClass_2.RosettaJavaClass) {
+                        else if (entity instanceof RosettaJavaClass_3.RosettaJavaClass) {
                             throw new Error('Adding Methods are not supported in Java.');
                         }
                         break;
                     }
                     case 'edit_method': {
-                        if (entity instanceof RosettaLuaClass_2.RosettaLuaClass) {
+                        if (entity instanceof RosettaLuaClass_3.RosettaLuaClass) {
                             try {
                                 const method = entity.methods[nameOld];
                                 method.name = name;
@@ -6777,16 +6813,16 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 console.error(e);
                             }
                         }
-                        else if (entity instanceof RosettaLuaTable_2.RosettaLuaTable) {
+                        else if (entity instanceof RosettaLuaTable_3.RosettaLuaTable) {
                             throw new Error('Methods are not supported in Lua Tables.');
                         }
-                        else if (entity instanceof RosettaJavaClass_2.RosettaJavaClass) {
+                        else if (entity instanceof RosettaJavaClass_3.RosettaJavaClass) {
                             throw new Error('Editing Methods are not supported in Java.');
                         }
                         break;
                     }
                     case 'new_parameter': {
-                        if (entity instanceof RosettaLuaClass_2.RosettaLuaClass) {
+                        if (entity instanceof RosettaLuaClass_3.RosettaLuaClass) {
                             try {
                                 const split = nameOld.split('-');
                                 const type = split[0];
@@ -6819,7 +6855,7 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 console.error(e);
                             }
                         }
-                        else if (entity instanceof RosettaLuaTable_2.RosettaLuaTable) {
+                        else if (entity instanceof RosettaLuaTable_3.RosettaLuaTable) {
                             try {
                                 const split = nameOld.split('-');
                                 const type = split[0];
@@ -6844,13 +6880,13 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 console.error(e);
                             }
                         }
-                        else if (entity instanceof RosettaJavaClass_2.RosettaJavaClass) {
+                        else if (entity instanceof RosettaJavaClass_3.RosettaJavaClass) {
                             throw new Error('Adding parameters are not supported in Java.');
                         }
                         break;
                     }
                     case 'edit_parameter': {
-                        if (entity instanceof RosettaLuaClass_2.RosettaLuaClass) {
+                        if (entity instanceof RosettaLuaClass_3.RosettaLuaClass) {
                             try {
                                 const split = nameOld.split('-');
                                 const funcName = split[0];
@@ -6916,7 +6952,7 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 console.error(e);
                             }
                         }
-                        else if (entity instanceof RosettaLuaTable_2.RosettaLuaTable) {
+                        else if (entity instanceof RosettaLuaTable_3.RosettaLuaTable) {
                             try {
                                 const split = nameOld.split('-');
                                 const funcName = split[0];
@@ -6954,7 +6990,7 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 console.error(e);
                             }
                         }
-                        else if (entity instanceof RosettaJavaClass_2.RosettaJavaClass) {
+                        else if (entity instanceof RosettaJavaClass_3.RosettaJavaClass) {
                             try {
                                 const split = nameOld.split('-');
                                 const funcName = split[0];
@@ -7006,6 +7042,10 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                 this.nameSelected = undefined;
                 this.modalName.hide();
             });
+        }
+        show(disableBtn) {
+            this.$btnName.prop('disabled', disableBtn);
+            this.modalName.show();
         }
         hide() {
             this.modalName.hide();
@@ -7081,7 +7121,7 @@ define("src/asledgehammer/mallet/component/Toast", ["require", "exports", "src/a
     }
     exports.Toast = Toast;
 });
-define("src/asledgehammer/mallet/component/lua/LuaTableCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_6, LuaTypeScriptGenerator_5, util_19, LuaCard_7) {
+define("src/asledgehammer/mallet/component/lua/LuaTableCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_7, LuaTypeScriptGenerator_5, util_19, LuaCard_7) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaTableCard = void 0;
@@ -7093,7 +7133,7 @@ define("src/asledgehammer/mallet/component/lua/LuaTableCard", ["require", "expor
                 case 'typescript':
                     return (0, LuaTypeScriptGenerator_5.luaTableToTS)(this.options.entity, true);
                 case 'lua':
-                    return '--- @meta\n\n' + (0, LuaLuaGenerator_6.generateLuaTable)(this.options.entity);
+                    return '--- @meta\n\n' + (0, LuaLuaGenerator_7.generateLuaTable)(this.options.entity);
                 case 'json':
                     return JSON.stringify(this.options.entity.toJSON(), null, 2);
             }
@@ -7156,7 +7196,7 @@ define("src/asledgehammer/mallet/component/lua/LuaTableCard", ["require", "expor
     }
     exports.LuaTableCard = LuaTableCard;
 });
-define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/TSUtils"], function (require, exports, JavaLuaGenerator2_5, RosettaJavaClass_3, LuaLuaGenerator_7, RosettaLuaClass_3, RosettaLuaTable_3, JavaTypeScriptGenerator_5, LuaTypeScriptGenerator_6, TSUtils_3) {
+define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/TSUtils"], function (require, exports, JavaLuaGenerator2_6, RosettaJavaClass_4, LuaLuaGenerator_8, RosettaLuaClass_4, RosettaLuaTable_4, JavaTypeScriptGenerator_5, LuaTypeScriptGenerator_6, TSUtils_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Catalog = void 0;
@@ -7231,7 +7271,7 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
                 for (const name of Object.keys(this.javaClasses)) {
                     const javaClass = this.javaClasses[name];
                     s += `-- Java Class: ${javaClass.namespace.name}.${javaClass.name} --\n\n`;
-                    s += (0, JavaLuaGenerator2_5.generateJavaClass)(javaClass) + '\n';
+                    s += (0, JavaLuaGenerator2_6.generateJavaClass)(javaClass) + '\n';
                 }
             }
             /* Lua Classes */
@@ -7241,7 +7281,7 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
                 for (const name of Object.keys(this.luaClasses)) {
                     const luaClass = this.luaClasses[name];
                     s += `-- Lua Class: ${luaClass.name} --\n\n`;
-                    s += (0, LuaLuaGenerator_7.generateLuaClass)(luaClass) + '\n';
+                    s += (0, LuaLuaGenerator_8.generateLuaClass)(luaClass) + '\n';
                 }
             }
             /* Lua Tables */
@@ -7251,7 +7291,7 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
                 for (const name of Object.keys(this.luaTables)) {
                     const luaTable = this.luaTables[name];
                     s += `-- Lua Table: ${luaTable.name} --\n\n`;
-                    s += (0, LuaLuaGenerator_7.generateLuaTable)(luaTable) + '\n';
+                    s += (0, LuaLuaGenerator_8.generateLuaTable)(luaTable) + '\n';
                 }
             }
             return s;
@@ -7260,19 +7300,19 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
             this.reset();
             if (json.luaClasses) {
                 for (const name of Object.keys(json.luaClasses)) {
-                    const entity = new RosettaLuaClass_3.RosettaLuaClass(name, json.luaClasses[name]);
+                    const entity = new RosettaLuaClass_4.RosettaLuaClass(name, json.luaClasses[name]);
                     this.luaClasses[name] = entity;
                 }
             }
             if (json.tables) {
                 for (const name of Object.keys(json.tables)) {
-                    const entity = new RosettaLuaTable_3.RosettaLuaTable(name, json.tables[name]);
+                    const entity = new RosettaLuaTable_4.RosettaLuaTable(name, json.tables[name]);
                     this.luaTables[name] = entity;
                 }
             }
             if (json.namespaces) {
                 for (const name of Object.keys(json.namespaces)) {
-                    const namespace = new RosettaJavaClass_3.RosettaJavaNamespace(name, json.namespaces[name]);
+                    const namespace = new RosettaJavaClass_4.RosettaJavaNamespace(name, json.namespaces[name]);
                     for (const className of Object.keys(namespace.classes)) {
                         this.javaClasses[className] = namespace.classes[className];
                     }
@@ -7324,7 +7364,7 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
     }
     exports.Catalog = Catalog;
 });
-define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/mallet/component/lua/LuaClassCard", "src/asledgehammer/mallet/component/java/JavaClassCard", "src/asledgehammer/mallet/component/Sidebar", "src/asledgehammer/mallet/component/lua/LuaConstructorCard", "src/asledgehammer/mallet/component/lua/LuaFieldCard", "src/asledgehammer/mallet/component/lua/LuaFunctionCard", "src/asledgehammer/mallet/component/java/JavaConstructorCard", "src/asledgehammer/mallet/component/java/JavaFieldCard", "src/asledgehammer/mallet/component/java/JavaMethodCard", "src/asledgehammer/mallet/modal/ModalName", "src/asledgehammer/mallet/modal/ModalConfirm", "src/asledgehammer/mallet/component/Toast", "src/asledgehammer/mallet/Catalog", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/mallet/component/lua/LuaTableCard"], function (require, exports, hljs, LuaLuaGenerator_8, RosettaLuaClass_4, RosettaLuaConstructor_2, util_20, RosettaJavaClass_4, JavaLuaGenerator2_6, LuaClassCard_1, JavaClassCard_1, Sidebar_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, JavaConstructorCard_1, JavaFieldCard_1, JavaMethodCard_1, ModalName_1, ModalConfirm_1, Toast_1, Catalog_1, JavaTypeScriptGenerator_6, LuaTypeScriptGenerator_7, RosettaLuaTable_4, LuaTableCard_1) {
+define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/mallet/component/lua/LuaClassCard", "src/asledgehammer/mallet/component/java/JavaClassCard", "src/asledgehammer/mallet/component/Sidebar", "src/asledgehammer/mallet/component/lua/LuaConstructorCard", "src/asledgehammer/mallet/component/lua/LuaFieldCard", "src/asledgehammer/mallet/component/lua/LuaFunctionCard", "src/asledgehammer/mallet/component/java/JavaConstructorCard", "src/asledgehammer/mallet/component/java/JavaFieldCard", "src/asledgehammer/mallet/component/java/JavaMethodCard", "src/asledgehammer/mallet/modal/ModalName", "src/asledgehammer/mallet/modal/ModalConfirm", "src/asledgehammer/mallet/component/Toast", "src/asledgehammer/mallet/Catalog", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/mallet/component/lua/LuaTableCard"], function (require, exports, hljs, LuaLuaGenerator_9, RosettaLuaClass_5, RosettaLuaConstructor_2, util_20, RosettaJavaClass_5, JavaLuaGenerator2_7, LuaClassCard_1, JavaClassCard_1, Sidebar_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, JavaConstructorCard_1, JavaFieldCard_1, JavaMethodCard_1, ModalName_1, ModalConfirm_1, Toast_1, Catalog_1, JavaTypeScriptGenerator_6, LuaTypeScriptGenerator_7, RosettaLuaTable_5, LuaTableCard_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.App = void 0;
@@ -7358,7 +7398,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
         }
         showLuaClassConstructor(entity) {
             const { selected } = this.catalog;
-            if (!(selected instanceof RosettaLuaClass_4.RosettaLuaClass))
+            if (!(selected instanceof RosettaLuaClass_5.RosettaLuaClass))
                 return null;
             if (!entity)
                 entity = new RosettaLuaConstructor_2.RosettaLuaConstructor(selected);
@@ -7372,7 +7412,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
         }
         showLuaClassField(entity) {
             const { selected } = this.catalog;
-            if (!(selected instanceof RosettaLuaClass_4.RosettaLuaClass))
+            if (!(selected instanceof RosettaLuaClass_5.RosettaLuaClass))
                 return null;
             this.$screenContent.empty();
             const card = new LuaFieldCard_1.LuaFieldCard(this, { entity, isStatic: false });
@@ -7383,7 +7423,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
         }
         showLuaClassValue(entity) {
             const { selected } = this.catalog;
-            if (!(selected instanceof RosettaLuaClass_4.RosettaLuaClass))
+            if (!(selected instanceof RosettaLuaClass_5.RosettaLuaClass))
                 return null;
             this.$screenContent.empty();
             const card = new LuaFieldCard_1.LuaFieldCard(this, { entity, isStatic: true });
@@ -7394,7 +7434,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
         }
         showLuaClassMethod(entity) {
             const { selected } = this.catalog;
-            if (!(selected instanceof RosettaLuaClass_4.RosettaLuaClass))
+            if (!(selected instanceof RosettaLuaClass_5.RosettaLuaClass))
                 return null;
             this.$screenContent.empty();
             const card = new LuaFunctionCard_1.LuaFunctionCard(this, { entity, isStatic: false });
@@ -7405,7 +7445,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
         }
         showLuaClassFunction(entity) {
             const { selected } = this.catalog;
-            if (!(selected instanceof RosettaLuaClass_4.RosettaLuaClass))
+            if (!(selected instanceof RosettaLuaClass_5.RosettaLuaClass))
                 return null;
             this.$screenContent.empty();
             const card = new LuaFunctionCard_1.LuaFunctionCard(this, { entity, isStatic: true });
@@ -7426,7 +7466,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
         }
         showLuaTableField(entity) {
             const { selected } = this.catalog;
-            if (!(selected instanceof RosettaLuaTable_4.RosettaLuaTable))
+            if (!(selected instanceof RosettaLuaTable_5.RosettaLuaTable))
                 return null;
             this.$screenContent.empty();
             const card = new LuaFieldCard_1.LuaFieldCard(this, { entity, isStatic: true });
@@ -7437,7 +7477,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
         }
         showLuaTableFunction(entity) {
             const { selected } = this.catalog;
-            if (!(selected instanceof RosettaLuaTable_4.RosettaLuaTable))
+            if (!(selected instanceof RosettaLuaTable_5.RosettaLuaTable))
                 return null;
             this.$screenContent.empty();
             const card = new LuaFunctionCard_1.LuaFunctionCard(this, { entity, isStatic: true });
@@ -7458,7 +7498,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
         }
         showJavaClassConstructor(entity) {
             const { selected } = this.catalog;
-            if (!(selected instanceof RosettaJavaClass_4.RosettaJavaClass))
+            if (!(selected instanceof RosettaJavaClass_5.RosettaJavaClass))
                 return null;
             if (!entity)
                 return null;
@@ -7472,7 +7512,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
         }
         showJavaClassField(entity) {
             const { selected } = this.catalog;
-            if (!(selected instanceof RosettaJavaClass_4.RosettaJavaClass))
+            if (!(selected instanceof RosettaJavaClass_5.RosettaJavaClass))
                 return null;
             this.$screenContent.empty();
             const card = new JavaFieldCard_1.JavaFieldCard(this, { entity, isStatic: entity.isStatic() });
@@ -7483,7 +7523,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
         }
         showJavaClassMethod(entity) {
             const { selected } = this.catalog;
-            if (!(selected instanceof RosettaJavaClass_4.RosettaJavaClass))
+            if (!(selected instanceof RosettaJavaClass_5.RosettaJavaClass))
                 return null;
             this.$screenContent.empty();
             const card = new JavaMethodCard_1.JavaMethodCard(this, { entity, isStatic: entity.isStatic() });
@@ -7502,10 +7542,10 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             }
             const { selected } = this.catalog;
             let highlightedCode = '';
-            if (selected instanceof RosettaLuaClass_4.RosettaLuaClass) {
+            if (selected instanceof RosettaLuaClass_5.RosettaLuaClass) {
                 switch (this.languageMode) {
                     case 'lua': {
-                        this.previewCode = '--- @meta\n\n' + (0, LuaLuaGenerator_8.generateLuaClass)(selected);
+                        this.previewCode = '--- @meta\n\n' + (0, LuaLuaGenerator_9.generateLuaClass)(selected);
                         break;
                     }
                     case 'typescript': {
@@ -7518,10 +7558,10 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                     }
                 }
             }
-            else if (selected instanceof RosettaLuaTable_4.RosettaLuaTable) {
+            else if (selected instanceof RosettaLuaTable_5.RosettaLuaTable) {
                 switch (this.languageMode) {
                     case 'lua': {
-                        this.previewCode = '--- @meta\n\n' + (0, LuaLuaGenerator_8.generateLuaTable)(selected);
+                        this.previewCode = '--- @meta\n\n' + (0, LuaLuaGenerator_9.generateLuaTable)(selected);
                         break;
                     }
                     case 'typescript': {
@@ -7534,10 +7574,10 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                     }
                 }
             }
-            else if (selected instanceof RosettaJavaClass_4.RosettaJavaClass) {
+            else if (selected instanceof RosettaJavaClass_5.RosettaJavaClass) {
                 switch (this.languageMode) {
                     case 'lua': {
-                        this.previewCode = '--- @meta\n\n' + (0, JavaLuaGenerator2_6.generateJavaClass)(selected);
+                        this.previewCode = '--- @meta\n\n' + (0, JavaLuaGenerator2_7.generateJavaClass)(selected);
                         break;
                     }
                     case 'typescript': {
@@ -7737,7 +7777,7 @@ define("src/asledgehammer/rosetta/RosettaFileInfo", ["require", "exports"], func
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
 });
-define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asledgehammer/rosetta/Rosetta", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/lua/RosettaLuaTableField", "src/asledgehammer/rosetta/lua/RosettaLuaClass"], function (require, exports, Rosetta_1, RosettaEntity_16, RosettaLuaFunction_3, RosettaLuaTable_5, RosettaLuaTableField_2, RosettaLuaClass_5) {
+define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asledgehammer/rosetta/Rosetta", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/lua/RosettaLuaTableField", "src/asledgehammer/rosetta/lua/RosettaLuaClass"], function (require, exports, Rosetta_1, RosettaEntity_16, RosettaLuaFunction_3, RosettaLuaTable_6, RosettaLuaTableField_2, RosettaLuaClass_6) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RosettaFile = void 0;
@@ -7761,7 +7801,7 @@ define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asle
                 const rawTables = raw.tables;
                 for (const name of Object.keys(rawTables)) {
                     const rawTable = rawTables[name];
-                    const table = new RosettaLuaTable_5.RosettaLuaTable(name, rawTable);
+                    const table = new RosettaLuaTable_6.RosettaLuaTable(name, rawTable);
                     this.tables[table.name] = this.tables[name] = table;
                 }
             }
@@ -7788,7 +7828,7 @@ define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asle
                 const rawLuaClasses = raw.luaClasses;
                 for (const name of Object.keys(rawLuaClasses)) {
                     const rawLuaClass = rawLuaClasses[name];
-                    const luaClass = new RosettaLuaClass_5.RosettaLuaClass(name, rawLuaClass);
+                    const luaClass = new RosettaLuaClass_6.RosettaLuaClass(name, rawLuaClass);
                     this.luaClasses[luaClass.name] = this.luaClasses[name] = luaClass;
                 }
             }
@@ -7806,7 +7846,7 @@ define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asle
         createLuaClass(name) {
             /* (Make sure the object can be modified) */
             this.checkReadOnly();
-            const luaClass = new RosettaLuaClass_5.RosettaLuaClass(name);
+            const luaClass = new RosettaLuaClass_6.RosettaLuaClass(name);
             // (Only check for the file instance)
             if (this.luaClasses[luaClass.name]) {
                 throw new Error(`A global Lua Class already exists: ${luaClass.name}`);
@@ -7827,7 +7867,7 @@ define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asle
         createGlobalLuaTable(name) {
             /* (Make sure the object can be modified) */
             this.checkReadOnly();
-            const luaTable = new RosettaLuaTable_5.RosettaLuaTable(name);
+            const luaTable = new RosettaLuaTable_6.RosettaLuaTable(name);
             // (Only check for the file instance)
             if (this.tables[luaTable.name]) {
                 throw new Error(`A global Lua Table already exists: ${luaTable.name}`);

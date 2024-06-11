@@ -56,7 +56,7 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
 
             if (!nameSelected) nameSelected = entity.name;
             this.app.modalName.nameSelected = nameSelected;
-            modalName.show();
+            this.app.modalName.show(true);
         });
     }
 
@@ -141,7 +141,7 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
                 this.app.modalName.javaCallback = (nameNew: string) => {
                     $(`#${name}_${index}_name`).html(nameNew);
                 };
-                modalName.show();
+                this.app.modalName.show(true);
             });
 
             this.listenType(param);

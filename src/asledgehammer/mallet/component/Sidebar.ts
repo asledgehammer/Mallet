@@ -1,4 +1,9 @@
 import { App } from '../../../app';
+import { generateJavaClass } from '../../rosetta/java/JavaLuaGenerator2';
+import { RosettaJavaClass } from '../../rosetta/java/RosettaJavaClass';
+import { generateLuaClass, generateLuaTable } from '../../rosetta/lua/LuaLuaGenerator';
+import { RosettaLuaClass } from '../../rosetta/lua/RosettaLuaClass';
+import { RosettaLuaTable } from '../../rosetta/lua/RosettaLuaTable';
 import { html } from '../../rosetta/util';
 import { Component, ComponentOptions } from './Component';
 import { ItemTree } from './ItemTree';
@@ -153,14 +158,14 @@ export class Sidebar extends Component<SidebarOptions> {
                 $btnName.addClass('btn-success');
                 $inputName.val('');
                 app.modalName.nameMode = 'new_lua_class';
-                modalName.show();
+                app.modalName.show(true);
             } catch (e) {
                 app.toast.alert(`Failed to create LuaClass.`, 'error');
                 console.error(e);
             }
         });
 
-        
+
         $doc.on('click', '#btn-new-lua-table', () => {
             try {
                 $titleName.html('New Lua Table');
@@ -169,7 +174,7 @@ export class Sidebar extends Component<SidebarOptions> {
                 $btnName.addClass('btn-success');
                 $inputName.val('');
                 app.modalName.nameMode = 'new_lua_table';
-                modalName.show();
+                app.modalName.show(true);
             } catch (e) {
                 app.toast.alert(`Failed to create LuaTable.`, 'error');
                 console.error(e);
@@ -219,6 +224,41 @@ export class Sidebar extends Component<SidebarOptions> {
                 });
                 const { catalog } = this.app;
                 const lua = catalog.toLuaTypings();
+
+                const writable = await result.createWritable();
+                await writable.write(lua);
+                await writable.close();
+
+                app.toast.alert(`Saved Lua typings file.`, 'info');
+            } catch (e) {
+                /* (Ignore aborted dialogs) */
+                if (e instanceof DOMException && e.name === 'AbortError') return;
+                app.toast.alert(`Failed to save Lua typings.`, 'error');
+                console.error(e);
+            }
+        });
+
+        $doc.on('click', '#btn-save-object-lua', async () => {
+            try {
+                // @ts-ignore
+                const result = await showSaveFilePicker({
+                    id: 'mallet-save-lua',
+                    types: [
+                        {
+                            description: "Lua file",
+                            accept: { "text/x-lua": [".lua"] },
+                        },
+                    ],
+                });
+                const { selected } = this.app.catalog;
+                let lua = '--- @meta\n\n';
+                if (selected instanceof RosettaLuaClass) {
+                    lua += generateLuaClass(selected);
+                } else if (selected instanceof RosettaLuaTable) {
+                    lua += generateLuaTable(selected);
+                } else if (selected instanceof RosettaJavaClass) {
+                    lua += generateJavaClass(selected);
+                }
 
                 const writable = await result.createWritable();
                 await writable.write(lua);
@@ -366,7 +406,7 @@ export class Sidebar extends Component<SidebarOptions> {
                 $titleName.html('Create Lua Value');
                 $inputName.val('');
                 $btnName.val('Create');
-                modalName.show();
+                this.app.modalName.show(true);
             } catch (e) {
                 app.toast.alert(`Failed to create Lua Value.`, 'error');
                 console.error(e);
@@ -384,7 +424,7 @@ export class Sidebar extends Component<SidebarOptions> {
                 $titleName.html('Create Lua Field');
                 $inputName.val('');
                 $btnName.val('Create');
-                modalName.show();
+                this.app.modalName.show(true);
             } catch (e) {
                 app.toast.alert(`Failed to create Lua Field.`, 'error');
                 console.error(e);
@@ -402,7 +442,7 @@ export class Sidebar extends Component<SidebarOptions> {
                 $titleName.html('Create Lua Function');
                 $inputName.val('');
                 $btnName.val('Create');
-                modalName.show();
+                this.app.modalName.show(true);
             } catch (e) {
                 app.toast.alert(`Failed to create Lua Function.`, 'error');
                 console.error(e);
@@ -420,7 +460,7 @@ export class Sidebar extends Component<SidebarOptions> {
                 $titleName.html('Create Lua Method');
                 $inputName.val('');
                 $btnName.val('Create');
-                modalName.show();
+                this.app.modalName.show(true);
             } catch (e) {
                 app.toast.alert(`Failed to create Lua Method.`, 'error');
                 console.error(e);

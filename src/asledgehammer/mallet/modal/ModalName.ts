@@ -49,7 +49,7 @@ export class ModalName {
             const val = $inputName.val()!;
             const isValid = isNameValid(val);
             $btnName.prop('disabled', !isValid);
-            if(isValid) {
+            if (isValid) {
                 $inputName.removeClass('is-invalid');
                 $inputName.addClass('is-valid');
             } else {
@@ -526,6 +526,11 @@ export class ModalName {
             this.nameSelected = undefined;
             this.modalName.hide();
         });
+    }
+
+    show(disableBtn: boolean) {
+        this.$btnName.prop('disabled', disableBtn);
+        this.modalName.show();
     }
 
     hide() {

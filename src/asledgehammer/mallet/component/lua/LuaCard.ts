@@ -59,7 +59,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
 
             if (!nameSelected) nameSelected = entity.name;
             this.app.modalName.nameSelected = nameSelected;
-            modalName.show();
+            this.app.modalName.show(true);
         });
     }
 
@@ -215,7 +215,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
             this.app.modalName.nameSelected = `${type}-${entity.name}`;
             $titleName.html('Add Parameter');
             $inputName.val('');
-            modalName.show();
+            this.app.modalName.show(true);
         });
     }
 
