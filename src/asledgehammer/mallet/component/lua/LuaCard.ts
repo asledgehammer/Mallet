@@ -114,6 +114,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
     }
 
     listenParameters(entity: { name: string, parameters: RosettaLuaParameter[] }, type: 'constructor' | 'function' | 'method'): void {
+        const _this = this;
         const { parameters } = entity;
 
         for (const param of parameters) {
@@ -122,6 +123,8 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
             const idParamNotes = `${entity.name}-parameter-${param.name}-notes`;
             const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
             const idBtnDelete = `${entity.name}-parameter-${param.name}-delete`;
+            const idNullable = `${entity.name}-parameter-${param.name}-nullable`;
+            const idOptional = `${entity.name}-parameter-${param.name}-optional`;
 
             createDeltaEditor(idParamNotes, param.notes!, (markdown: string) => {
                 while (markdown.endsWith('\n')) markdown = markdown.substring(0, markdown.length - 1);
@@ -189,6 +192,20 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                 }, `Delete Parameter ${param.name}?`);
             });
 
+            /* (Nullable CheckBox) */
+            $get(idNullable).on('change', function () {
+                param.nullable = this.checked;
+                _this.update();
+                _this.app.renderCode();
+            });
+
+            /* (Optional CheckBox) */
+            $get(idOptional).on('change', function () {
+                param.optional = this.checked;
+                _this.update();
+                _this.app.renderCode();
+            });
+
             this.listenEdit({ name: param.name }, idBtnEdit, 'edit_parameter', 'Edit Parameter Name', `${entity.name}-${param.name}`);
         }
         const idBtnAdd = `btn-${entity.name}-parameter-add`;
@@ -212,6 +229,8 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
             const idCollapse = `${entity.name}-parameter-${param.name}-collapse`;
             const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
             const idBtnDelete = `${entity.name}-parameter-${param.name}-delete`;
+            const idNullable = `${entity.name}-parameter-${param.name}-nullable`;
+            const idOptional = `${entity.name}-parameter-${param.name}-optional`;
             htmlParams += html`
                 <div class="accordion-item rounded-0">
                     <div class="accordion-header" style="position: relative" id="headingTwo">
@@ -242,6 +261,18 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                             <div class="mb-3">
                                 <label for="${idParamType}" class="form-label">Type</label>
                                 ${LuaCard.renderTypeSelect(idParamType, 'The return type.', param.type, true)}
+                            </div>
+                            <div class="mb-3 form-check">
+                                <!-- Optional Flag -->
+                                <div class="col-auto">
+                                    <input id="${idOptional}" type="checkbox" class="form-check-input" ${param.optional ? ' checked' : ''}>
+                                    <label class="form-check-label" for="${idOptional}">Optional</label>
+                                </div>
+                                <!-- Nullable Flag -->
+                                <div class="col-auto">
+                                    <input id="${idNullable}" type="checkbox" class="form-check-input" ${param.nullable ? ' checked' : ''}>
+                                    <label class="form-check-label" for="${idNullable}">Nullable</label>
+                                </div>
                             </div>
                             <!-- Notes -->
                             <div class="mb-3">
@@ -414,6 +445,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         if (!notes) notes = '';
 
         const idCard = `${entity.name}-returns-card`;
+        const idNullable = `${entity.name}-returns-nullable`;
 
         return html`
             <div class="card responsive-subcard mt-3">
@@ -428,7 +460,13 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                         <label for="${idReturnType}" class="form-label">Type</label>
                         ${LuaCard.renderTypeSelect(idReturnType, 'The return type.', returns.type, true)}
                     </div>
-
+                    <div class="mb-3 form-check">
+                        <!-- Nullable Flag -->
+                        <div class="col-auto">
+                            <input id="${idNullable}" type="checkbox" class="form-check-input" ${returns.nullable ? ' checked' : ''}>
+                            <label class="form-check-label" for="${idNullable}">Nullable</label>
+                        </div>
+                    </div>
                     <!-- Return Notes -->
                     <div>
                         <label for="${idReturnNotes}" class="form-label">Description</label>
@@ -439,10 +477,13 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         `;
     }
 
-    listenType(entity: { name: string, type: string }, idType: string, idSelect: string): void {
+    listenType(entity: { name: string, type: string, nullable: boolean }, idType: string, idSelect: string): void {
 
+        const _this = this;
         const $select = $get(idType);
         const $customInput = $get(`${idSelect}-custom-input`);
+        const $nullable = $get(`${entity.name}-type-nullable`);
+
         $select.on('change', (value) => {
             entity.type = value.target.value;
             if (entity.type === 'custom') {
@@ -490,11 +531,19 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                     break;
             }
         });
+
+        /* (Nullable CheckBox) */
+        $nullable.on('change', function () {
+            entity.nullable = this.checked;
+            _this.update();
+            _this.app.renderCode();
+        });
     }
 
-    renderType(name: string, type: string, idReturnType: string): string {
+    renderType(name: string, type: string, nullable: boolean, idReturnType: string): string {
 
         const idTypeCard = `${name}-type-card`;
+        const idNullable = `${name}-type-nullable`;
 
         return html`
             <div class="card responsive-subcard">
@@ -507,6 +556,11 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                     <div>
                         <label for="${idReturnType}" class="form-label">Type</label>
                         ${LuaCard.renderTypeSelect(idReturnType, 'The return type.', type, false)}
+                    </div>
+                    <!-- Nullable Flag -->
+                    <div class="col-auto">
+                        <input id="${idNullable}" type="checkbox" class="form-check-input" ${nullable ? ' checked' : ''}>
+                        <label class="form-check-label" for="${idNullable}">Nullable</label>
                     </div>
                 </div>
             </div>

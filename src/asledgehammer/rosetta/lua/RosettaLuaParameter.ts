@@ -12,6 +12,7 @@ export class RosettaLuaParameter extends RosettaEntity {
   name: string;
   type: string;
   optional: boolean = false;
+  nullable: boolean = false;
   notes: string | undefined;
 
   constructor(raw: { [key: string]: any }) {
@@ -29,6 +30,7 @@ export class RosettaLuaParameter extends RosettaEntity {
     }
     this.notes = this.readNotes();
     this.optional = this.readBoolean('optional') || false;
+    this.nullable = this.readBoolean('nullable') || false;
   }
 
   parse(raw: { [key: string]: any }) {
@@ -37,10 +39,11 @@ export class RosettaLuaParameter extends RosettaEntity {
       this.type = this.readRequiredString('type', raw);
     }
     this.optional = this.readBoolean('optional', raw) || false;
+    this.nullable = this.readBoolean('nullable', raw) || false;
   }
 
   toJSON(patch: boolean = false): any {
-    const { name, type, notes, optional } = this;
+    const { name, type, notes, nullable, optional } = this;
 
     const json: any = {};
 
@@ -49,6 +52,7 @@ export class RosettaLuaParameter extends RosettaEntity {
     json.type = type;
     json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
     json.optional = optional !== undefined ? optional : undefined;
+    json.nullable = nullable !== undefined ? nullable : undefined;
 
     return json;
   }

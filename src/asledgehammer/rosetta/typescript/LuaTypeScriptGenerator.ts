@@ -29,7 +29,7 @@ export function luaFieldToTS(
     s += i;
 
     /* Definition-line */
-    s += `${field.name}: ${tsType(field.type, field.optional)};`;
+    s += `${field.name}: ${tsType(field.type, field.nullable)};`;
 
     // Format documented variables as spaced for better legability.
     if (ds.length) s += '\n';
@@ -48,8 +48,8 @@ export function luaConstructorToTS(
     let ps = '';
     if (con.parameters && con.parameters.length) {
         ps += '(';
-        for (const parameter of con.parameters) {
-            ps += `${parameter.name}: ${tsType(parameter.type, parameter.optional)}, `;
+        for (const param of con.parameters) {
+            ps += `${param.name}${param.optional ? '?' : ''}: ${tsType(param.type, param.nullable)}, `;
         }
         ps = ps.substring(0, ps.length - 2) + ')';
     } else {
@@ -59,8 +59,8 @@ export function luaConstructorToTS(
     let fs = `${i}constructor${ps};`;
     if (fs.length > notesLength) {
         fs = `${i}constructor(\n`;
-        for (const parameter of con.parameters) {
-            fs += `${i}    ${parameter.name}: ${tsType(parameter.type, parameter.optional)}, \n`;
+        for (const param of con.parameters) {
+            fs += `${i}    ${param.name}${param.optional ? '?' : ''}: ${tsType(param.type, param.nullable)}, \n`;
         }
         fs += `${i});`;
     }
@@ -164,21 +164,21 @@ export function luaFunctionToTS(
     let ps = '';
     if (method.parameters && method.parameters.length) {
         ps += '(';
-        for (const parameter of method.parameters) {
-            ps += `${parameter.name}: ${tsType(parameter.type, parameter.optional)}, `;
+        for (const param of method.parameters) {
+            ps += `${param.name}${param.optional ? '?' : ''}: ${tsType(param.type, param.nullable)}, `;
         }
         ps = ps.substring(0, ps.length - 2) + ')';
     } else {
         ps = '()';
     }
 
-    const rs = tsType(method.returns.type, method.returns.optional);
+    const rs = tsType(method.returns.type, method.returns.nullable);
 
     let fs = `${i}${method.name}${ps}: ${rs};`;
     if (fs.length > notesLength) {
         fs = `${i}${method.name}(\n`;
-        for (const parameter of method.parameters) {
-            fs += `${i}    ${parameter.name}: ${tsType(parameter.type, parameter.optional)}, \n`;
+        for (const param of method.parameters) {
+            fs += `${i}    ${param.name}${param.optional ? '?' : ''}: ${tsType(param.type, param.nullable)}, \n`;
         }
         fs += `${i}): ${rs};`;
     }
@@ -404,7 +404,7 @@ export function luaTableToTS(
     return s;
 }
 
-export function tsType(type: string, optional: boolean): string {
+export function tsType(type: string, nullable: boolean): string {
     let result = type;
     if (type.startsWith('fun(')) {
         // FIXME: Nested function calls won't work here.
@@ -413,7 +413,7 @@ export function tsType(type: string, optional: boolean): string {
         result = '(' + t.trim() + ')';
     }
 
-    if (optional) {
+    if (nullable) {
         result = result + ' | null';
     }
 

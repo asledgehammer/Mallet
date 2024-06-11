@@ -2,6 +2,7 @@ import { App } from '../../../../app';
 import { generateLuaField, generateLuaValue } from '../../../rosetta/lua/LuaLuaGenerator';
 import { RosettaLuaClass } from '../../../rosetta/lua/RosettaLuaClass';
 import { RosettaLuaField } from '../../../rosetta/lua/RosettaLuaField';
+import { RosettaLuaTableField } from '../../../rosetta/lua/RosettaLuaTableField';
 import { luaFieldToTS } from '../../../rosetta/typescript/LuaTypeScriptGenerator';
 import { $get, html } from '../../../rosetta/util';
 import { CardOptions } from '../CardComponent';
@@ -103,7 +104,7 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
                 ${this.renderNotes(idNotes)}
                 ${this.renderDefaultValue(entity.defaultValue, idDefaultValue)}
                 <hr>
-                ${this.renderType(entity.name, entity.type, idType)}
+                ${this.renderType(entity.name, entity.type, entity.nullable, idType)}
                 <hr>
                 ${this.renderPreview(false)}
             </div>
@@ -138,6 +139,6 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
 }
 
 export type LuaFieldCardOptions = CardOptions & {
-    entity: RosettaLuaField;
+    entity: RosettaLuaField | RosettaLuaTableField;
     isStatic: boolean;
 };

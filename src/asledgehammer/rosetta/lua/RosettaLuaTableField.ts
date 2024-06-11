@@ -11,7 +11,7 @@ import { formatName } from '../RosettaUtils';
 export class RosettaLuaTableField extends RosettaEntity {
   name: string;
   type: string;
-  optional: boolean = false;
+  nullable: boolean = false;
   notes: string | undefined;
   defaultValue: string | undefined;
 
@@ -31,7 +31,7 @@ export class RosettaLuaTableField extends RosettaEntity {
 
     this.notes = this.readNotes();
     this.defaultValue = this.readString('defaultValue');
-    this.optional = this.readBoolean('optional') || false;
+    this.nullable = this.readBoolean('nullable') || false;
   }
 
   parse(raw: { [key: string]: any }) {
@@ -41,7 +41,7 @@ export class RosettaLuaTableField extends RosettaEntity {
       this.type = this.readRequiredString('type', raw);
     }
     this.defaultValue = this.readString('defaultValue', raw);
-    this.optional = this.readBoolean('optional', raw) || false;
+    this.nullable = this.readBoolean('nullable', raw) || false;
   }
 
   /**
@@ -50,7 +50,7 @@ export class RosettaLuaTableField extends RosettaEntity {
    * @returns The JSON of the Rosetta entity.
    */
   toJSON(patch: boolean = false): any {
-    const { type, notes, defaultValue, optional } = this;
+    const { type, notes, defaultValue, nullable } = this;
 
     const json: any = {};
 
@@ -58,7 +58,7 @@ export class RosettaLuaTableField extends RosettaEntity {
     json.type = type;
     json.notes = notes !== undefined && notes !== '' ? notes : undefined;
     json.defaultValue = defaultValue !== undefined ? defaultValue : undefined;
-    json.optional = optional !== undefined ? optional : undefined;
+    json.nullable = nullable !== undefined ? nullable : undefined;
 
     return json;
   }

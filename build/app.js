@@ -168,6 +168,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaParameter", ["require", "exports
         constructor(raw) {
             super(raw);
             this.optional = false;
+            this.nullable = false;
             Assert.assertNonNull(raw.type, 'raw.type');
             this.name = (0, RosettaUtils_1.formatName)(this.readRequiredString('name'));
             if (raw.type !== undefined) {
@@ -181,6 +182,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaParameter", ["require", "exports
             }
             this.notes = this.readNotes();
             this.optional = this.readBoolean('optional') || false;
+            this.nullable = this.readBoolean('nullable') || false;
         }
         parse(raw) {
             this.notes = this.readNotes(raw);
@@ -188,15 +190,17 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaParameter", ["require", "exports
                 this.type = this.readRequiredString('type', raw);
             }
             this.optional = this.readBoolean('optional', raw) || false;
+            this.nullable = this.readBoolean('nullable', raw) || false;
         }
         toJSON(patch = false) {
-            const { name, type, notes, optional } = this;
+            const { name, type, notes, nullable, optional } = this;
             const json = {};
             /* (Properties) */
             json.name = name;
             json.type = type;
             json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
             json.optional = optional !== undefined ? optional : undefined;
+            json.nullable = nullable !== undefined ? nullable : undefined;
             return json;
         }
     }
@@ -214,7 +218,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaReturns", ["require", "exports",
     class RosettaLuaReturns extends RosettaEntity_2.RosettaEntity {
         constructor(raw) {
             super(raw);
-            this.optional = false;
+            this.nullable = false;
             if (raw.type !== undefined) {
                 let type = this.readString('type');
                 if (type === undefined)
@@ -225,22 +229,22 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaReturns", ["require", "exports",
                 this.type = 'any';
             }
             this.notes = this.readNotes();
-            this.optional = this.readBoolean('optional') || false;
+            this.nullable = this.readBoolean('nullable') || false;
         }
         parse(raw) {
             this.notes = this.readNotes(raw);
             if (raw.type !== undefined) {
                 this.type = this.readRequiredString('type', raw);
             }
-            this.optional = this.readBoolean('optional', raw) || false;
+            this.nullable = this.readBoolean('nullable', raw) || false;
         }
         toJSON(patch = false) {
-            const { type, notes, optional } = this;
+            const { type, notes, nullable } = this;
             const json = {};
             /* (Properties) */
             json.type = type;
             json.notes = notes !== undefined && this.writeNotes(notes) !== '' ? notes : undefined;
-            json.optional = optional !== undefined ? optional : undefined;
+            json.nullable = nullable !== undefined ? nullable : undefined;
             return json;
         }
     }
@@ -345,7 +349,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaField", ["require", "exports", "
     class RosettaLuaField extends RosettaEntity_4.RosettaEntity {
         constructor(name, raw = {}) {
             super(raw);
-            this.optional = false;
+            this.nullable = false;
             Assert.assertNonEmptyString(name, 'name');
             this.name = name;
             if (raw.type !== undefined) {
@@ -361,7 +365,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaField", ["require", "exports", "
                 this.defaultValue = this.readString('defaultValue');
             }
             this.notes = this.readNotes();
-            this.optional = this.readBoolean('optional') || false;
+            this.nullable = this.readBoolean('nullable') || false;
         }
         parse(raw) {
             this.notes = this.readNotes(raw);
@@ -371,16 +375,16 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaField", ["require", "exports", "
             if (raw.defaultValue !== undefined) {
                 this.defaultValue = this.readRequiredString('defaultValue', raw);
             }
-            this.optional = this.readBoolean('optional', raw) || false;
+            this.nullable = this.readBoolean('nullable', raw) || false;
         }
         toJSON(patch = false) {
-            const { defaultValue, type, notes, optional } = this;
+            const { defaultValue, type, notes, nullable } = this;
             const json = {};
             /* (Properties) */
             json.type = type;
             json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
             json.defaultValue = defaultValue !== undefined && defaultValue !== '' ? defaultValue : undefined;
-            json.optional = optional !== undefined ? optional : undefined;
+            json.nullable = nullable !== undefined ? nullable : undefined;
             return json;
         }
     }
@@ -745,7 +749,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaTableField", ["require", "export
     class RosettaLuaTableField extends RosettaEntity_7.RosettaEntity {
         constructor(name, raw = {}) {
             super(raw);
-            this.optional = false;
+            this.nullable = false;
             Assert.assertNonEmptyString(name, 'name');
             this.name = (0, RosettaUtils_4.formatName)(name);
             if (raw.type !== undefined) {
@@ -759,7 +763,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaTableField", ["require", "export
             }
             this.notes = this.readNotes();
             this.defaultValue = this.readString('defaultValue');
-            this.optional = this.readBoolean('optional') || false;
+            this.nullable = this.readBoolean('nullable') || false;
         }
         parse(raw) {
             /* (Properties) */
@@ -768,7 +772,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaTableField", ["require", "export
                 this.type = this.readRequiredString('type', raw);
             }
             this.defaultValue = this.readString('defaultValue', raw);
-            this.optional = this.readBoolean('optional', raw) || false;
+            this.nullable = this.readBoolean('nullable', raw) || false;
         }
         /**
          * @param patch If true, the exported JSON object will only contain Patch-specific information.
@@ -776,13 +780,13 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaTableField", ["require", "export
          * @returns The JSON of the Rosetta entity.
          */
         toJSON(patch = false) {
-            const { type, notes, defaultValue, optional } = this;
+            const { type, notes, defaultValue, nullable } = this;
             const json = {};
             /* (Properties) */
             json.type = type;
             json.notes = notes !== undefined && notes !== '' ? notes : undefined;
             json.defaultValue = defaultValue !== undefined ? defaultValue : undefined;
-            json.optional = optional !== undefined ? optional : undefined;
+            json.nullable = nullable !== undefined ? nullable : undefined;
             return json;
         }
     }
@@ -957,9 +961,9 @@ define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports"], 
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.applyLuaDocumentation = exports.paginateNotes = exports.generateLuaTable = exports.generateLuaClass = exports.generateLuaConstructor = exports.generateLuaFunction = exports.generateLuaParameterBody = exports.generateLuaValue = exports.generateLuaField = exports.luaType = void 0;
-    function luaType(type, optional) {
+    function luaType(type, nullable) {
         let result = type;
-        if (optional) {
+        if (nullable) {
             result += ' | nil';
         }
         return result;
@@ -967,7 +971,7 @@ define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports"], 
     exports.luaType = luaType;
     const generateLuaField = (field) => {
         const notes = field.notes && field.notes.length ? field.notes.replace(/\n/g, '<br>') : '';
-        return `--- @field ${field.name} ${luaType(field.type, field.optional)} ${notes}`;
+        return `--- @field ${field.name} ${luaType(field.type, field.nullable)} ${notes}`;
     };
     exports.generateLuaField = generateLuaField;
     const generateLuaValue = (containerName, field) => {
@@ -1018,7 +1022,7 @@ define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports"], 
             if (ds.length)
                 ds.push('');
             for (const param of func.parameters) {
-                const pps = `@param ${param.name} ${luaType(param.type, param.optional)}`;
+                const pps = `@param ${param.name}${param.optional ? '?' : ''} ${luaType(param.type, param.nullable)}`;
                 if (param.notes && param.notes.trim().length) {
                     const notes = paginateNotes(pps + ' ' + param.notes.trim(), 100);
                     for (const line of notes) {
@@ -1034,7 +1038,7 @@ define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports"], 
         if (func.returns) {
             if (ds.length)
                 ds.push('');
-            let rs = `@return ${luaType(func.returns.type, func.returns.optional)}`;
+            let rs = `@return ${luaType(func.returns.type, func.returns.nullable)}`;
             if (func.returns.notes && func.returns.notes.length) {
                 rs += ' result';
                 const notes = paginateNotes(rs + ' ' + func.returns.notes.trim(), 100);
@@ -1072,7 +1076,7 @@ define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports"], 
             if (ds.length)
                 ds.push('');
             for (const param of con.parameters) {
-                const pps = `@param ${param.name} ${luaType(param.type, param.optional)}`;
+                const pps = `@param ${param.name}${param.optional ? '?' : ''}  ${luaType(param.type, param.nullable)}`;
                 if (param.notes && param.notes.trim().length) {
                     const notes = paginateNotes(pps + ' ' + param.notes.trim(), 100);
                     for (const line of notes) {
@@ -2385,7 +2389,7 @@ define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require"
         s = (0, TSUtils_1.applyTSDocumentation)(ds, s, indent);
         s += i;
         /* Definition-line */
-        s += `${field.name}: ${tsType(field.type, field.optional)};`;
+        s += `${field.name}: ${tsType(field.type, field.nullable)};`;
         // Format documented variables as spaced for better legability.
         if (ds.length)
             s += '\n';
@@ -2398,8 +2402,8 @@ define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require"
         let ps = '';
         if (con.parameters && con.parameters.length) {
             ps += '(';
-            for (const parameter of con.parameters) {
-                ps += `${parameter.name}: ${tsType(parameter.type, parameter.optional)}, `;
+            for (const param of con.parameters) {
+                ps += `${param.name}${param.optional ? '?' : ''}: ${tsType(param.type, param.nullable)}, `;
             }
             ps = ps.substring(0, ps.length - 2) + ')';
         }
@@ -2409,8 +2413,8 @@ define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require"
         let fs = `${i}constructor${ps};`;
         if (fs.length > notesLength) {
             fs = `${i}constructor(\n`;
-            for (const parameter of con.parameters) {
-                fs += `${i}    ${parameter.name}: ${tsType(parameter.type, parameter.optional)}, \n`;
+            for (const param of con.parameters) {
+                fs += `${i}    ${param.name}${param.optional ? '?' : ''}: ${tsType(param.type, param.nullable)}, \n`;
             }
             fs += `${i});`;
         }
@@ -2500,20 +2504,20 @@ define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require"
         let ps = '';
         if (method.parameters && method.parameters.length) {
             ps += '(';
-            for (const parameter of method.parameters) {
-                ps += `${parameter.name}: ${tsType(parameter.type, parameter.optional)}, `;
+            for (const param of method.parameters) {
+                ps += `${param.name}${param.optional ? '?' : ''}: ${tsType(param.type, param.nullable)}, `;
             }
             ps = ps.substring(0, ps.length - 2) + ')';
         }
         else {
             ps = '()';
         }
-        const rs = tsType(method.returns.type, method.returns.optional);
+        const rs = tsType(method.returns.type, method.returns.nullable);
         let fs = `${i}${method.name}${ps}: ${rs};`;
         if (fs.length > notesLength) {
             fs = `${i}${method.name}(\n`;
-            for (const parameter of method.parameters) {
-                fs += `${i}    ${parameter.name}: ${tsType(parameter.type, parameter.optional)}, \n`;
+            for (const param of method.parameters) {
+                fs += `${i}    ${param.name}${param.optional ? '?' : ''}: ${tsType(param.type, param.nullable)}, \n`;
             }
             fs += `${i}): ${rs};`;
         }
@@ -2716,7 +2720,7 @@ define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require"
         return s;
     }
     exports.luaTableToTS = luaTableToTS;
-    function tsType(type, optional) {
+    function tsType(type, nullable) {
         let result = type;
         if (type.startsWith('fun(')) {
             // FIXME: Nested function calls won't work here.
@@ -2724,7 +2728,7 @@ define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require"
             t = t.replace('):', ')=>');
             result = '(' + t.trim() + ')';
         }
-        if (optional) {
+        if (nullable) {
             result = result + ' | null';
         }
         return result;
@@ -3180,12 +3184,15 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
         `;
         }
         listenParameters(entity, type) {
+            const _this = this;
             const { parameters } = entity;
             for (const param of parameters) {
                 const idParamType = `${entity.name}-parameter-${param.name}-type`;
                 const idParamNotes = `${entity.name}-parameter-${param.name}-notes`;
                 const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
                 const idBtnDelete = `${entity.name}-parameter-${param.name}-delete`;
+                const idNullable = `${entity.name}-parameter-${param.name}-nullable`;
+                const idOptional = `${entity.name}-parameter-${param.name}-optional`;
                 (0, Delta_1.createDeltaEditor)(idParamNotes, param.notes, (markdown) => {
                     while (markdown.endsWith('\n'))
                         markdown = markdown.substring(0, markdown.length - 1);
@@ -3250,6 +3257,18 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
                             this.refreshParameters();
                     }, `Delete Parameter ${param.name}?`);
                 });
+                /* (Nullable CheckBox) */
+                (0, util_3.$get)(idNullable).on('change', function () {
+                    param.nullable = this.checked;
+                    _this.update();
+                    _this.app.renderCode();
+                });
+                /* (Optional CheckBox) */
+                (0, util_3.$get)(idOptional).on('change', function () {
+                    param.optional = this.checked;
+                    _this.update();
+                    _this.app.renderCode();
+                });
                 this.listenEdit({ name: param.name }, idBtnEdit, 'edit_parameter', 'Edit Parameter Name', `${entity.name}-${param.name}`);
             }
             const idBtnAdd = `btn-${entity.name}-parameter-add`;
@@ -3272,6 +3291,8 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
                 const idCollapse = `${entity.name}-parameter-${param.name}-collapse`;
                 const idBtnEdit = `${entity.name}-parameter-${param.name}-edit`;
                 const idBtnDelete = `${entity.name}-parameter-${param.name}-delete`;
+                const idNullable = `${entity.name}-parameter-${param.name}-nullable`;
+                const idOptional = `${entity.name}-parameter-${param.name}-optional`;
                 htmlParams += (0, util_3.html) `
                 <div class="accordion-item rounded-0">
                     <div class="accordion-header" style="position: relative" id="headingTwo">
@@ -3302,6 +3323,18 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
                             <div class="mb-3">
                                 <label for="${idParamType}" class="form-label">Type</label>
                                 ${LuaCard.renderTypeSelect(idParamType, 'The return type.', param.type, true)}
+                            </div>
+                            <div class="mb-3 form-check">
+                                <!-- Optional Flag -->
+                                <div class="col-auto">
+                                    <input id="${idOptional}" type="checkbox" class="form-check-input" ${param.optional ? ' checked' : ''}>
+                                    <label class="form-check-label" for="${idOptional}">Optional</label>
+                                </div>
+                                <!-- Nullable Flag -->
+                                <div class="col-auto">
+                                    <input id="${idNullable}" type="checkbox" class="form-check-input" ${param.nullable ? ' checked' : ''}>
+                                    <label class="form-check-label" for="${idNullable}">Nullable</label>
+                                </div>
                             </div>
                             <!-- Notes -->
                             <div class="mb-3">
@@ -3457,6 +3490,7 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
             if (!notes)
                 notes = '';
             const idCard = `${entity.name}-returns-card`;
+            const idNullable = `${entity.name}-returns-nullable`;
             return (0, util_3.html) `
             <div class="card responsive-subcard mt-3">
                 <div class="card-header">
@@ -3470,7 +3504,13 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
                         <label for="${idReturnType}" class="form-label">Type</label>
                         ${LuaCard.renderTypeSelect(idReturnType, 'The return type.', returns.type, true)}
                     </div>
-
+                    <div class="mb-3 form-check">
+                        <!-- Nullable Flag -->
+                        <div class="col-auto">
+                            <input id="${idNullable}" type="checkbox" class="form-check-input" ${returns.nullable ? ' checked' : ''}>
+                            <label class="form-check-label" for="${idNullable}">Nullable</label>
+                        </div>
+                    </div>
                     <!-- Return Notes -->
                     <div>
                         <label for="${idReturnNotes}" class="form-label">Description</label>
@@ -3481,8 +3521,10 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
         `;
         }
         listenType(entity, idType, idSelect) {
+            const _this = this;
             const $select = (0, util_3.$get)(idType);
             const $customInput = (0, util_3.$get)(`${idSelect}-custom-input`);
+            const $nullable = (0, util_3.$get)(`${entity.name}-type-nullable`);
             $select.on('change', (value) => {
                 entity.type = value.target.value;
                 if (entity.type === 'custom') {
@@ -3530,9 +3572,16 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
                         break;
                 }
             });
+            /* (Nullable CheckBox) */
+            $nullable.on('change', function () {
+                entity.nullable = this.checked;
+                _this.update();
+                _this.app.renderCode();
+            });
         }
-        renderType(name, type, idReturnType) {
+        renderType(name, type, nullable, idReturnType) {
             const idTypeCard = `${name}-type-card`;
+            const idNullable = `${name}-type-nullable`;
             return (0, util_3.html) `
             <div class="card responsive-subcard">
                 <div class="card-header">
@@ -3544,6 +3593,11 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
                     <div>
                         <label for="${idReturnType}" class="form-label">Type</label>
                         ${LuaCard.renderTypeSelect(idReturnType, 'The return type.', type, false)}
+                    </div>
+                    <!-- Nullable Flag -->
+                    <div class="col-auto">
+                        <input id="${idNullable}" type="checkbox" class="form-check-input" ${nullable ? ' checked' : ''}>
+                        <label class="form-check-label" for="${idNullable}">Nullable</label>
                     </div>
                 </div>
             </div>
@@ -5954,7 +6008,7 @@ define("src/asledgehammer/mallet/component/lua/LuaFieldCard", ["require", "expor
                 ${this.renderNotes(idNotes)}
                 ${this.renderDefaultValue(entity.defaultValue, idDefaultValue)}
                 <hr>
-                ${this.renderType(entity.name, entity.type, idType)}
+                ${this.renderType(entity.name, entity.type, entity.nullable, idType)}
                 <hr>
                 ${this.renderPreview(false)}
             </div>
