@@ -6,10 +6,11 @@ import { RosettaEntity } from '../RosettaEntity';
  * @author Jab
  */
 export class RosettaJavaType extends RosettaEntity {
+
   readonly rawBasic: string;
   readonly basic: string;
   readonly full: string | undefined;
-  optional: boolean = true;
+  nullable: boolean = true;
 
   constructor(raw: { [key: string]: any }) {
     super(raw);
@@ -24,23 +25,32 @@ export class RosettaJavaType extends RosettaEntity {
       this.basic = basic;
     }
 
-    this.optional = this.readBoolean('optional') || true;
-    this.checkOptionalFlag();
+    this.nullable = this.readBoolean('nullable') || true;
+    this.checkNullableFlag();
 
     this.full = this.readString('full');
   }
 
   toJSON(patch: boolean = false): any {
-    const { rawBasic: basic, full, optional } = this;
+    const { rawBasic: basic, full, nullable } = this;
+
+    this.checkNullableFlag();
+
     const json: any = {};
     json.basic = basic;
     json.full = full;
-    json.optional = optional != null ? optional : undefined;
-    this.checkOptionalFlag();
+    json.nullable = nullable != null ? nullable : undefined;
+
     return json;
   }
 
-  private checkOptionalFlag() {
+  private checkNullableFlag() {
+    if(this.nullable && !this.isNullPossible()) {
+      this.nullable = false;
+    }
+  }
+
+  isNullPossible(): boolean {
     switch (this.basic) {
       case 'boolean':
       case 'byte':
@@ -52,12 +62,9 @@ export class RosettaJavaType extends RosettaEntity {
       case 'char':
       case 'null':
       case 'void': {
-        this.optional = false;
-        break;
-      }
-      default: {
-        break;
+        return false;
       }
     }
+    return true;
   }
 }

@@ -33,7 +33,7 @@ export function javaFieldToTS(
     /* Definition-line */
     if (field.isStatic()) s += 'static ';
     if (field.isFinal()) s += 'readonly ';
-    s += `${field.name}: ${tsType(field.type.basic, field.type.optional)};`;
+    s += `${field.name}: ${tsType(field.type.basic, field.type.nullable)};`;
 
     // Format documented variables as spaced for better legability.
     if (ds.length) s += '\n';
@@ -56,7 +56,7 @@ export function javaConstructorToTS(
     if (con.parameters && con.parameters.length) {
         ps += '(';
         for (const parameter of con.parameters) {
-            ps += `${parameter.name}: ${tsType(parameter.type.basic, parameter.type.optional)}, `;
+            ps += `${parameter.name}: ${tsType(parameter.type.basic, parameter.type.nullable)}, `;
         }
         ps = ps.substring(0, ps.length - 2) + ')';
     } else {
@@ -68,7 +68,7 @@ export function javaConstructorToTS(
         fs = `${i}`;
         fs += `constructor(\n`;
         for (const parameter of con.parameters) {
-            fs += `${i}    ${parameter.name}: ${tsType(parameter.type.basic, parameter.type.optional)}, \n`;
+            fs += `${i}    ${parameter.name}: ${tsType(parameter.type.basic, parameter.type.nullable)}, \n`;
         }
         fs += `${i});`;
     }
@@ -265,14 +265,14 @@ export function javaMethodToTS(
     if (method.parameters && method.parameters.length) {
         ps += '(';
         for (const parameter of method.parameters) {
-            ps += `${parameter.name}: ${tsType(parameter.type.basic, parameter.type.optional)}, `;
+            ps += `${parameter.name}: ${tsType(parameter.type.basic, parameter.type.nullable)}, `;
         }
         ps = ps.substring(0, ps.length - 2) + ')';
     } else {
         ps = '()';
     }
 
-    const rs = tsType(method.returns.type.basic, method.returns.type.optional);
+    const rs = tsType(method.returns.type.basic, method.returns.type.nullable);
 
     let fs = `${i}`;
     if (method.isStatic()) fs += 'static ';
@@ -284,7 +284,7 @@ export function javaMethodToTS(
         if (method.isFinal()) fs += 'readonly ';
         fs += `${method.name}(\n`;
         for (const parameter of method.parameters) {
-            fs += `${i}    ${parameter.name}: ${tsType(parameter.type.basic, parameter.type.optional)}, \n`;
+            fs += `${i}    ${parameter.name}: ${tsType(parameter.type.basic, parameter.type.nullable)}, \n`;
         }
         fs += `${i}): ${rs}\n`;
     }

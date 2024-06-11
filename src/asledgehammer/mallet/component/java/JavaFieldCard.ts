@@ -85,7 +85,7 @@ export class JavaFieldCard extends JavaCard<JavaFieldCardOptions> {
             <div>
                 ${this.renderNotes(idNotes)}
                 <hr>
-                ${this.renderType(entity.name, entity.type.basic)}
+                ${this.renderType(entity)}
                 <hr>
                 ${this.renderPreview(false)}
             </div>
@@ -100,6 +100,7 @@ export class JavaFieldCard extends JavaCard<JavaFieldCardOptions> {
         this.listenNotes(entity, idNotes);
         this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_value' : 'edit_field', `Edit ${isStatic ? 'Value' : 'Field'} Name`);
         this.listenPreview();
+        this.listenType(entity);
 
         $get(idBtnDelete).on('click', () => {
             app.modalConfirm.show(() => {

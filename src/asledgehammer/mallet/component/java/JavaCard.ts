@@ -11,6 +11,7 @@ import { RosettaEntity } from '../../../rosetta/RosettaEntity';
 import { RosettaJavaMethod } from '../../../rosetta/java/RosettaJavaMethod';
 import { RosettaJavaConstructor } from '../../../rosetta/java/RosettaJavaConstructor';
 import { CodeLanguage } from '../CodeLanguage';
+import { RosettaJavaType } from '../../../rosetta/java/RosettaJavaType';
 
 export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<O> {
 
@@ -142,6 +143,8 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
                 };
                 modalName.show();
             });
+
+            this.listenType(param);
         }
     }
 
@@ -176,6 +179,9 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
                     </div>
                     <div id="${idCollapse}" class="accordion-collapse collapse rounded-0" aria-labelledby="headingTwo" data-bs-parent="#${idAccordion}">
                         <div class="accordion-body bg-dark" style="position: relative;">
+                            
+                                ${this.renderType(param)}
+
                             <!-- Notes -->
                             <div class="mb-3">
                                 <label for="${idParamNotes}" class="form-label">Description</label>
@@ -275,13 +281,14 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
         `;
     }
 
-    listenReturns(entity: { returns: RosettaJavaReturns }, idReturnType: string, idReturnNotes: string, idSelect: string): void {
+    listenReturns(entity: { returns: RosettaJavaReturns }, idReturnNotes: string): void {
         createDeltaEditor(idReturnNotes, entity.returns.notes!, (markdown: string) => {
             while (markdown.endsWith('\n')) markdown = markdown.substring(0, markdown.length - 1);
             entity.returns.notes = markdown;
             this.update();
             this.app.renderCode();
         });
+        this.listenType({name: 'returns', type: entity.returns.type});
     }
 
     renderReturns(entity: { name: string, returns: RosettaJavaReturns }, idReturnType: string, idReturnNotes: string, show: boolean = false): string {
@@ -304,6 +311,7 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
                     <div class="mb-3">
                         <label for="${idReturnType}" class="form-label">Type: ${returns.type.basic}</label>
                     </div>
+                    ${this.renderType({name: 'returns', type: entity.returns.type})}
                     <!-- Return Notes -->
                     <div>
                         <label for="${idReturnNotes}" class="form-label">Description</label>
@@ -314,72 +322,36 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
         `;
     }
 
-    listenType(entity: { name: string, type: string }, idType: string, idSelect: string): void {
+    listenType(entity: { name: string, type: RosettaJavaType }): void {
 
-        const $select = $get(idType);
-        const $customInput = $get(`${idSelect}-custom-input`);
-        $select.on('change', (value) => {
-            entity.type = value.target.value;
-            if (entity.type === 'custom') {
-                $customInput.show();
-                // We default to 'any' for an undefined custom value.
-                entity.type = 'any';
-            } else {
-                $customInput.hide();
-                $customInput.val(''); // Clear custom field.
-            }
-            this.update();
-            this.app.renderCode();
+        // Don't let the user change the nullability.
+        if (!entity.type.isNullPossible()) return;
+
+        const _this = this;
+        const idNullable = `${entity.name}-nullable`;
+
+        /* (Nullable CheckBox) */
+        $get(idNullable).on('change', function () {
+            entity.type.nullable = this.checked;
+            _this.update();
+            _this.app.renderCode();
         });
 
-        $customInput.on('input', () => {
-            const val = $customInput.val();
-            if (val === '') {
-                entity.type = 'any';
-            } else {
-                entity.type = val;
-            }
-            this.update();
-            this.app.renderCode();
-        });
-
-        $customInput.on('focusout', () => {
-            const value = $customInput.val().trim();
-            switch (value.toLowerCase()) {
-                // Here the reference stays valid.
-                case 'custom':
-                    break;
-                // Here the reference converts to its select option.
-                case 'void':
-                case 'any':
-                case 'nil':
-                case 'boolean':
-                case 'number':
-                case 'string':
-                    entity.type = value;
-                    $select.val(value);
-                    $customInput.hide();
-                    $customInput.val(''); // Clear custom field.
-                    this.update();
-                    this.app.renderCode();
-                    break;
-            }
-        });
     }
 
-    renderType(name: string, type: string): string {
+    renderType(entity: { name: string, type: RosettaJavaType }): string {
 
-        const idTypeCard = `${name}-type-card`;
+        const idNullable = `${entity.name}-nullable`;
+
+        // Don't let the user change the nullable status.
+        if (!entity.type.isNullPossible()) return '';
 
         return html`
-            <div class="card responsive-subcard">
-                <div class="card-header">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idTypeCard}" aria-expanded="true" aria-controls="${idTypeCard}">
-                        Type
-                    </button>   
-                </div>
-                <div id="${idTypeCard}" class="card-body py-2 collapse show">
-                    <span><strong>${type}</strong></span>
+            <!-- Nullable Flag -->
+            <div class="mb-3">
+                <div class="col-auto">
+                    <input id="${idNullable}" type="checkbox" class="form-check-input" ${entity.type.nullable ? ' checked' : ''}>
+                    <label class="form-check-label" for="${idNullable}">Nullable</label>
                 </div>
             </div>
         `;

@@ -1377,7 +1377,7 @@ define("src/asledgehammer/rosetta/java/RosettaJavaType", ["require", "exports", 
     class RosettaJavaType extends RosettaEntity_9.RosettaEntity {
         constructor(raw) {
             super(raw);
-            this.optional = true;
+            this.nullable = true;
             const basic = this.readRequiredString('basic');
             this.rawBasic = basic;
             if (basic.indexOf('.') !== -1) {
@@ -1387,20 +1387,25 @@ define("src/asledgehammer/rosetta/java/RosettaJavaType", ["require", "exports", 
             else {
                 this.basic = basic;
             }
-            this.optional = this.readBoolean('optional') || true;
-            this.checkOptionalFlag();
+            this.nullable = this.readBoolean('nullable') || true;
+            this.checkNullableFlag();
             this.full = this.readString('full');
         }
         toJSON(patch = false) {
-            const { rawBasic: basic, full, optional } = this;
+            const { rawBasic: basic, full, nullable } = this;
+            this.checkNullableFlag();
             const json = {};
             json.basic = basic;
             json.full = full;
-            json.optional = optional != null ? optional : undefined;
-            this.checkOptionalFlag();
+            json.nullable = nullable != null ? nullable : undefined;
             return json;
         }
-        checkOptionalFlag() {
+        checkNullableFlag() {
+            if (this.nullable && !this.isNullPossible()) {
+                this.nullable = false;
+            }
+        }
+        isNullPossible() {
             switch (this.basic) {
                 case 'boolean':
                 case 'byte':
@@ -1412,13 +1417,10 @@ define("src/asledgehammer/rosetta/java/RosettaJavaType", ["require", "exports", 
                 case 'char':
                 case 'null':
                 case 'void': {
-                    this.optional = false;
-                    break;
-                }
-                default: {
-                    break;
+                    return false;
                 }
             }
+            return true;
         }
     }
     exports.RosettaJavaType = RosettaJavaType;
@@ -2054,7 +2056,7 @@ define("src/asledgehammer/rosetta/java/JavaLuaGenerator2", ["require", "exports"
         if (field.getVisibilityScope() !== 'public')
             return '';
         const notes = field.notes && field.notes.length ? field.notes.replace(/\n/g, '<br>') : '';
-        return `@field ${field.name} ${luaType(field.type.basic, field.type.optional)} ${notes}`;
+        return `@field ${field.name} ${luaType(field.type.basic, field.type.nullable)} ${notes}`;
     }
     exports.generateJavaField = generateJavaField;
     function generateJavaConstructor(className, con) {
@@ -2071,7 +2073,7 @@ define("src/asledgehammer/rosetta/java/JavaLuaGenerator2", ["require", "exports"
             if (ds.length)
                 ds.push('');
             for (const param of con.parameters) {
-                let line = `@param ${param.name} ${luaType(param.type.basic, param.type.optional)}`;
+                let line = `@param ${param.name} ${luaType(param.type.basic, param.type.nullable)}`;
                 if (param.notes && param.notes.trim().length) {
                     const notes = (0, LuaLuaGenerator_1.paginateNotes)(line + ' ' + param.notes.trim(), 96);
                     for (const line of notes)
@@ -2126,7 +2128,7 @@ define("src/asledgehammer/rosetta/java/JavaLuaGenerator2", ["require", "exports"
             if (ds.length)
                 ds.push('');
             for (const param of method.parameters) {
-                let line = `@param ${param.name} ${luaType(param.type.basic, param.type.optional)}`;
+                let line = `@param ${param.name} ${luaType(param.type.basic, param.type.nullable)}`;
                 if (param.notes && param.notes.trim().length) {
                     const notes = (0, LuaLuaGenerator_1.paginateNotes)(line + ' ' + param.notes.trim(), 96);
                     for (const line of notes)
@@ -2141,7 +2143,7 @@ define("src/asledgehammer/rosetta/java/JavaLuaGenerator2", ["require", "exports"
         if (method.returns) {
             if (ds.length)
                 ds.push('');
-            let line = `@return ${luaType(method.returns.type.basic, method.returns.type.optional)}`;
+            let line = `@return ${luaType(method.returns.type.basic, method.returns.type.nullable)}`;
             if (method.returns.notes && method.returns.notes.trim().length) {
                 const notes = (0, LuaLuaGenerator_1.paginateNotes)(line + ' result ' + method.returns.notes.trim(), 96);
                 for (const line of notes)
@@ -3791,7 +3793,7 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
             s += 'static ';
         if (field.isFinal())
             s += 'readonly ';
-        s += `${field.name}: ${tsType(field.type.basic, field.type.optional)};`;
+        s += `${field.name}: ${tsType(field.type.basic, field.type.nullable)};`;
         // Format documented variables as spaced for better legability.
         if (ds.length)
             s += '\n';
@@ -3807,7 +3809,7 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
         if (con.parameters && con.parameters.length) {
             ps += '(';
             for (const parameter of con.parameters) {
-                ps += `${parameter.name}: ${tsType(parameter.type.basic, parameter.type.optional)}, `;
+                ps += `${parameter.name}: ${tsType(parameter.type.basic, parameter.type.nullable)}, `;
             }
             ps = ps.substring(0, ps.length - 2) + ')';
         }
@@ -3819,7 +3821,7 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
             fs = `${i}`;
             fs += `constructor(\n`;
             for (const parameter of con.parameters) {
-                fs += `${i}    ${parameter.name}: ${tsType(parameter.type.basic, parameter.type.optional)}, \n`;
+                fs += `${i}    ${parameter.name}: ${tsType(parameter.type.basic, parameter.type.nullable)}, \n`;
             }
             fs += `${i});`;
         }
@@ -3985,14 +3987,14 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
         if (method.parameters && method.parameters.length) {
             ps += '(';
             for (const parameter of method.parameters) {
-                ps += `${parameter.name}: ${tsType(parameter.type.basic, parameter.type.optional)}, `;
+                ps += `${parameter.name}: ${tsType(parameter.type.basic, parameter.type.nullable)}, `;
             }
             ps = ps.substring(0, ps.length - 2) + ')';
         }
         else {
             ps = '()';
         }
-        const rs = tsType(method.returns.type.basic, method.returns.type.optional);
+        const rs = tsType(method.returns.type.basic, method.returns.type.nullable);
         let fs = `${i}`;
         if (method.isStatic())
             fs += 'static ';
@@ -4007,7 +4009,7 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
                 fs += 'readonly ';
             fs += `${method.name}(\n`;
             for (const parameter of method.parameters) {
-                fs += `${i}    ${parameter.name}: ${tsType(parameter.type.basic, parameter.type.optional)}, \n`;
+                fs += `${i}    ${parameter.name}: ${tsType(parameter.type.basic, parameter.type.nullable)}, \n`;
             }
             fs += `${i}): ${rs}\n`;
         }
@@ -4278,6 +4280,7 @@ define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports"
                     };
                     modalName.show();
                 });
+                this.listenType(param);
             }
         }
         renderParameters(entity, show = false) {
@@ -4310,6 +4313,9 @@ define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports"
                     </div>
                     <div id="${idCollapse}" class="accordion-collapse collapse rounded-0" aria-labelledby="headingTwo" data-bs-parent="#${idAccordion}">
                         <div class="accordion-body bg-dark" style="position: relative;">
+                            
+                                ${this.renderType(param)}
+
                             <!-- Notes -->
                             <div class="mb-3">
                                 <label for="${idParamNotes}" class="form-label">Description</label>
@@ -4397,7 +4403,7 @@ define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports"
             </div>
         `;
         }
-        listenReturns(entity, idReturnType, idReturnNotes, idSelect) {
+        listenReturns(entity, idReturnNotes) {
             (0, Delta_2.createDeltaEditor)(idReturnNotes, entity.returns.notes, (markdown) => {
                 while (markdown.endsWith('\n'))
                     markdown = markdown.substring(0, markdown.length - 1);
@@ -4405,6 +4411,7 @@ define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports"
                 this.update();
                 this.app.renderCode();
             });
+            this.listenType({ name: 'returns', type: entity.returns.type });
         }
         renderReturns(entity, idReturnType, idReturnNotes, show = false) {
             const { returns } = entity;
@@ -4424,6 +4431,7 @@ define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports"
                     <div class="mb-3">
                         <label for="${idReturnType}" class="form-label">Type: ${returns.type.basic}</label>
                     </div>
+                    ${this.renderType({ name: 'returns', type: entity.returns.type })}
                     <!-- Return Notes -->
                     <div>
                         <label for="${idReturnNotes}" class="form-label">Description</label>
@@ -4433,68 +4441,30 @@ define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports"
             </div>
         `;
         }
-        listenType(entity, idType, idSelect) {
-            const $select = (0, util_5.$get)(idType);
-            const $customInput = (0, util_5.$get)(`${idSelect}-custom-input`);
-            $select.on('change', (value) => {
-                entity.type = value.target.value;
-                if (entity.type === 'custom') {
-                    $customInput.show();
-                    // We default to 'any' for an undefined custom value.
-                    entity.type = 'any';
-                }
-                else {
-                    $customInput.hide();
-                    $customInput.val(''); // Clear custom field.
-                }
-                this.update();
-                this.app.renderCode();
-            });
-            $customInput.on('input', () => {
-                const val = $customInput.val();
-                if (val === '') {
-                    entity.type = 'any';
-                }
-                else {
-                    entity.type = val;
-                }
-                this.update();
-                this.app.renderCode();
-            });
-            $customInput.on('focusout', () => {
-                const value = $customInput.val().trim();
-                switch (value.toLowerCase()) {
-                    // Here the reference stays valid.
-                    case 'custom':
-                        break;
-                    // Here the reference converts to its select option.
-                    case 'void':
-                    case 'any':
-                    case 'nil':
-                    case 'boolean':
-                    case 'number':
-                    case 'string':
-                        entity.type = value;
-                        $select.val(value);
-                        $customInput.hide();
-                        $customInput.val(''); // Clear custom field.
-                        this.update();
-                        this.app.renderCode();
-                        break;
-                }
+        listenType(entity) {
+            // Don't let the user change the nullability.
+            if (!entity.type.isNullPossible())
+                return;
+            const _this = this;
+            const idNullable = `${entity.name}-nullable`;
+            /* (Nullable CheckBox) */
+            (0, util_5.$get)(idNullable).on('change', function () {
+                entity.type.nullable = this.checked;
+                _this.update();
+                _this.app.renderCode();
             });
         }
-        renderType(name, type) {
-            const idTypeCard = `${name}-type-card`;
+        renderType(entity) {
+            const idNullable = `${entity.name}-nullable`;
+            // Don't let the user change the nullable status.
+            if (!entity.type.isNullPossible())
+                return '';
             return (0, util_5.html) `
-            <div class="card responsive-subcard">
-                <div class="card-header">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idTypeCard}" aria-expanded="true" aria-controls="${idTypeCard}">
-                        Type
-                    </button>   
-                </div>
-                <div id="${idTypeCard}" class="card-body py-2 collapse show">
-                    <span><strong>${type}</strong></span>
+            <!-- Nullable Flag -->
+            <div class="mb-3">
+                <div class="col-auto">
+                    <input id="${idNullable}" type="checkbox" class="form-check-input" ${entity.type.nullable ? ' checked' : ''}>
+                    <label class="form-check-label" for="${idNullable}">Nullable</label>
                 </div>
             </div>
         `;
@@ -6317,7 +6287,7 @@ define("src/asledgehammer/mallet/component/java/JavaFieldCard", ["require", "exp
             <div>
                 ${this.renderNotes(idNotes)}
                 <hr>
-                ${this.renderType(entity.name, entity.type.basic)}
+                ${this.renderType(entity)}
                 <hr>
                 ${this.renderPreview(false)}
             </div>
@@ -6330,6 +6300,7 @@ define("src/asledgehammer/mallet/component/java/JavaFieldCard", ["require", "exp
             this.listenNotes(entity, idNotes);
             this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_value' : 'edit_field', `Edit ${isStatic ? 'Value' : 'Field'} Name`);
             this.listenPreview();
+            this.listenType(entity);
             (0, util_14.$get)(idBtnDelete).on('click', () => {
                 app.modalConfirm.show(() => {
                     var _a;
@@ -6430,11 +6401,11 @@ define("src/asledgehammer/mallet/component/java/JavaMethodCard", ["require", "ex
         }
         listen() {
             super.listen();
-            const { app, idBtnDelete, idNotes, idReturnType, idReturnNotes } = this;
+            const { app, idBtnDelete, idNotes, idReturnNotes } = this;
             const { entity, isStatic } = this.options;
             this.listenNotes(entity, idNotes);
             this.listenParameters(entity);
-            this.listenReturns(entity, idReturnType, idReturnNotes, idReturnType);
+            this.listenReturns(entity, idReturnNotes);
             this.listenPreview();
             (0, util_15.$get)(idBtnDelete).on('click', () => {
                 app.modalConfirm.show(() => {

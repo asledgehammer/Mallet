@@ -108,12 +108,12 @@ export class JavaMethodCard extends JavaCard<JavaMethodCardOptions> {
     listen(): void {
         super.listen();
 
-        const { app, idBtnDelete, idNotes, idReturnType, idReturnNotes } = this;
+        const { app, idBtnDelete, idNotes, idReturnNotes } = this;
         const { entity, isStatic } = this.options!;
 
         this.listenNotes(entity, idNotes);
         this.listenParameters(entity);
-        this.listenReturns(entity, idReturnType, idReturnNotes, idReturnType);
+        this.listenReturns(entity, idReturnNotes);
         this.listenPreview();
 
         $get(idBtnDelete).on('click', () => {
