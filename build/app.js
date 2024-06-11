@@ -5301,7 +5301,11 @@ define("src/asledgehammer/mallet/component/ObjectTree", ["require", "exports", "
                 itemTree.selected = undefined;
                 itemTree.selectedID = undefined;
                 itemTree.populate();
-                $(`#${_this.sidebar.idLuaClassDropdown}`).show();
+                $(`#btn-new-lua-value`).show();
+                $(`#btn-new-lua-field`).show();
+                $(`#btn-new-lua-function`).show();
+                $(`#btn-new-lua-method`).show();
+                $(`#btn-lua-class-dropdown`).show();
             });
             $doc.on('click', '.object-tree-lua-table', function () {
                 const name = this.id.substring('object-lua-table-'.length);
@@ -5311,7 +5315,11 @@ define("src/asledgehammer/mallet/component/ObjectTree", ["require", "exports", "
                 itemTree.selected = undefined;
                 itemTree.selectedID = undefined;
                 itemTree.populate();
-                $(`#${_this.sidebar.idLuaClassDropdown}`).show();
+                $(`#btn-new-lua-value`).show();
+                $(`#btn-new-lua-field`).hide();
+                $(`#btn-new-lua-function`).show();
+                $(`#btn-new-lua-method`).hide();
+                $(`#btn-lua-class-dropdown`).show();
             });
             $doc.on('click', '.object-tree-java-class', function () {
                 const name = this.id.substring('object-java-class-'.length);
