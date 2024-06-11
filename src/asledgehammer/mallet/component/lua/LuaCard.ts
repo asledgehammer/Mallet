@@ -553,7 +553,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                     </button>   
                 </div>
                 <div id="${idTypeCard}" class="card-body collapse show">
-                    <div>
+                    <div class="mb-3">
                         <label for="${idReturnType}" class="form-label">Type</label>
                         ${LuaCard.renderTypeSelect(idReturnType, 'The return type.', type, false)}
                     </div>

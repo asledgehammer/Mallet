@@ -63,24 +63,34 @@ export class App {
 
     public showLuaClass(entity: RosettaLuaClass): LuaClassCard {
         this.$screenContent.empty();
+
+        // For new object-selections, unselect prior items.
+        if (this.catalog.selected !== entity) {
+            this.sidebar.itemTree.selectedID = undefined;
+        }
+
         this.catalog.selected = entity;
         this.catalog.selectedCard = new LuaClassCard(this, { entity });
         this.$screenContent.append(this.catalog.selectedCard.render());
         this.catalog.selectedCard.listen();
         this.catalog.selectedCard.update();
+        this.sidebar.populateTrees();
         this.renderCode();
+
         return this.catalog.selectedCard;
     }
 
     public showLuaClassConstructor(entity: RosettaLuaConstructor | undefined): LuaConstructorCard | null {
         const { selected } = this.catalog;
         if (!(selected instanceof RosettaLuaClass)) return null;
+        this.catalog.selected = selected;
         if (!entity) entity = new RosettaLuaConstructor(selected);
         this.$screenContent.empty();
         const card = new LuaConstructorCard(this, { entity });
         this.$screenContent.append(card.render());
         card.listen();
         card.update();
+        this.sidebar.populateTrees();
         this.renderCode();
         return card;
     }
@@ -88,54 +98,77 @@ export class App {
     public showLuaClassField(entity: RosettaLuaField): LuaFieldCard | null {
         const { selected } = this.catalog;
         if (!(selected instanceof RosettaLuaClass)) return null;
+        this.catalog.selected = selected;
         this.$screenContent.empty();
         const card = new LuaFieldCard(this, { entity, isStatic: false });
         this.$screenContent.append(card.render());
         card.listen();
         card.update();
+        this.sidebar.itemTree.selectedID = `lua-class-${selected.name}-field-${entity.name}`;
+        this.sidebar.populateTrees();
+        this.renderCode();
         return card;
     }
 
     public showLuaClassValue(entity: RosettaLuaField): LuaFieldCard | null {
         const { selected } = this.catalog;
         if (!(selected instanceof RosettaLuaClass)) return null;
+        this.catalog.selected = selected;
         this.$screenContent.empty();
         const card = new LuaFieldCard(this, { entity, isStatic: true });
         this.$screenContent.append(card.render());
         card.listen();
         card.update();
+        this.sidebar.itemTree.selectedID = `lua-class-${selected.name}-value-${entity.name}`;
+        this.sidebar.populateTrees();
+        this.renderCode();
         return card;
     }
 
     public showLuaClassMethod(entity: RosettaLuaFunction): LuaFunctionCard | null {
         const { selected } = this.catalog;
         if (!(selected instanceof RosettaLuaClass)) return null;
+        this.catalog.selected = selected;
         this.$screenContent.empty();
         const card = new LuaFunctionCard(this, { entity, isStatic: false });
         this.$screenContent.append(card.render());
         card.listen();
         card.update();
+        this.sidebar.itemTree.selectedID = `lua-class-${selected.name}-method-${entity.name}`;
+        this.sidebar.populateTrees();
+        this.renderCode();
         return card;
     }
 
     public showLuaClassFunction(entity: RosettaLuaFunction): LuaFunctionCard | null {
         const { selected } = this.catalog;
         if (!(selected instanceof RosettaLuaClass)) return null;
+        this.catalog.selected = selected;
         this.$screenContent.empty();
         const card = new LuaFunctionCard(this, { entity, isStatic: true });
         this.$screenContent.append(card.render());
         card.listen();
         card.update();
+        this.sidebar.itemTree.selectedID = `lua-class-${selected.name}-function-${entity.name}`;
+        this.sidebar.populateTrees();
+        this.renderCode();
         return card;
     }
 
     public showLuaTable(entity: RosettaLuaTable): LuaTableCard {
         this.$screenContent.empty();
+
+        // For new object-selections, unselect prior items.
+        if (this.catalog.selected !== entity) {
+            this.sidebar.itemTree.selectedID = undefined;
+        }
+
         this.catalog.selected = entity;
         this.catalog.selectedCard = new LuaTableCard(this, { entity });
         this.$screenContent.append(this.catalog.selectedCard.render());
         this.catalog.selectedCard.listen();
         this.catalog.selectedCard.update();
+        this.sidebar.populateTrees();
         this.renderCode();
         return this.catalog.selectedCard;
     }
@@ -143,32 +176,47 @@ export class App {
     public showLuaTableField(entity: RosettaLuaTableField): LuaFieldCard | null {
         const { selected } = this.catalog;
         if (!(selected instanceof RosettaLuaTable)) return null;
+        this.catalog.selected = selected;
         this.$screenContent.empty();
         const card = new LuaFieldCard(this, { entity, isStatic: true });
         this.$screenContent.append(card.render());
         card.listen();
         card.update();
+        this.sidebar.itemTree.selectedID = `lua-table-${selected.name}-field-${entity.name}`;
+        this.sidebar.populateTrees();
+        this.renderCode();
         return card;
     }
 
     public showLuaTableFunction(entity: RosettaLuaFunction): LuaFunctionCard | null {
         const { selected } = this.catalog;
         if (!(selected instanceof RosettaLuaTable)) return null;
+        this.catalog.selected = selected;
         this.$screenContent.empty();
         const card = new LuaFunctionCard(this, { entity, isStatic: true });
         this.$screenContent.append(card.render());
         card.listen();
         card.update();
+        this.sidebar.itemTree.selectedID = `lua-table-${selected.name}-function-${entity.name}`;
+        this.sidebar.populateTrees();
+        this.renderCode();
         return card;
     }
 
     public showJavaClass(entity: RosettaJavaClass): JavaClassCard {
         this.$screenContent.empty();
+
+        // For new object-selections, unselect prior items.
+        if(this.catalog.selected !== entity) {
+            this.sidebar.itemTree.selectedID = undefined;
+        }
+
         this.catalog.selected = entity;
         this.catalog.selectedCard = new JavaClassCard(this, { entity });
         this.$screenContent.append(this.catalog.selectedCard.render());
         this.catalog.selectedCard.listen();
         this.catalog.selectedCard.update();
+        this.sidebar.populateTrees();
         this.renderCode();
         return this.catalog.selectedCard;
     }
@@ -177,12 +225,14 @@ export class App {
         const { selected } = this.catalog;
         if (!(selected instanceof RosettaJavaClass)) return null;
         if (!entity) return null;
-
+        this.catalog.selected = selected;
         this.$screenContent.empty();
         const card = new JavaConstructorCard(this, { entity });
         this.$screenContent.append(card.render());
         card.listen();
         card.update();
+        this.sidebar.itemTree.selectedID = `java-class-${selected.name}-constructor-${entity.getSignature()}`;
+        this.sidebar.populateTrees();
         this.renderCode();
         return card;
     }
@@ -190,22 +240,30 @@ export class App {
     public showJavaClassField(entity: RosettaJavaField): JavaFieldCard | null {
         const { selected } = this.catalog;
         if (!(selected instanceof RosettaJavaClass)) return null;
+        this.catalog.selected = selected;
         this.$screenContent.empty();
         const card = new JavaFieldCard(this, { entity, isStatic: entity.isStatic() });
         this.$screenContent.append(card.render());
         card.listen();
         card.update();
+        this.sidebar.itemTree.selectedID = `java-class-${selected.name}-field-${entity.name}`;
+        this.sidebar.populateTrees();
+        this.renderCode();
         return card;
     }
 
     public showJavaClassMethod(entity: RosettaJavaMethod): JavaMethodCard | null {
         const { selected } = this.catalog;
         if (!(selected instanceof RosettaJavaClass)) return null;
+        this.catalog.selected = selected;
         this.$screenContent.empty();
         const card = new JavaMethodCard(this, { entity, isStatic: entity.isStatic() });
         this.$screenContent.append(card.render());
         card.listen();
         card.update();
+        this.sidebar.itemTree.selectedID = `java-class-${selected.name}-method-${entity.getSignature()}`;
+        this.sidebar.populateTrees();
+        this.renderCode();
         return card;
     }
 
@@ -270,7 +328,7 @@ export class App {
             }
         }
 
-       highlightedCode = hljs.default.highlightAuto(this.previewCode, [this.languageMode]).value;
+        highlightedCode = hljs.default.highlightAuto(this.previewCode, [this.languageMode]).value;
 
         $renderPane.html(highlightedCode);
     }

@@ -80,7 +80,6 @@ export class ModalName {
                         const entity = new RosettaLuaClass(validateLuaVariableName($inputName.val()!).trim());
                         app.catalog.luaClasses[entity.name] = entity;
                         app.showLuaClass(entity);
-                        app.sidebar.populateTrees();
                         toast.alert('Created Lua Class.', 'success');
                     } catch (e) {
                         toast.alert(`Failed to create Lua Class.`, 'error');
@@ -93,7 +92,6 @@ export class ModalName {
                         const entity = new RosettaLuaTable(validateLuaVariableName($inputName.val()!).trim());
                         app.catalog.luaTables[entity.name] = entity;
                         app.showLuaTable(entity);
-                        app.sidebar.populateTrees();
                         toast.alert('Created Lua Table.', 'success');
                     } catch (e) {
                         toast.alert(`Failed to create Lua Table.`, 'error');
@@ -111,7 +109,6 @@ export class ModalName {
                             active.luaClasses[name] = entity;
 
                             app.showLuaClass(entity);
-                            sidebar.populateTrees();
                             toast.alert('Edited Lua Class.');
                         } catch (e) {
                             toast.alert(`Failed to edit Lua Class.`, 'error');
@@ -127,7 +124,6 @@ export class ModalName {
                         try {
                             const field = entity.createField(name);
                             app.showLuaClassField(field);
-                            sidebar.populateTrees();
                             toast.alert('Created Lua Class Field.', 'success');
                         } catch (e) {
                             toast.alert(`Failed to create Lua Class Field.`, 'error');
@@ -137,7 +133,6 @@ export class ModalName {
                         try {
                             const field = entity.createField(name);
                             app.showLuaTableField(field);
-                            sidebar.populateTrees();
                             toast.alert('Created Lua Table Field.', 'success');
                         } catch (e) {
                             toast.alert(`Failed to create Lua Table Field.`, 'error');
@@ -156,7 +151,6 @@ export class ModalName {
                             entity.fields[name] = field;
                             delete entity.fields[nameOld];
                             app.showLuaClassField(field);
-                            sidebar.populateTrees();
                             toast.alert('Edited Lua Class Field.');
                         } catch (e) {
                             toast.alert(`Failed to edit Lua Class Field.`, 'error');
@@ -169,7 +163,6 @@ export class ModalName {
                             entity.fields[name] = field;
                             delete entity.fields[nameOld];
                             app.showLuaTableField(field);
-                            sidebar.populateTrees();
                             toast.alert('Edited Lua Table Field.');
                         } catch (e) {
                             toast.alert(`Failed to edit Lua Table Field.`, 'error');
@@ -185,7 +178,6 @@ export class ModalName {
                         try {
                             const value = entity.createValue(name);
                             app.showLuaClassValue(value);
-                            sidebar.populateTrees();
                             toast.alert('Created Lua Value.', 'success');
                         } catch (e) {
                             toast.alert(`Failed to create Lua Value.`, 'error');
@@ -206,7 +198,6 @@ export class ModalName {
                             entity.values[name] = value;
                             delete entity.values[nameOld];
                             app.showLuaClassValue(value);
-                            sidebar.populateTrees();
                             toast.alert('Edited Lua value.');
                         } catch (e) {
                             toast.alert(`Failed to edit Lua Value.`, 'error');
@@ -224,7 +215,6 @@ export class ModalName {
                         try {
                             const func = entity.createFunction(name);
                             app.showLuaClassFunction(func);
-                            sidebar.populateTrees();
                             toast.alert('Created Lua Function.', 'success');
                         } catch (e) {
                             toast.alert(`Failed to create Lua Function.`, 'error');
@@ -234,7 +224,6 @@ export class ModalName {
                         try {
                             const func = entity.createFunction(name);
                             app.showLuaClassFunction(func);
-                            sidebar.populateTrees();
                             toast.alert('Created Lua Function.', 'success');
                         } catch (e) {
                             toast.alert(`Failed to create Lua Function.`, 'error');
@@ -253,7 +242,6 @@ export class ModalName {
                             entity.functions[name] = func;
                             delete entity.functions[nameOld];
                             app.showLuaClassFunction(func);
-                            sidebar.populateTrees();
                             toast.alert('Edited Lua Class Function.');
                         } catch (e) {
                             toast.alert(`Failed to edit Lua Class Function.`, 'error');
@@ -266,7 +254,6 @@ export class ModalName {
                             entity.functions[name] = func;
                             delete entity.functions[nameOld];
                             app.showLuaClassFunction(func);
-                            sidebar.populateTrees();
                             toast.alert('Edited Lua Table Function.');
                         } catch (e) {
                             toast.alert(`Failed to edit Lua Table Function.`, 'error');
@@ -282,7 +269,6 @@ export class ModalName {
                         try {
                             const method = entity.createMethod(name);
                             app.showLuaClassMethod(method);
-                            sidebar.populateTrees();
                             toast.alert('Created Lua Method.', 'success');
                         } catch (e) {
                             toast.alert(`Failed to create Lua Method.`, 'error');
@@ -303,7 +289,6 @@ export class ModalName {
                             entity.methods[name] = method;
                             delete entity.methods[nameOld];
                             app.showLuaClassMethod(method);
-                            sidebar.populateTrees();
                             toast.alert('Edited Lua Method.');
                         } catch (e) {
                             toast.alert(`Failed to edit Lua Method.`, 'error');
@@ -341,7 +326,6 @@ export class ModalName {
                             } else {
                                 app.showLuaClassMethod(func as RosettaLuaFunction);
                             }
-                            app.renderCode();
                             toast.alert('Created Lua Parameter.', 'success');
                         } catch (e) {
                             toast.alert(`Failed to create Lua Parameter.`, 'error');
@@ -365,7 +349,6 @@ export class ModalName {
                             func!.addParameter(name, 'any');
 
                             app.showLuaClassFunction(func as RosettaLuaFunction);
-                            app.renderCode();
 
                             toast.alert('Created Lua Parameter.', 'success');
                         } catch (e) {
@@ -432,8 +415,6 @@ export class ModalName {
                             } else if (type === 'method') {
                                 app.showLuaClassMethod(func as RosettaLuaFunction);
                             }
-                            app.renderCode();
-                            sidebar.populateTrees();
                             toast.alert('Edited Lua Parameter.');
                         } catch (e) {
                             toast.alert(`Failed to edit Lua Parameter.`, 'error');
@@ -469,8 +450,6 @@ export class ModalName {
                             param.name = name;
 
                             app.showLuaClassFunction(func as RosettaLuaFunction);
-                            app.renderCode();
-                            sidebar.populateTrees();
                             toast.alert('Edited Lua Parameter.');
                         } catch (e) {
                             toast.alert(`Failed to edit Lua Parameter.`, 'error');
@@ -504,8 +483,6 @@ export class ModalName {
                             } else if (type === 'method') {
                                 app.showJavaClassMethod((method as any) as RosettaJavaMethod);
                             }
-                            app.renderCode();
-                            sidebar.populateTrees();
                             toast.alert('Edited Lua Parameter.');
 
                             if (this.javaCallback) this.javaCallback(name);

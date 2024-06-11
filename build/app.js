@@ -1557,6 +1557,17 @@ define("src/asledgehammer/rosetta/java/RosettaJavaConstructor", ["require", "exp
             else
                 return 'package';
         }
+        getSignature() {
+            let signature = `constructor`;
+            if (this.parameters && this.parameters.length) {
+                signature += '_';
+                for (const param of this.parameters) {
+                    signature += `${param.type.basic}-`;
+                }
+                signature = signature.substring(0, signature.length - 1);
+            }
+            return signature;
+        }
     }
     exports.RosettaJavaConstructor = RosettaJavaConstructor;
 });
@@ -1685,6 +1696,17 @@ define("src/asledgehammer/rosetta/java/RosettaJavaMethod", ["require", "exports"
                 return 'private';
             else
                 return 'package';
+        }
+        getSignature() {
+            let signature = `${this.name}`;
+            if (this.parameters && this.parameters.length) {
+                signature += '_';
+                for (const param of this.parameters) {
+                    signature += `${param.type.basic}-`;
+                }
+                signature = signature.substring(0, signature.length - 1);
+            }
+            return signature;
         }
     }
     exports.RosettaJavaMethod = RosettaJavaMethod;
@@ -3677,7 +3699,7 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
                     </button>   
                 </div>
                 <div id="${idTypeCard}" class="card-body collapse show">
-                    <div>
+                    <div class="mb-3">
                         <label for="${idReturnType}" class="form-label">Type</label>
                         ${LuaCard.renderTypeSelect(idReturnType, 'The return type.', type, false)}
                     </div>
@@ -5151,34 +5173,18 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 for (const method of cluster.methods) {
                     if (method.getVisibilityScope() !== 'public')
                         continue;
-                    let signature = `${method.name}`;
-                    if (method.parameters && method.parameters.length) {
-                        signature += '_';
-                        for (const param of method.parameters) {
-                            signature += `${param.type.basic}-`;
-                        }
-                        signature = signature.substring(0, signature.length - 1);
-                    }
                     if (method.isStatic()) {
-                        this.staticMethodSignatureMap[signature] = method;
+                        this.staticMethodSignatureMap[method.getSignature()] = method;
                     }
                     else {
-                        this.methodSignatureMap[signature] = method;
+                        this.methodSignatureMap[method.getSignature()] = method;
                     }
                 }
             }
             for (const cons of entity.constructors) {
                 if (cons.getVisibilityScope() !== 'public')
                     continue;
-                let signature = `constructor`;
-                if (cons.parameters && cons.parameters.length) {
-                    signature += '_';
-                    for (const param of cons.parameters) {
-                        signature += `${param.type.basic}-`;
-                    }
-                    signature = signature.substring(0, signature.length - 1);
-                }
-                this.constructorSignatureMap[signature] = cons;
+                this.constructorSignatureMap[cons.getSignature()] = cons;
             }
             // Constructor(s)
             const consSignatures = Object.keys(this.constructorSignatureMap);
@@ -5224,21 +5230,6 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                     class: classes
                 });
             }
-            // Instance field(s)
-            // for (const name of fieldNames) {
-            //     const field = entity.fields[name];
-            //     if (!field.isStatic()) {
-            //         const id = `java-class-${entity.name}-field-${field.name}`;
-            //         const classes: string[] = ['item-tree-item', 'java-class-field-item'];
-            //         if (id === this.selectedID) classes.push('selected');
-            //         fields.push({
-            //             text: wrapItem(field.name),
-            //             icon: LuaCard.getTypeIcon(field.type.basic),
-            //             id,
-            //             class: classes
-            //         });
-            //     }
-            // }
             // Static method(s)
             const staticMethodSignatures = Object.keys(this.staticMethodSignatureMap);
             staticMethodSignatures.sort((a, b) => a.localeCompare(b));
@@ -5336,6 +5327,9 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 data.push(folderMethods);
             // @ts-ignore
             $treeLower.bstreeview({ data });
+            // if(this.selectedID != null) {
+            //     document.getElementById(this.selectedID)!.scrollIntoView(true);
+            // }
         }
     }
     exports.ItemTree = ItemTree;
@@ -5432,6 +5426,7 @@ define("src/asledgehammer/mallet/component/ObjectTree", ["require", "exports", "
         }
         populate() {
             const _this = this;
+            this.selectedID = this.app.catalog.selected ? `object-lua-class-${this.app.catalog.selected.name}` : undefined;
             let $treeUpper = (0, util_8.$get)('tree-upper');
             $treeUpper.remove();
             const $sidebarContentUpper = (0, util_8.$get)('sidebar-content-upper');
@@ -5509,6 +5504,9 @@ define("src/asledgehammer/mallet/component/ObjectTree", ["require", "exports", "
                 data.push(folderJavaClasses);
             // @ts-ignore
             $treeUpper.bstreeview({ data });
+            // if(this.selectedID != null) {
+            //     document.getElementById(this.selectedID)!.scrollIntoView(true);
+            // }
         }
     }
     exports.ObjectTree = ObjectTree;
@@ -6721,7 +6719,6 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                             const entity = new RosettaLuaClass_3.RosettaLuaClass((0, util_16.validateLuaVariableName)($inputName.val()).trim());
                             app.catalog.luaClasses[entity.name] = entity;
                             app.showLuaClass(entity);
-                            app.sidebar.populateTrees();
                             toast.alert('Created Lua Class.', 'success');
                         }
                         catch (e) {
@@ -6735,7 +6732,6 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                             const entity = new RosettaLuaTable_3.RosettaLuaTable((0, util_16.validateLuaVariableName)($inputName.val()).trim());
                             app.catalog.luaTables[entity.name] = entity;
                             app.showLuaTable(entity);
-                            app.sidebar.populateTrees();
                             toast.alert('Created Lua Table.', 'success');
                         }
                         catch (e) {
@@ -6752,7 +6748,6 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 entity.name = name;
                                 active.luaClasses[name] = entity;
                                 app.showLuaClass(entity);
-                                sidebar.populateTrees();
                                 toast.alert('Edited Lua Class.');
                             }
                             catch (e) {
@@ -6770,7 +6765,6 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                             try {
                                 const field = entity.createField(name);
                                 app.showLuaClassField(field);
-                                sidebar.populateTrees();
                                 toast.alert('Created Lua Class Field.', 'success');
                             }
                             catch (e) {
@@ -6782,7 +6776,6 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                             try {
                                 const field = entity.createField(name);
                                 app.showLuaTableField(field);
-                                sidebar.populateTrees();
                                 toast.alert('Created Lua Table Field.', 'success');
                             }
                             catch (e) {
@@ -6803,7 +6796,6 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 entity.fields[name] = field;
                                 delete entity.fields[nameOld];
                                 app.showLuaClassField(field);
-                                sidebar.populateTrees();
                                 toast.alert('Edited Lua Class Field.');
                             }
                             catch (e) {
@@ -6818,7 +6810,6 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 entity.fields[name] = field;
                                 delete entity.fields[nameOld];
                                 app.showLuaTableField(field);
-                                sidebar.populateTrees();
                                 toast.alert('Edited Lua Table Field.');
                             }
                             catch (e) {
@@ -6836,7 +6827,6 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                             try {
                                 const value = entity.createValue(name);
                                 app.showLuaClassValue(value);
-                                sidebar.populateTrees();
                                 toast.alert('Created Lua Value.', 'success');
                             }
                             catch (e) {
@@ -6860,7 +6850,6 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 entity.values[name] = value;
                                 delete entity.values[nameOld];
                                 app.showLuaClassValue(value);
-                                sidebar.populateTrees();
                                 toast.alert('Edited Lua value.');
                             }
                             catch (e) {
@@ -6881,7 +6870,6 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                             try {
                                 const func = entity.createFunction(name);
                                 app.showLuaClassFunction(func);
-                                sidebar.populateTrees();
                                 toast.alert('Created Lua Function.', 'success');
                             }
                             catch (e) {
@@ -6893,7 +6881,6 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                             try {
                                 const func = entity.createFunction(name);
                                 app.showLuaClassFunction(func);
-                                sidebar.populateTrees();
                                 toast.alert('Created Lua Function.', 'success');
                             }
                             catch (e) {
@@ -6914,7 +6901,6 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 entity.functions[name] = func;
                                 delete entity.functions[nameOld];
                                 app.showLuaClassFunction(func);
-                                sidebar.populateTrees();
                                 toast.alert('Edited Lua Class Function.');
                             }
                             catch (e) {
@@ -6929,7 +6915,6 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 entity.functions[name] = func;
                                 delete entity.functions[nameOld];
                                 app.showLuaClassFunction(func);
-                                sidebar.populateTrees();
                                 toast.alert('Edited Lua Table Function.');
                             }
                             catch (e) {
@@ -6947,7 +6932,6 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                             try {
                                 const method = entity.createMethod(name);
                                 app.showLuaClassMethod(method);
-                                sidebar.populateTrees();
                                 toast.alert('Created Lua Method.', 'success');
                             }
                             catch (e) {
@@ -6971,7 +6955,6 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 entity.methods[name] = method;
                                 delete entity.methods[nameOld];
                                 app.showLuaClassMethod(method);
-                                sidebar.populateTrees();
                                 toast.alert('Edited Lua Method.');
                             }
                             catch (e) {
@@ -7013,7 +6996,6 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 else {
                                     app.showLuaClassMethod(func);
                                 }
-                                app.renderCode();
                                 toast.alert('Created Lua Parameter.', 'success');
                             }
                             catch (e) {
@@ -7038,7 +7020,6 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 }
                                 func.addParameter(name, 'any');
                                 app.showLuaClassFunction(func);
-                                app.renderCode();
                                 toast.alert('Created Lua Parameter.', 'success');
                             }
                             catch (e) {
@@ -7109,8 +7090,6 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 else if (type === 'method') {
                                     app.showLuaClassMethod(func);
                                 }
-                                app.renderCode();
-                                sidebar.populateTrees();
                                 toast.alert('Edited Lua Parameter.');
                             }
                             catch (e) {
@@ -7147,8 +7126,6 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 }
                                 param.name = name;
                                 app.showLuaClassFunction(func);
-                                app.renderCode();
-                                sidebar.populateTrees();
                                 toast.alert('Edited Lua Parameter.');
                             }
                             catch (e) {
@@ -7186,8 +7163,6 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 else if (type === 'method') {
                                     app.showJavaClassMethod(method);
                                 }
-                                app.renderCode();
-                                sidebar.populateTrees();
                                 toast.alert('Edited Lua Parameter.');
                                 if (this.javaCallback)
                                     this.javaCallback(name);
@@ -7554,11 +7529,16 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
         }
         showLuaClass(entity) {
             this.$screenContent.empty();
+            // For new object-selections, unselect prior items.
+            if (this.catalog.selected !== entity) {
+                this.sidebar.itemTree.selectedID = undefined;
+            }
             this.catalog.selected = entity;
             this.catalog.selectedCard = new LuaClassCard_1.LuaClassCard(this, { entity });
             this.$screenContent.append(this.catalog.selectedCard.render());
             this.catalog.selectedCard.listen();
             this.catalog.selectedCard.update();
+            this.sidebar.populateTrees();
             this.renderCode();
             return this.catalog.selectedCard;
         }
@@ -7566,6 +7546,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             const { selected } = this.catalog;
             if (!(selected instanceof RosettaLuaClass_5.RosettaLuaClass))
                 return null;
+            this.catalog.selected = selected;
             if (!entity)
                 entity = new RosettaLuaConstructor_2.RosettaLuaConstructor(selected);
             this.$screenContent.empty();
@@ -7573,6 +7554,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             this.$screenContent.append(card.render());
             card.listen();
             card.update();
+            this.sidebar.populateTrees();
             this.renderCode();
             return card;
         }
@@ -7580,53 +7562,74 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             const { selected } = this.catalog;
             if (!(selected instanceof RosettaLuaClass_5.RosettaLuaClass))
                 return null;
+            this.catalog.selected = selected;
             this.$screenContent.empty();
             const card = new LuaFieldCard_1.LuaFieldCard(this, { entity, isStatic: false });
             this.$screenContent.append(card.render());
             card.listen();
             card.update();
+            this.sidebar.itemTree.selectedID = `lua-class-${selected.name}-field-${entity.name}`;
+            this.sidebar.populateTrees();
+            this.renderCode();
             return card;
         }
         showLuaClassValue(entity) {
             const { selected } = this.catalog;
             if (!(selected instanceof RosettaLuaClass_5.RosettaLuaClass))
                 return null;
+            this.catalog.selected = selected;
             this.$screenContent.empty();
             const card = new LuaFieldCard_1.LuaFieldCard(this, { entity, isStatic: true });
             this.$screenContent.append(card.render());
             card.listen();
             card.update();
+            this.sidebar.itemTree.selectedID = `lua-class-${selected.name}-value-${entity.name}`;
+            this.sidebar.populateTrees();
+            this.renderCode();
             return card;
         }
         showLuaClassMethod(entity) {
             const { selected } = this.catalog;
             if (!(selected instanceof RosettaLuaClass_5.RosettaLuaClass))
                 return null;
+            this.catalog.selected = selected;
             this.$screenContent.empty();
             const card = new LuaFunctionCard_1.LuaFunctionCard(this, { entity, isStatic: false });
             this.$screenContent.append(card.render());
             card.listen();
             card.update();
+            this.sidebar.itemTree.selectedID = `lua-class-${selected.name}-method-${entity.name}`;
+            this.sidebar.populateTrees();
+            this.renderCode();
             return card;
         }
         showLuaClassFunction(entity) {
             const { selected } = this.catalog;
             if (!(selected instanceof RosettaLuaClass_5.RosettaLuaClass))
                 return null;
+            this.catalog.selected = selected;
             this.$screenContent.empty();
             const card = new LuaFunctionCard_1.LuaFunctionCard(this, { entity, isStatic: true });
             this.$screenContent.append(card.render());
             card.listen();
             card.update();
+            this.sidebar.itemTree.selectedID = `lua-class-${selected.name}-function-${entity.name}`;
+            this.sidebar.populateTrees();
+            this.renderCode();
             return card;
         }
         showLuaTable(entity) {
             this.$screenContent.empty();
+            // For new object-selections, unselect prior items.
+            if (this.catalog.selected !== entity) {
+                this.sidebar.itemTree.selectedID = undefined;
+            }
             this.catalog.selected = entity;
             this.catalog.selectedCard = new LuaTableCard_1.LuaTableCard(this, { entity });
             this.$screenContent.append(this.catalog.selectedCard.render());
             this.catalog.selectedCard.listen();
             this.catalog.selectedCard.update();
+            this.sidebar.populateTrees();
             this.renderCode();
             return this.catalog.selectedCard;
         }
@@ -7634,31 +7637,44 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             const { selected } = this.catalog;
             if (!(selected instanceof RosettaLuaTable_5.RosettaLuaTable))
                 return null;
+            this.catalog.selected = selected;
             this.$screenContent.empty();
             const card = new LuaFieldCard_1.LuaFieldCard(this, { entity, isStatic: true });
             this.$screenContent.append(card.render());
             card.listen();
             card.update();
+            this.sidebar.itemTree.selectedID = `lua-table-${selected.name}-field-${entity.name}`;
+            this.sidebar.populateTrees();
+            this.renderCode();
             return card;
         }
         showLuaTableFunction(entity) {
             const { selected } = this.catalog;
             if (!(selected instanceof RosettaLuaTable_5.RosettaLuaTable))
                 return null;
+            this.catalog.selected = selected;
             this.$screenContent.empty();
             const card = new LuaFunctionCard_1.LuaFunctionCard(this, { entity, isStatic: true });
             this.$screenContent.append(card.render());
             card.listen();
             card.update();
+            this.sidebar.itemTree.selectedID = `lua-table-${selected.name}-function-${entity.name}`;
+            this.sidebar.populateTrees();
+            this.renderCode();
             return card;
         }
         showJavaClass(entity) {
             this.$screenContent.empty();
+            // For new object-selections, unselect prior items.
+            if (this.catalog.selected !== entity) {
+                this.sidebar.itemTree.selectedID = undefined;
+            }
             this.catalog.selected = entity;
             this.catalog.selectedCard = new JavaClassCard_1.JavaClassCard(this, { entity });
             this.$screenContent.append(this.catalog.selectedCard.render());
             this.catalog.selectedCard.listen();
             this.catalog.selectedCard.update();
+            this.sidebar.populateTrees();
             this.renderCode();
             return this.catalog.selectedCard;
         }
@@ -7668,11 +7684,14 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
                 return null;
             if (!entity)
                 return null;
+            this.catalog.selected = selected;
             this.$screenContent.empty();
             const card = new JavaConstructorCard_1.JavaConstructorCard(this, { entity });
             this.$screenContent.append(card.render());
             card.listen();
             card.update();
+            this.sidebar.itemTree.selectedID = `java-class-${selected.name}-constructor-${entity.getSignature()}`;
+            this.sidebar.populateTrees();
             this.renderCode();
             return card;
         }
@@ -7680,22 +7699,30 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             const { selected } = this.catalog;
             if (!(selected instanceof RosettaJavaClass_5.RosettaJavaClass))
                 return null;
+            this.catalog.selected = selected;
             this.$screenContent.empty();
             const card = new JavaFieldCard_1.JavaFieldCard(this, { entity, isStatic: entity.isStatic() });
             this.$screenContent.append(card.render());
             card.listen();
             card.update();
+            this.sidebar.itemTree.selectedID = `java-class-${selected.name}-field-${entity.name}`;
+            this.sidebar.populateTrees();
+            this.renderCode();
             return card;
         }
         showJavaClassMethod(entity) {
             const { selected } = this.catalog;
             if (!(selected instanceof RosettaJavaClass_5.RosettaJavaClass))
                 return null;
+            this.catalog.selected = selected;
             this.$screenContent.empty();
             const card = new JavaMethodCard_1.JavaMethodCard(this, { entity, isStatic: entity.isStatic() });
             this.$screenContent.append(card.render());
             card.listen();
             card.update();
+            this.sidebar.itemTree.selectedID = `java-class-${selected.name}-method-${entity.getSignature()}`;
+            this.sidebar.populateTrees();
+            this.renderCode();
             return card;
         }
         renderCode() {

@@ -63,7 +63,7 @@ export class ObjectTree {
             $(`#btn-new-lua-function`).show();
             $(`#btn-new-lua-method`).show();
             $(`#btn-lua-class-dropdown`).show();
-            $(`#save-object-dropdown`).css({'display': 'inline'});
+            $(`#save-object-dropdown`).css({ 'display': 'inline' });
         });
 
         $doc.on('click', '.object-tree-lua-table', function () {
@@ -79,7 +79,7 @@ export class ObjectTree {
             $(`#btn-new-lua-function`).show();
             $(`#btn-new-lua-method`).hide();
             $(`#btn-lua-class-dropdown`).show();
-            $(`#save-object-dropdown`).css({'display': 'inline'});
+            $(`#save-object-dropdown`).css({ 'display': 'inline' });
         });
 
         $doc.on('click', '.object-tree-java-class', function () {
@@ -91,7 +91,7 @@ export class ObjectTree {
             itemTree.selectedID = undefined;
             itemTree.populate();
             $(`#btn-lua-class-dropdown`).hide();
-            $(`#save-object-dropdown`).css({'display': 'inline'});
+            $(`#save-object-dropdown`).css({ 'display': 'inline' });
         });
 
         // Preserve the state of folders.
@@ -110,6 +110,8 @@ export class ObjectTree {
 
     populate() {
         const _this = this;
+
+        this.selectedID = this.app.catalog.selected ? `object-lua-class-${this.app.catalog.selected.name}` : undefined;
 
         let $treeUpper = $get('tree-upper');
         $treeUpper.remove();
@@ -198,5 +200,9 @@ export class ObjectTree {
 
         // @ts-ignore
         $treeUpper.bstreeview({ data });
+
+        // if(this.selectedID != null) {
+        //     document.getElementById(this.selectedID)!.scrollIntoView(true);
+        // }
     }
 }

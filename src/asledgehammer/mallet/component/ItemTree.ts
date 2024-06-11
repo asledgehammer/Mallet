@@ -521,40 +521,19 @@ export class ItemTree {
 
         for (const clusterName of clusterNames) {
             const cluster = entity.methods[clusterName];
-
             for (const method of cluster.methods) {
-
                 if (method.getVisibilityScope() !== 'public') continue;
-
-                let signature = `${method.name}`;
-                if (method.parameters && method.parameters.length) {
-                    signature += '_';
-                    for (const param of method.parameters) {
-                        signature += `${param.type.basic}-`;
-                    }
-                    signature = signature.substring(0, signature.length - 1);
-                }
                 if (method.isStatic()) {
-                    this.staticMethodSignatureMap[signature] = method;
+                    this.staticMethodSignatureMap[method.getSignature()] = method;
                 } else {
-                    this.methodSignatureMap[signature] = method;
+                    this.methodSignatureMap[method.getSignature()] = method;
                 }
             }
         }
 
         for (const cons of entity.constructors) {
-
             if (cons.getVisibilityScope() !== 'public') continue;
-
-            let signature = `constructor`;
-            if (cons.parameters && cons.parameters.length) {
-                signature += '_';
-                for (const param of cons.parameters) {
-                    signature += `${param.type.basic}-`;
-                }
-                signature = signature.substring(0, signature.length - 1);
-            }
-            this.constructorSignatureMap[signature] = cons;
+            this.constructorSignatureMap[cons.getSignature()] = cons;
         }
 
         // Constructor(s)
@@ -594,7 +573,6 @@ export class ItemTree {
             else if (!field.isFinal()) continue;
 
             const id = `java-class-${entity.name}-field-${field.name}`;
-
             const classes: string[] = ['item-tree-item', 'java-class-field-item'];
             if (id === this.selectedID) classes.push('selected');
 
@@ -605,24 +583,6 @@ export class ItemTree {
                 class: classes
             });
         }
-
-        // Instance field(s)
-        // for (const name of fieldNames) {
-        //     const field = entity.fields[name];
-        //     if (!field.isStatic()) {
-        //         const id = `java-class-${entity.name}-field-${field.name}`;
-
-        //         const classes: string[] = ['item-tree-item', 'java-class-field-item'];
-        //         if (id === this.selectedID) classes.push('selected');
-
-        //         fields.push({
-        //             text: wrapItem(field.name),
-        //             icon: LuaCard.getTypeIcon(field.type.basic),
-        //             id,
-        //             class: classes
-        //         });
-        //     }
-        // }
 
         // Static method(s)
 
@@ -731,5 +691,9 @@ export class ItemTree {
 
         // @ts-ignore
         $treeLower.bstreeview({ data });
+
+        // if(this.selectedID != null) {
+        //     document.getElementById(this.selectedID)!.scrollIntoView(true);
+        // }
     }
 }

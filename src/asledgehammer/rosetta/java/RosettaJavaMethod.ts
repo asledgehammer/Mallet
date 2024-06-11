@@ -121,4 +121,16 @@ export class RosettaJavaMethod extends RosettaEntity {
     else if (this.hasModifier('private')) return 'private';
     else return 'package';
   }
+
+  getSignature(): string {
+    let signature = `${this.name}`;
+    if (this.parameters && this.parameters.length) {
+      signature += '_';
+      for (const param of this.parameters) {
+        signature += `${param.type.basic}-`;
+      }
+      signature = signature.substring(0, signature.length - 1);
+    }
+    return signature;
+  }
 }
