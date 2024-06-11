@@ -66,14 +66,28 @@ export class ModalName {
             const name = validateLuaVariableName($inputName.val()!).trim();
             const nameOld = this.nameSelected!;
             switch (this.nameMode) {
-                case 'new_class': {
+                case 'new_lua_class': {
                     try {
                         const entity = new RosettaLuaClass(validateLuaVariableName($inputName.val()!).trim());
+                        app.catalog.luaClasses[entity.name] = entity;
                         app.showLuaClass(entity);
                         app.sidebar.populateTrees();
                         toast.alert('Created Lua Class.', 'success');
                     } catch (e) {
                         toast.alert(`Failed to create Lua Class.`, 'error');
+                        console.error(e);
+                    }
+                    break;
+                }
+                case 'new_lua_table': {
+                    try {
+                        const entity = new RosettaLuaTable(validateLuaVariableName($inputName.val()!).trim());
+                        app.catalog.luaTables[entity.name] = entity;
+                        app.showLuaTable(entity);
+                        app.sidebar.populateTrees();
+                        toast.alert('Created Lua Table.', 'success');
+                    } catch (e) {
+                        toast.alert(`Failed to create Lua Table.`, 'error');
                         console.error(e);
                     }
                     break;

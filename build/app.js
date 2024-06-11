@@ -5446,12 +5446,18 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
             <div style="position: relative; top: 0; left: 0; width: 100%; height: 30%;">
                 <div class="p-1 border-bottom border-bottom-2 border-black shadow">
                     
-                    <!-- New Class -->
-                    <button id="new-lua-class" class="btn btn-sm responsive-btn responsive-btn-success" title="New Lua Class">
-                        <div class="btn-pane">    
+                    <!-- New dropdown -->
+                    <div id="new-dropdown" class="dropdown" style="display: inline;">
+                        <button class="btn btn-sm responsive-btn responsive-btn-success" style="width: 32px; height: 32px" data-bs-toggle="dropdown" aria-expanded="false" title="Create a new object.">
+                        <div class="btn-pane">     
                             <i class="fa fa-file"></i>
                         </div>
-                    </button>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a id="btn-new-lua-class" class="dropdown-item" href="#">Lua Class</a></li>
+                            <li><a id="btn-new-lua-table" class="dropdown-item" href="#">Lua Table</a></li>
+                        </ul>
+                    </div>
 
                     <!-- Open -->
                     <button id="open-lua-class" class="btn btn-sm responsive-btn responsive-btn-info" title="Open JSON File">
@@ -5459,13 +5465,6 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
                             <i class="fa-solid fa-folder-open"></i>
                         </div>
                     </button>
-
-                    <!-- Save
-                    <button id="save-lua-class" class="btn btn-sm responsive-btn responsive-btn-info" title="Save JSON File">
-                        <div class="btn-pane">
-                            <i class="fa fa-save"></i>
-                        </div>
-                    </button> -->
 
                     <!-- Save dropdown -->
                     <div id="save-file-dropdown" class="dropdown" style="display: inline;">
@@ -5550,18 +5549,33 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
             const _this = this;
             const $doc = $(document);
             const { $titleName, $btnName, $inputName, modalName } = app.modalName;
-            $doc.on('click', '#new-lua-class', () => {
+            $doc.on('click', '#btn-new-lua-class', () => {
                 try {
                     $titleName.html('New Lua Class');
                     $btnName.html('Create');
                     $btnName.removeClass('btn-primary');
                     $btnName.addClass('btn-success');
                     $inputName.val('');
-                    app.modalName.nameMode = 'new_class';
+                    app.modalName.nameMode = 'new_lua_class';
                     modalName.show();
                 }
                 catch (e) {
                     app.toast.alert(`Failed to create LuaClass.`, 'error');
+                    console.error(e);
+                }
+            });
+            $doc.on('click', '#btn-new-lua-table', () => {
+                try {
+                    $titleName.html('New Lua Table');
+                    $btnName.html('Create');
+                    $btnName.removeClass('btn-primary');
+                    $btnName.addClass('btn-success');
+                    $inputName.val('');
+                    app.modalName.nameMode = 'new_lua_table';
+                    modalName.show();
+                }
+                catch (e) {
+                    app.toast.alert(`Failed to create LuaTable.`, 'error');
                     console.error(e);
                 }
             });
@@ -6469,15 +6483,30 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                 const name = (0, util_16.validateLuaVariableName)($inputName.val()).trim();
                 const nameOld = this.nameSelected;
                 switch (this.nameMode) {
-                    case 'new_class': {
+                    case 'new_lua_class': {
                         try {
                             const entity = new RosettaLuaClass_2.RosettaLuaClass((0, util_16.validateLuaVariableName)($inputName.val()).trim());
+                            app.catalog.luaClasses[entity.name] = entity;
                             app.showLuaClass(entity);
                             app.sidebar.populateTrees();
                             toast.alert('Created Lua Class.', 'success');
                         }
                         catch (e) {
                             toast.alert(`Failed to create Lua Class.`, 'error');
+                            console.error(e);
+                        }
+                        break;
+                    }
+                    case 'new_lua_table': {
+                        try {
+                            const entity = new RosettaLuaTable_2.RosettaLuaTable((0, util_16.validateLuaVariableName)($inputName.val()).trim());
+                            app.catalog.luaTables[entity.name] = entity;
+                            app.showLuaTable(entity);
+                            app.sidebar.populateTrees();
+                            toast.alert('Created Lua Table.', 'success');
+                        }
+                        catch (e) {
+                            toast.alert(`Failed to create Lua Table.`, 'error');
                             console.error(e);
                         }
                         break;
