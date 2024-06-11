@@ -362,10 +362,11 @@ export class Sidebar extends Component<SidebarOptions> {
                 const clazz = card.options!.entity;
                 if (!clazz) return;
 
-                this.app.modalName.nameMode = 'new_value';
-                this.app.modalName.$titleName.html('Create Lua Value');
-                this.app.modalName.$inputName.val('');
-                this.app.modalName.modalName.show();
+                modalName.nameMode = 'new_value';
+                $titleName.html('Create Lua Value');
+                $inputName.val('');
+                $btnName.val('Create');
+                modalName.show();
             } catch (e) {
                 app.toast.alert(`Failed to create Lua Value.`, 'error');
                 console.error(e);
@@ -379,10 +380,11 @@ export class Sidebar extends Component<SidebarOptions> {
                 const clazz = card.options!.entity;
                 if (!clazz) return;
 
-                this.app.modalName.nameMode = 'new_field';
-                this.app.modalName.$titleName.html('Create Lua Field');
-                this.app.modalName.$inputName.val('');
-                this.app.modalName.modalName.show();
+                modalName.nameMode = 'new_field';
+                $titleName.html('Create Lua Field');
+                $inputName.val('');
+                $btnName.val('Create');
+                modalName.show();
             } catch (e) {
                 app.toast.alert(`Failed to create Lua Field.`, 'error');
                 console.error(e);
@@ -396,10 +398,11 @@ export class Sidebar extends Component<SidebarOptions> {
                 const clazz = card.options!.entity;
                 if (!clazz) return;
 
-                this.app.modalName.nameMode = 'new_function';
-                this.app.modalName.$titleName.html('Create Lua Function');
-                this.app.modalName.$inputName.val('');
-                this.app.modalName.modalName.show();
+                modalName.nameMode = 'new_function';
+                $titleName.html('Create Lua Function');
+                $inputName.val('');
+                $btnName.val('Create');
+                modalName.show();
             } catch (e) {
                 app.toast.alert(`Failed to create Lua Function.`, 'error');
                 console.error(e);
@@ -413,14 +416,14 @@ export class Sidebar extends Component<SidebarOptions> {
                 const clazz = card.options!.entity;
                 if (!clazz) return;
 
-                this.app.modalName.nameMode = 'new_method';
-                this.app.modalName.$titleName.html('Create Lua Method');
-                this.app.modalName.$inputName.val('');
-                this.app.modalName.modalName.show();
+                modalName.nameMode = 'new_method';
+                $titleName.html('Create Lua Method');
+                $inputName.val('');
+                $btnName.val('Create');
+                modalName.show();
             } catch (e) {
                 app.toast.alert(`Failed to create Lua Method.`, 'error');
                 console.error(e);
-
             }
         });
 
