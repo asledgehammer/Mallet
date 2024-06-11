@@ -405,17 +405,99 @@ export function luaTableToTS(
 }
 
 export function tsType(type: string, nullable: boolean): string {
+
+    if (type === '') {
+        return nullable ? 'null' : '';
+    }
+
+    const wrapped = type[0] === '(' && type[type.length - 1] === ')';
+
+    if (wrapped) {
+        type = type.substring(1, type.length - 2);
+    }
+
     let result = type;
-    if (type.startsWith('fun(')) {
-        // FIXME: Nested function calls won't work here.
-        let t = type.substring(3);
-        t = t.replace('):', ')=>');
-        result = '(' + t.trim() + ')';
+    if (type == 'nil') {
+        result = 'null';
+    } else if (type.startsWith('table<')) {
+        result = luaTableToTSDict(type);
+    } else if (type.startsWith('table')) {
+        result = 'any';
+    } else if (type.startsWith('fun(')) {
+        result = luaFuncToTSFunc(type);
     }
 
     if (nullable) {
         result = result + ' | null';
     }
 
+    return wrapped ? `(${result})` : result;
+}
+
+export function luaTableToTSDict(raw: string): string {
+    if (!raw.startsWith('table<')) {
+        throw new Error('The table is invalid: ' + raw);
+    }
+    let result = '';
+
+    if (raw.indexOf('<') === -1 || raw.indexOf('>') === -1) {
+        result = 'any';
+    } else {
+        let temp = raw.substring(raw.indexOf('<'));
+        temp = temp.substring(1, temp.indexOf('>'));
+        if (temp.indexOf(',') === -1) {
+            result = 'any';
+        } else {
+            const split = temp.split(',').map((s) => s.trim());
+            if (split.length !== 2) {
+                result = 'any';
+            } else {
+                if (split[0] !== 'number' && split[0] !== 'string') {
+                    result = 'any';
+                } else {
+                    result = `{[key: ${split[0]}]: ${tsType(split[1], false)}}`;
+                }
+            }
+        }
+    }
+
     return result;
+}
+
+export function luaFuncToTSFunc(raw: string): string {
+    if (!raw.startsWith('fun(')) {
+        throw new Error('The function is invalid: ' + raw);
+    }
+
+    let lastRetIndex = raw.length - 1;
+    while (raw[lastRetIndex] !== ':') {
+        lastRetIndex--;
+        if (lastRetIndex <= 0) {
+            throw new Error('The function is invalid: ' + raw);
+        }
+    }
+
+    const rType = tsType(raw.substring(lastRetIndex + 1).trim(), false);
+
+    let lastParamIndex = raw.length - 1;
+    while (raw[lastParamIndex] !== ')') {
+        lastParamIndex--;
+        if (lastParamIndex <= 0) {
+            throw new Error('The function is invalid: ' + raw);
+        }
+    }
+
+    let inner = raw.substring(4, lastParamIndex);
+    let params: string[] = [];
+    if (inner !== '') {
+        params = [];
+        const _params = inner.indexOf(',') !== -1 ? inner.split(',').map((s) => s.trim()) : [inner.trim()];
+        for (let param of _params) {
+            let [name, type] = param.split(':').map((s) => s.trim());
+            type = tsType(type, false);
+            params.push(`${name}: ${type}`);
+        }
+    }
+
+    return `(${params.join(', ')}) => ${rType}`;
 }

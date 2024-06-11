@@ -4,6 +4,9 @@ import { RosettaJavaClass } from '../../rosetta/java/RosettaJavaClass';
 import { generateLuaClass, generateLuaTable } from '../../rosetta/lua/LuaLuaGenerator';
 import { RosettaLuaClass } from '../../rosetta/lua/RosettaLuaClass';
 import { RosettaLuaTable } from '../../rosetta/lua/RosettaLuaTable';
+import { javaClassToTS } from '../../rosetta/typescript/JavaTypeScriptGenerator';
+import { luaClassToTS, luaTableToTS } from '../../rosetta/typescript/LuaTypeScriptGenerator';
+import { wrapAsTSFile } from '../../rosetta/typescript/TSUtils';
 import { html } from '../../rosetta/util';
 import { Component, ComponentOptions } from './Component';
 import { ItemTree } from './ItemTree';
@@ -301,31 +304,31 @@ export class Sidebar extends Component<SidebarOptions> {
             }
         });
 
-        $doc.on('click', '#btn-save-object-lua', async () => {
+        $doc.on('click', '#btn-save-object-typescript', async () => {
             try {
-
-                if (!this.app.catalog.selected) {
-                    return;
-                }
-
-                const { selected } = this.app.catalog;
-
                 // @ts-ignore
                 const result = await showSaveFilePicker({
-                    id: 'mallet-save-lua',
+                    id: 'mallet-save-typescript',
                     types: [
                         {
-                            description: "Lua file",
-                            accept: { "text/x-lua": [".lua"] },
-                            suggestedName: `${selected.name}.lua`,
+                            description: "TypeScript Declarations file",
+                            accept: { "application/typescript": [".d.ts"] },
                         },
                     ],
                 });
-                const { catalog } = this.app;
-                const lua = catalog.toLuaTypings();
+
+                const { selected } = this.app.catalog;
+                let ts = '';
+                if (selected instanceof RosettaLuaClass) {
+                    ts += luaClassToTS(selected, true);
+                } else if (selected instanceof RosettaLuaTable) {
+                    ts += luaTableToTS(selected, true);
+                } else if (selected instanceof RosettaJavaClass) {
+                    ts += javaClassToTS(selected, true, true);
+                }
 
                 const writable = await result.createWritable();
-                await writable.write(lua);
+                await writable.write(ts);
                 await writable.close();
 
                 app.toast.alert(`Saved Lua typings file.`, 'info');
@@ -366,7 +369,95 @@ export class Sidebar extends Component<SidebarOptions> {
             }
         });
 
+        $doc.on('click', '#btn-save-object-json', async () => {
+            try {
+                // @ts-ignore
+                const result = await showSaveFilePicker({
+                    id: 'mallet-save-json',
+                    types: [
+                        {
+                            description: "JSON file",
+                            accept: { "application/json": [".json"] },
+                        }
+                    ],
+                });
+                
+                const jsonFile: any = {
+                    $schema: 'https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-schema.json',
+                };
+
+                const { selected } = this.app.catalog;
+                if (selected instanceof RosettaLuaClass) {
+                    jsonFile.luaClasses = {};
+                    jsonFile.luaClasses[selected.name] = selected.toJSON();
+                } else if (selected instanceof RosettaLuaTable) {
+                    jsonFile.tables = {};
+                    jsonFile.tables[selected.name] = selected.toJSON();
+                } else if (selected instanceof RosettaJavaClass) {
+                    jsonFile.namespaces = {};
+                    jsonFile.namespaces[selected.namespace.name] = {};
+                    jsonFile.namespaces[selected.namespace.name][selected.name] = selected.toJSON();
+                }
+
+                const writable = await result.createWritable();
+                await writable.write(JSON.stringify(jsonFile, null, 2));
+                await writable.close();
+
+                app.toast.alert(`Saved JSON file.`, 'info');
+
+            } catch (e) {
+                /* (Ignore aborted dialogs) */
+                if (e instanceof DOMException && e.name === 'AbortError') return;
+                app.toast.alert(`Failed to save JSON file.`, 'error');
+                console.error(e);
+            }
+        });
+
         $doc.on('click', '#btn-save-json-compressed', async () => {
+            try {
+                // @ts-ignore
+                const result = await showSaveFilePicker({
+                    id: 'mallet-save-json',
+                    types: [
+                        {
+                            description: "JSON file",
+                            accept: { "application/json": [".json"] },
+                        }
+                    ],
+                });
+
+                const jsonFile: any = {
+                    $schema: 'https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-schema.json',
+                };
+
+                const { selected } = this.app.catalog;
+                if (selected instanceof RosettaLuaClass) {
+                    jsonFile.luaClasses = {};
+                    jsonFile.luaClasses[selected.name] = selected.toJSON();
+                } else if (selected instanceof RosettaLuaTable) {
+                    jsonFile.tables = {};
+                    jsonFile.tables[selected.name] = selected.toJSON();
+                } else if (selected instanceof RosettaJavaClass) {
+                    jsonFile.namespaces = {};
+                    jsonFile.namespaces[selected.namespace.name] = {};
+                    jsonFile.namespaces[selected.namespace.name][selected.name] = selected.toJSON();
+                }
+
+                const writable = await result.createWritable();
+                await writable.write(JSON.stringify(jsonFile));
+                await writable.close();
+
+                app.toast.alert(`Saved JSON file.`, 'info');
+
+            } catch (e) {
+                /* (Ignore aborted dialogs) */
+                if (e instanceof DOMException && e.name === 'AbortError') return;
+                app.toast.alert(`Failed to save JSON file.`, 'error');
+                console.error(e);
+            }
+        });
+
+        $doc.on('click', '#btn-save-object-json-compressed', async () => {
             try {
                 // @ts-ignore
                 const result = await showSaveFilePicker({

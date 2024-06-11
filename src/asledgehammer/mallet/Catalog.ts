@@ -6,7 +6,7 @@ import { RosettaLuaClass } from "../rosetta/lua/RosettaLuaClass";
 import { RosettaLuaTable } from "../rosetta/lua/RosettaLuaTable";
 import { javaClassToTS } from "../rosetta/typescript/JavaTypeScriptGenerator";
 import { luaClassToTS, luaTableToTS } from "../rosetta/typescript/LuaTypeScriptGenerator";
-import { wrapAsTSFile, wrapAsTSNamespace } from "../rosetta/typescript/TSUtils";
+import { wrapAsTSFile } from "../rosetta/typescript/TSUtils";
 import { JavaClassCard } from "./component/java/JavaClassCard";
 import { LuaClassCard } from "./component/lua/LuaClassCard";
 import { LuaTableCard } from "./component/lua/LuaTableCard";
@@ -170,12 +170,12 @@ export class Catalog {
         }
 
         // Lua Tables
-        let luaTables: any = undefined;
+        let tables: any = undefined;
         keys = Object.keys(this.luaTables);
         if (keys.length) {
-            luaTables = {};
+            tables = {};
             for (const name of keys) {
-                luaTables[name] = this.luaTables[name].toJSON();
+                tables[name] = this.luaTables[name].toJSON();
             }
         }
 
@@ -197,7 +197,7 @@ export class Catalog {
         return {
             $schema: 'https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-schema.json',
             luaClasses,
-            luaTables,
+            tables,
             namespaces
         };
     }
