@@ -1269,7 +1269,7 @@ define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports"], 
 define("src/asledgehammer/rosetta/util", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.get = exports.$get = exports.validateLuaVariableName = exports.combine = exports.combineArrays = exports.randomString = exports.css = exports.html = void 0;
+    exports.isNameValid = exports.get = exports.$get = exports.validateLuaVariableName = exports.combine = exports.combineArrays = exports.randomString = exports.css = exports.html = void 0;
     const html = function (c, ...d) {
         let a = '';
         for (let b = 0; b < c.length - 1; b++)
@@ -1364,6 +1364,13 @@ define("src/asledgehammer/rosetta/util", ["require", "exports"], function (requi
         return document.getElementById(id);
     }
     exports.get = get;
+    function isNameValid(name) {
+        const result = /[a-zA-z_]+[a-zA-z0-9]*/g.exec(name);
+        if (!result || result.length !== 1 || result.index !== 0)
+            return false;
+        return result[0] === name;
+    }
+    exports.isNameValid = isNameValid;
 });
 define("src/asledgehammer/rosetta/java/RosettaJavaType", ["require", "exports", "src/asledgehammer/rosetta/RosettaEntity"], function (require, exports, RosettaEntity_9) {
     "use strict";
@@ -5290,7 +5297,6 @@ define("src/asledgehammer/mallet/component/ObjectTree", ["require", "exports", "
                 $('.object-tree-item.selected').removeClass('selected');
                 $this.addClass('selected');
                 _this.selectedID = this.id;
-                // console.log(`Selected object: ${_this.selectedID}`);
             });
             // Apply jQuery listeners next.
             $doc.on('click', '.object-tree-lua-class', function () {
@@ -5306,6 +5312,7 @@ define("src/asledgehammer/mallet/component/ObjectTree", ["require", "exports", "
                 $(`#btn-new-lua-function`).show();
                 $(`#btn-new-lua-method`).show();
                 $(`#btn-lua-class-dropdown`).show();
+                $(`#save-object-dropdown`).css({ 'display': 'inline' });
             });
             $doc.on('click', '.object-tree-lua-table', function () {
                 const name = this.id.substring('object-lua-table-'.length);
@@ -5320,6 +5327,7 @@ define("src/asledgehammer/mallet/component/ObjectTree", ["require", "exports", "
                 $(`#btn-new-lua-function`).show();
                 $(`#btn-new-lua-method`).hide();
                 $(`#btn-lua-class-dropdown`).show();
+                $(`#save-object-dropdown`).css({ 'display': 'inline' });
             });
             $doc.on('click', '.object-tree-java-class', function () {
                 const name = this.id.substring('object-java-class-'.length);
@@ -5330,6 +5338,7 @@ define("src/asledgehammer/mallet/component/ObjectTree", ["require", "exports", "
                 itemTree.selectedID = undefined;
                 itemTree.populate();
                 $(`#btn-lua-class-dropdown`).hide();
+                $(`#save-object-dropdown`).css({ 'display': 'inline' });
             });
             // Preserve the state of folders.
             $doc.on('click', '#' + this.idFolderLuaClass, () => {
@@ -5504,7 +5513,7 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
                     
                     
                     <!-- Save dropdown -->
-                    <div id="save-object-dropdown" class="dropdown" style="display: inline;">
+                    <div id="save-object-dropdown" class="dropdown" style="display: none;">
                         <button class="btn btn-sm responsive-btn responsive-btn-success" style="width: 32px; height: 32px" data-bs-toggle="dropdown" aria-expanded="false" title="Save Object">
                         <div class="btn-pane">     
                             <i class="fa fa-save"></i>
@@ -5764,7 +5773,7 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
                     const clazz = card.options.entity;
                     if (!clazz)
                         return;
-                    modalName.nameMode = 'new_value';
+                    this.app.modalName.nameMode = 'new_value';
                     $titleName.html('Create Lua Value');
                     $inputName.val('');
                     $btnName.val('Create');
@@ -5783,7 +5792,7 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
                     const clazz = card.options.entity;
                     if (!clazz)
                         return;
-                    modalName.nameMode = 'new_field';
+                    this.app.modalName.nameMode = 'new_field';
                     $titleName.html('Create Lua Field');
                     $inputName.val('');
                     $btnName.val('Create');
@@ -5802,7 +5811,7 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
                     const clazz = card.options.entity;
                     if (!clazz)
                         return;
-                    modalName.nameMode = 'new_function';
+                    this.app.modalName.nameMode = 'new_function';
                     $titleName.html('Create Lua Function');
                     $inputName.val('');
                     $btnName.val('Create');
@@ -5821,7 +5830,7 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
                     const clazz = card.options.entity;
                     if (!clazz)
                         return;
-                    modalName.nameMode = 'new_method';
+                    this.app.modalName.nameMode = 'new_method';
                     $titleName.html('Create Lua Method');
                     $inputName.val('');
                     $btnName.val('Create');
@@ -6478,7 +6487,17 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
             const { app, $inputName, $btnName } = this;
             const { catalog: active, sidebar, toast } = app;
             this.$inputName.on('input', () => {
-                setTimeout(() => this.$inputName.val((0, util_16.validateLuaVariableName)(this.$inputName.val())), 1);
+                const val = $inputName.val();
+                const isValid = (0, util_16.isNameValid)(val);
+                $btnName.prop('disabled', !isValid);
+                if (isValid) {
+                    $inputName.removeClass('is-invalid');
+                    $inputName.addClass('is-valid');
+                }
+                else {
+                    $inputName.addClass('is-invalid');
+                    $inputName.removeClass('is-valid');
+                }
             });
             const $modalName = $('#modal-name');
             $modalName.on('shown.bs.modal', function () {

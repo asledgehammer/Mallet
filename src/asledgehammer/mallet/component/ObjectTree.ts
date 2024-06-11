@@ -47,7 +47,6 @@ export class ObjectTree {
             $('.object-tree-item.selected').removeClass('selected');
             $this.addClass('selected');
             _this.selectedID = this.id;
-            // console.log(`Selected object: ${_this.selectedID}`);
         });
 
         // Apply jQuery listeners next.
@@ -64,6 +63,7 @@ export class ObjectTree {
             $(`#btn-new-lua-function`).show();
             $(`#btn-new-lua-method`).show();
             $(`#btn-lua-class-dropdown`).show();
+            $(`#save-object-dropdown`).css({'display': 'inline'});
         });
 
         $doc.on('click', '.object-tree-lua-table', function () {
@@ -79,6 +79,7 @@ export class ObjectTree {
             $(`#btn-new-lua-function`).show();
             $(`#btn-new-lua-method`).hide();
             $(`#btn-lua-class-dropdown`).show();
+            $(`#save-object-dropdown`).css({'display': 'inline'});
         });
 
         $doc.on('click', '.object-tree-java-class', function () {
@@ -90,6 +91,7 @@ export class ObjectTree {
             itemTree.selectedID = undefined;
             itemTree.populate();
             $(`#btn-lua-class-dropdown`).hide();
+            $(`#save-object-dropdown`).css({'display': 'inline'});
         });
 
         // Preserve the state of folders.

@@ -7,7 +7,7 @@ import { RosettaLuaClass } from "../../rosetta/lua/RosettaLuaClass";
 import { RosettaLuaConstructor } from "../../rosetta/lua/RosettaLuaConstructor";
 import { RosettaLuaFunction } from "../../rosetta/lua/RosettaLuaFunction";
 import { RosettaLuaTable } from "../../rosetta/lua/RosettaLuaTable";
-import { $get, validateLuaVariableName } from "../../rosetta/util";
+import { $get, isNameValid, validateLuaVariableName } from "../../rosetta/util";
 import { NameModeType } from "../component/NameModeType";
 
 export class ModalName {
@@ -46,7 +46,16 @@ export class ModalName {
         const { catalog: active, sidebar, toast } = app;
 
         this.$inputName.on('input', () => {
-            setTimeout(() => this.$inputName.val(validateLuaVariableName(this.$inputName.val()!)), 1);
+            const val = $inputName.val()!;
+            const isValid = isNameValid(val);
+            $btnName.prop('disabled', !isValid);
+            if(isValid) {
+                $inputName.removeClass('is-invalid');
+                $inputName.addClass('is-valid');
+            } else {
+                $inputName.addClass('is-invalid');
+                $inputName.removeClass('is-valid');
+            }
         });
 
         const $modalName = $('#modal-name');

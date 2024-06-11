@@ -88,7 +88,7 @@ export class Sidebar extends Component<SidebarOptions> {
                     
                     
                     <!-- Save dropdown -->
-                    <div id="save-object-dropdown" class="dropdown" style="display: inline;">
+                    <div id="save-object-dropdown" class="dropdown" style="display: none;">
                         <button class="btn btn-sm responsive-btn responsive-btn-success" style="width: 32px; height: 32px" data-bs-toggle="dropdown" aria-expanded="false" title="Save Object">
                         <div class="btn-pane">     
                             <i class="fa fa-save"></i>
@@ -362,7 +362,7 @@ export class Sidebar extends Component<SidebarOptions> {
                 const clazz = card.options!.entity;
                 if (!clazz) return;
 
-                modalName.nameMode = 'new_value';
+                this.app.modalName.nameMode = 'new_value';
                 $titleName.html('Create Lua Value');
                 $inputName.val('');
                 $btnName.val('Create');
@@ -380,7 +380,7 @@ export class Sidebar extends Component<SidebarOptions> {
                 const clazz = card.options!.entity;
                 if (!clazz) return;
 
-                modalName.nameMode = 'new_field';
+                this.app.modalName.nameMode = 'new_field';
                 $titleName.html('Create Lua Field');
                 $inputName.val('');
                 $btnName.val('Create');
@@ -398,7 +398,7 @@ export class Sidebar extends Component<SidebarOptions> {
                 const clazz = card.options!.entity;
                 if (!clazz) return;
 
-                modalName.nameMode = 'new_function';
+                this.app.modalName.nameMode = 'new_function';
                 $titleName.html('Create Lua Function');
                 $inputName.val('');
                 $btnName.val('Create');
@@ -416,7 +416,7 @@ export class Sidebar extends Component<SidebarOptions> {
                 const clazz = card.options!.entity;
                 if (!clazz) return;
 
-                modalName.nameMode = 'new_method';
+                this.app.modalName.nameMode = 'new_method';
                 $titleName.html('Create Lua Method');
                 $inputName.val('');
                 $btnName.val('Create');

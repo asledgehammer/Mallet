@@ -93,3 +93,9 @@ export function $get(id: string): JQuery<any> {
 export function get(id: string): HTMLElement | null {
     return document.getElementById(id);
 }
+
+export function isNameValid(name: string): boolean {
+    const result: RegExpExecArray | null = /[a-zA-z_]+[a-zA-z0-9]*/g.exec(name);
+    if (!result || result.length !== 1 || result.index !== 0) return false;
+    return result[0] === name;
+}
