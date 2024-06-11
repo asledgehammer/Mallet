@@ -5329,7 +5329,7 @@ define("src/asledgehammer/mallet/component/ObjectTree", ["require", "exports", "
                 itemTree.selected = undefined;
                 itemTree.selectedID = undefined;
                 itemTree.populate();
-                $(`#${_this.sidebar.idLuaClassDropdown}`).hide();
+                $(`#btn-lua-class-dropdown`).hide();
             });
             // Preserve the state of folders.
             $doc.on('click', '#' + this.idFolderLuaClass, () => {
