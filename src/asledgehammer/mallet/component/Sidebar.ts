@@ -6,7 +6,6 @@ import { RosettaLuaClass } from '../../rosetta/lua/RosettaLuaClass';
 import { RosettaLuaTable } from '../../rosetta/lua/RosettaLuaTable';
 import { javaClassToTS } from '../../rosetta/typescript/JavaTypeScriptGenerator';
 import { luaClassToTS, luaTableToTS } from '../../rosetta/typescript/LuaTypeScriptGenerator';
-import { wrapAsTSFile } from '../../rosetta/typescript/TSUtils';
 import { html } from '../../rosetta/util';
 import { Component, ComponentOptions } from './Component';
 import { ItemTree } from './ItemTree';

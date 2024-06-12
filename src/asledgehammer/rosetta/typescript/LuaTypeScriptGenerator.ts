@@ -174,9 +174,12 @@ export function luaFunctionToTS(
 
     const rs = tsType(method.returns.type, method.returns.nullable);
 
-    let fs = `${i}${method.name}${ps}: ${rs};`;
+    let mName = method.name;
+    if(mName === '__toString__') mName = 'toString';
+
+    let fs = `${i}${mName}${ps}: ${rs};`;
     if (fs.length > notesLength) {
-        fs = `${i}${method.name}(\n`;
+        fs = `${i}${mName}(\n`;
         for (const param of method.parameters) {
             fs += `${i}    ${param.name}${param.optional ? '?' : ''}: ${tsType(param.type, param.nullable)}, \n`;
         }

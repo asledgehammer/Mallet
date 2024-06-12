@@ -99,9 +99,13 @@ export const generateLuaFunction = (className: string, operator: ':' | '.', func
         }
     }
 
-    let fs = `function ${className}${operator}${func.name}${generateLuaParameterBody(func.parameters)} end`;
+    let fName = func.name;
+    if(fName === '__toString__') fName = 'toString';
+
+
+    let fs = `function ${className}${operator}${fName}${generateLuaParameterBody(func.parameters)} end`;
     if (fs.length > 100) {
-        fs = `function ${className}${operator}${func.name}(\n`;
+        fs = `function ${className}${operator}${fName}(\n`;
         for (const parameter of func.parameters) {
             fs += `    ${parameter.name},\n`;
         }

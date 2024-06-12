@@ -101,8 +101,11 @@ export function generateJavaMethod(className: string, operator: ':' | '.', metho
         }
     }
 
+    let mName = method.name;
+    if(mName === '__toString__') mName = 'toString';
+
     // Constructor-Body.
-    let line = `function ${className}${operator}${method.name}(`;
+    let line = `function ${className}${operator}${mName}(`;
     if (method.parameters && method.parameters.length) {
         for (const param of method.parameters) {
             line += param.name + ', ';
@@ -113,7 +116,7 @@ export function generateJavaMethod(className: string, operator: ':' | '.', metho
 
     // If too long, render as slinky.
     if (line.length > 100) {
-        cs.push(`function ${className}${operator}${method.name}(`);
+        cs.push(`function ${className}${operator}${mName}(`);
         if (method.parameters && method.parameters.length) {
             for (const param of method.parameters) {
                 cs.push(`    ${param.name},`);

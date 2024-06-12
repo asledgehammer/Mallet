@@ -46,13 +46,13 @@ export class RosettaLuaTable extends RosettaEntity {
       }
     }
 
-    /* (Values) */
-    if (raw.values !== undefined) {
-      const rawValues: { [key: string]: any } = raw.values;
-      for (const name2 of Object.keys(rawValues)) {
-        const rawValue = rawValues[name2];
-        const value = new RosettaLuaTableField(name2, rawValue);
-        this.fields[value.name] = this.fields[name2] = value;
+    /* (Fields) */
+    if (raw.fields !== undefined) {
+      const rawFields: { [key: string]: any } = raw.fields;
+      for (const name2 of Object.keys(rawFields)) {
+        const rawField = rawFields[name2];
+        const field = new RosettaLuaTableField(name2, rawField);
+        this.fields[field.name] = this.fields[name2] = field;
       }
     }
   }
@@ -90,18 +90,18 @@ export class RosettaLuaTable extends RosettaEntity {
       }
     }
 
-    /* (Values) */
-    if (raw.values !== undefined) {
-      const rawValues: { [key: string]: any } = raw.values;
-      for (const name of Object.keys(rawValues)) {
-        const rawValue = rawValues[name];
-        let value = this.fields[name];
-        if (value === undefined) {
-          value = new RosettaLuaTableField(name, rawValue);
+    /* (Fields) */
+    if (raw.fields !== undefined) {
+      const rawFields: { [key: string]: any } = raw.fields;
+      for (const name of Object.keys(rawFields)) {
+        const rawField = rawFields[name];
+        let field = this.fields[name];
+        if (field === undefined) {
+          field = new RosettaLuaTableField(name, rawField);
         } else {
-          value.parse(rawValue);
+          field.parse(rawField);
         }
-        this.fields[value.name] = this.fields[name] = value;
+        this.fields[field.name] = this.fields[name] = field;
       }
     }
   }

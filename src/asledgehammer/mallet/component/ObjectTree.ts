@@ -1,6 +1,11 @@
 import { App } from "../../../app";
+import { RosettaJavaClass } from "../../rosetta/java/RosettaJavaClass";
+import { RosettaLuaClass } from "../../rosetta/lua/RosettaLuaClass";
+import { RosettaLuaTable } from "../../rosetta/lua/RosettaLuaTable";
 import { $get } from "../../rosetta/util";
 import { LuaCard } from "./lua/LuaCard";
+import { LuaClassCard } from "./lua/LuaClassCard";
+import { LuaTableCard } from "./lua/LuaTableCard";
 import { Sidebar } from "./Sidebar";
 
 const CLASS_HEADER = 'obj-tree';
@@ -53,11 +58,6 @@ export class ObjectTree {
         $doc.on('click', '.object-tree-lua-class', function () {
             const name = this.id.substring('object-lua-class-'.length);
             _this.app.showLuaClass(_this.app.catalog.luaClasses[name]);
-            // Update the class properties tree.
-            const { itemTree } = _this.sidebar;
-            itemTree.selected = undefined;
-            itemTree.selectedID = undefined;
-            itemTree.populate();
             $(`#btn-new-lua-value`).show();
             $(`#btn-new-lua-field`).show();
             $(`#btn-new-lua-function`).show();
@@ -69,13 +69,8 @@ export class ObjectTree {
         $doc.on('click', '.object-tree-lua-table', function () {
             const name = this.id.substring('object-lua-table-'.length);
             _this.app.showLuaTable(_this.app.catalog.luaTables[name]);
-            // Update the class properties tree.
-            const { itemTree } = _this.sidebar;
-            itemTree.selected = undefined;
-            itemTree.selectedID = undefined;
-            itemTree.populate();
-            $(`#btn-new-lua-value`).show();
-            $(`#btn-new-lua-field`).hide();
+            $(`#btn-new-lua-value`).hide();
+            $(`#btn-new-lua-field`).show();
             $(`#btn-new-lua-function`).show();
             $(`#btn-new-lua-method`).hide();
             $(`#btn-lua-class-dropdown`).show();
@@ -85,11 +80,6 @@ export class ObjectTree {
         $doc.on('click', '.object-tree-java-class', function () {
             const name = this.id.substring('object-java-class-'.length);
             _this.app.showJavaClass(_this.app.catalog.javaClasses[name]);
-            // Update the class properties tree.
-            const { itemTree } = _this.sidebar;
-            itemTree.selected = undefined;
-            itemTree.selectedID = undefined;
-            itemTree.populate();
             $(`#btn-lua-class-dropdown`).hide();
             $(`#save-object-dropdown`).css({ 'display': 'inline' });
         });
@@ -111,7 +101,16 @@ export class ObjectTree {
     populate() {
         const _this = this;
 
-        this.selectedID = this.app.catalog.selected ? `object-lua-class-${this.app.catalog.selected.name}` : undefined;
+        const { selected } = this.app.catalog;
+        if (selected instanceof RosettaLuaClass) {
+            this.selectedID = `object-lua-class-${selected.name}`;
+        } else if (selected instanceof RosettaLuaTable) {
+            this.selectedID = `object-lua-table-${selected.name}`;
+        } else if (selected instanceof RosettaJavaClass) {
+            this.selectedID = `object-java-class-${selected.name}`;
+        } else {
+            this.selectedID = undefined;
+        }
 
         let $treeUpper = $get('tree-upper');
         $treeUpper.remove();

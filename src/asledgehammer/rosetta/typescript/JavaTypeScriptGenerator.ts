@@ -277,12 +277,16 @@ export function javaMethodToTS(
     let fs = `${i}`;
     if (method.isStatic()) fs += 'static ';
     if (method.isFinal()) fs += 'readonly ';
-    fs += `${method.name}${ps}: ${rs};\n`;
+
+    let mName = method.name;
+    if(mName === '__toString__') mName = 'toString';
+
+    fs += `${mName}${ps}: ${rs};\n`;
     if (fs.length > notesLength) {
         fs = `${i}`;
         if (method.isStatic()) fs += 'static ';
         if (method.isFinal()) fs += 'readonly ';
-        fs += `${method.name}(\n`;
+        fs += `${mName}(\n`;
         for (const parameter of method.parameters) {
             fs += `${i}    ${parameter.name}: ${tsType(parameter.type.basic, parameter.type.nullable)}, \n`;
         }
