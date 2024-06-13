@@ -99,7 +99,7 @@ export class ModalName {
                     }
                     break;
                 }
-                case 'edit_class': {
+                case 'edit_lua_class': {
                     if (entity instanceof RosettaLuaClass) {
                         try {
 
@@ -111,11 +111,34 @@ export class ModalName {
                             app.showLuaClass(entity);
                             toast.alert('Edited Lua Class.');
                         } catch (e) {
-                            toast.alert(`Failed to edit Lua Class.`, 'error');
+                            toast.alert(`Failed to edit Lua class.`, 'error');
                             console.error(e);
                         }
+                    } else if (entity instanceof RosettaLuaTable) {
+                        throw new Error('Cannot modify Lua class-name of Lua table.');
                     } else if (entity instanceof RosettaJavaClass) {
-                        throw new Error('Cannot modify name of Java class. (Read-Only)');
+                        throw new Error('Cannot modify Lua class-name of Java class.');
+                    }
+                    break;
+                }
+                case 'edit_lua_table': {
+                    if (entity instanceof RosettaLuaTable) {
+                        try {
+                             // Modify the dictionary.
+                             delete active.luaTables[entity.name];
+                             entity.name = name;
+                             active.luaTables[name] = entity;
+ 
+                             app.showLuaTable(entity);
+                             toast.alert('Edited Lua table.');
+                        } catch (e) {
+                            toast.alert(`Failed to edit Lua table.`, 'error');
+                            console.error(e);
+                        }
+                    } else if (entity instanceof RosettaLuaClass) {
+                        throw new Error('Cannot modify Lua table-name of Lua class.');
+                    } else if (entity instanceof RosettaJavaClass) {
+                        throw new Error('Cannot modify Lua table-name of Java class.');
                     }
                     break;
                 }
@@ -223,7 +246,7 @@ export class ModalName {
                     } else if (entity instanceof RosettaLuaTable) {
                         try {
                             const func = entity.createFunction(name);
-                            app.showLuaClassFunction(func);
+                            app.showLuaTableFunction(func);
                             toast.alert('Created Lua Function.', 'success');
                         } catch (e) {
                             toast.alert(`Failed to create Lua Function.`, 'error');
@@ -253,7 +276,7 @@ export class ModalName {
                             func.name = name;
                             entity.functions[name] = func;
                             delete entity.functions[nameOld];
-                            app.showLuaClassFunction(func);
+                            app.showLuaTableFunction(func);
                             toast.alert('Edited Lua Table Function.');
                         } catch (e) {
                             toast.alert(`Failed to edit Lua Table Function.`, 'error');
@@ -348,7 +371,7 @@ export class ModalName {
 
                             func!.addParameter(name, 'any');
 
-                            app.showLuaClassFunction(func as RosettaLuaFunction);
+                            app.showLuaTableFunction(func as RosettaLuaFunction);
 
                             toast.alert('Created Lua Parameter.', 'success');
                         } catch (e) {
@@ -449,7 +472,7 @@ export class ModalName {
                             }
                             param.name = name;
 
-                            app.showLuaClassFunction(func as RosettaLuaFunction);
+                            app.showLuaTableFunction(func as RosettaLuaFunction);
                             toast.alert('Edited Lua Parameter.');
                         } catch (e) {
                             toast.alert(`Failed to edit Lua Parameter.`, 'error');

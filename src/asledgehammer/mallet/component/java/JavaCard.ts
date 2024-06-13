@@ -41,7 +41,7 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
 
             $titleName.html(title);
 
-            if (mode === 'edit_class' || mode === 'edit_field' || mode === 'edit_function' || mode === 'edit_method' || mode === 'edit_value') {
+            if (mode === 'edit_lua_class' || mode === 'edit_lua_table' || mode === 'edit_field' || mode === 'edit_function' || mode === 'edit_method' || mode === 'edit_value') {
                 $btnName.html('Edit');
                 $btnName.removeClass('btn-success');
                 $btnName.addClass('btn-primary');
@@ -288,7 +288,7 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
             this.update();
             this.app.renderCode();
         });
-        this.listenType({name: 'returns', type: entity.returns.type});
+        this.listenType({ name: 'returns', type: entity.returns.type });
     }
 
     renderReturns(entity: { name: string, returns: RosettaJavaReturns }, idReturnType: string, idReturnNotes: string, show: boolean = false): string {
@@ -311,7 +311,7 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
                     <div class="mb-3">
                         <label for="${idReturnType}" class="form-label">Type: ${returns.type.basic}</label>
                     </div>
-                    ${this.renderType({name: 'returns', type: entity.returns.type})}
+                    ${this.renderType({ name: 'returns', type: entity.returns.type })}
                     <!-- Return Notes -->
                     <div>
                         <label for="${idReturnNotes}" class="form-label">Description</label>

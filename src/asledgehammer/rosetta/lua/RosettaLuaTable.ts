@@ -14,7 +14,7 @@ export class RosettaLuaTable extends RosettaEntity {
   readonly fields: { [id: string]: RosettaLuaTableField } = {};
   readonly tables: { [id: string]: RosettaLuaTable } = {};
   readonly functions: { [id: string]: RosettaLuaFunction } = {};
-  readonly name: string;
+  name: string;
   mutable: boolean = false;
   notes: string | undefined;
 

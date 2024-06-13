@@ -39,7 +39,8 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
             $titleName.html(title);
 
             if (mode === 'edit_parameter'
-                || mode === 'edit_class'
+                || mode === 'edit_lua_class'
+                || mode === 'edit_lua_table'
                 || mode === 'edit_field'
                 || mode === 'edit_function'
                 || mode === 'edit_method'

@@ -423,8 +423,6 @@ export class ItemTree {
 
         const _this = this;
 
-        const funcs: any[] = [];
-
         const fieldNames = Object.keys(entity.fields);
         fieldNames.sort((a, b) => a.localeCompare(b));
         const fields = [];
@@ -461,6 +459,9 @@ export class ItemTree {
             });
         }
 
+        console.log(functionNames);
+        console.log(functions);
+
         let $treeLower = $get('tree-lower');
         $treeLower.remove();
 
@@ -485,7 +486,7 @@ export class ItemTree {
                     class: ['item-tree-folder', 'bg-secondary'],
                     id: _this.idFolderLuaTableFunction,
                     expanded: _this.folderLuaTableFunctionOpen,
-                    nodes: funcs
+                    nodes: functions
                 }
             ]
         });

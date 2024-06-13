@@ -2,6 +2,7 @@ import { App } from '../../../../app';
 import { generateLuaField, generateLuaValue } from '../../../rosetta/lua/LuaLuaGenerator';
 import { RosettaLuaClass } from '../../../rosetta/lua/RosettaLuaClass';
 import { RosettaLuaField } from '../../../rosetta/lua/RosettaLuaField';
+import { RosettaLuaTable } from '../../../rosetta/lua/RosettaLuaTable';
 import { RosettaLuaTableField } from '../../../rosetta/lua/RosettaLuaTableField';
 import { luaFieldToTS } from '../../../rosetta/typescript/LuaTypeScriptGenerator';
 import { $get, html } from '../../../rosetta/util';
@@ -124,16 +125,23 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
 
         $get(idBtnDelete).on('click', () => {
             app.modalConfirm.show(() => {
-                const clazz = app.catalog.selectedCard?.options!.entity! as RosettaLuaClass;
-                if (isStatic) {
-                    delete clazz.values[entity.name];
-                } else {
-                    delete clazz.fields[entity.name];
+                const entity = this.options!.entity!;
+                if (entity instanceof RosettaLuaField) {
+                    const clazz = app.catalog.selected as RosettaLuaClass;
+                    if (isStatic) {
+                        delete clazz.values[entity.name];
+                    } else {
+                        delete clazz.fields[entity.name];
+                    }
+                    app.sidebar.itemTree.selectedID = undefined;
+                    app.showLuaClass(clazz);
+                } else if (entity instanceof RosettaLuaTableField) {
+                    const table = app.catalog.selected as RosettaLuaTable;
+                    delete table.fields[entity.name];
+                    app.sidebar.itemTree.selectedID = undefined;
+                    app.showLuaTable(table);
                 }
-                app.showLuaClass(clazz);
-                app.sidebar.itemTree.selectedID = undefined;
-                app.sidebar.populateTrees();
-            }, `Delete ${isStatic ? 'Value' : 'Field'} ${entity.name}`);
+            }, `Delete Field ${entity.name}`);
         })
     }
 }

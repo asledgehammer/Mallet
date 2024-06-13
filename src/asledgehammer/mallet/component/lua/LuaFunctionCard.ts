@@ -2,6 +2,7 @@ import { App } from '../../../../app';
 import { generateLuaFunction } from '../../../rosetta/lua/LuaLuaGenerator';
 import { RosettaLuaClass } from '../../../rosetta/lua/RosettaLuaClass';
 import { RosettaLuaFunction } from '../../../rosetta/lua/RosettaLuaFunction';
+import { RosettaLuaTable } from '../../../rosetta/lua/RosettaLuaTable';
 import { luaFunctionToTS } from '../../../rosetta/typescript/LuaTypeScriptGenerator';
 import { $get, html } from '../../../rosetta/util';
 import { CardOptions } from '../CardComponent';
@@ -119,15 +120,23 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
 
         $get(idBtnDelete).on('click', () => {
             app.modalConfirm.show(() => {
-                const clazz = app.catalog.selectedCard?.options!.entity! as RosettaLuaClass;
-                if (isStatic) {
-                    delete clazz.functions[entity.name];
-                } else {
-                    delete clazz.methods[entity.name];
+                const entity = this.options!.entity!;
+
+                const selected = this.app.catalog.selected;
+                if (selected instanceof RosettaLuaClass) {
+                    if (isStatic) {
+                        delete selected.functions[entity.name];
+                    } else {
+                        delete selected.methods[entity.name];
+                    }
+                    app.sidebar.itemTree.selectedID = undefined;
+                    app.showLuaClass(selected);
+                } else if (selected instanceof RosettaLuaTable) {
+                    delete selected.functions[entity.name];
+                    app.sidebar.itemTree.selectedID = undefined;
+                    app.showLuaTable(selected);
                 }
-                app.showLuaClass(clazz);
-                app.sidebar.itemTree.selectedID = undefined;
-                app.sidebar.populateTrees();
+
             }, `Delete ${isStatic ? 'Function' : 'Method'} ${entity.name}`);
         });
     }
