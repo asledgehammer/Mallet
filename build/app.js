@@ -5132,8 +5132,6 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                     class: classes
                 });
             }
-            console.log(functionNames);
-            console.log(functions);
             let $treeLower = (0, util_7.$get)('tree-lower');
             $treeLower.remove();
             const $sidebarContentLower = (0, util_7.$get)('sidebar-content-lower');

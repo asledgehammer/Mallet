@@ -459,9 +459,6 @@ export class ItemTree {
             });
         }
 
-        console.log(functionNames);
-        console.log(functions);
-
         let $treeLower = $get('tree-lower');
         $treeLower.remove();
 
