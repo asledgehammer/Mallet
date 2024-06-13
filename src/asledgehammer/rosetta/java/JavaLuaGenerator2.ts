@@ -131,6 +131,72 @@ export function generateJavaMethod(className: string, operator: ':' | '.', metho
     return applyLuaDocumentation(ds, 0) + cs.join('\n');
 }
 
+export function generateGlobalJavaMethod(method: RosettaJavaMethod): string {
+    const ds: string[] = [];
+    const cs: string[] = [];
+
+    // Notes.
+    if (method.notes && method.notes.trim().length) {
+        const notes = paginateNotes(method.notes.trim(), 96);
+        for (const line of notes) ds.push(line);
+    }
+
+    // Parameter(s).
+    if (method.parameters && method.parameters.length) {
+        if (ds.length) ds.push('');
+        for (const param of method.parameters) {
+            let line = `@param ${param.name} ${luaType(param.type.basic, param.type.nullable)}`;
+            if (param.notes && param.notes.trim().length) {
+                const notes = paginateNotes(line + ' ' + param.notes.trim(), 96);
+                for (const line of notes) ds.push(line);
+            } else {
+                ds.push(line);
+            }
+        }
+    }
+
+    // Returns.
+    if (method.returns) {
+        if (ds.length) ds.push('');
+        let line = `@return ${luaType(method.returns.type.basic, method.returns.type.nullable)}`;
+        if (method.returns.notes && method.returns.notes.trim().length) {
+            const notes = paginateNotes(line + ' result ' + method.returns.notes.trim(), 96);
+            for (const line of notes) ds.push(line);
+        } else {
+            ds.push(line);
+        }
+    }
+
+    let mName = method.name;
+    if(mName === '__toString__') mName = 'toString';
+
+    // Constructor-Body.
+    let line = `function ${mName}(`;
+    if (method.parameters && method.parameters.length) {
+        for (const param of method.parameters) {
+            line += param.name + ', ';
+        }
+        line = line.substring(0, line.length - 2);
+    }
+    line += ') end';
+
+    // If too long, render as slinky.
+    if (line.length > 100) {
+        cs.push(`function ${mName}(`);
+        if (method.parameters && method.parameters.length) {
+            for (const param of method.parameters) {
+                cs.push(`    ${param.name},`);
+            }
+            cs[cs.length - 1] = cs[cs.length - 1].substring(0, cs[cs.length - 1].length - 1);
+        }
+        cs.push(') end');
+    } else {
+        cs.push(line);
+    }
+
+    return applyLuaDocumentation(ds, 0) + cs.join('\n');
+}
+
 export function generateJavaClass(clazz: RosettaJavaClass): string {
     const ds: string[] = [];
     const cs: string[] = [];

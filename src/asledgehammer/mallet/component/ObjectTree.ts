@@ -30,6 +30,8 @@ export class ObjectTree {
     folderLuaTableOpen: boolean = true;
     folderJavaClassOpen: boolean = true;
 
+    globalSelected = false;
+
     listening: boolean = false;
 
     selected: string | undefined = undefined;
@@ -56,6 +58,7 @@ export class ObjectTree {
 
         // Apply jQuery listeners next.
         $doc.on('click', '.object-tree-lua-class', function () {
+            _this.globalSelected = false;
             const name = this.id.substring('object-lua-class-'.length);
             _this.app.showLuaClass(_this.app.catalog.luaClasses[name]);
             $(`#btn-new-lua-value`).show();
@@ -67,6 +70,7 @@ export class ObjectTree {
         });
 
         $doc.on('click', '.object-tree-lua-table', function () {
+            _this.globalSelected = false;
             const name = this.id.substring('object-lua-table-'.length);
             _this.app.showLuaTable(_this.app.catalog.luaTables[name]);
             $(`#btn-new-lua-value`).hide();
@@ -78,10 +82,24 @@ export class ObjectTree {
         });
 
         $doc.on('click', '.object-tree-java-class', function () {
+            _this.globalSelected = false;
             const name = this.id.substring('object-java-class-'.length);
             _this.app.showJavaClass(_this.app.catalog.javaClasses[name]);
             $(`#btn-lua-class-dropdown`).hide();
             $(`#save-object-dropdown`).css({ 'display': 'inline' });
+        });
+
+        $doc.on('click', '.object-tree-global', () => {
+            this.globalSelected = true;
+            this.sidebar.itemTree.selected = undefined;
+            this.sidebar.itemTree.selectedID = undefined;
+            $(`#btn-new-lua-value`).hide();
+            $(`#btn-new-lua-field`).show();
+            $(`#btn-new-lua-function`).show();
+            $(`#btn-new-lua-method`).hide();
+            $(`#btn-lua-class-dropdown`).show();
+            this.app.hideCard();
+            this.app.renderCode();
         });
 
         // Preserve the state of folders.
@@ -102,14 +120,16 @@ export class ObjectTree {
         const _this = this;
 
         const { selected } = this.app.catalog;
-        if (selected instanceof RosettaLuaClass) {
-            this.selectedID = `object-lua-class-${selected.name}`;
-        } else if (selected instanceof RosettaLuaTable) {
-            this.selectedID = `object-lua-table-${selected.name}`;
-        } else if (selected instanceof RosettaJavaClass) {
-            this.selectedID = `object-java-class-${selected.name}`;
-        } else {
-            this.selectedID = undefined;
+        if (!this.globalSelected) {
+            if (selected instanceof RosettaLuaClass) {
+                this.selectedID = `object-lua-class-${selected.name}`;
+            } else if (selected instanceof RosettaLuaTable) {
+                this.selectedID = `object-lua-table-${selected.name}`;
+            } else if (selected instanceof RosettaJavaClass) {
+                this.selectedID = `object-java-class-${selected.name}`;
+            } else {
+                this.selectedID = undefined;
+            }
         }
 
         let $treeUpper = $get('tree-upper');
@@ -191,7 +211,19 @@ export class ObjectTree {
             nodes: javaClasses
         };
 
-        const data: any[] = [];
+        const itemGlobal = {
+            id: 'object-global',
+            text: wrapItem('Global'),
+            icon: 'fa-solid fa-globe text-light mx-2 desaturate',
+            class: ['object-tree-item', 'object-tree-global']
+        };
+        if (this.globalSelected) {
+            itemGlobal.class.push('selected');
+        }
+
+        const data: any[] = [
+            itemGlobal
+        ];
 
         if (luaClasses.length) data.push(folderLuaClasses);
         if (luaTables.length) data.push(folderLuaTables);

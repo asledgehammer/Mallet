@@ -127,7 +127,7 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
             });
 
             $get(idBtnEdit).on('click', () => {
-                const { modalName, $btnName, $titleName, $inputName } = this.app.modalName;
+                const { $btnName, $titleName, $inputName } = this.app.modalName;
                 $titleName.html('Edit Parameter Name');
                 $btnName.html('Edit');
                 $btnName.removeClass('btn-success');

@@ -81,11 +81,60 @@ export class ItemTree {
             // console.log(`Selected item: ${_this.selectedID}`);
         });
 
+        this.listenGlobal();
         this.listenLuaClass();
         this.listenLuaTable();
         this.listenJavaClass();
 
         this.listening = true;
+    }
+
+    listenGlobal() {
+
+        const { app } = this;
+        const { catalog } = app;
+        const _this = this;
+        const $doc = $(document);
+
+        $doc.on('click', '.global-lua-field-item', function () {
+            const fieldName = this.id.split('field-')[1].trim();
+            // Prevent wasteful selection code executions here.
+            if (_this.selected === fieldName) return;
+            const field = catalog.fields[fieldName];
+            if (!field) return;
+            app.showGlobalLuaField(field);
+            // Let the editor know we last selected the field.
+            _this.selected = fieldName;
+            _this.selectedID = this.id;
+        });
+
+        $doc.on('click', '.global-lua-function-item', function () {
+            const funcName = this.id.split('function-')[1].trim();
+            // Prevent wasteful selection code executions here.
+            if (_this.selected === funcName) return;
+            const func = catalog.functions[funcName];
+            if (!func) return;
+            app.showGlobalLuaFunction(func);
+            // Let the editor know we last selected the field.
+            _this.selected = funcName;
+            _this.selectedID = this.id;
+        });
+
+        $doc.on('click', '.global-java-method-item', function () {
+            const signature = this.id.split('method-')[1].trim();
+
+            // Prevent wasteful selection code executions here.
+            if (_this.selected === signature) return;
+
+            // This is lazy but it works.
+            let method = _this.methodSignatureMap[signature];
+            if (!method) return;
+
+            _this.app.showGlobalJavaMethod(method);
+            // Let the editor know we last selected the field.
+            _this.selected = signature;
+            _this.selectedID = this.id;
+        });
     }
 
     listenLuaClass() {
@@ -269,6 +318,12 @@ export class ItemTree {
     }
 
     populate() {
+
+        if (this.sidebar.objTree.globalSelected) {
+            this.populateGlobal();
+            return;
+        }
+
         const { selected } = this.app.catalog;
         if (!selected) return;
         if (selected instanceof RosettaLuaClass) {
@@ -278,6 +333,128 @@ export class ItemTree {
         } else if (selected instanceof RosettaJavaClass) {
             this.populateJavaClass(selected);
         }
+    }
+
+    populateGlobal() {
+        const _this = this;
+        const { catalog } = this.app;
+
+        const fieldNames = Object.keys(catalog.fields);
+        fieldNames.sort((a, b) => a.localeCompare(b));
+        const fields = [];
+        for (const fieldName of fieldNames) {
+            const field = catalog.fields[fieldName];
+            const id = `lua-global-field-${field.name}`;
+
+            const classes: string[] = ['item-tree-item', 'global-lua-field-item'];
+            if (id === this.selectedID) classes.push('selected');
+
+            fields.push({
+                text: field.name,
+                icon: LuaCard.getTypeIcon(field.type),
+                id,
+                class: classes
+            });
+        }
+
+        const functionNames = Object.keys(catalog.functions);
+        functionNames.sort((a, b) => a.localeCompare(b));
+        const functions = [];
+        for (const functionName of functionNames) {
+            const func = catalog.functions[functionName];
+            const id = `lua-global-function-${func.name}`;
+
+            const classes: string[] = ['item-tree-item', 'global-lua-function-item'];
+            if (id === this.selectedID) classes.push('selected');
+
+            functions.push({
+                text: html`<i class="fa-solid fa-xmark me-2" title="${func.returns.type}"></i>${func.name}`,
+                icon: 'fa-solid fa-terminal text-success mx-2',
+                id,
+                class: classes
+            });
+        }
+
+        this.methodSignatureMap = {};
+
+        const clusterNames = Object.keys(catalog.methods);
+        clusterNames.sort((a, b) => a.localeCompare(b));
+
+        for (const clusterName of clusterNames) {
+            const cluster = catalog.methods[clusterName];
+            for (const method of cluster.methods) {
+                this.methodSignatureMap[method.getSignature()] = method;
+            }
+        }
+
+        // Global Method(s)
+        const methods: any[] = [];
+        const methodSignatures = Object.keys(this.methodSignatureMap);
+        methodSignatures.sort((a, b) => a.localeCompare(b));
+
+        for (const signature of methodSignatures) {
+            const method = this.methodSignatureMap[signature];
+            const id = `global-java-method-${signature}`;
+
+            let params = '';
+            for (const param of method.parameters) {
+                params += `${param.name}, `;
+            }
+            if (params.length) params = params.substring(0, params.length - 2);
+
+            const classes: string[] = ['item-tree-item', 'java-class-method-item'];
+            if (id === this.selectedID) classes.push('selected');
+
+            methods.push({
+                text: wrapItem(`${method.name}(${params})`),
+                icon: LuaCard.getTypeIcon(method.returns.type.basic),
+                id,
+                class: classes
+            });
+        }
+
+        const folderFields = {
+            text: `${wrapFolderCount(`(${fields.length})`)} Field(s)`,
+            icon: "fa-solid fa-folder text-light mx-2",
+            class: ['item-tree-folder', 'bg-secondary'],
+            id: _this.idFolderLuaClassField,
+            expanded: _this.folderLuaClassFieldOpen,
+            nodes: fields
+        };
+
+        const folderFuncs = {
+            text: `${wrapFolderCount(`(${functions.length})`)} Function(s)`,
+            icon: "fa-solid fa-folder text-light mx-2",
+            class: ['item-tree-folder', 'bg-secondary'],
+            id: _this.idFolderLuaClassFunction,
+            expanded: _this.folderLuaClassFunctionOpen,
+            nodes: functions
+        };
+
+        const folderMethods = {
+            text: `${wrapFolderCount(`(${methods.length})`)} Method(s)`,
+            icon: "fa-solid fa-folder text-light mx-2",
+            class: ['item-tree-folder', 'bg-secondary'],
+            id: _this.idFolderJavaClassMethod,
+            expanded: _this.folderJavaClassMethodOpen,
+            nodes: methods
+        };
+
+        const data: any[] = [];
+
+        if (fields.length) data.push(folderFields);
+        if (methods.length) data.push(folderMethods);
+        if (functions.length) data.push(folderFuncs);
+
+        let $treeLower = $get('tree-lower');
+        $treeLower.remove();
+
+        const $sidebarContentLower = $get('sidebar-content-lower');
+        $sidebarContentLower.append('<div id="tree-lower" class="rounded-0 bg-dark text-white"></div>');
+        $treeLower = $get('tree-lower');
+
+        // @ts-ignore
+        $treeLower.bstreeview({ data });
     }
 
     populateLuaClass(entity: RosettaLuaClass) {

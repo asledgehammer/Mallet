@@ -957,10 +957,530 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaTable", ["require", "exports", "
     }
     exports.RosettaLuaTable = RosettaLuaTable;
 });
-define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports"], function (require, exports) {
+define("src/asledgehammer/rosetta/typescript/TSUtils", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.applyLuaDocumentation = exports.paginateNotes = exports.generateLuaTable = exports.generateLuaClass = exports.generateLuaConstructor = exports.generateLuaFunction = exports.generateLuaParameterBody = exports.generateLuaValue = exports.generateLuaField = exports.luaType = void 0;
+    exports.wrapAsTSNamespace = exports.wrapAsTSFile = exports.applyTSDocumentation = exports.paginateNotes = void 0;
+    function paginateNotes(notes, length) {
+        function _line(line) {
+            const split = line === null || line === void 0 ? void 0 : line.trim().split(' ');
+            const result = [];
+            let s = split[0];
+            for (let i = 1; i < split.length; i++) {
+                let word = split[i];
+                if (s.length + word.length + 1 <= length) {
+                    s = s + ' ' + word;
+                }
+                else {
+                    result.push(s);
+                    s = word;
+                }
+            }
+            if (s.length)
+                result.push(s);
+            return result;
+        }
+        const res = [];
+        const lines = notes.split('\n');
+        for (const line of lines) {
+            const subLines = _line(line);
+            for (const subLine of subLines) {
+                res.push(subLine);
+            }
+        }
+        return res;
+    }
+    exports.paginateNotes = paginateNotes;
+    function applyTSDocumentation(ds, s, indent) {
+        const i = ' '.repeat(indent * 4);
+        if (ds.length) {
+            if (ds.length === 1) {
+                s += `${i}/** ${ds[0]} */\n`;
+            }
+            else {
+                s += `${i}/**\n`;
+                for (const next of ds) {
+                    s += `${i} * ${next}\n`;
+                }
+                s = s.substring(0, s.length - 1);
+                // s += ds.map((a) => `${i} * ${a}`).join('\n');
+                s += `\n${i} */\n`;
+            }
+        }
+        return s;
+    }
+    exports.applyTSDocumentation = applyTSDocumentation;
+    function wrapAsTSFile(text) {
+        let s = '';
+        s += `/** @noSelfInFile */\n`;
+        s += `declare module '@asledgehammer/pipewrench'`;
+        if (text.length) {
+            return `${s} {\n\n` + text.split('\n').map((a) => `    ${a}`).join('\n') + '\n}';
+        }
+        return `${s} {}\n`;
+    }
+    exports.wrapAsTSFile = wrapAsTSFile;
+    function wrapAsTSNamespace(namespace, text) {
+        const s = `export namespace ${namespace}`;
+        if (text.length) {
+            return `${s} {\n\n` + text.split('\n').map((a) => `    ${a}`).join('\n') + '\n}';
+        }
+        return `${s} {}\n`;
+    }
+    exports.wrapAsTSNamespace = wrapAsTSNamespace;
+});
+define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require", "exports", "src/asledgehammer/rosetta/typescript/TSUtils"], function (require, exports, TSUtils_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.luaFuncToTSFunc = exports.luaTableToTSDict = exports.tsType = exports.luaTableToTS = exports.luaClassToTS = exports.luaFunctionToTS = exports.luaMethodDocumentation = exports.luaConstructorDocumentation = exports.luaConstructorToTS = exports.luaFieldToTS = void 0;
+    function luaFieldToTS(field, indent = 0, notesLength) {
+        const i = ' '.repeat(indent * 4);
+        let s = '';
+        /* Documentation */
+        let ds = [];
+        // if (field.deprecated) ds.push('@deprecated');
+        if (field.notes) {
+            const notes = (0, TSUtils_1.paginateNotes)(field.notes, notesLength);
+            if (ds.length)
+                ds.push('');
+            for (const line of notes) {
+                ds.push(line);
+            }
+        }
+        s = (0, TSUtils_1.applyTSDocumentation)(ds, s, indent);
+        s += i;
+        /* Definition-line */
+        s += `${field.name}: ${tsType(field.type, field.nullable)};`;
+        // Format documented variables as spaced for better legability.
+        if (ds.length)
+            s += '\n';
+        return s;
+    }
+    exports.luaFieldToTS = luaFieldToTS;
+    function luaConstructorToTS(con, indent, notesLength) {
+        const i = ' '.repeat(indent * 4);
+        const ds = luaConstructorDocumentation(con, notesLength);
+        let ps = '';
+        if (con.parameters && con.parameters.length) {
+            ps += '(';
+            for (const param of con.parameters) {
+                ps += `${param.name}${param.optional ? '?' : ''}: ${tsType(param.type, param.nullable)}, `;
+            }
+            ps = ps.substring(0, ps.length - 2) + ')';
+        }
+        else {
+            ps = '()';
+        }
+        let fs = `${i}constructor${ps};`;
+        if (fs.length > notesLength) {
+            fs = `${i}constructor(\n`;
+            for (const param of con.parameters) {
+                fs += `${i}    ${param.name}${param.optional ? '?' : ''}: ${tsType(param.type, param.nullable)}, \n`;
+            }
+            fs += `${i});`;
+        }
+        return (0, TSUtils_1.applyTSDocumentation)(ds, '', indent) + fs + '\n';
+        // let s = applyTSDocumentation(ds, '', indent);
+        // s += `${i}`;
+        // s += `constructor${ps};`;
+        // // Format documented variables as spaced for better legability.
+        // if (ds.length) s += '\n';
+        // return s;
+    }
+    exports.luaConstructorToTS = luaConstructorToTS;
+    function luaConstructorDocumentation(con, notesLength) {
+        const ds = [];
+        /* (Annotations) */
+        // if (con.deprecated) ds.push('@deprecated');
+        /* (Notes) */
+        if (con.notes && con.notes.length) {
+            if (ds.length)
+                ds.push('');
+            const notes = (0, TSUtils_1.paginateNotes)(con.notes, notesLength);
+            for (const line of notes)
+                ds.push(line);
+        }
+        /* (Parameters) */
+        if (con.parameters && con.parameters.length) {
+            if (ds.length)
+                ds.push('');
+            for (const param of con.parameters) {
+                if (param.notes && param.notes.length) {
+                    const notes = (0, TSUtils_1.paginateNotes)(`@param ${param.name} ${param.notes}`, notesLength);
+                    for (const line of notes)
+                        ds.push(line);
+                }
+                else {
+                    ds.push(`@param ${param.name}`);
+                }
+            }
+        }
+        return ds;
+    }
+    exports.luaConstructorDocumentation = luaConstructorDocumentation;
+    function luaMethodDocumentation(method, notesLength, overload = false) {
+        const ds = [];
+        /* (Annotations) */
+        if (overload)
+            ds.push('@overload');
+        if (method.deprecated)
+            ds.push('@deprecated');
+        /* (Notes) */
+        if (method.notes && method.notes.length) {
+            if (ds.length)
+                ds.push('');
+            const notes = (0, TSUtils_1.paginateNotes)(method.notes, notesLength);
+            for (const line of notes)
+                ds.push(line);
+        }
+        /* (Parameters) */
+        if (method.parameters && method.parameters.length) {
+            if (ds.length)
+                ds.push('');
+            for (const param of method.parameters) {
+                if (param.notes && param.notes.length) {
+                    const notes = (0, TSUtils_1.paginateNotes)(`@param ${param.name} ${param.notes}`, notesLength);
+                    for (const line of notes)
+                        ds.push(line);
+                }
+                else {
+                    ds.push(`@param ${param.name}`);
+                }
+            }
+        }
+        /* (Returns) */
+        if (method.returns && method.returns.notes && method.returns.notes.length) {
+            if (ds.length)
+                ds.push('');
+            const notes = (0, TSUtils_1.paginateNotes)(`@returns ${method.returns.notes}`, notesLength);
+            for (const line of notes)
+                ds.push(line);
+        }
+        return ds;
+    }
+    exports.luaMethodDocumentation = luaMethodDocumentation;
+    function luaFunctionToTS(method, indent = 0, notesLength) {
+        const i = ' '.repeat(indent * 4);
+        const ds = luaMethodDocumentation(method, notesLength, false);
+        let ps = '';
+        if (method.parameters && method.parameters.length) {
+            ps += '(';
+            for (const param of method.parameters) {
+                ps += `${param.name}${param.optional ? '?' : ''}: ${tsType(param.type, param.nullable)}, `;
+            }
+            ps = ps.substring(0, ps.length - 2) + ')';
+        }
+        else {
+            ps = '()';
+        }
+        const rs = tsType(method.returns.type, method.returns.nullable);
+        let mName = method.name;
+        if (mName === '__toString__')
+            mName = 'toString';
+        let fs = `${i}${mName}${ps}: ${rs};`;
+        if (fs.length > notesLength) {
+            fs = `${i}${mName}(\n`;
+            for (const param of method.parameters) {
+                fs += `${i}    ${param.name}${param.optional ? '?' : ''}: ${tsType(param.type, param.nullable)}, \n`;
+            }
+            fs += `${i}): ${rs};`;
+        }
+        return (0, TSUtils_1.applyTSDocumentation)(ds, '', indent) + fs + '\n';
+    }
+    exports.luaFunctionToTS = luaFunctionToTS;
+    function luaClassToTS(clazz, wrapFile = false) {
+        let s = '';
+        const valueNames = Object.keys(clazz.values);
+        valueNames.sort((a, b) => a.localeCompare(b));
+        const fieldNames = Object.keys(clazz.fields);
+        fieldNames.sort((a, b) => a.localeCompare(b));
+        const methodNames = Object.keys(clazz.methods);
+        methodNames.sort((a, b) => a.localeCompare(b));
+        const funcNames = Object.keys(clazz.functions);
+        funcNames.sort((a, b) => a.localeCompare(b));
+        const values = [];
+        const fields = [];
+        const funcs = [];
+        const methods = [];
+        /* (VALUES) */
+        for (const valueName of valueNames) {
+            const value = clazz.values[valueName];
+            values.push(value);
+        }
+        /* (FIELDS) */
+        for (const fieldName of fieldNames) {
+            const field = clazz.fields[fieldName];
+            fields.push(field);
+        }
+        /* (METHODS) */
+        for (const methodName of methodNames) {
+            const method = clazz.methods[methodName];
+            methods.push(method);
+        }
+        /* (FUNCTIONS) */
+        for (const funcName of funcNames) {
+            const func = clazz.functions[funcName];
+            funcs.push(func);
+        }
+        /** 100
+         * * -4 (module indent)
+         * * -3 (' * ')
+         */
+        let notesLength = 96;
+        if (wrapFile)
+            notesLength -= 4;
+        /* (Class Documentation) */
+        const ds = [];
+        ds.push(`@customConstructor ${clazz.name}:new`);
+        ds.push('');
+        ds.push(`Lua Class: ${clazz.name}`);
+        if (clazz.notes && clazz.notes.length) {
+            ds.push('');
+            const lines = (0, TSUtils_1.paginateNotes)(clazz.notes, notesLength);
+            for (const line of lines)
+                ds.push(line);
+        }
+        s = (0, TSUtils_1.applyTSDocumentation)(ds, s, 0);
+        s += `export class ${clazz.name} `;
+        let i = '    ';
+        let is = '';
+        if (values.length) {
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* -------------- VALUES -------------- */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            for (const value of values) {
+                is += `${luaFieldToTS(value, 1, notesLength)}\n`;
+            }
+            is = is.substring(0, is.length - 1);
+        }
+        if (fields.length) {
+            if (is.length)
+                is += '\n';
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* ------------- FIELDS --------------- */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            for (const field of fields) {
+                is += `${luaFieldToTS(field, 1, notesLength)}\n`;
+            }
+            is = is.substring(0, is.length - 1);
+        }
+        if (methods.length) {
+            if (is.length)
+                is += '\n';
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* ------------- METHODS -------------- */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            for (const method of methods) {
+                is += `${luaFunctionToTS(method, 1, notesLength)}\n`;
+            }
+            is = is.substring(0, is.length - 1);
+        }
+        if (funcs.length) {
+            if (is.length)
+                is += '\n';
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* ------------ FUNCTIONS ------------- */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            for (const func of funcs) {
+                is += `${luaFunctionToTS(func, 1, notesLength)}\n`;
+            }
+            is = is.substring(0, is.length - 1);
+        }
+        if (clazz.constructor) {
+            if (is.length)
+                is += '\n';
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* ----------- CONSTRUCTOR ------------ */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            is += `${luaConstructorToTS(clazz.conztructor, 1, notesLength)}\n`;
+            is = is.substring(0, is.length - 1);
+        }
+        if (is.length) {
+            s += `{\n\n${is}}`;
+        }
+        else {
+            s += `{}\n`;
+        }
+        if (wrapFile)
+            return (0, TSUtils_1.wrapAsTSFile)(s);
+        return s;
+    }
+    exports.luaClassToTS = luaClassToTS;
+    function luaTableToTS(table, wrapFile = false) {
+        let s = '';
+        const fieldNames = Object.keys(table.fields);
+        fieldNames.sort((a, b) => a.localeCompare(b));
+        const funcNames = Object.keys(table.functions);
+        funcNames.sort((a, b) => a.localeCompare(b));
+        const fields = [];
+        const funcs = [];
+        /* (FIELDS) */
+        for (const fieldName of fieldNames) {
+            const field = table.fields[fieldName];
+            fields.push(field);
+        }
+        /* (FUNCTIONS) */
+        for (const funcName of funcNames) {
+            const func = table.functions[funcName];
+            funcs.push(func);
+        }
+        /** 100
+         * * -4 (module indent)
+         * * -3 (' * ')
+         */
+        let notesLength = 96;
+        if (wrapFile)
+            notesLength -= 4;
+        /* (Class Documentation) */
+        const ds = [];
+        ds.push(`Lua Table: ${table.name}`);
+        if (table.notes && table.notes.length) {
+            ds.push('');
+            const lines = (0, TSUtils_1.paginateNotes)(table.notes, notesLength);
+            for (const line of lines)
+                ds.push(line);
+        }
+        s = (0, TSUtils_1.applyTSDocumentation)(ds, s, 0);
+        s += `export class ${table.name} `;
+        let i = '    ';
+        let is = '';
+        if (fields.length) {
+            if (is.length)
+                is += '\n';
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* ------------- FIELDS --------------- */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            for (const field of fields) {
+                is += `${luaFieldToTS(field, 1, notesLength)}\n`;
+            }
+            is = is.substring(0, is.length - 1);
+        }
+        if (funcs.length) {
+            if (is.length)
+                is += '\n';
+            is += `${i}/* ------------------------------------ */\n`;
+            is += `${i}/* ------------ FUNCTIONS ------------- */\n`;
+            is += `${i}/* ------------------------------------ */\n`;
+            is += '\n';
+            for (const func of funcs) {
+                is += `${luaFunctionToTS(func, 1, notesLength)}\n`;
+            }
+            is = is.substring(0, is.length - 1);
+        }
+        if (is.length) {
+            s += `{\n\n${is}}`;
+        }
+        else {
+            s += `{}\n`;
+        }
+        if (wrapFile)
+            return (0, TSUtils_1.wrapAsTSFile)(s);
+        return s;
+    }
+    exports.luaTableToTS = luaTableToTS;
+    function tsType(type, nullable) {
+        if (type === '') {
+            return nullable ? 'null' : '';
+        }
+        const wrapped = type[0] === '(' && type[type.length - 1] === ')';
+        if (wrapped) {
+            type = type.substring(1, type.length - 2);
+        }
+        let result = type;
+        if (type == 'nil') {
+            result = 'null';
+        }
+        else if (type.startsWith('table<')) {
+            result = luaTableToTSDict(type);
+        }
+        else if (type.startsWith('table')) {
+            result = 'any';
+        }
+        else if (type.startsWith('fun(')) {
+            result = luaFuncToTSFunc(type);
+        }
+        if (nullable) {
+            result = result + ' | null';
+        }
+        return wrapped ? `(${result})` : result;
+    }
+    exports.tsType = tsType;
+    function luaTableToTSDict(raw) {
+        if (!raw.startsWith('table<')) {
+            throw new Error('The table is invalid: ' + raw);
+        }
+        let result = '';
+        if (raw.indexOf('<') === -1 || raw.indexOf('>') === -1) {
+            result = 'any';
+        }
+        else {
+            let temp = raw.substring(raw.indexOf('<'));
+            temp = temp.substring(1, temp.indexOf('>'));
+            if (temp.indexOf(',') === -1) {
+                result = 'any';
+            }
+            else {
+                const split = temp.split(',').map((s) => s.trim());
+                if (split.length !== 2) {
+                    result = 'any';
+                }
+                else {
+                    if (split[0] !== 'number' && split[0] !== 'string') {
+                        result = 'any';
+                    }
+                    else {
+                        result = `{[key: ${split[0]}]: ${tsType(split[1], false)}}`;
+                    }
+                }
+            }
+        }
+        return result;
+    }
+    exports.luaTableToTSDict = luaTableToTSDict;
+    function luaFuncToTSFunc(raw) {
+        if (!raw.startsWith('fun(')) {
+            throw new Error('The function is invalid: ' + raw);
+        }
+        let lastRetIndex = raw.length - 1;
+        while (raw[lastRetIndex] !== ':') {
+            lastRetIndex--;
+            if (lastRetIndex <= 0) {
+                throw new Error('The function is invalid: ' + raw);
+            }
+        }
+        const rType = tsType(raw.substring(lastRetIndex + 1).trim(), false);
+        let lastParamIndex = raw.length - 1;
+        while (raw[lastParamIndex] !== ')') {
+            lastParamIndex--;
+            if (lastParamIndex <= 0) {
+                throw new Error('The function is invalid: ' + raw);
+            }
+        }
+        let inner = raw.substring(4, lastParamIndex);
+        let params = [];
+        if (inner !== '') {
+            params = [];
+            const _params = inner.indexOf(',') !== -1 ? inner.split(',').map((s) => s.trim()) : [inner.trim()];
+            for (let param of _params) {
+                let [name, type] = param.split(':').map((s) => s.trim());
+                type = tsType(type, false);
+                params.push(`${name}: ${type}`);
+            }
+        }
+        return `(${params.join(', ')}) => ${rType}`;
+    }
+    exports.luaFuncToTSFunc = luaFuncToTSFunc;
+});
+define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator"], function (require, exports, LuaTypeScriptGenerator_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.applyLuaDocumentation = exports.paginateNotes = exports.generateLuaTable = exports.generateLuaClass = exports.generateLuaConstructor = exports.generateGlobalLuaFunction = exports.generateLuaFunction = exports.generateLuaParameterBody = exports.generateLuaValue = exports.generateGlobalLuaField = exports.generateLuaField = exports.luaType = void 0;
     function luaType(type, nullable) {
         let result = type;
         if (nullable) {
@@ -974,6 +1494,29 @@ define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports"], 
         return `--- @field ${field.name} ${luaType(field.type, field.nullable)} ${notes}`;
     };
     exports.generateLuaField = generateLuaField;
+    function generateGlobalLuaField(field) {
+        const ds = [];
+        // (Field notes)
+        if (field.notes && field.notes.length) {
+            const notes = paginateNotes(field.notes, 96);
+            for (const line of notes)
+                ds.push(line);
+        }
+        // (Field type)
+        ds.push(`@type ${(0, LuaTypeScriptGenerator_1.tsType)(field.type, field.nullable)}`);
+        let s = `${field.name}`;
+        if (field.defaultValue) {
+            let value = field.defaultValue;
+            // Try parsing as a int.
+            if (parseInt(value) == null && parseFloat(value) == null) {
+                // String-wrapping with escaped double-quotes.
+                value = `"${value.replace(/"/g, '\\"').replace(/\n/g, '\\n')}"`;
+            }
+            s += ` = ${value}`;
+        }
+        return applyLuaDocumentation(ds, 0) + `\n${s};`;
+    }
+    exports.generateGlobalLuaField = generateGlobalLuaField;
     const generateLuaValue = (containerName, field) => {
         if (field.defaultValue) {
             let s = '';
@@ -1065,6 +1608,63 @@ define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports"], 
         return `${applyLuaDocumentation(ds, 0)}${fs}`;
     };
     exports.generateLuaFunction = generateLuaFunction;
+    const generateGlobalLuaFunction = (func) => {
+        let ds = [];
+        // Function Description
+        if (func.notes && func.notes.length) {
+            const notes = paginateNotes(func.notes, 100);
+            for (const line of notes) {
+                ds.push(line);
+            }
+        }
+        // Parameter Documentation
+        if (func.parameters && func.parameters.length) {
+            if (ds.length)
+                ds.push('');
+            for (const param of func.parameters) {
+                const pps = `@param ${param.name}${param.optional ? '?' : ''} ${luaType(param.type, param.nullable)}`;
+                if (param.notes && param.notes.trim().length) {
+                    const notes = paginateNotes(pps + ' ' + param.notes.trim(), 100);
+                    for (const line of notes) {
+                        ds.push(line);
+                    }
+                }
+                else {
+                    ds.push(pps);
+                }
+            }
+        }
+        // Returns Documentation
+        if (func.returns) {
+            if (ds.length)
+                ds.push('');
+            let rs = `@return ${luaType(func.returns.type, func.returns.nullable)}`;
+            if (func.returns.notes && func.returns.notes.length) {
+                rs += ' result';
+                const notes = paginateNotes(rs + ' ' + func.returns.notes.trim(), 100);
+                for (const line of notes) {
+                    ds.push(line);
+                }
+            }
+            else {
+                ds.push(rs);
+            }
+        }
+        let fName = func.name;
+        if (fName === '__toString__')
+            fName = 'toString';
+        let fs = `function ${fName}${(0, exports.generateLuaParameterBody)(func.parameters)} end`;
+        if (fs.length > 100) {
+            fs = `function ${fName}(\n`;
+            for (const parameter of func.parameters) {
+                fs += `    ${parameter.name},\n`;
+            }
+            fs = fs.substring(0, fs.length - 2);
+            fs += `\n) end`;
+        }
+        return `${applyLuaDocumentation(ds, 0)}${fs}`;
+    };
+    exports.generateGlobalLuaFunction = generateGlobalLuaFunction;
     const generateLuaConstructor = (className, con) => {
         let ds = [];
         // Function Description
@@ -2083,7 +2683,7 @@ define("src/asledgehammer/rosetta/java/RosettaJavaClass", ["require", "exports",
 define("src/asledgehammer/rosetta/java/JavaLuaGenerator2", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator"], function (require, exports, LuaLuaGenerator_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.luaType = exports.generateJavaClass = exports.generateJavaMethod = exports.generateJavaConstructor = exports.generateJavaField = void 0;
+    exports.luaType = exports.generateJavaClass = exports.generateGlobalJavaMethod = exports.generateJavaMethod = exports.generateJavaConstructor = exports.generateJavaField = void 0;
     function generateJavaField(field) {
         if (field.getVisibilityScope() !== 'public')
             return '';
@@ -2214,6 +2814,74 @@ define("src/asledgehammer/rosetta/java/JavaLuaGenerator2", ["require", "exports"
         return (0, LuaLuaGenerator_1.applyLuaDocumentation)(ds, 0) + cs.join('\n');
     }
     exports.generateJavaMethod = generateJavaMethod;
+    function generateGlobalJavaMethod(method) {
+        const ds = [];
+        const cs = [];
+        // Notes.
+        if (method.notes && method.notes.trim().length) {
+            const notes = (0, LuaLuaGenerator_1.paginateNotes)(method.notes.trim(), 96);
+            for (const line of notes)
+                ds.push(line);
+        }
+        // Parameter(s).
+        if (method.parameters && method.parameters.length) {
+            if (ds.length)
+                ds.push('');
+            for (const param of method.parameters) {
+                let line = `@param ${param.name} ${luaType(param.type.basic, param.type.nullable)}`;
+                if (param.notes && param.notes.trim().length) {
+                    const notes = (0, LuaLuaGenerator_1.paginateNotes)(line + ' ' + param.notes.trim(), 96);
+                    for (const line of notes)
+                        ds.push(line);
+                }
+                else {
+                    ds.push(line);
+                }
+            }
+        }
+        // Returns.
+        if (method.returns) {
+            if (ds.length)
+                ds.push('');
+            let line = `@return ${luaType(method.returns.type.basic, method.returns.type.nullable)}`;
+            if (method.returns.notes && method.returns.notes.trim().length) {
+                const notes = (0, LuaLuaGenerator_1.paginateNotes)(line + ' result ' + method.returns.notes.trim(), 96);
+                for (const line of notes)
+                    ds.push(line);
+            }
+            else {
+                ds.push(line);
+            }
+        }
+        let mName = method.name;
+        if (mName === '__toString__')
+            mName = 'toString';
+        // Constructor-Body.
+        let line = `function ${mName}(`;
+        if (method.parameters && method.parameters.length) {
+            for (const param of method.parameters) {
+                line += param.name + ', ';
+            }
+            line = line.substring(0, line.length - 2);
+        }
+        line += ') end';
+        // If too long, render as slinky.
+        if (line.length > 100) {
+            cs.push(`function ${mName}(`);
+            if (method.parameters && method.parameters.length) {
+                for (const param of method.parameters) {
+                    cs.push(`    ${param.name},`);
+                }
+                cs[cs.length - 1] = cs[cs.length - 1].substring(0, cs[cs.length - 1].length - 1);
+            }
+            cs.push(') end');
+        }
+        else {
+            cs.push(line);
+        }
+        return (0, LuaLuaGenerator_1.applyLuaDocumentation)(ds, 0) + cs.join('\n');
+    }
+    exports.generateGlobalJavaMethod = generateGlobalJavaMethod;
     function generateJavaClass(clazz) {
         const ds = [];
         const cs = [];
@@ -2332,526 +3000,6 @@ define("src/asledgehammer/rosetta/java/JavaLuaGenerator2", ["require", "exports"
         return result;
     }
     exports.luaType = luaType;
-});
-define("src/asledgehammer/rosetta/typescript/TSUtils", ["require", "exports"], function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.wrapAsTSNamespace = exports.wrapAsTSFile = exports.applyTSDocumentation = exports.paginateNotes = void 0;
-    function paginateNotes(notes, length) {
-        function _line(line) {
-            const split = line === null || line === void 0 ? void 0 : line.trim().split(' ');
-            const result = [];
-            let s = split[0];
-            for (let i = 1; i < split.length; i++) {
-                let word = split[i];
-                if (s.length + word.length + 1 <= length) {
-                    s = s + ' ' + word;
-                }
-                else {
-                    result.push(s);
-                    s = word;
-                }
-            }
-            if (s.length)
-                result.push(s);
-            return result;
-        }
-        const res = [];
-        const lines = notes.split('\n');
-        for (const line of lines) {
-            const subLines = _line(line);
-            for (const subLine of subLines) {
-                res.push(subLine);
-            }
-        }
-        return res;
-    }
-    exports.paginateNotes = paginateNotes;
-    function applyTSDocumentation(ds, s, indent) {
-        const i = ' '.repeat(indent * 4);
-        if (ds.length) {
-            if (ds.length === 1) {
-                s += `${i}/** ${ds[0]} */\n`;
-            }
-            else {
-                s += `${i}/**\n`;
-                for (const next of ds) {
-                    s += `${i} * ${next}\n`;
-                }
-                s = s.substring(0, s.length - 1);
-                // s += ds.map((a) => `${i} * ${a}`).join('\n');
-                s += `\n${i} */\n`;
-            }
-        }
-        return s;
-    }
-    exports.applyTSDocumentation = applyTSDocumentation;
-    function wrapAsTSFile(text) {
-        let s = '';
-        s += `/** @noSelfInFile */\n`;
-        s += `declare module '@asledgehammer/pipewrench'`;
-        if (text.length) {
-            return `${s} {\n\n` + text.split('\n').map((a) => `    ${a}`).join('\n') + '\n}';
-        }
-        return `${s} {}\n`;
-    }
-    exports.wrapAsTSFile = wrapAsTSFile;
-    function wrapAsTSNamespace(namespace, text) {
-        const s = `export namespace ${namespace}`;
-        if (text.length) {
-            return `${s} {\n\n` + text.split('\n').map((a) => `    ${a}`).join('\n') + '\n}';
-        }
-        return `${s} {}\n`;
-    }
-    exports.wrapAsTSNamespace = wrapAsTSNamespace;
-});
-define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require", "exports", "src/asledgehammer/rosetta/typescript/TSUtils"], function (require, exports, TSUtils_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.luaFuncToTSFunc = exports.luaTableToTSDict = exports.tsType = exports.luaTableToTS = exports.luaClassToTS = exports.luaFunctionToTS = exports.luaMethodDocumentation = exports.luaConstructorDocumentation = exports.luaConstructorToTS = exports.luaFieldToTS = void 0;
-    function luaFieldToTS(field, indent = 0, notesLength) {
-        const i = ' '.repeat(indent * 4);
-        let s = '';
-        /* Documentation */
-        let ds = [];
-        // if (field.deprecated) ds.push('@deprecated');
-        if (field.notes) {
-            const notes = (0, TSUtils_1.paginateNotes)(field.notes, notesLength);
-            if (ds.length)
-                ds.push('');
-            for (const line of notes) {
-                ds.push(line);
-            }
-        }
-        s = (0, TSUtils_1.applyTSDocumentation)(ds, s, indent);
-        s += i;
-        /* Definition-line */
-        s += `${field.name}: ${tsType(field.type, field.nullable)};`;
-        // Format documented variables as spaced for better legability.
-        if (ds.length)
-            s += '\n';
-        return s;
-    }
-    exports.luaFieldToTS = luaFieldToTS;
-    function luaConstructorToTS(con, indent, notesLength) {
-        const i = ' '.repeat(indent * 4);
-        const ds = luaConstructorDocumentation(con, notesLength);
-        let ps = '';
-        if (con.parameters && con.parameters.length) {
-            ps += '(';
-            for (const param of con.parameters) {
-                ps += `${param.name}${param.optional ? '?' : ''}: ${tsType(param.type, param.nullable)}, `;
-            }
-            ps = ps.substring(0, ps.length - 2) + ')';
-        }
-        else {
-            ps = '()';
-        }
-        let fs = `${i}constructor${ps};`;
-        if (fs.length > notesLength) {
-            fs = `${i}constructor(\n`;
-            for (const param of con.parameters) {
-                fs += `${i}    ${param.name}${param.optional ? '?' : ''}: ${tsType(param.type, param.nullable)}, \n`;
-            }
-            fs += `${i});`;
-        }
-        return (0, TSUtils_1.applyTSDocumentation)(ds, '', indent) + fs + '\n';
-        // let s = applyTSDocumentation(ds, '', indent);
-        // s += `${i}`;
-        // s += `constructor${ps};`;
-        // // Format documented variables as spaced for better legability.
-        // if (ds.length) s += '\n';
-        // return s;
-    }
-    exports.luaConstructorToTS = luaConstructorToTS;
-    function luaConstructorDocumentation(con, notesLength) {
-        const ds = [];
-        /* (Annotations) */
-        // if (con.deprecated) ds.push('@deprecated');
-        /* (Notes) */
-        if (con.notes && con.notes.length) {
-            if (ds.length)
-                ds.push('');
-            const notes = (0, TSUtils_1.paginateNotes)(con.notes, notesLength);
-            for (const line of notes)
-                ds.push(line);
-        }
-        /* (Parameters) */
-        if (con.parameters && con.parameters.length) {
-            if (ds.length)
-                ds.push('');
-            for (const param of con.parameters) {
-                if (param.notes && param.notes.length) {
-                    const notes = (0, TSUtils_1.paginateNotes)(`@param ${param.name} ${param.notes}`, notesLength);
-                    for (const line of notes)
-                        ds.push(line);
-                }
-                else {
-                    ds.push(`@param ${param.name}`);
-                }
-            }
-        }
-        return ds;
-    }
-    exports.luaConstructorDocumentation = luaConstructorDocumentation;
-    function luaMethodDocumentation(method, notesLength, overload = false) {
-        const ds = [];
-        /* (Annotations) */
-        if (overload)
-            ds.push('@overload');
-        if (method.deprecated)
-            ds.push('@deprecated');
-        /* (Notes) */
-        if (method.notes && method.notes.length) {
-            if (ds.length)
-                ds.push('');
-            const notes = (0, TSUtils_1.paginateNotes)(method.notes, notesLength);
-            for (const line of notes)
-                ds.push(line);
-        }
-        /* (Parameters) */
-        if (method.parameters && method.parameters.length) {
-            if (ds.length)
-                ds.push('');
-            for (const param of method.parameters) {
-                if (param.notes && param.notes.length) {
-                    const notes = (0, TSUtils_1.paginateNotes)(`@param ${param.name} ${param.notes}`, notesLength);
-                    for (const line of notes)
-                        ds.push(line);
-                }
-                else {
-                    ds.push(`@param ${param.name}`);
-                }
-            }
-        }
-        /* (Returns) */
-        if (method.returns && method.returns.notes && method.returns.notes.length) {
-            if (ds.length)
-                ds.push('');
-            const notes = (0, TSUtils_1.paginateNotes)(`@returns ${method.returns.notes}`, notesLength);
-            for (const line of notes)
-                ds.push(line);
-        }
-        return ds;
-    }
-    exports.luaMethodDocumentation = luaMethodDocumentation;
-    function luaFunctionToTS(method, indent = 0, notesLength) {
-        const i = ' '.repeat(indent * 4);
-        const ds = luaMethodDocumentation(method, notesLength, false);
-        let ps = '';
-        if (method.parameters && method.parameters.length) {
-            ps += '(';
-            for (const param of method.parameters) {
-                ps += `${param.name}${param.optional ? '?' : ''}: ${tsType(param.type, param.nullable)}, `;
-            }
-            ps = ps.substring(0, ps.length - 2) + ')';
-        }
-        else {
-            ps = '()';
-        }
-        const rs = tsType(method.returns.type, method.returns.nullable);
-        let mName = method.name;
-        if (mName === '__toString__')
-            mName = 'toString';
-        let fs = `${i}${mName}${ps}: ${rs};`;
-        if (fs.length > notesLength) {
-            fs = `${i}${mName}(\n`;
-            for (const param of method.parameters) {
-                fs += `${i}    ${param.name}${param.optional ? '?' : ''}: ${tsType(param.type, param.nullable)}, \n`;
-            }
-            fs += `${i}): ${rs};`;
-        }
-        return (0, TSUtils_1.applyTSDocumentation)(ds, '', indent) + fs + '\n';
-    }
-    exports.luaFunctionToTS = luaFunctionToTS;
-    function luaClassToTS(clazz, wrapFile = false) {
-        let s = '';
-        const valueNames = Object.keys(clazz.values);
-        valueNames.sort((a, b) => a.localeCompare(b));
-        const fieldNames = Object.keys(clazz.fields);
-        fieldNames.sort((a, b) => a.localeCompare(b));
-        const methodNames = Object.keys(clazz.methods);
-        methodNames.sort((a, b) => a.localeCompare(b));
-        const funcNames = Object.keys(clazz.functions);
-        funcNames.sort((a, b) => a.localeCompare(b));
-        const values = [];
-        const fields = [];
-        const funcs = [];
-        const methods = [];
-        /* (VALUES) */
-        for (const valueName of valueNames) {
-            const value = clazz.values[valueName];
-            values.push(value);
-        }
-        /* (FIELDS) */
-        for (const fieldName of fieldNames) {
-            const field = clazz.fields[fieldName];
-            fields.push(field);
-        }
-        /* (METHODS) */
-        for (const methodName of methodNames) {
-            const method = clazz.methods[methodName];
-            methods.push(method);
-        }
-        /* (FUNCTIONS) */
-        for (const funcName of funcNames) {
-            const func = clazz.functions[funcName];
-            funcs.push(func);
-        }
-        /** 100
-         * * -4 (module indent)
-         * * -3 (' * ')
-         */
-        let notesLength = 96;
-        if (wrapFile)
-            notesLength -= 4;
-        /* (Class Documentation) */
-        const ds = [];
-        ds.push(`@customConstructor ${clazz.name}:new`);
-        ds.push('');
-        ds.push(`Lua Class: ${clazz.name}`);
-        if (clazz.notes && clazz.notes.length) {
-            ds.push('');
-            const lines = (0, TSUtils_1.paginateNotes)(clazz.notes, notesLength);
-            for (const line of lines)
-                ds.push(line);
-        }
-        s = (0, TSUtils_1.applyTSDocumentation)(ds, s, 0);
-        s += `export class ${clazz.name} `;
-        let i = '    ';
-        let is = '';
-        if (values.length) {
-            is += `${i}/* ------------------------------------ */\n`;
-            is += `${i}/* -------------- VALUES -------------- */\n`;
-            is += `${i}/* ------------------------------------ */\n`;
-            is += '\n';
-            for (const value of values) {
-                is += `${luaFieldToTS(value, 1, notesLength)}\n`;
-            }
-            is = is.substring(0, is.length - 1);
-        }
-        if (fields.length) {
-            if (is.length)
-                is += '\n';
-            is += `${i}/* ------------------------------------ */\n`;
-            is += `${i}/* ------------- FIELDS --------------- */\n`;
-            is += `${i}/* ------------------------------------ */\n`;
-            is += '\n';
-            for (const field of fields) {
-                is += `${luaFieldToTS(field, 1, notesLength)}\n`;
-            }
-            is = is.substring(0, is.length - 1);
-        }
-        if (methods.length) {
-            if (is.length)
-                is += '\n';
-            is += `${i}/* ------------------------------------ */\n`;
-            is += `${i}/* ------------- METHODS -------------- */\n`;
-            is += `${i}/* ------------------------------------ */\n`;
-            is += '\n';
-            for (const method of methods) {
-                is += `${luaFunctionToTS(method, 1, notesLength)}\n`;
-            }
-            is = is.substring(0, is.length - 1);
-        }
-        if (funcs.length) {
-            if (is.length)
-                is += '\n';
-            is += `${i}/* ------------------------------------ */\n`;
-            is += `${i}/* ------------ FUNCTIONS ------------- */\n`;
-            is += `${i}/* ------------------------------------ */\n`;
-            is += '\n';
-            for (const func of funcs) {
-                is += `${luaFunctionToTS(func, 1, notesLength)}\n`;
-            }
-            is = is.substring(0, is.length - 1);
-        }
-        if (clazz.constructor) {
-            if (is.length)
-                is += '\n';
-            is += `${i}/* ------------------------------------ */\n`;
-            is += `${i}/* ----------- CONSTRUCTOR ------------ */\n`;
-            is += `${i}/* ------------------------------------ */\n`;
-            is += '\n';
-            is += `${luaConstructorToTS(clazz.conztructor, 1, notesLength)}\n`;
-            is = is.substring(0, is.length - 1);
-        }
-        if (is.length) {
-            s += `{\n\n${is}}`;
-        }
-        else {
-            s += `{}\n`;
-        }
-        if (wrapFile)
-            return (0, TSUtils_1.wrapAsTSFile)(s);
-        return s;
-    }
-    exports.luaClassToTS = luaClassToTS;
-    function luaTableToTS(table, wrapFile = false) {
-        let s = '';
-        const fieldNames = Object.keys(table.fields);
-        fieldNames.sort((a, b) => a.localeCompare(b));
-        const funcNames = Object.keys(table.functions);
-        funcNames.sort((a, b) => a.localeCompare(b));
-        const fields = [];
-        const funcs = [];
-        /* (FIELDS) */
-        for (const fieldName of fieldNames) {
-            const field = table.fields[fieldName];
-            fields.push(field);
-        }
-        /* (FUNCTIONS) */
-        for (const funcName of funcNames) {
-            const func = table.functions[funcName];
-            funcs.push(func);
-        }
-        /** 100
-         * * -4 (module indent)
-         * * -3 (' * ')
-         */
-        let notesLength = 96;
-        if (wrapFile)
-            notesLength -= 4;
-        /* (Class Documentation) */
-        const ds = [];
-        ds.push(`Lua Table: ${table.name}`);
-        if (table.notes && table.notes.length) {
-            ds.push('');
-            const lines = (0, TSUtils_1.paginateNotes)(table.notes, notesLength);
-            for (const line of lines)
-                ds.push(line);
-        }
-        s = (0, TSUtils_1.applyTSDocumentation)(ds, s, 0);
-        s += `export class ${table.name} `;
-        let i = '    ';
-        let is = '';
-        if (fields.length) {
-            if (is.length)
-                is += '\n';
-            is += `${i}/* ------------------------------------ */\n`;
-            is += `${i}/* ------------- FIELDS --------------- */\n`;
-            is += `${i}/* ------------------------------------ */\n`;
-            is += '\n';
-            for (const field of fields) {
-                is += `${luaFieldToTS(field, 1, notesLength)}\n`;
-            }
-            is = is.substring(0, is.length - 1);
-        }
-        if (funcs.length) {
-            if (is.length)
-                is += '\n';
-            is += `${i}/* ------------------------------------ */\n`;
-            is += `${i}/* ------------ FUNCTIONS ------------- */\n`;
-            is += `${i}/* ------------------------------------ */\n`;
-            is += '\n';
-            for (const func of funcs) {
-                is += `${luaFunctionToTS(func, 1, notesLength)}\n`;
-            }
-            is = is.substring(0, is.length - 1);
-        }
-        if (is.length) {
-            s += `{\n\n${is}}`;
-        }
-        else {
-            s += `{}\n`;
-        }
-        if (wrapFile)
-            return (0, TSUtils_1.wrapAsTSFile)(s);
-        return s;
-    }
-    exports.luaTableToTS = luaTableToTS;
-    function tsType(type, nullable) {
-        if (type === '') {
-            return nullable ? 'null' : '';
-        }
-        const wrapped = type[0] === '(' && type[type.length - 1] === ')';
-        if (wrapped) {
-            type = type.substring(1, type.length - 2);
-        }
-        let result = type;
-        if (type == 'nil') {
-            result = 'null';
-        }
-        else if (type.startsWith('table<')) {
-            result = luaTableToTSDict(type);
-        }
-        else if (type.startsWith('table')) {
-            result = 'any';
-        }
-        else if (type.startsWith('fun(')) {
-            result = luaFuncToTSFunc(type);
-        }
-        if (nullable) {
-            result = result + ' | null';
-        }
-        return wrapped ? `(${result})` : result;
-    }
-    exports.tsType = tsType;
-    function luaTableToTSDict(raw) {
-        if (!raw.startsWith('table<')) {
-            throw new Error('The table is invalid: ' + raw);
-        }
-        let result = '';
-        if (raw.indexOf('<') === -1 || raw.indexOf('>') === -1) {
-            result = 'any';
-        }
-        else {
-            let temp = raw.substring(raw.indexOf('<'));
-            temp = temp.substring(1, temp.indexOf('>'));
-            if (temp.indexOf(',') === -1) {
-                result = 'any';
-            }
-            else {
-                const split = temp.split(',').map((s) => s.trim());
-                if (split.length !== 2) {
-                    result = 'any';
-                }
-                else {
-                    if (split[0] !== 'number' && split[0] !== 'string') {
-                        result = 'any';
-                    }
-                    else {
-                        result = `{[key: ${split[0]}]: ${tsType(split[1], false)}}`;
-                    }
-                }
-            }
-        }
-        return result;
-    }
-    exports.luaTableToTSDict = luaTableToTSDict;
-    function luaFuncToTSFunc(raw) {
-        if (!raw.startsWith('fun(')) {
-            throw new Error('The function is invalid: ' + raw);
-        }
-        let lastRetIndex = raw.length - 1;
-        while (raw[lastRetIndex] !== ':') {
-            lastRetIndex--;
-            if (lastRetIndex <= 0) {
-                throw new Error('The function is invalid: ' + raw);
-            }
-        }
-        const rType = tsType(raw.substring(lastRetIndex + 1).trim(), false);
-        let lastParamIndex = raw.length - 1;
-        while (raw[lastParamIndex] !== ')') {
-            lastParamIndex--;
-            if (lastParamIndex <= 0) {
-                throw new Error('The function is invalid: ' + raw);
-            }
-        }
-        let inner = raw.substring(4, lastParamIndex);
-        let params = [];
-        if (inner !== '') {
-            params = [];
-            const _params = inner.indexOf(',') !== -1 ? inner.split(',').map((s) => s.trim()) : [inner.trim()];
-            for (let param of _params) {
-                let [name, type] = param.split(':').map((s) => s.trim());
-                type = tsType(type, false);
-                params.push(`${name}: ${type}`);
-            }
-        }
-        return `(${params.join(', ')}) => ${rType}`;
-    }
-    exports.luaFuncToTSFunc = luaFuncToTSFunc;
 });
 define("src/asledgehammer/mallet/component/Component", ["require", "exports", "src/asledgehammer/rosetta/util"], function (require, exports, util_1) {
     "use strict";
@@ -3557,8 +3705,10 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
                 this.update();
                 this.app.renderCode();
             });
+            const _this = this;
             const $select = (0, util_3.$get)(idReturnType);
             const $customInput = (0, util_3.$get)(`${idSelect}-custom-input`);
+            const idNullable = `${entity.name}-returns-nullable`;
             $select.on('change', (value) => {
                 returns.type = value.target.value;
                 if (returns.type === 'custom') {
@@ -3601,6 +3751,12 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
                         this.app.renderCode();
                         break;
                 }
+            });
+            /* (Nullable CheckBox) */
+            (0, util_3.$get)(idNullable).on('change', function () {
+                entity.returns.nullable = this.checked;
+                _this.update();
+                _this.app.renderCode();
             });
         }
         renderReturns(entity, idReturnType, idReturnNotes, show = false) {
@@ -3794,7 +3950,7 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
     }
     exports.LuaCard = LuaCard;
 });
-define("src/asledgehammer/mallet/component/lua/LuaClassCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_2, LuaTypeScriptGenerator_1, util_4, LuaCard_1) {
+define("src/asledgehammer/mallet/component/lua/LuaClassCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_2, LuaTypeScriptGenerator_2, util_4, LuaCard_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaClassCard = void 0;
@@ -3804,7 +3960,7 @@ define("src/asledgehammer/mallet/component/lua/LuaClassCard", ["require", "expor
                 return '';
             switch (language) {
                 case 'typescript':
-                    return (0, LuaTypeScriptGenerator_1.luaClassToTS)(this.options.entity, true);
+                    return (0, LuaTypeScriptGenerator_2.luaClassToTS)(this.options.entity, true);
                 case 'lua':
                     return '--- @meta\n\n' + (0, LuaLuaGenerator_2.generateLuaClass)(this.options.entity);
                 case 'json':
@@ -4382,7 +4538,7 @@ define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports"
                     this.app.renderCode();
                 });
                 (0, util_5.$get)(idBtnEdit).on('click', () => {
-                    const { modalName, $btnName, $titleName, $inputName } = this.app.modalName;
+                    const { $btnName, $titleName, $inputName } = this.app.modalName;
                     $titleName.html('Edit Parameter Name');
                     $btnName.html('Edit');
                     $btnName.removeClass('btn-success');
@@ -4776,10 +4932,57 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 _this.selectedID = this.id;
                 // console.log(`Selected item: ${_this.selectedID}`);
             });
+            this.listenGlobal();
             this.listenLuaClass();
             this.listenLuaTable();
             this.listenJavaClass();
             this.listening = true;
+        }
+        listenGlobal() {
+            const { app } = this;
+            const { catalog } = app;
+            const _this = this;
+            const $doc = $(document);
+            $doc.on('click', '.global-lua-field-item', function () {
+                const fieldName = this.id.split('field-')[1].trim();
+                // Prevent wasteful selection code executions here.
+                if (_this.selected === fieldName)
+                    return;
+                const field = catalog.fields[fieldName];
+                if (!field)
+                    return;
+                app.showGlobalLuaField(field);
+                // Let the editor know we last selected the field.
+                _this.selected = fieldName;
+                _this.selectedID = this.id;
+            });
+            $doc.on('click', '.global-lua-function-item', function () {
+                const funcName = this.id.split('function-')[1].trim();
+                // Prevent wasteful selection code executions here.
+                if (_this.selected === funcName)
+                    return;
+                const func = catalog.functions[funcName];
+                if (!func)
+                    return;
+                app.showGlobalLuaFunction(func);
+                // Let the editor know we last selected the field.
+                _this.selected = funcName;
+                _this.selectedID = this.id;
+            });
+            $doc.on('click', '.global-java-method-item', function () {
+                const signature = this.id.split('method-')[1].trim();
+                // Prevent wasteful selection code executions here.
+                if (_this.selected === signature)
+                    return;
+                // This is lazy but it works.
+                let method = _this.methodSignatureMap[signature];
+                if (!method)
+                    return;
+                _this.app.showGlobalJavaMethod(method);
+                // Let the editor know we last selected the field.
+                _this.selected = signature;
+                _this.selectedID = this.id;
+            });
         }
         listenLuaClass() {
             const _this = this;
@@ -4957,6 +5160,10 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
             });
         }
         populate() {
+            if (this.sidebar.objTree.globalSelected) {
+                this.populateGlobal();
+                return;
+            }
             const { selected } = this.app.catalog;
             if (!selected)
                 return;
@@ -4969,6 +5176,112 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
             else if (selected instanceof RosettaJavaClass_1.RosettaJavaClass) {
                 this.populateJavaClass(selected);
             }
+        }
+        populateGlobal() {
+            const _this = this;
+            const { catalog } = this.app;
+            const fieldNames = Object.keys(catalog.fields);
+            fieldNames.sort((a, b) => a.localeCompare(b));
+            const fields = [];
+            for (const fieldName of fieldNames) {
+                const field = catalog.fields[fieldName];
+                const id = `lua-global-field-${field.name}`;
+                const classes = ['item-tree-item', 'global-lua-field-item'];
+                if (id === this.selectedID)
+                    classes.push('selected');
+                fields.push({
+                    text: field.name,
+                    icon: LuaCard_2.LuaCard.getTypeIcon(field.type),
+                    id,
+                    class: classes
+                });
+            }
+            const functionNames = Object.keys(catalog.functions);
+            functionNames.sort((a, b) => a.localeCompare(b));
+            const functions = [];
+            for (const functionName of functionNames) {
+                const func = catalog.functions[functionName];
+                const id = `lua-global-function-${func.name}`;
+                const classes = ['item-tree-item', 'global-lua-function-item'];
+                if (id === this.selectedID)
+                    classes.push('selected');
+                functions.push({
+                    text: (0, util_7.html) `<i class="fa-solid fa-xmark me-2" title="${func.returns.type}"></i>${func.name}`,
+                    icon: 'fa-solid fa-terminal text-success mx-2',
+                    id,
+                    class: classes
+                });
+            }
+            this.methodSignatureMap = {};
+            const clusterNames = Object.keys(catalog.methods);
+            clusterNames.sort((a, b) => a.localeCompare(b));
+            for (const clusterName of clusterNames) {
+                const cluster = catalog.methods[clusterName];
+                for (const method of cluster.methods) {
+                    this.methodSignatureMap[method.getSignature()] = method;
+                }
+            }
+            // Global Method(s)
+            const methods = [];
+            const methodSignatures = Object.keys(this.methodSignatureMap);
+            methodSignatures.sort((a, b) => a.localeCompare(b));
+            for (const signature of methodSignatures) {
+                const method = this.methodSignatureMap[signature];
+                const id = `global-java-method-${signature}`;
+                let params = '';
+                for (const param of method.parameters) {
+                    params += `${param.name}, `;
+                }
+                if (params.length)
+                    params = params.substring(0, params.length - 2);
+                const classes = ['item-tree-item', 'java-class-method-item'];
+                if (id === this.selectedID)
+                    classes.push('selected');
+                methods.push({
+                    text: wrapItem(`${method.name}(${params})`),
+                    icon: LuaCard_2.LuaCard.getTypeIcon(method.returns.type.basic),
+                    id,
+                    class: classes
+                });
+            }
+            const folderFields = {
+                text: `${wrapFolderCount(`(${fields.length})`)} Field(s)`,
+                icon: "fa-solid fa-folder text-light mx-2",
+                class: ['item-tree-folder', 'bg-secondary'],
+                id: _this.idFolderLuaClassField,
+                expanded: _this.folderLuaClassFieldOpen,
+                nodes: fields
+            };
+            const folderFuncs = {
+                text: `${wrapFolderCount(`(${functions.length})`)} Function(s)`,
+                icon: "fa-solid fa-folder text-light mx-2",
+                class: ['item-tree-folder', 'bg-secondary'],
+                id: _this.idFolderLuaClassFunction,
+                expanded: _this.folderLuaClassFunctionOpen,
+                nodes: functions
+            };
+            const folderMethods = {
+                text: `${wrapFolderCount(`(${methods.length})`)} Method(s)`,
+                icon: "fa-solid fa-folder text-light mx-2",
+                class: ['item-tree-folder', 'bg-secondary'],
+                id: _this.idFolderJavaClassMethod,
+                expanded: _this.folderJavaClassMethodOpen,
+                nodes: methods
+            };
+            const data = [];
+            if (fields.length)
+                data.push(folderFields);
+            if (methods.length)
+                data.push(folderMethods);
+            if (functions.length)
+                data.push(folderFuncs);
+            let $treeLower = (0, util_7.$get)('tree-lower');
+            $treeLower.remove();
+            const $sidebarContentLower = (0, util_7.$get)('sidebar-content-lower');
+            $sidebarContentLower.append('<div id="tree-lower" class="rounded-0 bg-dark text-white"></div>');
+            $treeLower = (0, util_7.$get)('tree-lower');
+            // @ts-ignore
+            $treeLower.bstreeview({ data });
         }
         populateLuaClass(entity) {
             if (!entity)
@@ -5346,7 +5659,7 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
     }
     exports.ItemTree = ItemTree;
 });
-define("src/asledgehammer/mallet/component/lua/LuaTableCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_3, LuaTypeScriptGenerator_2, util_8, LuaCard_3) {
+define("src/asledgehammer/mallet/component/lua/LuaTableCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_3, LuaTypeScriptGenerator_3, util_8, LuaCard_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaTableCard = void 0;
@@ -5356,7 +5669,7 @@ define("src/asledgehammer/mallet/component/lua/LuaTableCard", ["require", "expor
                 return '';
             switch (language) {
                 case 'typescript':
-                    return (0, LuaTypeScriptGenerator_2.luaTableToTS)(this.options.entity, true);
+                    return (0, LuaTypeScriptGenerator_3.luaTableToTS)(this.options.entity, true);
                 case 'lua':
                     return '--- @meta\n\n' + (0, LuaLuaGenerator_3.generateLuaTable)(this.options.entity);
                 case 'json':
@@ -5440,6 +5753,7 @@ define("src/asledgehammer/mallet/component/ObjectTree", ["require", "exports", "
             this.folderLuaClassOpen = true;
             this.folderLuaTableOpen = true;
             this.folderJavaClassOpen = true;
+            this.globalSelected = false;
             this.listening = false;
             this.selected = undefined;
             this.selectedID = undefined;
@@ -5459,6 +5773,7 @@ define("src/asledgehammer/mallet/component/ObjectTree", ["require", "exports", "
             });
             // Apply jQuery listeners next.
             $doc.on('click', '.object-tree-lua-class', function () {
+                _this.globalSelected = false;
                 const name = this.id.substring('object-lua-class-'.length);
                 _this.app.showLuaClass(_this.app.catalog.luaClasses[name]);
                 $(`#btn-new-lua-value`).show();
@@ -5469,6 +5784,7 @@ define("src/asledgehammer/mallet/component/ObjectTree", ["require", "exports", "
                 $(`#save-object-dropdown`).css({ 'display': 'inline' });
             });
             $doc.on('click', '.object-tree-lua-table', function () {
+                _this.globalSelected = false;
                 const name = this.id.substring('object-lua-table-'.length);
                 _this.app.showLuaTable(_this.app.catalog.luaTables[name]);
                 $(`#btn-new-lua-value`).hide();
@@ -5479,10 +5795,23 @@ define("src/asledgehammer/mallet/component/ObjectTree", ["require", "exports", "
                 $(`#save-object-dropdown`).css({ 'display': 'inline' });
             });
             $doc.on('click', '.object-tree-java-class', function () {
+                _this.globalSelected = false;
                 const name = this.id.substring('object-java-class-'.length);
                 _this.app.showJavaClass(_this.app.catalog.javaClasses[name]);
                 $(`#btn-lua-class-dropdown`).hide();
                 $(`#save-object-dropdown`).css({ 'display': 'inline' });
+            });
+            $doc.on('click', '.object-tree-global', () => {
+                this.globalSelected = true;
+                this.sidebar.itemTree.selected = undefined;
+                this.sidebar.itemTree.selectedID = undefined;
+                $(`#btn-new-lua-value`).hide();
+                $(`#btn-new-lua-field`).show();
+                $(`#btn-new-lua-function`).show();
+                $(`#btn-new-lua-method`).hide();
+                $(`#btn-lua-class-dropdown`).show();
+                this.app.hideCard();
+                this.app.renderCode();
             });
             // Preserve the state of folders.
             $doc.on('click', '#' + this.idFolderLuaClass, () => {
@@ -5499,17 +5828,19 @@ define("src/asledgehammer/mallet/component/ObjectTree", ["require", "exports", "
         populate() {
             const _this = this;
             const { selected } = this.app.catalog;
-            if (selected instanceof RosettaLuaClass_2.RosettaLuaClass) {
-                this.selectedID = `object-lua-class-${selected.name}`;
-            }
-            else if (selected instanceof RosettaLuaTable_2.RosettaLuaTable) {
-                this.selectedID = `object-lua-table-${selected.name}`;
-            }
-            else if (selected instanceof RosettaJavaClass_2.RosettaJavaClass) {
-                this.selectedID = `object-java-class-${selected.name}`;
-            }
-            else {
-                this.selectedID = undefined;
+            if (!this.globalSelected) {
+                if (selected instanceof RosettaLuaClass_2.RosettaLuaClass) {
+                    this.selectedID = `object-lua-class-${selected.name}`;
+                }
+                else if (selected instanceof RosettaLuaTable_2.RosettaLuaTable) {
+                    this.selectedID = `object-lua-table-${selected.name}`;
+                }
+                else if (selected instanceof RosettaJavaClass_2.RosettaJavaClass) {
+                    this.selectedID = `object-java-class-${selected.name}`;
+                }
+                else {
+                    this.selectedID = undefined;
+                }
             }
             let $treeUpper = (0, util_9.$get)('tree-upper');
             $treeUpper.remove();
@@ -5579,7 +5910,18 @@ define("src/asledgehammer/mallet/component/ObjectTree", ["require", "exports", "
                 expanded: _this.folderJavaClassOpen,
                 nodes: javaClasses
             };
-            const data = [];
+            const itemGlobal = {
+                id: 'object-global',
+                text: wrapItem('Global'),
+                icon: 'fa-solid fa-globe text-light mx-2 desaturate',
+                class: ['object-tree-item', 'object-tree-global']
+            };
+            if (this.globalSelected) {
+                itemGlobal.class.push('selected');
+            }
+            const data = [
+                itemGlobal
+            ];
             if (luaClasses.length)
                 data.push(folderLuaClasses);
             if (luaTables.length)
@@ -5595,7 +5937,7 @@ define("src/asledgehammer/mallet/component/ObjectTree", ["require", "exports", "
     }
     exports.ObjectTree = ObjectTree;
 });
-define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/Component", "src/asledgehammer/mallet/component/ItemTree", "src/asledgehammer/mallet/component/ObjectTree"], function (require, exports, JavaLuaGenerator2_2, RosettaJavaClass_3, LuaLuaGenerator_4, RosettaLuaClass_3, RosettaLuaTable_3, JavaTypeScriptGenerator_2, LuaTypeScriptGenerator_3, util_10, Component_2, ItemTree_1, ObjectTree_1) {
+define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/Component", "src/asledgehammer/mallet/component/ItemTree", "src/asledgehammer/mallet/component/ObjectTree"], function (require, exports, JavaLuaGenerator2_2, RosettaJavaClass_3, LuaLuaGenerator_4, RosettaLuaClass_3, RosettaLuaTable_3, JavaTypeScriptGenerator_2, LuaTypeScriptGenerator_4, util_10, Component_2, ItemTree_1, ObjectTree_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Sidebar = void 0;
@@ -5756,6 +6098,81 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
                     console.error(e);
                 }
             });
+            $doc.on('click', '#btn-new-lua-value', () => {
+                try {
+                    this.app.modalName.nameMode = 'new_value';
+                    $titleName.html('Create Lua Value');
+                    $inputName.val('');
+                    $btnName.html('Create');
+                    $btnName.removeClass('btn-primary');
+                    $btnName.addClass('btn-success');
+                    this.app.modalName.show(true);
+                }
+                catch (e) {
+                    app.toast.alert(`Failed to create Lua Value.`, 'error');
+                    console.error(e);
+                }
+            });
+            $doc.on('click', '#btn-new-lua-field', () => {
+                try {
+                    this.app.modalName.nameMode = 'new_field';
+                    if (this.objTree.globalSelected) {
+                        $titleName.html('Create Global Lua Field');
+                    }
+                    else {
+                        $titleName.html('Create Lua Field');
+                    }
+                    $inputName.val('');
+                    $btnName.html('Create');
+                    $btnName.removeClass('btn-primary');
+                    $btnName.addClass('btn-success');
+                    this.app.modalName.show(true);
+                }
+                catch (e) {
+                    app.toast.alert(`Failed to create Lua Field.`, 'error');
+                    console.error(e);
+                }
+            });
+            $doc.on('click', '#btn-new-lua-function', () => {
+                try {
+                    this.app.modalName.nameMode = 'new_function';
+                    if (this.objTree.globalSelected) {
+                        $titleName.html('Create Global Lua Function');
+                    }
+                    else {
+                        $titleName.html('Create Lua Function');
+                    }
+                    $inputName.val('');
+                    $btnName.html('Create');
+                    $btnName.removeClass('btn-primary');
+                    $btnName.addClass('btn-success');
+                    this.app.modalName.show(true);
+                }
+                catch (e) {
+                    app.toast.alert(`Failed to create Lua Function.`, 'error');
+                    console.error(e);
+                }
+            });
+            $doc.on('click', '#btn-new-lua-method', () => {
+                try {
+                    this.app.modalName.nameMode = 'new_method';
+                    if (this.objTree.globalSelected) {
+                        $titleName.html('Create Global Lua Method');
+                    }
+                    else {
+                        $titleName.html('Create Lua Method');
+                    }
+                    $inputName.val('');
+                    $btnName.html('Create');
+                    $btnName.removeClass('btn-primary');
+                    $btnName.addClass('btn-success');
+                    this.app.modalName.show(true);
+                }
+                catch (e) {
+                    app.toast.alert(`Failed to create Lua Method.`, 'error');
+                    console.error(e);
+                }
+            });
             $doc.on('click', '#open-lua-class', () => {
                 const dFileLoad = document.getElementById('load-file');
                 const onchange = () => {
@@ -5890,10 +6307,10 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
                     const { selected } = this.app.catalog;
                     let ts = '';
                     if (selected instanceof RosettaLuaClass_3.RosettaLuaClass) {
-                        ts += (0, LuaTypeScriptGenerator_3.luaClassToTS)(selected, true);
+                        ts += (0, LuaTypeScriptGenerator_4.luaClassToTS)(selected, true);
                     }
                     else if (selected instanceof RosettaLuaTable_3.RosettaLuaTable) {
-                        ts += (0, LuaTypeScriptGenerator_3.luaTableToTS)(selected, true);
+                        ts += (0, LuaTypeScriptGenerator_4.luaTableToTS)(selected, true);
                     }
                     else if (selected instanceof RosettaJavaClass_3.RosettaJavaClass) {
                         ts += (0, JavaTypeScriptGenerator_2.javaClassToTS)(selected, true, true);
@@ -6049,82 +6466,6 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
                     console.error(e);
                 }
             });
-            $doc.on('click', '#btn-new-lua-value', () => {
-                try {
-                    const { selectedCard: card } = app.catalog;
-                    if (!card)
-                        return;
-                    const clazz = card.options.entity;
-                    if (!clazz)
-                        return;
-                    this.app.modalName.nameMode = 'new_value';
-                    $titleName.html('Create Lua Value');
-                    $inputName.val('');
-                    $btnName.val('Create');
-                    this.app.modalName.show(true);
-                }
-                catch (e) {
-                    app.toast.alert(`Failed to create Lua Value.`, 'error');
-                    console.error(e);
-                }
-            });
-            $doc.on('click', '#btn-new-lua-field', () => {
-                try {
-                    const { selectedCard: card } = app.catalog;
-                    if (!card)
-                        return;
-                    const clazz = card.options.entity;
-                    if (!clazz)
-                        return;
-                    this.app.modalName.nameMode = 'new_field';
-                    $titleName.html('Create Lua Field');
-                    $inputName.val('');
-                    $btnName.val('Create');
-                    this.app.modalName.show(true);
-                }
-                catch (e) {
-                    app.toast.alert(`Failed to create Lua Field.`, 'error');
-                    console.error(e);
-                }
-            });
-            $doc.on('click', '#btn-new-lua-function', () => {
-                try {
-                    const { selectedCard: card } = app.catalog;
-                    if (!card)
-                        return;
-                    const clazz = card.options.entity;
-                    if (!clazz)
-                        return;
-                    this.app.modalName.nameMode = 'new_function';
-                    $titleName.html('Create Lua Function');
-                    $inputName.val('');
-                    $btnName.val('Create');
-                    this.app.modalName.show(true);
-                }
-                catch (e) {
-                    app.toast.alert(`Failed to create Lua Function.`, 'error');
-                    console.error(e);
-                }
-            });
-            $doc.on('click', '#btn-new-lua-method', () => {
-                try {
-                    const { selectedCard: card } = app.catalog;
-                    if (!card)
-                        return;
-                    const clazz = card.options.entity;
-                    if (!clazz)
-                        return;
-                    this.app.modalName.nameMode = 'new_method';
-                    $titleName.html('Create Lua Method');
-                    $inputName.val('');
-                    $btnName.val('Create');
-                    this.app.modalName.show(true);
-                }
-                catch (e) {
-                    app.toast.alert(`Failed to create Lua Method.`, 'error');
-                    console.error(e);
-                }
-            });
             this.listening = true;
         }
         populateTrees() {
@@ -6135,7 +6476,7 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
     exports.Sidebar = Sidebar;
     ;
 });
-define("src/asledgehammer/mallet/component/lua/LuaConstructorCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_5, LuaTypeScriptGenerator_4, util_11, LuaCard_5) {
+define("src/asledgehammer/mallet/component/lua/LuaConstructorCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_5, LuaTypeScriptGenerator_5, util_11, LuaCard_5) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaConstructorCard = void 0;
@@ -6155,7 +6496,7 @@ define("src/asledgehammer/mallet/component/lua/LuaConstructorCard", ["require", 
                     return (0, LuaLuaGenerator_5.generateLuaConstructor)(classEntity.name, entity);
                 }
                 case 'typescript': {
-                    return (0, LuaTypeScriptGenerator_4.luaConstructorToTS)(this.options.entity, 0, 100);
+                    return (0, LuaTypeScriptGenerator_5.luaConstructorToTS)(this.options.entity, 0, 100);
                 }
                 case 'json': {
                     return JSON.stringify(this.options.entity.toJSON(), null, 2);
@@ -6212,7 +6553,7 @@ define("src/asledgehammer/mallet/component/lua/LuaConstructorCard", ["require", 
     }
     exports.LuaConstructorCard = LuaConstructorCard;
 });
-define("src/asledgehammer/mallet/component/lua/LuaFieldCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaField", "src/asledgehammer/rosetta/lua/RosettaLuaTableField", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_6, RosettaLuaField_2, RosettaLuaTableField_2, LuaTypeScriptGenerator_5, util_12, LuaCard_6) {
+define("src/asledgehammer/mallet/component/lua/LuaFieldCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaField", "src/asledgehammer/rosetta/lua/RosettaLuaTableField", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_6, RosettaLuaField_2, RosettaLuaTableField_2, LuaTypeScriptGenerator_6, util_12, LuaCard_6) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaFieldCard = void 0;
@@ -6245,7 +6586,7 @@ define("src/asledgehammer/mallet/component/lua/LuaFieldCard", ["require", "expor
                     return s;
                 }
                 case 'typescript': {
-                    return (0, LuaTypeScriptGenerator_5.luaFieldToTS)(this.options.entity, 0, 100);
+                    return (0, LuaTypeScriptGenerator_6.luaFieldToTS)(this.options.entity, 0, 100);
                 }
                 case 'json': {
                     return JSON.stringify(this.options.entity.toJSON(), null, 2);
@@ -6315,6 +6656,12 @@ define("src/asledgehammer/mallet/component/lua/LuaFieldCard", ["require", "expor
             (0, util_12.$get)(idBtnDelete).on('click', () => {
                 app.modalConfirm.show(() => {
                     const entity = this.options.entity;
+                    // Global field.
+                    if (app.sidebar.objTree.globalSelected) {
+                        delete app.catalog.fields[entity.name];
+                        app.hideCard();
+                        return;
+                    }
                     if (entity instanceof RosettaLuaField_2.RosettaLuaField) {
                         const clazz = app.catalog.selected;
                         if (isStatic) {
@@ -6338,7 +6685,7 @@ define("src/asledgehammer/mallet/component/lua/LuaFieldCard", ["require", "expor
     }
     exports.LuaFieldCard = LuaFieldCard;
 });
-define("src/asledgehammer/mallet/component/lua/LuaFunctionCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_7, RosettaLuaClass_4, RosettaLuaTable_4, LuaTypeScriptGenerator_6, util_13, LuaCard_7) {
+define("src/asledgehammer/mallet/component/lua/LuaFunctionCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_7, RosettaLuaClass_4, RosettaLuaTable_4, LuaTypeScriptGenerator_7, util_13, LuaCard_7) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaFunctionCard = void 0;
@@ -6363,7 +6710,7 @@ define("src/asledgehammer/mallet/component/lua/LuaFunctionCard", ["require", "ex
                     return (0, LuaLuaGenerator_7.generateLuaFunction)(className, ':', entity);
                 }
                 case 'typescript': {
-                    return (0, LuaTypeScriptGenerator_6.luaFunctionToTS)(this.options.entity, 0, 100);
+                    return (0, LuaTypeScriptGenerator_7.luaFunctionToTS)(this.options.entity, 0, 100);
                 }
                 case 'json': {
                     return JSON.stringify(this.options.entity.toJSON(), null, 2);
@@ -6435,6 +6782,12 @@ define("src/asledgehammer/mallet/component/lua/LuaFunctionCard", ["require", "ex
             (0, util_13.$get)(idBtnDelete).on('click', () => {
                 app.modalConfirm.show(() => {
                     const entity = this.options.entity;
+                    // Global function.
+                    if (app.sidebar.objTree.globalSelected) {
+                        delete app.catalog.functions[entity.name];
+                        app.hideCard();
+                        return;
+                    }
                     const selected = this.app.catalog.selected;
                     if (selected instanceof RosettaLuaClass_4.RosettaLuaClass) {
                         if (isStatic) {
@@ -6761,7 +7114,7 @@ define("src/asledgehammer/mallet/component/java/JavaMethodCard", ["require", "ex
     }
     exports.JavaMethodCard = JavaMethodCard;
 });
-define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/util"], function (require, exports, RosettaJavaClass_4, RosettaLuaClass_5, RosettaLuaTable_5, util_17) {
+define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaField", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/util"], function (require, exports, RosettaJavaClass_4, RosettaLuaClass_5, RosettaLuaField_3, RosettaLuaFunction_3, RosettaLuaTable_5, util_17) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ModalName = void 0;
@@ -6779,6 +7132,153 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
             this.$inputName = (0, util_17.$get)('input-name');
             this.$btnName = (0, util_17.$get)('btn-name-create');
             this.nameMode = null;
+        }
+        onGlobalCreate() {
+            const { $inputName, app } = this;
+            const { catalog, sidebar, toast } = app;
+            const name = (0, util_17.validateLuaVariableName)($inputName.val()).trim();
+            const nameOld = this.nameSelected;
+            switch (this.nameMode) {
+                case 'new_field': {
+                    try {
+                        const field = new RosettaLuaField_3.RosettaLuaField(name);
+                        catalog.fields[field.name] = field;
+                        app.showGlobalLuaField(field);
+                        toast.alert('Created Global Lua Field.', 'success');
+                    }
+                    catch (e) {
+                        toast.alert(`Failed to create Global Lua Field.`, 'error');
+                        console.error(e);
+                    }
+                    break;
+                }
+                case 'edit_field': {
+                    try {
+                        const field = catalog.fields[nameOld];
+                        field.name = name;
+                        catalog.fields[name] = field;
+                        delete catalog.fields[nameOld];
+                        app.showLuaClassField(field);
+                        toast.alert('Edited Global Lua Field.');
+                    }
+                    catch (e) {
+                        toast.alert(`Failed to edit Global Lua Field.`, 'error');
+                        console.error(e);
+                    }
+                    break;
+                }
+                case 'new_function': {
+                    try {
+                        const func = new RosettaLuaFunction_3.RosettaLuaFunction(name, { returns: { type: 'void' } });
+                        catalog.functions[func.name] = func;
+                        app.showGlobalLuaFunction(func);
+                        toast.alert('Created Global Lua Function.', 'success');
+                    }
+                    catch (e) {
+                        toast.alert(`Failed to create Global Lua Function.`, 'error');
+                        console.error(e);
+                    }
+                    break;
+                }
+                case 'edit_function': {
+                    try {
+                        const funcName = nameOld;
+                        const name = (0, util_17.validateLuaVariableName)($inputName.val()).trim();
+                        const func = catalog.functions[funcName];
+                        func.name = name;
+                        catalog.functions[name] = func;
+                        delete catalog.functions[nameOld];
+                        app.showGlobalLuaFunction(func);
+                        toast.alert('Created Global Lua Function.', 'success');
+                    }
+                    catch (e) {
+                        toast.alert(`Failed to create Global Lua Function.`, 'error');
+                        console.error(e);
+                    }
+                    break;
+                }
+                case 'new_parameter': {
+                    try {
+                        const split = nameOld.split('-');
+                        const type = split[0];
+                        const funcName = split[1];
+                        let func = undefined;
+                        if (type === 'function') {
+                            func = catalog.functions[funcName];
+                        }
+                        else {
+                            throw new Error('Creating parameters for Java Methods is not supported.');
+                        }
+                        if (!func) {
+                            toast.alert('Unknown function: ' + funcName, 'error');
+                            return;
+                        }
+                        func.addParameter(name, 'any');
+                        app.showGlobalLuaFunction(func);
+                        toast.alert('Created Global Lua Function Parameter.', 'success');
+                    }
+                    catch (e) {
+                        toast.alert(`Failed to create Global Lua Function Parameter.`, 'error');
+                        console.error(e);
+                    }
+                    break;
+                }
+                case 'edit_parameter': {
+                    try {
+                        const split = nameOld.split('-');
+                        const funcName = split[0];
+                        const paramName = split[1];
+                        let type = null;
+                        let func = undefined;
+                        let param = null;
+                        // First, check methods.
+                        func = this.javaMethod;
+                        // Second, check functions.
+                        if (!func) {
+                            for (const methodName of Object.keys(catalog.functions)) {
+                                if (methodName === funcName) {
+                                    func = catalog.functions[methodName];
+                                    type = 'function';
+                                    break;
+                                }
+                            }
+                        }
+                        if (!func) {
+                            console.warn(`Unknown function / method: _G.${funcName}!`);
+                            break;
+                        }
+                        for (const next of func.parameters) {
+                            if (next.name === paramName) {
+                                param = next;
+                                break;
+                            }
+                        }
+                        if (!param) {
+                            console.warn(`Unknown parameter: _G.${funcName}#${paramName}!`);
+                            break;
+                        }
+                        param.name = name;
+                        if (type === 'function') {
+                            app.showGlobalLuaFunction(func);
+                            toast.alert('Edited Global Lua Function Parameter.');
+                        }
+                        else if (type === 'method') {
+                            app.showGlobalJavaMethod(func);
+                            toast.alert('Edited Global Java Method Parameter.');
+                        }
+                    }
+                    catch (e) {
+                        toast.alert(`Failed to edit Parameter.`, 'error');
+                        console.error(e);
+                    }
+                    break;
+                }
+                default: {
+                    throw new Error('Unsupported Global name-mode: ' + this.nameMode);
+                }
+            }
+            this.nameSelected = undefined;
+            this.modalName.hide();
         }
         listen() {
             const { app, $inputName, $btnName } = this;
@@ -6807,6 +7307,11 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
             });
             this.$btnName.on('click', () => {
                 var _a;
+                // Handle global creation elsewhere.
+                if (this.app.sidebar.objTree.globalSelected) {
+                    this.onGlobalCreate();
+                    return;
+                }
                 const entity = (_a = active.selectedCard) === null || _a === void 0 ? void 0 : _a.options.entity;
                 const name = (0, util_17.validateLuaVariableName)($inputName.val()).trim();
                 const nameOld = this.nameSelected;
@@ -7385,7 +7890,7 @@ define("src/asledgehammer/mallet/component/Toast", ["require", "exports", "src/a
     }
     exports.Toast = Toast;
 });
-define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/TSUtils"], function (require, exports, JavaLuaGenerator2_6, RosettaJavaClass_5, LuaLuaGenerator_8, RosettaLuaClass_6, RosettaLuaTable_6, JavaTypeScriptGenerator_6, LuaTypeScriptGenerator_7, TSUtils_3) {
+define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/java/RosettaJavaMethod", "src/asledgehammer/rosetta/java/RosettaJavaMethodCluster", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaField", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/TSUtils"], function (require, exports, JavaLuaGenerator2_6, RosettaJavaClass_5, RosettaJavaMethod_2, RosettaJavaMethodCluster_2, LuaLuaGenerator_8, RosettaLuaClass_6, RosettaLuaField_4, RosettaLuaFunction_4, RosettaLuaTable_6, JavaTypeScriptGenerator_6, LuaTypeScriptGenerator_8, TSUtils_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Catalog = void 0;
@@ -7394,6 +7899,9 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
             this.luaClasses = {};
             this.luaTables = {};
             this.javaClasses = {};
+            this.methods = {};
+            this.fields = {};
+            this.functions = {};
             this.selected = undefined;
             this.selectedCard = undefined;
             this.app = app;
@@ -7409,6 +7917,15 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
             for (const name of Object.keys(this.javaClasses)) {
                 delete this.javaClasses[name];
             }
+            for (const name of Object.keys(this.fields)) {
+                delete this.fields[name];
+            }
+            for (const name of Object.keys(this.functions)) {
+                delete this.functions[name];
+            }
+            for (const name of Object.keys(this.methods)) {
+                delete this.methods[name];
+            }
             // Wipe active selections.
             this.selected = undefined;
             this.selectedCard = undefined;
@@ -7422,30 +7939,60 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
             keys = Object.keys(this.javaClasses);
             if (keys.length) {
                 keys.sort((a, b) => a.localeCompare(b));
-                for (const name of Object.keys(this.javaClasses)) {
+                for (const name of keys) {
                     const javaClass = this.javaClasses[name];
-                    s += `// Java Class: ${javaClass.namespace.name}.${javaClass.name} \n\n`;
-                    s += (0, JavaTypeScriptGenerator_6.javaClassToTS)(javaClass, false, false) + '\n\n';
+                    // s += `// Java Class: ${javaClass.namespace.name}.${javaClass.name} \n\n`;
+                    s += (0, JavaTypeScriptGenerator_6.javaClassToTS)(javaClass, false, false);
                 }
             }
             /* Lua Classes */
             keys = Object.keys(this.luaClasses);
             if (keys.length) {
                 keys.sort((a, b) => a.localeCompare(b));
-                for (const name of Object.keys(this.luaClasses)) {
+                for (const name of keys) {
                     const luaClass = this.luaClasses[name];
-                    s += `// Lua Class: ${luaClass.name} \n\n`;
-                    s += (0, LuaTypeScriptGenerator_7.luaClassToTS)(luaClass, false) + '\n\n';
+                    // s += `// Lua Class: ${luaClass.name} \n\n`;
+                    s += (0, LuaTypeScriptGenerator_8.luaClassToTS)(luaClass, false);
                 }
             }
             /* Lua Tables */
             keys = Object.keys(this.luaTables);
             if (keys.length) {
                 keys.sort((a, b) => a.localeCompare(b));
-                for (const name of Object.keys(this.luaTables)) {
+                for (const name of keys) {
                     const luaTable = this.luaTables[name];
-                    s += `// Lua Table: ${luaTable.name} \n\n`;
-                    s += (0, LuaTypeScriptGenerator_7.luaTableToTS)(luaTable, false) + '\n\n';
+                    // s += `// Lua Table: ${luaTable.name} \n\n`;
+                    s += (0, LuaTypeScriptGenerator_8.luaTableToTS)(luaTable, false);
+                }
+            }
+            /* Global Lua Fields */
+            keys = Object.keys(this.fields);
+            if (keys.length) {
+                keys.sort((a, b) => a.localeCompare(b));
+                for (const name of keys) {
+                    const field = this.fields[name];
+                    // s += `// Global Lua Field: ${field.name} \n\n`;
+                    s += (0, LuaTypeScriptGenerator_8.luaFieldToTS)(field, 0, 100) + '\n';
+                }
+            }
+            /* Global Lua Functions */
+            keys = Object.keys(this.functions);
+            if (keys.length) {
+                keys.sort((a, b) => a.localeCompare(b));
+                for (const name of keys) {
+                    const func = this.functions[name];
+                    // s += `// Global Lua Function: ${func.name} \n\n`;
+                    s += (0, LuaTypeScriptGenerator_8.luaFunctionToTS)(func, 0, 100) + '\n';
+                }
+            }
+            /* Global Java Methods */
+            keys = Object.keys(this.methods);
+            if (keys.length) {
+                keys.sort((a, b) => a.localeCompare(b));
+                for (const name of keys) {
+                    const cluster = this.methods[name];
+                    // s += `// Global Java Method(s): ${cluster.name} \n\n`;
+                    s += (0, JavaTypeScriptGenerator_6.javaMethodClusterToTS)(cluster, 0, 100) + '\n';
                 }
             }
             return (0, TSUtils_3.wrapAsTSFile)(s);
@@ -7457,30 +8004,69 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
             keys = Object.keys(this.javaClasses);
             if (keys.length) {
                 keys.sort((a, b) => a.localeCompare(b));
-                for (const name of Object.keys(this.javaClasses)) {
+                for (const name of keys) {
                     const javaClass = this.javaClasses[name];
-                    s += `-- Java Class: ${javaClass.namespace.name}.${javaClass.name} --\n\n`;
-                    s += (0, JavaLuaGenerator2_6.generateJavaClass)(javaClass) + '\n';
+                    // s += `-- Java Class: ${javaClass.namespace.name}.${javaClass.name} --\n\n`;
+                    s += (0, JavaLuaGenerator2_6.generateJavaClass)(javaClass) + '\n\n';
                 }
             }
             /* Lua Classes */
             keys = Object.keys(this.luaClasses);
             if (keys.length) {
                 keys.sort((a, b) => a.localeCompare(b));
-                for (const name of Object.keys(this.luaClasses)) {
+                for (const name of keys) {
                     const luaClass = this.luaClasses[name];
-                    s += `-- Lua Class: ${luaClass.name} --\n\n`;
-                    s += (0, LuaLuaGenerator_8.generateLuaClass)(luaClass) + '\n';
+                    // s += `-- Lua Class: ${luaClass.name} --\n\n`;
+                    s += (0, LuaLuaGenerator_8.generateLuaClass)(luaClass) + '\n\n';
                 }
             }
             /* Lua Tables */
             keys = Object.keys(this.luaTables);
             if (keys.length) {
                 keys.sort((a, b) => a.localeCompare(b));
-                for (const name of Object.keys(this.luaTables)) {
+                for (const name of keys) {
                     const luaTable = this.luaTables[name];
-                    s += `-- Lua Table: ${luaTable.name} --\n\n`;
-                    s += (0, LuaLuaGenerator_8.generateLuaTable)(luaTable) + '\n';
+                    // s += `-- Lua Table: ${luaTable.name} --\n\n`;
+                    s += (0, LuaLuaGenerator_8.generateLuaTable)(luaTable) + '\n\n';
+                }
+            }
+            /* Global Lua Fields */
+            keys = Object.keys(this.fields);
+            if (keys.length) {
+                keys.sort((a, b) => a.localeCompare(b));
+                for (const name of keys) {
+                    const field = this.fields[name];
+                    // s += `-- Global Lua Field: ${name} --\n\n`;
+                    s += (0, LuaLuaGenerator_8.generateGlobalLuaField)(field) + '\n\n';
+                }
+            }
+            /* Global Lua Functions */
+            keys = Object.keys(this.functions);
+            if (keys.length) {
+                keys.sort((a, b) => a.localeCompare(b));
+                for (const name of keys) {
+                    const func = this.functions[name];
+                    // s += `-- Global Lua Function: ${name} --\n\n`;
+                    s += (0, LuaLuaGenerator_8.generateGlobalLuaFunction)(func) + '\n\n';
+                }
+            }
+            /* Global Java Methods */
+            const staticMethods = [];
+            const methodClusterNames = Object.keys(this.methods);
+            if (methodClusterNames.length) {
+                methodClusterNames.sort((a, b) => a.localeCompare(b));
+                for (const clusterName of methodClusterNames) {
+                    for (const method of this.methods[clusterName].methods) {
+                        staticMethods.push(method);
+                    }
+                }
+            }
+            keys = Object.keys(staticMethods);
+            if (keys.length) {
+                keys.sort((a, b) => a.localeCompare(b));
+                for (const method of staticMethods) {
+                    // s += `-- Global Java Method: ${method.name} --\n\n`;
+                    s += (0, JavaLuaGenerator2_6.generateGlobalJavaMethod)(method) + '\n\n';
                 }
             }
             return s;
@@ -7505,6 +8091,41 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
                     for (const className of Object.keys(namespace.classes)) {
                         this.javaClasses[className] = namespace.classes[className];
                     }
+                }
+            }
+            /* (Fields) */
+            if (json.fields) {
+                const rawFields = json.fields;
+                for (const name of Object.keys(rawFields)) {
+                    const rawField = rawFields[name];
+                    const field = new RosettaLuaField_4.RosettaLuaField(name, rawField);
+                    this.fields[name] = this.fields[field.name] = field;
+                }
+            }
+            /* (Functions) */
+            if (json.functions) {
+                const rawFunctions = json.functions;
+                for (const name of Object.keys(rawFunctions)) {
+                    const rawFunction = rawFunctions[name];
+                    const func = new RosettaLuaFunction_4.RosettaLuaFunction(name, rawFunction);
+                    this.functions[name] = this.functions[func.name] = func;
+                }
+            }
+            /* METHODS */
+            if (json.methods) {
+                const rawMethods = json.methods;
+                for (const rawMethod of rawMethods) {
+                    const method = new RosettaJavaMethod_2.RosettaJavaMethod(rawMethod);
+                    const { name: methodName } = method;
+                    let cluster;
+                    if (this.methods[methodName] === undefined) {
+                        cluster = new RosettaJavaMethodCluster_2.RosettaJavaMethodCluster(methodName);
+                        this.methods[methodName] = cluster;
+                    }
+                    else {
+                        cluster = this.methods[methodName];
+                    }
+                    cluster.add(method);
                 }
             }
             this.app.sidebar.populateTrees();
@@ -7543,17 +8164,347 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
                     namespaces[namespace.name][name] = this.javaClasses[name].toJSON();
                 }
             }
+            // Global Lua Fields
+            let fields = undefined;
+            keys = Object.keys(this.fields);
+            if (keys.length) {
+                fields = {};
+                for (const name of keys) {
+                    fields[name] = this.fields[name].toJSON();
+                }
+            }
+            // Global Lua Functions
+            let functions = undefined;
+            keys = Object.keys(this.functions);
+            if (keys.length) {
+                functions = {};
+                for (const name of keys) {
+                    functions[name] = this.functions[name].toJSON();
+                }
+            }
+            /* (Methods) */
+            let methods = undefined;
+            keys = Object.keys(this.methods);
+            keys.sort((a, b) => a.localeCompare(b));
+            if (keys.length) {
+                methods = [];
+                /* (Flatten MethodClusters into JSON method bodies) */
+                for (const key of keys) {
+                    for (const method of this.methods[key].methods)
+                        methods.push(method.toJSON());
+                }
+            }
             return {
                 $schema: 'https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-schema.json',
                 luaClasses,
                 tables,
-                namespaces
+                namespaces,
+                fields,
+                functions,
+                methods
             };
         }
     }
     exports.Catalog = Catalog;
 });
-define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/mallet/component/lua/LuaClassCard", "src/asledgehammer/mallet/component/java/JavaClassCard", "src/asledgehammer/mallet/component/Sidebar", "src/asledgehammer/mallet/component/lua/LuaConstructorCard", "src/asledgehammer/mallet/component/lua/LuaFieldCard", "src/asledgehammer/mallet/component/lua/LuaFunctionCard", "src/asledgehammer/mallet/component/java/JavaConstructorCard", "src/asledgehammer/mallet/component/java/JavaFieldCard", "src/asledgehammer/mallet/component/java/JavaMethodCard", "src/asledgehammer/mallet/modal/ModalName", "src/asledgehammer/mallet/modal/ModalConfirm", "src/asledgehammer/mallet/component/Toast", "src/asledgehammer/mallet/Catalog", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/mallet/component/lua/LuaTableCard"], function (require, exports, hljs, LuaLuaGenerator_9, RosettaLuaClass_7, RosettaLuaConstructor_2, util_20, RosettaJavaClass_6, JavaLuaGenerator2_7, LuaClassCard_1, JavaClassCard_1, Sidebar_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, JavaConstructorCard_1, JavaFieldCard_1, JavaMethodCard_1, ModalName_1, ModalConfirm_1, Toast_1, Catalog_1, JavaTypeScriptGenerator_7, LuaTypeScriptGenerator_8, RosettaLuaTable_7, LuaTableCard_1) {
+define("src/asledgehammer/mallet/component/lua/LuaGlobalFunctionCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_9, LuaTypeScriptGenerator_9, util_20, LuaCard_8) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.LuaGlobalFunctionCard = void 0;
+    class LuaGlobalFunctionCard extends LuaCard_8.LuaCard {
+        constructor(app, options) {
+            super(app, options);
+            this.idNotes = `${this.id}-notes`;
+            this.idReturnType = `${this.id}-return-type`;
+            this.idReturnNotes = `${this.id}-return-notes`;
+            this.idBtnDelete = `${this.id}-btn-delete`;
+            this.idBtnEdit = `${this.id}-btn-edit`;
+            this.idParamContainer = `${this.id}-parameter-container`;
+        }
+        onRenderPreview(language) {
+            if (!this.options)
+                return '';
+            switch (language) {
+                case 'lua': {
+                    const { entity } = this.options;
+                    return (0, LuaLuaGenerator_9.generateGlobalLuaFunction)(entity);
+                }
+                case 'typescript': {
+                    return (0, LuaTypeScriptGenerator_9.luaFunctionToTS)(this.options.entity, 0, 100);
+                }
+                case 'json': {
+                    return JSON.stringify(this.options.entity.toJSON(), null, 2);
+                }
+            }
+        }
+        onHeaderHTML() {
+            const { idBtnDelete, idBtnEdit } = this;
+            const { entity } = this.options;
+            let name = `_G.${entity.name}( )`;
+            return (0, util_20.html) ` 
+            <div class="row">
+
+                <!-- Visual Category Badge -->
+                <div class="col-auto ps-2 pe-2">
+                    <div class="text-bg-primary px-2 border border-1 border-light-half desaturate shadow">
+                        <strong>Global Lua Function</strong>
+                    </div>
+                </div>
+                
+                <div class="col-auto p-0">
+                    <h5 class="card-text"><strong>${name}</strong></h5> 
+                </div>
+                <div style="position: absolute; top: 5px; width: 100%; height: 32px;">
+                    <!-- Delete Button -->
+                    <button id="${idBtnDelete}" class="btn btn-sm responsive-btn float-end ms-1" title="Delete Function">
+                        <div class="btn-pane">
+                            <i class="fa-solid fa-xmark"></i>
+                        </div>
+                    </button>
+                    <!-- Edit Button -->
+                    <button id="${idBtnEdit}" class="btn btn-sm responsive-btn float-end" title="Edit Name">
+                        <div class="btn-pane">
+                            <i class="fa-solid fa-pen"></i>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        `;
+        }
+        onBodyHTML() {
+            const { idNotes, idParamContainer, idReturnType, idReturnNotes } = this;
+            const { entity } = this.options;
+            return (0, util_20.html) `
+            ${this.renderNotes(idNotes)}
+            <hr>
+            <div id="${idParamContainer}">
+                ${this.renderParameters(entity)}
+            </div>
+            ${this.renderReturns(entity, idReturnType, idReturnNotes)}
+            <hr>
+            ${this.renderPreview(false)}
+        `;
+        }
+        listen() {
+            super.listen();
+            const { app, idBtnDelete, idBtnEdit, idNotes, idReturnType, idReturnNotes } = this;
+            const { entity } = this.options;
+            this.listenEdit(entity, idBtnEdit, 'edit_function', `Edit Global Lua Function`);
+            this.listenNotes(entity, idNotes);
+            this.listenParameters(entity, 'function');
+            this.listenReturns(entity, idReturnType, idReturnNotes, idReturnType);
+            this.listenPreview();
+            (0, util_20.$get)(idBtnDelete).on('click', () => {
+                app.modalConfirm.show(() => {
+                    const entity = this.options.entity;
+                    delete app.catalog.functions[entity.name];
+                    app.hideCard();
+                    return;
+                }, `Delete Global Lua Function ${entity.name}`);
+            });
+        }
+        refreshParameters() {
+            const { idParamContainer } = this;
+            const { entity } = this.options;
+            const $paramContainer = (0, util_20.$get)(idParamContainer);
+            $paramContainer.empty();
+            $paramContainer.html(this.renderParameters(entity, true));
+            this.listenParameters(entity, 'function');
+        }
+    }
+    exports.LuaGlobalFunctionCard = LuaGlobalFunctionCard;
+});
+define("src/asledgehammer/mallet/component/lua/LuaGlobalFieldCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_10, LuaTypeScriptGenerator_10, util_21, LuaCard_9) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.LuaGlobalFieldCard = void 0;
+    class LuaGlobalFieldCard extends LuaCard_9.LuaCard {
+        constructor(app, options) {
+            super(app, options);
+            this.idDefaultValue = `${this.id}-default-value`;
+            this.idNotes = `${this.id}-notes`;
+            this.idType = `${this.id}-type`;
+            this.idBtnEdit = `${this.id}-btn-edit`;
+            this.idBtnDelete = `${this.id}-btn-delete`;
+        }
+        onRenderPreview(language) {
+            if (!this.options)
+                return '';
+            const { entity } = this.options;
+            switch (language) {
+                case 'lua': {
+                    return (0, LuaLuaGenerator_10.generateGlobalLuaField)(entity);
+                }
+                case 'typescript': {
+                    return (0, LuaTypeScriptGenerator_10.luaFieldToTS)(entity, 0, 100);
+                }
+                case 'json': {
+                    return JSON.stringify(entity.toJSON(), null, 2);
+                }
+            }
+        }
+        onHeaderHTML() {
+            const { idBtnEdit, idBtnDelete } = this;
+            const { entity } = this.options;
+            let name = `_G.${entity.name}`;
+            return (0, util_21.html) ` 
+            <div class="row">
+                <!-- Visual Category Badge -->
+                <div class="col-auto ps-2 pe-2">
+                    <div class="text-bg-primary px-2 border border-1 border-light-half desaturate shadow">
+                        <strong>Global Lua Field</strong>
+                    </div>
+                </div>
+                <div class="col-auto p-0">
+                    <h5 class="card-text"><strong>${name}</strong></h5> 
+                </div>
+                <div style="position: absolute; top: 5px; width: 100%; height: 32px;">
+                    <!-- Delete Button -->
+                    <button id="${idBtnDelete}" class="btn btn-sm responsive-btn float-end ms-1" title="Delete Global Lua Field">
+                        <div class="btn-pane">
+                            <i class="fa-solid fa-xmark"></i>
+                        </div>
+                    </button>
+                    <!-- Edit Button -->
+                    <button id="${idBtnEdit}" class="btn btn-sm responsive-btn float-end" title="Edit Name">
+                        <div class="btn-pane">
+                            <i class="fa-solid fa-pen"></i>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        `;
+        }
+        onBodyHTML() {
+            const { idDefaultValue, idNotes, idType } = this;
+            const { entity } = this.options;
+            return (0, util_21.html) `
+            <div>
+                ${this.renderNotes(idNotes)}
+                ${this.renderDefaultValue(entity.defaultValue, idDefaultValue)}
+                <hr>
+                ${this.renderType(entity.name, entity.type, entity.nullable, idType)}
+                <hr>
+                ${this.renderPreview(false)}
+            </div>
+        `;
+        }
+        listen() {
+            super.listen();
+            const { app, idBtnDelete, idBtnEdit, idDefaultValue, idNotes, idType } = this;
+            const { entity } = this.options;
+            this.listenNotes(entity, idNotes);
+            this.listenDefaultValue(entity, idDefaultValue);
+            this.listenType(entity, idType, idType);
+            this.listenEdit(entity, idBtnEdit, 'edit_field', 'Edit Global Field Name');
+            this.listenPreview();
+            (0, util_21.$get)(idBtnDelete).on('click', () => {
+                app.modalConfirm.show(() => {
+                    const entity = this.options.entity;
+                    delete app.catalog.fields[entity.name];
+                    app.hideCard();
+                }, `Delete Global Lua Field ${entity.name}`);
+            });
+        }
+    }
+    exports.LuaGlobalFieldCard = LuaGlobalFieldCard;
+});
+define("src/asledgehammer/mallet/component/java/JavaGlobalMethodCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaLuaGenerator2_7, JavaTypeScriptGenerator_7, util_22, JavaCard_5) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.JavaGlobalMethodCard = void 0;
+    class JavaGlobalMethodCard extends JavaCard_5.JavaCard {
+        constructor(app, options) {
+            super(app, options);
+            this.idNotes = `${this.id}-notes`;
+            this.idReturnType = `${this.id}-return-type`;
+            this.idReturnNotes = `${this.id}-return-notes`;
+            this.idBtnDelete = `${this.id}-btn-delete`;
+            this.idBtnEdit = `${this.id}-btn-edit`;
+            this.idParamContainer = `${this.id}-parameter-container`;
+        }
+        onRenderPreview(language) {
+            if (!this.options)
+                return '';
+            switch (language) {
+                case 'lua': {
+                    const { entity } = this.options;
+                    const classEntity = this.app.catalog.selectedCard.options.entity;
+                    const className = classEntity.name;
+                    return (0, JavaLuaGenerator2_7.generateJavaMethod)(className, entity.isStatic() ? '.' : ':', entity);
+                }
+                case 'typescript': {
+                    return (0, JavaTypeScriptGenerator_7.javaMethodToTS)(this.options.entity, 0, 100);
+                }
+                case 'json': {
+                    return JSON.stringify(this.options.entity.toJSON(), null, 2);
+                }
+            }
+        }
+        onHeaderHTML() {
+            const { entity } = this.options;
+            let params = '';
+            for (const param of entity.parameters) {
+                params += `${param.name}, `;
+            }
+            if (params.length)
+                params = params.substring(0, params.length - 2);
+            let name = `_G.${entity.name}(${params})`;
+            return (0, util_22.html) ` 
+            <div class="row">
+                <!-- Visual Category Badge -->
+                <div class="col-auto ps-2 pe-2">
+                    <div class="text-bg-success px-2 border border-1 border-light-half desaturate shadow">
+                        <strong>Global Java Method</strong>
+                    </div>
+                </div>
+                <div class="col-auto p-0">
+                    <h5 class="card-text font-monospace" style="position: relative; top: 1px;"><strong>${name}</strong></h5> 
+                </div>
+            </div>
+        `;
+        }
+        onBodyHTML() {
+            const { idNotes, idParamContainer, idReturnType, idReturnNotes } = this;
+            const { entity } = this.options;
+            return (0, util_22.html) `
+            ${this.renderNotes(idNotes)}
+            <hr>
+            <div id="${idParamContainer}">
+                ${this.renderParameters(entity)}
+            </div>
+            ${this.renderReturns(entity, idReturnType, idReturnNotes)}
+            <hr>
+            ${this.renderPreview(false)}
+        `;
+        }
+        listen() {
+            super.listen();
+            const { app, idBtnDelete, idNotes, idReturnNotes } = this;
+            const { entity } = this.options;
+            this.listenNotes(entity, idNotes);
+            this.listenParameters(entity);
+            this.listenReturns(entity, idReturnNotes);
+            this.listenPreview();
+            (0, util_22.$get)(idBtnDelete).on('click', () => {
+                app.modalConfirm.show(() => {
+                    delete app.catalog.methods[entity.name];
+                    app.hideCard();
+                }, `Delete Global Java Method ${entity.name}`);
+            });
+        }
+        refreshParameters() {
+            const { idParamContainer } = this;
+            const { entity } = this.options;
+            const $paramContainer = (0, util_22.$get)(idParamContainer);
+            $paramContainer.empty();
+            $paramContainer.html(this.renderParameters(entity, true));
+            this.listenParameters(entity);
+        }
+    }
+    exports.JavaGlobalMethodCard = JavaGlobalMethodCard;
+});
+define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/mallet/component/lua/LuaClassCard", "src/asledgehammer/mallet/component/java/JavaClassCard", "src/asledgehammer/mallet/component/Sidebar", "src/asledgehammer/mallet/component/lua/LuaConstructorCard", "src/asledgehammer/mallet/component/lua/LuaFieldCard", "src/asledgehammer/mallet/component/lua/LuaFunctionCard", "src/asledgehammer/mallet/component/java/JavaConstructorCard", "src/asledgehammer/mallet/component/java/JavaFieldCard", "src/asledgehammer/mallet/component/java/JavaMethodCard", "src/asledgehammer/mallet/modal/ModalName", "src/asledgehammer/mallet/modal/ModalConfirm", "src/asledgehammer/mallet/component/Toast", "src/asledgehammer/mallet/Catalog", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/mallet/component/lua/LuaTableCard", "src/asledgehammer/mallet/component/lua/LuaGlobalFunctionCard", "src/asledgehammer/mallet/component/lua/LuaGlobalFieldCard", "src/asledgehammer/mallet/component/java/JavaGlobalMethodCard"], function (require, exports, hljs, LuaLuaGenerator_11, RosettaLuaClass_7, RosettaLuaConstructor_2, util_23, RosettaJavaClass_6, JavaLuaGenerator2_8, LuaClassCard_1, JavaClassCard_1, Sidebar_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, JavaConstructorCard_1, JavaFieldCard_1, JavaMethodCard_1, ModalName_1, ModalConfirm_1, Toast_1, Catalog_1, JavaTypeScriptGenerator_8, LuaTypeScriptGenerator_11, RosettaLuaTable_7, LuaTableCard_1, LuaGlobalFunctionCard_1, LuaGlobalFieldCard_1, JavaGlobalMethodCard_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.App = void 0;
@@ -7575,6 +8526,58 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
         async init() {
             this.createSidebar();
         }
+        hideCard() {
+            this.$screenContent.empty();
+            this.catalog.selected = undefined;
+            this.catalog.selectedCard = undefined;
+            this.sidebar.itemTree.selected = undefined;
+            this.sidebar.itemTree.selectedID = undefined;
+            this.sidebar.objTree.selected = undefined;
+            this.sidebar.objTree.selectedID = undefined;
+            this.sidebar.populateTrees();
+        }
+        showGlobalLuaField(entity) {
+            this.catalog.selected = undefined;
+            this.catalog.selectedCard = undefined;
+            this.sidebar.objTree.globalSelected = true;
+            this.$screenContent.empty();
+            const card = new LuaGlobalFieldCard_1.LuaGlobalFieldCard(this, { entity });
+            this.$screenContent.append(card.render());
+            card.listen();
+            card.update();
+            this.sidebar.itemTree.selectedID = `global-lua-field-${entity.name}`;
+            this.sidebar.populateTrees();
+            this.renderCode();
+            return card;
+        }
+        showGlobalLuaFunction(entity) {
+            this.catalog.selected = undefined;
+            this.catalog.selectedCard = undefined;
+            this.sidebar.objTree.globalSelected = true;
+            this.$screenContent.empty();
+            const card = new LuaGlobalFunctionCard_1.LuaGlobalFunctionCard(this, { entity });
+            this.$screenContent.append(card.render());
+            card.listen();
+            card.update();
+            this.sidebar.itemTree.selectedID = `global-lua-function-${entity.name}`;
+            this.sidebar.populateTrees();
+            this.renderCode();
+            return card;
+        }
+        showGlobalJavaMethod(entity) {
+            this.catalog.selected = undefined;
+            this.catalog.selectedCard = undefined;
+            this.sidebar.objTree.globalSelected = true;
+            this.$screenContent.empty();
+            const card = new JavaGlobalMethodCard_1.JavaGlobalMethodCard(this, { entity });
+            this.$screenContent.append(card.render());
+            card.listen();
+            card.update();
+            this.sidebar.itemTree.selectedID = `global-java-method-${entity.name}`;
+            this.sidebar.populateTrees();
+            this.renderCode();
+            return card;
+        }
         showLuaClass(entity) {
             this.$screenContent.empty();
             // For new object-selections, unselect prior items.
@@ -7586,6 +8589,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             this.$screenContent.append(this.catalog.selectedCard.render());
             this.catalog.selectedCard.listen();
             this.catalog.selectedCard.update();
+            this.sidebar.objTree.globalSelected = false;
             this.sidebar.populateTrees();
             this.renderCode();
             return this.catalog.selectedCard;
@@ -7677,6 +8681,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             this.$screenContent.append(this.catalog.selectedCard.render());
             this.catalog.selectedCard.listen();
             this.catalog.selectedCard.update();
+            this.sidebar.objTree.globalSelected = false;
             this.sidebar.populateTrees();
             this.renderCode();
             return this.catalog.selectedCard;
@@ -7723,6 +8728,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             this.catalog.selectedCard.listen();
             this.catalog.selectedCard.update();
             this.sidebar.populateTrees();
+            this.sidebar.objTree.globalSelected = false;
             this.renderCode();
             return this.catalog.selectedCard;
         }
@@ -7774,60 +8780,78 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             return card;
         }
         renderCode() {
-            const $renderPane = (0, util_20.$get)('code-preview');
+            const $renderPane = (0, util_23.$get)('code-preview');
             $renderPane.empty();
-            /* (Keep empty if nothing renders) */
-            if (!this.catalog.selectedCard) {
-                this.previewCode = '';
-                return;
-            }
-            const { selected } = this.catalog;
             let highlightedCode = '';
-            if (selected instanceof RosettaLuaClass_7.RosettaLuaClass) {
+            if (this.sidebar.objTree.globalSelected) {
                 switch (this.languageMode) {
                     case 'lua': {
-                        this.previewCode = '--- @meta\n\n' + (0, LuaLuaGenerator_9.generateLuaClass)(selected);
+                        this.previewCode = this.catalog.toLuaTypings();
                         break;
                     }
                     case 'typescript': {
-                        this.previewCode = (0, LuaTypeScriptGenerator_8.luaClassToTS)(selected, true);
+                        this.previewCode = this.catalog.toTypeScript();
                         break;
                     }
                     case 'json': {
-                        this.previewCode = JSON.stringify(selected.toJSON(), null, 2);
+                        this.previewCode = JSON.stringify(this.catalog.toJSON(), null, 2);
                         break;
                     }
                 }
             }
-            else if (selected instanceof RosettaLuaTable_7.RosettaLuaTable) {
-                switch (this.languageMode) {
-                    case 'lua': {
-                        this.previewCode = '--- @meta\n\n' + (0, LuaLuaGenerator_9.generateLuaTable)(selected);
-                        break;
-                    }
-                    case 'typescript': {
-                        this.previewCode = (0, LuaTypeScriptGenerator_8.luaTableToTS)(selected, true);
-                        break;
-                    }
-                    case 'json': {
-                        this.previewCode = JSON.stringify(selected.toJSON(), null, 2);
-                        break;
+            else {
+                /* (Keep empty if nothing renders) */
+                if (!this.catalog.selectedCard) {
+                    this.previewCode = '';
+                    return;
+                }
+                const { selected } = this.catalog;
+                if (selected instanceof RosettaLuaClass_7.RosettaLuaClass) {
+                    switch (this.languageMode) {
+                        case 'lua': {
+                            this.previewCode = '--- @meta\n\n' + (0, LuaLuaGenerator_11.generateLuaClass)(selected);
+                            break;
+                        }
+                        case 'typescript': {
+                            this.previewCode = (0, LuaTypeScriptGenerator_11.luaClassToTS)(selected, true);
+                            break;
+                        }
+                        case 'json': {
+                            this.previewCode = JSON.stringify(selected.toJSON(), null, 2);
+                            break;
+                        }
                     }
                 }
-            }
-            else if (selected instanceof RosettaJavaClass_6.RosettaJavaClass) {
-                switch (this.languageMode) {
-                    case 'lua': {
-                        this.previewCode = '--- @meta\n\n' + (0, JavaLuaGenerator2_7.generateJavaClass)(selected);
-                        break;
+                else if (selected instanceof RosettaLuaTable_7.RosettaLuaTable) {
+                    switch (this.languageMode) {
+                        case 'lua': {
+                            this.previewCode = '--- @meta\n\n' + (0, LuaLuaGenerator_11.generateLuaTable)(selected);
+                            break;
+                        }
+                        case 'typescript': {
+                            this.previewCode = (0, LuaTypeScriptGenerator_11.luaTableToTS)(selected, true);
+                            break;
+                        }
+                        case 'json': {
+                            this.previewCode = JSON.stringify(selected.toJSON(), null, 2);
+                            break;
+                        }
                     }
-                    case 'typescript': {
-                        this.previewCode = (0, JavaTypeScriptGenerator_7.javaClassToTS)(selected, true, true);
-                        break;
-                    }
-                    case 'json': {
-                        this.previewCode = JSON.stringify(selected.toJSON(), null, 2);
-                        break;
+                }
+                else if (selected instanceof RosettaJavaClass_6.RosettaJavaClass) {
+                    switch (this.languageMode) {
+                        case 'lua': {
+                            this.previewCode = '--- @meta\n\n' + (0, JavaLuaGenerator2_8.generateJavaClass)(selected);
+                            break;
+                        }
+                        case 'typescript': {
+                            this.previewCode = (0, JavaTypeScriptGenerator_8.javaClassToTS)(selected, true, true);
+                            break;
+                        }
+                        case 'json': {
+                            this.previewCode = JSON.stringify(selected.toJSON(), null, 2);
+                            break;
+                        }
                     }
                 }
             }
@@ -7843,13 +8867,13 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             this.modalName.listen();
             this.modalConfirm.listen();
             const _this = this;
-            const $btnCopy = (0, util_20.$get)('btn-code-preview-copy');
-            const $container = (0, util_20.$get)('screen-content-container');
-            const $cardPreview = (0, util_20.$get)('screen-content-end-container');
-            const $codePreview = (0, util_20.$get)('code-preview');
-            const $btnCardCode = (0, util_20.$get)('btn-card-code');
-            const $iconCard = (0, util_20.$get)('icon-card');
-            const $iconCode = (0, util_20.$get)('icon-code');
+            const $btnCopy = (0, util_23.$get)('btn-code-preview-copy');
+            const $container = (0, util_23.$get)('screen-content-container');
+            const $cardPreview = (0, util_23.$get)('screen-content-end-container');
+            const $codePreview = (0, util_23.$get)('code-preview');
+            const $btnCardCode = (0, util_23.$get)('btn-card-code');
+            const $iconCard = (0, util_23.$get)('icon-card');
+            const $iconCode = (0, util_23.$get)('icon-code');
             let mode = 'card';
             let cog = false;
             let hideCog = () => {
@@ -7946,7 +8970,7 @@ define("src/asledgehammer/JSONSerializable", ["require", "exports"], function (r
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
 });
-define("src/asledgehammer/mallet/component/LabelComponent", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/Component"], function (require, exports, util_21, Component_3) {
+define("src/asledgehammer/mallet/component/LabelComponent", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/Component"], function (require, exports, util_24, Component_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LabelComponent = void 0;
@@ -7955,12 +8979,12 @@ define("src/asledgehammer/mallet/component/LabelComponent", ["require", "exports
             super(options);
         }
         onRender() {
-            return (0, util_21.html) ``;
+            return (0, util_24.html) ``;
         }
     }
     exports.LabelComponent = LabelComponent;
 });
-define("src/asledgehammer/mallet/component/SidebarPanelButton", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/Component"], function (require, exports, util_22, Component_4) {
+define("src/asledgehammer/mallet/component/SidebarPanelButton", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/Component"], function (require, exports, util_25, Component_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.SidebarPanelButton = void 0;
@@ -7969,7 +8993,7 @@ define("src/asledgehammer/mallet/component/SidebarPanelButton", ["require", "exp
             super(options);
         }
         listen() {
-            (0, util_22.$get)(this.id).on('click', () => {
+            (0, util_25.$get)(this.id).on('click', () => {
                 if (this.options && this.options.onclick) {
                     this.options.onclick();
                 }
@@ -7977,7 +9001,7 @@ define("src/asledgehammer/mallet/component/SidebarPanelButton", ["require", "exp
         }
         onRender() {
             const { label } = this.options;
-            return (0, util_22.html) `
+            return (0, util_25.html) `
             <button class="btn btn-primary col-12 rounded-0">${label}</button>
         `;
         }
@@ -8018,7 +9042,7 @@ define("src/asledgehammer/rosetta/RosettaFileInfo", ["require", "exports"], func
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
 });
-define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asledgehammer/rosetta/Rosetta", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/lua/RosettaLuaTableField", "src/asledgehammer/rosetta/lua/RosettaLuaClass"], function (require, exports, Rosetta_1, RosettaEntity_16, RosettaLuaFunction_3, RosettaLuaTable_8, RosettaLuaTableField_3, RosettaLuaClass_8) {
+define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asledgehammer/rosetta/Rosetta", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/lua/RosettaLuaTableField", "src/asledgehammer/rosetta/lua/RosettaLuaClass"], function (require, exports, Rosetta_1, RosettaEntity_16, RosettaLuaFunction_5, RosettaLuaTable_8, RosettaLuaTableField_3, RosettaLuaClass_8) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RosettaFile = void 0;
@@ -8051,7 +9075,7 @@ define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asle
                 const rawFunctions = raw.functions;
                 for (const name of Object.keys(rawFunctions)) {
                     const rawFunction = rawFunctions[name];
-                    const func = new RosettaLuaFunction_3.RosettaLuaFunction(name, rawFunction);
+                    const func = new RosettaLuaFunction_5.RosettaLuaFunction(name, rawFunction);
                     this.functions[func.name] = this.functions[name] = func;
                 }
             }
@@ -8129,7 +9153,7 @@ define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asle
         createGlobalLuaFunction(name) {
             /* (Make sure the object can be modified) */
             this.checkReadOnly();
-            const luaFunction = new RosettaLuaFunction_3.RosettaLuaFunction(name);
+            const luaFunction = new RosettaLuaFunction_5.RosettaLuaFunction(name);
             // (Only check for the file instance)
             if (this.functions[luaFunction.name]) {
                 throw new Error(`A global Lua Function already exists: ${luaFunction.name}`);

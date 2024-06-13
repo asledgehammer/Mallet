@@ -383,7 +383,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         `;
     }
 
-    listenReturns(entity: { returns: RosettaLuaReturns }, idReturnType: string, idReturnNotes: string, idSelect: string): void {
+    listenReturns(entity: { name: string, returns: RosettaLuaReturns }, idReturnType: string, idReturnNotes: string, idSelect: string): void {
         const { returns } = entity;
 
         createDeltaEditor(idReturnNotes, entity.returns.notes!, (markdown: string) => {
@@ -393,8 +393,11 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
             this.app.renderCode();
         });
 
+        const _this = this;
         const $select = $get(idReturnType);
         const $customInput = $get(`${idSelect}-custom-input`);
+        const idNullable = `${entity.name}-returns-nullable`;
+
         $select.on('change', (value) => {
             returns.type = value.target.value;
             if (returns.type === 'custom') {
@@ -436,6 +439,13 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                     this.app.renderCode();
                     break;
             }
+        });
+
+        /* (Nullable CheckBox) */
+        $get(idNullable).on('change', function () {
+            entity.returns.nullable = this.checked;
+            _this.update();
+            _this.app.renderCode();
         });
     }
 
@@ -656,5 +666,5 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
 }
 
 export type LuaCardOptions = ComponentOptions & {
-    entity: RosettaEntity;
+    entity: RosettaEntity | undefined;
 };

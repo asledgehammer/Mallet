@@ -167,7 +167,6 @@ export class Sidebar extends Component<SidebarOptions> {
             }
         });
 
-
         $doc.on('click', '#btn-new-lua-table', () => {
             try {
                 $titleName.html('New Lua Table');
@@ -179,6 +178,78 @@ export class Sidebar extends Component<SidebarOptions> {
                 app.modalName.show(true);
             } catch (e) {
                 app.toast.alert(`Failed to create LuaTable.`, 'error');
+                console.error(e);
+            }
+        });
+
+        $doc.on('click', '#btn-new-lua-value', () => {
+            try {
+                this.app.modalName.nameMode = 'new_value';
+                $titleName.html('Create Lua Value');
+                $inputName.val('');
+                $btnName.html('Create');
+                $btnName.removeClass('btn-primary');
+                $btnName.addClass('btn-success');
+                this.app.modalName.show(true);
+            } catch (e) {
+                app.toast.alert(`Failed to create Lua Value.`, 'error');
+                console.error(e);
+            }
+        });
+
+        $doc.on('click', '#btn-new-lua-field', () => {
+            try {
+                this.app.modalName.nameMode = 'new_field';
+                if (this.objTree.globalSelected) {
+                    $titleName.html('Create Global Lua Field');
+                } else {
+                    $titleName.html('Create Lua Field');
+                }
+                $inputName.val('');
+                $btnName.html('Create');
+                $btnName.removeClass('btn-primary');
+                $btnName.addClass('btn-success');
+                this.app.modalName.show(true);
+            } catch (e) {
+                app.toast.alert(`Failed to create Lua Field.`, 'error');
+                console.error(e);
+            }
+        });
+
+        $doc.on('click', '#btn-new-lua-function', () => {
+            try {
+                this.app.modalName.nameMode = 'new_function';
+                if (this.objTree.globalSelected) {
+                    $titleName.html('Create Global Lua Function');
+                } else {
+                    $titleName.html('Create Lua Function');
+                }
+                $inputName.val('');
+                $btnName.html('Create');
+                $btnName.removeClass('btn-primary');
+                $btnName.addClass('btn-success');
+                this.app.modalName.show(true);
+            } catch (e) {
+                app.toast.alert(`Failed to create Lua Function.`, 'error');
+                console.error(e);
+            }
+        });
+
+        $doc.on('click', '#btn-new-lua-method', () => {
+            try {
+                this.app.modalName.nameMode = 'new_method';
+                if (this.objTree.globalSelected) {
+                    $titleName.html('Create Global Lua Method');
+                } else {
+                    $titleName.html('Create Lua Method');
+                }
+                $inputName.val('');
+                $btnName.html('Create');
+                $btnName.removeClass('btn-primary');
+                $btnName.addClass('btn-success');
+                this.app.modalName.show(true);
+            } catch (e) {
+                app.toast.alert(`Failed to create Lua Method.`, 'error');
                 console.error(e);
             }
         });
@@ -380,7 +451,7 @@ export class Sidebar extends Component<SidebarOptions> {
                         }
                     ],
                 });
-                
+
                 const jsonFile: any = {
                     $schema: 'https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-schema.json',
                 };
@@ -481,78 +552,6 @@ export class Sidebar extends Component<SidebarOptions> {
                 /* (Ignore aborted dialogs) */
                 if (e instanceof DOMException && e.name === 'AbortError') return;
                 app.toast.alert(`Failed to save JSON file.`, 'error');
-                console.error(e);
-            }
-        });
-
-        $doc.on('click', '#btn-new-lua-value', () => {
-            try {
-                const { selectedCard: card } = app.catalog;
-                if (!card) return;
-                const clazz = card.options!.entity;
-                if (!clazz) return;
-
-                this.app.modalName.nameMode = 'new_value';
-                $titleName.html('Create Lua Value');
-                $inputName.val('');
-                $btnName.val('Create');
-                this.app.modalName.show(true);
-            } catch (e) {
-                app.toast.alert(`Failed to create Lua Value.`, 'error');
-                console.error(e);
-            }
-        });
-
-        $doc.on('click', '#btn-new-lua-field', () => {
-            try {
-                const { selectedCard: card } = app.catalog;
-                if (!card) return;
-                const clazz = card.options!.entity;
-                if (!clazz) return;
-
-                this.app.modalName.nameMode = 'new_field';
-                $titleName.html('Create Lua Field');
-                $inputName.val('');
-                $btnName.val('Create');
-                this.app.modalName.show(true);
-            } catch (e) {
-                app.toast.alert(`Failed to create Lua Field.`, 'error');
-                console.error(e);
-            }
-        });
-
-        $doc.on('click', '#btn-new-lua-function', () => {
-            try {
-                const { selectedCard: card } = app.catalog;
-                if (!card) return;
-                const clazz = card.options!.entity;
-                if (!clazz) return;
-
-                this.app.modalName.nameMode = 'new_function';
-                $titleName.html('Create Lua Function');
-                $inputName.val('');
-                $btnName.val('Create');
-                this.app.modalName.show(true);
-            } catch (e) {
-                app.toast.alert(`Failed to create Lua Function.`, 'error');
-                console.error(e);
-            }
-        });
-
-        $doc.on('click', '#btn-new-lua-method', () => {
-            try {
-                const { selectedCard: card } = app.catalog;
-                if (!card) return;
-                const clazz = card.options!.entity;
-                if (!clazz) return;
-
-                this.app.modalName.nameMode = 'new_method';
-                $titleName.html('Create Lua Method');
-                $inputName.val('');
-                $btnName.val('Create');
-                this.app.modalName.show(true);
-            } catch (e) {
-                app.toast.alert(`Failed to create Lua Method.`, 'error');
                 console.error(e);
             }
         });

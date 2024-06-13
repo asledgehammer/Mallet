@@ -1,3 +1,4 @@
+import { tsType } from "../typescript/LuaTypeScriptGenerator";
 import { RosettaLuaClass } from "./RosettaLuaClass"
 import { RosettaLuaConstructor } from "./RosettaLuaConstructor";
 import { RosettaLuaField } from "./RosettaLuaField";
@@ -18,6 +19,32 @@ export const generateLuaField = (field: RosettaLuaField | RosettaLuaTableField):
     const notes = field.notes && field.notes.length ? field.notes.replace(/\n/g, '<br>') : '';
     return `--- @field ${field.name} ${luaType(field.type, field.nullable)} ${notes}`;
 };
+
+export function generateGlobalLuaField(field: RosettaLuaField): string {
+    const ds: string[] = [];
+
+    // (Field notes)
+    if (field.notes && field.notes.length) {
+        const notes = paginateNotes(field.notes, 96);
+        for (const line of notes) ds.push(line);
+    }
+
+    // (Field type)
+    ds.push(`@type ${tsType(field.type, field.nullable)}`);
+
+    let s = `${field.name}`;
+    if (field.defaultValue) {
+        let value = field.defaultValue;
+        // Try parsing as a int.
+        if (parseInt(value) == null && parseFloat(value) == null) {
+            // String-wrapping with escaped double-quotes.
+            value = `"${value.replace(/"/g, '\\"').replace(/\n/g, '\\n')}"`;
+        }
+        s += ` = ${value}`;
+    }
+
+    return applyLuaDocumentation(ds, 0) + `\n${s};`;
+}
 
 export const generateLuaValue = (containerName: string, field: RosettaLuaField | RosettaLuaTableField): string => {
 
@@ -100,12 +127,72 @@ export const generateLuaFunction = (className: string, operator: ':' | '.', func
     }
 
     let fName = func.name;
-    if(fName === '__toString__') fName = 'toString';
+    if (fName === '__toString__') fName = 'toString';
 
 
     let fs = `function ${className}${operator}${fName}${generateLuaParameterBody(func.parameters)} end`;
     if (fs.length > 100) {
         fs = `function ${className}${operator}${fName}(\n`;
+        for (const parameter of func.parameters) {
+            fs += `    ${parameter.name},\n`;
+        }
+        fs = fs.substring(0, fs.length - 2);
+        fs += `\n) end`;
+    }
+
+    return `${applyLuaDocumentation(ds, 0)}${fs}`;
+};
+
+export const generateGlobalLuaFunction = (func: RosettaLuaFunction): string => {
+
+    let ds: string[] = [];
+
+    // Function Description
+    if (func.notes && func.notes.length) {
+        const notes = paginateNotes(func.notes, 100);
+        for (const line of notes) {
+            ds.push(line);
+        }
+    }
+
+    // Parameter Documentation
+    if (func.parameters && func.parameters.length) {
+        if (ds.length) ds.push('');
+        for (const param of func.parameters) {
+            const pps = `@param ${param.name}${param.optional ? '?' : ''} ${luaType(param.type, param.nullable)}`;
+            if (param.notes && param.notes.trim().length) {
+                const notes = paginateNotes(pps + ' ' + param.notes.trim(), 100);
+                for (const line of notes) {
+                    ds.push(line);
+                }
+            } else {
+                ds.push(pps);
+            }
+        }
+    }
+
+    // Returns Documentation
+    if (func.returns) {
+        if (ds.length) ds.push('');
+        let rs = `@return ${luaType(func.returns.type, func.returns.nullable)}`;
+        if (func.returns.notes && func.returns.notes.length) {
+            rs += ' result';
+            const notes = paginateNotes(rs + ' ' + func.returns.notes.trim(), 100);
+            for (const line of notes) {
+                ds.push(line);
+            }
+        } else {
+            ds.push(rs);
+        }
+    }
+
+    let fName = func.name;
+    if (fName === '__toString__') fName = 'toString';
+
+
+    let fs = `function ${fName}${generateLuaParameterBody(func.parameters)} end`;
+    if (fs.length > 100) {
+        fs = `function ${fName}(\n`;
         for (const parameter of func.parameters) {
             fs += `    ${parameter.name},\n`;
         }

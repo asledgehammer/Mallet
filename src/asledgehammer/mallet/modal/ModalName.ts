@@ -5,6 +5,7 @@ import { RosettaJavaMethod } from "../../rosetta/java/RosettaJavaMethod";
 import { RosettaJavaParameter } from "../../rosetta/java/RosettaJavaParameter";
 import { RosettaLuaClass } from "../../rosetta/lua/RosettaLuaClass";
 import { RosettaLuaConstructor } from "../../rosetta/lua/RosettaLuaConstructor";
+import { RosettaLuaField } from "../../rosetta/lua/RosettaLuaField";
 import { RosettaLuaFunction } from "../../rosetta/lua/RosettaLuaFunction";
 import { RosettaLuaTable } from "../../rosetta/lua/RosettaLuaTable";
 import { $get, isNameValid, validateLuaVariableName } from "../../rosetta/util";
@@ -40,6 +41,152 @@ export class ModalName {
         this.nameMode = null;
     }
 
+    onGlobalCreate() {
+        const { $inputName, app } = this;
+        const { catalog, sidebar, toast } = app;
+        const name = validateLuaVariableName($inputName.val()!).trim();
+        const nameOld = this.nameSelected!;
+        switch (this.nameMode) {
+            case 'new_field': {
+                try {
+                    const field = new RosettaLuaField(name);
+                    catalog.fields[field.name] = field;
+                    app.showGlobalLuaField(field);
+                    toast.alert('Created Global Lua Field.', 'success');
+                } catch (e) {
+                    toast.alert(`Failed to create Global Lua Field.`, 'error');
+                    console.error(e);
+                }
+                break;
+            }
+            case 'edit_field': {
+                try {
+                    const field = catalog.fields[nameOld];
+                    field.name = name;
+                    catalog.fields[name] = field;
+                    delete catalog.fields[nameOld];
+                    app.showLuaClassField(field);
+                    toast.alert('Edited Global Lua Field.');
+                } catch (e) {
+                    toast.alert(`Failed to edit Global Lua Field.`, 'error');
+                    console.error(e);
+                }
+                break;
+            }
+            case 'new_function': {
+                try {
+                    const func = new RosettaLuaFunction(name, { returns: { type: 'void' } });
+                    catalog.functions[func.name] = func;
+                    app.showGlobalLuaFunction(func);
+                    toast.alert('Created Global Lua Function.', 'success');
+                } catch (e) {
+                    toast.alert(`Failed to create Global Lua Function.`, 'error');
+                    console.error(e);
+                }
+                break;
+            }
+            case 'edit_function': {
+                try {
+                    const funcName = nameOld;
+                    const name = validateLuaVariableName($inputName.val()!).trim();
+                    const func = catalog.functions[funcName];
+                    func.name = name;
+                    catalog.functions[name] = func;
+                    delete catalog.functions[nameOld];
+                    app.showGlobalLuaFunction(func);
+                    toast.alert('Created Global Lua Function.', 'success');
+                } catch (e) {
+                    toast.alert(`Failed to create Global Lua Function.`, 'error');
+                    console.error(e);
+                }
+                break;
+            }
+            case 'new_parameter': {
+                try {
+                    const split = nameOld.split('-');
+                    const type = split[0];
+                    const funcName = split[1];
+
+                    let func: RosettaLuaFunction | RosettaJavaMethod | undefined = undefined;
+
+                    if (type === 'function') {
+                        func = catalog.functions[funcName];
+                    } else {
+                        throw new Error('Creating parameters for Java Methods is not supported.');
+                    }
+
+                    if (!func) {
+                        toast.alert('Unknown function: ' + funcName, 'error');
+                        return;
+                    }
+
+                    func.addParameter(name, 'any');
+                    app.showGlobalLuaFunction(func);
+
+                    toast.alert('Created Global Lua Function Parameter.', 'success');
+                } catch (e) {
+                    toast.alert(`Failed to create Global Lua Function Parameter.`, 'error');
+                    console.error(e);
+                }
+                break;
+            }
+            case 'edit_parameter': {
+                try {
+                    const split = nameOld.split('-');
+                    const funcName = split[0];
+                    const paramName = split[1];
+                    let type: 'method' | 'function' | null = null;
+                    let func: RosettaJavaMethod | RosettaLuaFunction | undefined = undefined;
+                    let param = null;
+                    // First, check methods.
+                    func = this.javaMethod;
+                    // Second, check functions.
+                    if (!func) {
+                        for (const methodName of Object.keys(catalog.functions)) {
+                            if (methodName === funcName) {
+                                func = catalog.functions[methodName];
+                                type = 'function';
+                                break;
+                            }
+                        }
+                    }
+                    if (!func) {
+                        console.warn(`Unknown function / method: _G.${funcName}!`);
+                        break;
+                    }
+                    for (const next of func.parameters) {
+                        if (next.name === paramName) {
+                            param = next;
+                            break;
+                        }
+                    }
+                    if (!param) {
+                        console.warn(`Unknown parameter: _G.${funcName}#${paramName}!`);
+                        break;
+                    }
+                    param.name = name;
+                    if (type === 'function') {
+                        app.showGlobalLuaFunction(func as RosettaLuaFunction);
+                        toast.alert('Edited Global Lua Function Parameter.');
+                    } else if (type === 'method') {
+                        app.showGlobalJavaMethod(func as RosettaJavaMethod);
+                        toast.alert('Edited Global Java Method Parameter.');
+                    }
+                } catch (e) {
+                    toast.alert(`Failed to edit Parameter.`, 'error');
+                    console.error(e);
+                }
+                break;
+            }
+            default: {
+                throw new Error('Unsupported Global name-mode: ' + this.nameMode);
+            }
+        }
+
+        this.nameSelected = undefined;
+        this.modalName.hide();
+    }
+
     listen() {
 
         const { app, $inputName, $btnName } = this;
@@ -71,6 +218,13 @@ export class ModalName {
         });
 
         this.$btnName.on('click', () => {
+
+            // Handle global creation elsewhere.
+            if (this.app.sidebar.objTree.globalSelected) {
+                this.onGlobalCreate();
+                return;
+            }
+
             const entity = active.selectedCard?.options!.entity!;
             const name = validateLuaVariableName($inputName.val()!).trim();
             const nameOld = this.nameSelected!;
@@ -124,13 +278,13 @@ export class ModalName {
                 case 'edit_lua_table': {
                     if (entity instanceof RosettaLuaTable) {
                         try {
-                             // Modify the dictionary.
-                             delete active.luaTables[entity.name];
-                             entity.name = name;
-                             active.luaTables[name] = entity;
- 
-                             app.showLuaTable(entity);
-                             toast.alert('Edited Lua table.');
+                            // Modify the dictionary.
+                            delete active.luaTables[entity.name];
+                            entity.name = name;
+                            active.luaTables[name] = entity;
+
+                            app.showLuaTable(entity);
+                            toast.alert('Edited Lua table.');
                         } catch (e) {
                             toast.alert(`Failed to edit Lua table.`, 'error');
                             console.error(e);

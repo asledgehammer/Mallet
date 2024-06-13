@@ -1,15 +1,12 @@
 import { App } from '../../../../app';
-import { generateLuaFunction } from '../../../rosetta/lua/LuaLuaGenerator';
-import { RosettaLuaClass } from '../../../rosetta/lua/RosettaLuaClass';
+import { generateGlobalLuaFunction } from '../../../rosetta/lua/LuaLuaGenerator';
 import { RosettaLuaFunction } from '../../../rosetta/lua/RosettaLuaFunction';
-import { RosettaLuaTable } from '../../../rosetta/lua/RosettaLuaTable';
 import { luaFunctionToTS } from '../../../rosetta/typescript/LuaTypeScriptGenerator';
 import { $get, html } from '../../../rosetta/util';
-import { CardOptions } from '../CardComponent';
 import { CodeLanguage } from '../CodeLanguage';
 import { LuaCard } from './LuaCard';
 
-export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
+export class LuaGlobalFunctionCard extends LuaCard<LuaGlobalFunctionCardOptions> {
 
     idNotes: string;
     idReturnType: string;
@@ -18,7 +15,7 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
     idBtnEdit: string;
     idParamContainer: string;
 
-    constructor(app: App, options: LuaFunctionCardOptions) {
+    constructor(app: App, options: LuaGlobalFunctionCardOptions) {
         super(app, options);
 
         this.idNotes = `${this.id}-notes`;
@@ -34,10 +31,7 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
         switch (language) {
             case 'lua': {
                 const { entity } = this.options;
-                
-                const classEntity = this.app.catalog.selectedCard!.options!.entity;
-                const className = classEntity.name;
-                return generateLuaFunction(className, ':', entity);
+                return generateGlobalLuaFunction(entity);
             }
             case 'typescript': {
                 return luaFunctionToTS(this.options!.entity, 0, 100);
@@ -50,14 +44,9 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
 
     onHeaderHTML(): string | undefined {
         const { idBtnDelete, idBtnEdit } = this;
-        const { entity, isStatic } = this.options!;
-        const classEntity = this.app.catalog.selectedCard!.options!.entity;
-        const className = classEntity.name;
+        const { entity } = this.options!;
 
-        let name = `${className}${isStatic ? '.' : ':'}${entity.name}( )`;
-        if (isStatic) {
-            name = html`<span class="fst-italic">${name}</span>`;
-        }
+        let name = `_G.${entity.name}( )`;
 
         return html` 
             <div class="row">
@@ -65,7 +54,7 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
                 <!-- Visual Category Badge -->
                 <div class="col-auto ps-2 pe-2">
                     <div class="text-bg-primary px-2 border border-1 border-light-half desaturate shadow">
-                        <strong>Lua ${isStatic ? 'Function' : 'Method'}</strong>
+                        <strong>Global Lua Function</strong>
                     </div>
                 </div>
                 
@@ -74,7 +63,7 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
                 </div>
                 <div style="position: absolute; top: 5px; width: 100%; height: 32px;">
                     <!-- Delete Button -->
-                    <button id="${idBtnDelete}" class="btn btn-sm responsive-btn float-end ms-1" title="Delete ${isStatic ? 'Function' : 'Method'}">
+                    <button id="${idBtnDelete}" class="btn btn-sm responsive-btn float-end ms-1" title="Delete Function">
                         <div class="btn-pane">
                             <i class="fa-solid fa-xmark"></i>
                         </div>
@@ -111,55 +100,34 @@ export class LuaFunctionCard extends LuaCard<LuaFunctionCardOptions> {
         super.listen();
 
         const { app, idBtnDelete, idBtnEdit, idNotes, idReturnType, idReturnNotes } = this;
-        const { entity, isStatic } = this.options!;
+        const { entity } = this.options!;
 
-        this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_function' : 'edit_method', `Edit Lua ${isStatic ? 'Function' : 'Method'}`);
+        this.listenEdit(entity, idBtnEdit, 'edit_function', `Edit Global Lua Function`);
         this.listenNotes(entity, idNotes);
-        this.listenParameters(entity, isStatic ? 'function' : 'method');
+        this.listenParameters(entity, 'function');
         this.listenReturns(entity, idReturnType, idReturnNotes, idReturnType);
         this.listenPreview();
 
         $get(idBtnDelete).on('click', () => {
             app.modalConfirm.show(() => {
                 const entity = this.options!.entity!;
-
-                // Global function.
-                if(app.sidebar.objTree.globalSelected) {
-                    delete app.catalog.functions[entity.name];
-                    app.hideCard();
-                    return;
-                }
-
-                const selected = this.app.catalog.selected;
-                if (selected instanceof RosettaLuaClass) {
-                    if (isStatic) {
-                        delete selected.functions[entity.name];
-                    } else {
-                        delete selected.methods[entity.name];
-                    }
-                    app.sidebar.itemTree.selectedID = undefined;
-                    app.showLuaClass(selected);
-                } else if (selected instanceof RosettaLuaTable) {
-                    delete selected.functions[entity.name];
-                    app.sidebar.itemTree.selectedID = undefined;
-                    app.showLuaTable(selected);
-                }
-
-            }, `Delete ${isStatic ? 'Function' : 'Method'} ${entity.name}`);
+                delete app.catalog.functions[entity.name];
+                app.hideCard();
+                return;
+            }, `Delete Global Lua Function ${entity.name}`);
         });
     }
 
     refreshParameters(): void {
         const { idParamContainer } = this;
-        const { entity, isStatic } = this.options!;
+        const { entity } = this.options!;
         const $paramContainer = $get(idParamContainer);
         $paramContainer.empty();
         $paramContainer.html(this.renderParameters(entity, true));
-        this.listenParameters(entity, isStatic ? 'function' : 'method');
+        this.listenParameters(entity, 'function');
     }
 }
 
-export type LuaFunctionCardOptions = CardOptions & {
+export type LuaGlobalFunctionCardOptions = {
     entity: RosettaLuaFunction;
-    isStatic: boolean;
 };

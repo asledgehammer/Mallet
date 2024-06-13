@@ -29,6 +29,9 @@ import { CodeLanguage } from './asledgehammer/mallet/component/CodeLanguage';
 import { RosettaLuaTable } from './asledgehammer/rosetta/lua/RosettaLuaTable';
 import { LuaTableCard } from './asledgehammer/mallet/component/lua/LuaTableCard';
 import { RosettaLuaTableField } from './asledgehammer/rosetta/lua/RosettaLuaTableField';
+import { LuaGlobalFunctionCard } from './asledgehammer/mallet/component/lua/LuaGlobalFunctionCard';
+import { LuaGlobalFieldCard } from './asledgehammer/mallet/component/lua/LuaGlobalFieldCard';
+import { JavaGlobalMethodCard } from './asledgehammer/mallet/component/java/JavaGlobalMethodCard';
 
 export class App {
 
@@ -61,6 +64,65 @@ export class App {
         this.createSidebar();
     }
 
+    public hideCard() {
+        this.$screenContent.empty();
+        this.catalog.selected = undefined;
+        this.catalog.selectedCard = undefined;
+        this.sidebar.itemTree.selected = undefined;
+        this.sidebar.itemTree.selectedID = undefined;
+        this.sidebar.objTree.selected = undefined;
+        this.sidebar.objTree.selectedID = undefined;
+        this.sidebar.populateTrees();
+    }
+
+    public showGlobalLuaField(entity: RosettaLuaField): LuaGlobalFieldCard | null {
+        this.catalog.selected = undefined;
+        this.catalog.selectedCard = undefined;
+        this.sidebar.objTree.globalSelected = true;
+
+        this.$screenContent.empty();
+        const card = new LuaGlobalFieldCard(this, { entity });
+        this.$screenContent.append(card.render());
+        card.listen();
+        card.update();
+        this.sidebar.itemTree.selectedID = `global-lua-field-${entity.name}`;
+        this.sidebar.populateTrees();
+        this.renderCode();
+        return card;
+    }
+
+    public showGlobalLuaFunction(entity: RosettaLuaFunction): LuaGlobalFunctionCard | null {
+        this.catalog.selected = undefined;
+        this.catalog.selectedCard = undefined;
+        this.sidebar.objTree.globalSelected = true;
+
+        this.$screenContent.empty();
+        const card = new LuaGlobalFunctionCard(this, { entity });
+        this.$screenContent.append(card.render());
+        card.listen();
+        card.update();
+        this.sidebar.itemTree.selectedID = `global-lua-function-${entity.name}`;
+        this.sidebar.populateTrees();
+        this.renderCode();
+        return card;
+    }
+
+    public showGlobalJavaMethod(entity: RosettaJavaMethod): JavaGlobalMethodCard | null {
+        this.catalog.selected = undefined;
+        this.catalog.selectedCard = undefined;
+        this.sidebar.objTree.globalSelected = true;
+
+        this.$screenContent.empty();
+        const card = new JavaGlobalMethodCard(this, { entity });
+        this.$screenContent.append(card.render());
+        card.listen();
+        card.update();
+        this.sidebar.itemTree.selectedID = `global-java-method-${entity.name}`;
+        this.sidebar.populateTrees();
+        this.renderCode();
+        return card;
+    }
+
     public showLuaClass(entity: RosettaLuaClass): LuaClassCard {
         this.$screenContent.empty();
 
@@ -74,6 +136,7 @@ export class App {
         this.$screenContent.append(this.catalog.selectedCard.render());
         this.catalog.selectedCard.listen();
         this.catalog.selectedCard.update();
+        this.sidebar.objTree.globalSelected = false;
         this.sidebar.populateTrees();
         this.renderCode();
 
@@ -168,6 +231,7 @@ export class App {
         this.$screenContent.append(this.catalog.selectedCard.render());
         this.catalog.selectedCard.listen();
         this.catalog.selectedCard.update();
+        this.sidebar.objTree.globalSelected = false;
         this.sidebar.populateTrees();
         this.renderCode();
         return this.catalog.selectedCard;
@@ -207,7 +271,7 @@ export class App {
         this.$screenContent.empty();
 
         // For new object-selections, unselect prior items.
-        if(this.catalog.selected !== entity) {
+        if (this.catalog.selected !== entity) {
             this.sidebar.itemTree.selectedID = undefined;
         }
 
@@ -217,6 +281,7 @@ export class App {
         this.catalog.selectedCard.listen();
         this.catalog.selectedCard.update();
         this.sidebar.populateTrees();
+        this.sidebar.objTree.globalSelected = false;
         this.renderCode();
         return this.catalog.selectedCard;
     }
@@ -271,59 +336,77 @@ export class App {
         const $renderPane = $get('code-preview');
         $renderPane.empty();
 
-        /* (Keep empty if nothing renders) */
-        if (!this.catalog.selectedCard) {
-            this.previewCode = '';
-            return;
-        }
-
-        const { selected } = this.catalog;
-
         let highlightedCode = '';
 
-        if (selected instanceof RosettaLuaClass) {
+        if (this.sidebar.objTree.globalSelected) {
             switch (this.languageMode) {
                 case 'lua': {
-                    this.previewCode = '--- @meta\n\n' + generateLuaClass(selected);
+                    this.previewCode = this.catalog.toLuaTypings();
                     break;
                 }
                 case 'typescript': {
-                    this.previewCode = luaClassToTS(selected, true);
+                    this.previewCode = this.catalog.toTypeScript();
                     break;
                 }
                 case 'json': {
-                    this.previewCode = JSON.stringify(selected.toJSON(), null, 2);
+                    this.previewCode = JSON.stringify(this.catalog.toJSON(), null, 2);
                     break;
                 }
             }
-        } else if (selected instanceof RosettaLuaTable) {
-            switch (this.languageMode) {
-                case 'lua': {
-                    this.previewCode = '--- @meta\n\n' + generateLuaTable(selected);
-                    break;
-                }
-                case 'typescript': {
-                    this.previewCode = luaTableToTS(selected, true);
-                    break;
-                }
-                case 'json': {
-                    this.previewCode = JSON.stringify(selected.toJSON(), null, 2);
-                    break;
-                }
+        } else {
+
+            /* (Keep empty if nothing renders) */
+            if (!this.catalog.selectedCard) {
+                this.previewCode = '';
+                return;
             }
-        } else if (selected instanceof RosettaJavaClass) {
-            switch (this.languageMode) {
-                case 'lua': {
-                    this.previewCode = '--- @meta\n\n' + generateJavaClass(selected);
-                    break;
+
+            const { selected } = this.catalog;
+
+            if (selected instanceof RosettaLuaClass) {
+                switch (this.languageMode) {
+                    case 'lua': {
+                        this.previewCode = '--- @meta\n\n' + generateLuaClass(selected);
+                        break;
+                    }
+                    case 'typescript': {
+                        this.previewCode = luaClassToTS(selected, true);
+                        break;
+                    }
+                    case 'json': {
+                        this.previewCode = JSON.stringify(selected.toJSON(), null, 2);
+                        break;
+                    }
                 }
-                case 'typescript': {
-                    this.previewCode = javaClassToTS(selected, true, true);
-                    break;
+            } else if (selected instanceof RosettaLuaTable) {
+                switch (this.languageMode) {
+                    case 'lua': {
+                        this.previewCode = '--- @meta\n\n' + generateLuaTable(selected);
+                        break;
+                    }
+                    case 'typescript': {
+                        this.previewCode = luaTableToTS(selected, true);
+                        break;
+                    }
+                    case 'json': {
+                        this.previewCode = JSON.stringify(selected.toJSON(), null, 2);
+                        break;
+                    }
                 }
-                case 'json': {
-                    this.previewCode = JSON.stringify(selected.toJSON(), null, 2);
-                    break;
+            } else if (selected instanceof RosettaJavaClass) {
+                switch (this.languageMode) {
+                    case 'lua': {
+                        this.previewCode = '--- @meta\n\n' + generateJavaClass(selected);
+                        break;
+                    }
+                    case 'typescript': {
+                        this.previewCode = javaClassToTS(selected, true, true);
+                        break;
+                    }
+                    case 'json': {
+                        this.previewCode = JSON.stringify(selected.toJSON(), null, 2);
+                        break;
+                    }
                 }
             }
         }
