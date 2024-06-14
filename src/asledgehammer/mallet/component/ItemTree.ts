@@ -102,10 +102,10 @@ export class ItemTree {
             if (_this.selected === fieldName) return;
             const field = catalog.fields[fieldName];
             if (!field) return;
-            app.showGlobalLuaField(field);
             // Let the editor know we last selected the field.
             _this.selected = fieldName;
             _this.selectedID = this.id;
+            app.showGlobalLuaField(field);
         });
 
         $doc.on('click', '.global-lua-function-item', function () {
@@ -114,10 +114,10 @@ export class ItemTree {
             if (_this.selected === funcName) return;
             const func = catalog.functions[funcName];
             if (!func) return;
-            app.showGlobalLuaFunction(func);
             // Let the editor know we last selected the field.
             _this.selected = funcName;
             _this.selectedID = this.id;
+            app.showGlobalLuaFunction(func);
         });
 
         $doc.on('click', '.global-java-method-item', function () {
@@ -130,10 +130,10 @@ export class ItemTree {
             let method = _this.methodSignatureMap[signature];
             if (!method) return;
 
-            _this.app.showGlobalJavaMethod(method);
             // Let the editor know we last selected the field.
             _this.selected = signature;
             _this.selectedID = this.id;
+            _this.app.showGlobalJavaMethod(method);
         });
     }
 
@@ -146,9 +146,10 @@ export class ItemTree {
             // Prevent wasteful selection code executions here.
             if (_this.selected === 'constructor') return;
             const entity = _this.app.catalog.selected as RosettaLuaClass;
-            _this.app.showLuaClassConstructor(entity.conztructor);
             // Let the editor know we last selected the constructor.
             _this.selected = 'constructor';
+            _this.selectedID = this.id;
+            _this.app.showLuaClassConstructor(entity.conztructor);
         });
 
         $doc.on('click', '.lua-class-field-item', function () {
@@ -158,9 +159,10 @@ export class ItemTree {
             const entity = _this.app.catalog.selected as RosettaLuaClass;
             const field = entity.fields[fieldName];
             if (!field) return;
-            _this.app.showLuaClassField(field);
             // Let the editor know we last selected the field.
             _this.selected = fieldName;
+            _this.selectedID = this.id;
+            _this.app.showLuaClassField(field);
         });
 
         $doc.on('click', '.lua-class-value-item', function () {
@@ -170,9 +172,10 @@ export class ItemTree {
             const entity = _this.app.catalog.selected as RosettaLuaClass;
             const value = entity.values[valueName];
             if (!value) return;
-            _this.app.showLuaClassValue(value);
             // Let the editor know we last selected the value.
             _this.selected = valueName;
+            _this.selectedID = this.id;
+            _this.app.showLuaClassValue(value);
         });
 
         $doc.on('click', '.lua-class-method-item', function () {
@@ -182,9 +185,10 @@ export class ItemTree {
             const entity = _this.app.catalog.selected as RosettaLuaClass;
             const method = entity.methods[methodName];
             if (!method) return;
-            _this.app.showLuaClassMethod(method);
             // Let the editor know we last selected the method.
             _this.selected = methodName;
+            _this.selectedID = this.id;
+            _this.app.showLuaClassMethod(method);
         });
 
         $doc.on('click', '.lua-class-function-item', function () {
@@ -194,9 +198,10 @@ export class ItemTree {
             const entity = _this.app.catalog.selected as RosettaLuaClass;
             const func = entity.functions[functionName];
             if (!func) return;
-            _this.app.showLuaClassFunction(func);
             // Let the editor know we last selected the function.
             _this.selected = functionName;
+            _this.selectedID = this.id;
+            _this.app.showLuaClassFunction(func);
         });
 
         // Preserve the state of folders.
@@ -229,9 +234,10 @@ export class ItemTree {
             const field = entity.fields[fieldName];
             console.log(field);
             if (!field) return;
-            _this.app.showLuaTableField(field);
             // Let the editor know we last selected the field.
             _this.selected = fieldName;
+            _this.selectedID = this.id;
+            _this.app.showLuaTableField(field);
         });
 
         $doc.on('click', '.lua-table-function-item', function () {
@@ -241,9 +247,10 @@ export class ItemTree {
             const entity = _this.app.catalog.selected as RosettaLuaTable;
             const func = entity.functions[functionName];
             if (!func) return;
-            _this.app.showLuaTableFunction(func);
             // Let the editor know we last selected the function.
             _this.selected = functionName;
+            _this.selectedID = this.id;
+            _this.app.showLuaTableFunction(func);
         });
 
         // Preserve the state of folders.
@@ -267,9 +274,10 @@ export class ItemTree {
             const entity = _this.app.catalog.selected as RosettaJavaClass;
             const field = entity.fields[fieldName];
             if (!field) return;
-            _this.app.showJavaClassField(field);
             // Let the editor know we last selected the field.
             _this.selected = fieldName;
+            _this.selectedID = this.id;
+            _this.app.showJavaClassField(field);
         });
 
         $doc.on('click', '.java-class-method-item', function () {
@@ -283,9 +291,10 @@ export class ItemTree {
             if (!method) method = _this.methodSignatureMap[signature];
             if (!method) return;
 
-            _this.app.showJavaClassMethod(method);
             // Let the editor know we last selected the field.
             _this.selected = signature;
+            _this.selectedID = this.id;
+            _this.app.showJavaClassMethod(method);
         });
 
         $doc.on('click', '.java-class-constructor-item', function () {
@@ -297,9 +306,10 @@ export class ItemTree {
             const conztructor = _this.constructorSignatureMap[signature];
             if (!conztructor) return;
 
-            _this.app.showJavaClassConstructor(conztructor);
             // Let the editor know we last selected the field.
             _this.selected = signature;
+            _this.selectedID = this.id;
+            _this.app.showJavaClassConstructor(conztructor);
         });
 
         // Preserve the state of folders.
@@ -402,7 +412,7 @@ export class ItemTree {
             }
             if (params.length) params = params.substring(0, params.length - 2);
 
-            const classes: string[] = ['item-tree-item', 'java-class-method-item'];
+            const classes: string[] = ['item-tree-item', 'global-java-method-item'];
             if (id === this.selectedID) classes.push('selected');
 
             methods.push({

@@ -85,7 +85,7 @@ export class App {
         this.$screenContent.append(card.render());
         card.listen();
         card.update();
-        this.sidebar.itemTree.selectedID = `global-lua-field-${entity.name}`;
+        // this.sidebar.itemTree.selectedID = `global-lua-field-${entity.name}`;
         this.sidebar.populateTrees();
         this.renderCode();
         return card;
@@ -101,7 +101,7 @@ export class App {
         this.$screenContent.append(card.render());
         card.listen();
         card.update();
-        this.sidebar.itemTree.selectedID = `global-lua-function-${entity.name}`;
+        // this.sidebar.itemTree.selectedID = `global-lua-function-${entity.name}`;
         this.sidebar.populateTrees();
         this.renderCode();
         return card;
@@ -117,7 +117,7 @@ export class App {
         this.$screenContent.append(card.render());
         card.listen();
         card.update();
-        this.sidebar.itemTree.selectedID = `global-java-method-${entity.name}`;
+        // this.sidebar.itemTree.selectedID = `global-java-method-${entity.name}`;
         this.sidebar.populateTrees();
         this.renderCode();
         return card;

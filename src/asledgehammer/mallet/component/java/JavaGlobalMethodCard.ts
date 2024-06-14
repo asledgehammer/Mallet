@@ -1,5 +1,5 @@
 import { App } from '../../../../app';
-import { generateJavaMethod } from '../../../rosetta/java/JavaLuaGenerator2';
+import { generateGlobalJavaMethod, generateJavaMethod } from '../../../rosetta/java/JavaLuaGenerator2';
 import { RosettaJavaMethod } from '../../../rosetta/java/RosettaJavaMethod';
 import { javaMethodToTS } from '../../../rosetta/typescript/JavaTypeScriptGenerator';
 import { $get, html } from '../../../rosetta/util';
@@ -32,9 +32,7 @@ export class JavaGlobalMethodCard extends JavaCard<JavaGlobalMethodCardOptions> 
         switch (language) {
             case 'lua': {
                 const { entity } = this.options;
-                const classEntity = this.app.catalog.selectedCard!.options!.entity;
-                const className = classEntity.name;
-                return generateJavaMethod(className, entity.isStatic() ? '.' : ':', entity);
+                return generateGlobalJavaMethod(entity);
             }
             case 'typescript': {
                 return javaMethodToTS(this.options!.entity, 0, 100);

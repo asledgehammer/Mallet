@@ -4951,10 +4951,10 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 const field = catalog.fields[fieldName];
                 if (!field)
                     return;
-                app.showGlobalLuaField(field);
                 // Let the editor know we last selected the field.
                 _this.selected = fieldName;
                 _this.selectedID = this.id;
+                app.showGlobalLuaField(field);
             });
             $doc.on('click', '.global-lua-function-item', function () {
                 const funcName = this.id.split('function-')[1].trim();
@@ -4964,10 +4964,10 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 const func = catalog.functions[funcName];
                 if (!func)
                     return;
-                app.showGlobalLuaFunction(func);
                 // Let the editor know we last selected the field.
                 _this.selected = funcName;
                 _this.selectedID = this.id;
+                app.showGlobalLuaFunction(func);
             });
             $doc.on('click', '.global-java-method-item', function () {
                 const signature = this.id.split('method-')[1].trim();
@@ -4978,10 +4978,10 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 let method = _this.methodSignatureMap[signature];
                 if (!method)
                     return;
-                _this.app.showGlobalJavaMethod(method);
                 // Let the editor know we last selected the field.
                 _this.selected = signature;
                 _this.selectedID = this.id;
+                _this.app.showGlobalJavaMethod(method);
             });
         }
         listenLuaClass() {
@@ -4992,9 +4992,10 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 if (_this.selected === 'constructor')
                     return;
                 const entity = _this.app.catalog.selected;
-                _this.app.showLuaClassConstructor(entity.conztructor);
                 // Let the editor know we last selected the constructor.
                 _this.selected = 'constructor';
+                _this.selectedID = this.id;
+                _this.app.showLuaClassConstructor(entity.conztructor);
             });
             $doc.on('click', '.lua-class-field-item', function () {
                 const fieldName = this.id.split('field-')[1].trim();
@@ -5005,9 +5006,10 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 const field = entity.fields[fieldName];
                 if (!field)
                     return;
-                _this.app.showLuaClassField(field);
                 // Let the editor know we last selected the field.
                 _this.selected = fieldName;
+                _this.selectedID = this.id;
+                _this.app.showLuaClassField(field);
             });
             $doc.on('click', '.lua-class-value-item', function () {
                 const valueName = this.id.split('value-')[1].trim();
@@ -5018,9 +5020,10 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 const value = entity.values[valueName];
                 if (!value)
                     return;
-                _this.app.showLuaClassValue(value);
                 // Let the editor know we last selected the value.
                 _this.selected = valueName;
+                _this.selectedID = this.id;
+                _this.app.showLuaClassValue(value);
             });
             $doc.on('click', '.lua-class-method-item', function () {
                 const methodName = this.id.split('method-')[1].trim();
@@ -5031,9 +5034,10 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 const method = entity.methods[methodName];
                 if (!method)
                     return;
-                _this.app.showLuaClassMethod(method);
                 // Let the editor know we last selected the method.
                 _this.selected = methodName;
+                _this.selectedID = this.id;
+                _this.app.showLuaClassMethod(method);
             });
             $doc.on('click', '.lua-class-function-item', function () {
                 const functionName = this.id.split('function-')[1].trim();
@@ -5044,9 +5048,10 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 const func = entity.functions[functionName];
                 if (!func)
                     return;
-                _this.app.showLuaClassFunction(func);
                 // Let the editor know we last selected the function.
                 _this.selected = functionName;
+                _this.selectedID = this.id;
+                _this.app.showLuaClassFunction(func);
             });
             // Preserve the state of folders.
             $doc.on('click', '#' + this.idFolderLuaClassField, () => {
@@ -5077,9 +5082,10 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 console.log(field);
                 if (!field)
                     return;
-                _this.app.showLuaTableField(field);
                 // Let the editor know we last selected the field.
                 _this.selected = fieldName;
+                _this.selectedID = this.id;
+                _this.app.showLuaTableField(field);
             });
             $doc.on('click', '.lua-table-function-item', function () {
                 const functionName = this.id.split('function-')[1].trim();
@@ -5090,9 +5096,10 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 const func = entity.functions[functionName];
                 if (!func)
                     return;
-                _this.app.showLuaTableFunction(func);
                 // Let the editor know we last selected the function.
                 _this.selected = functionName;
+                _this.selectedID = this.id;
+                _this.app.showLuaTableFunction(func);
             });
             // Preserve the state of folders.
             $doc.on('click', '#' + this.idFolderLuaTableField, () => {
@@ -5114,9 +5121,10 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 const field = entity.fields[fieldName];
                 if (!field)
                     return;
-                _this.app.showJavaClassField(field);
                 // Let the editor know we last selected the field.
                 _this.selected = fieldName;
+                _this.selectedID = this.id;
+                _this.app.showJavaClassField(field);
             });
             $doc.on('click', '.java-class-method-item', function () {
                 const signature = this.id.split('method-')[1].trim();
@@ -5129,9 +5137,10 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                     method = _this.methodSignatureMap[signature];
                 if (!method)
                     return;
-                _this.app.showJavaClassMethod(method);
                 // Let the editor know we last selected the field.
                 _this.selected = signature;
+                _this.selectedID = this.id;
+                _this.app.showJavaClassMethod(method);
             });
             $doc.on('click', '.java-class-constructor-item', function () {
                 const signature = this.id.split('constructor-')[1].trim();
@@ -5141,9 +5150,10 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 const conztructor = _this.constructorSignatureMap[signature];
                 if (!conztructor)
                     return;
-                _this.app.showJavaClassConstructor(conztructor);
                 // Let the editor know we last selected the field.
                 _this.selected = signature;
+                _this.selectedID = this.id;
+                _this.app.showJavaClassConstructor(conztructor);
             });
             // Preserve the state of folders.
             $doc.on('click', '#' + this.idFolderJavaClassStaticField, () => {
@@ -5234,7 +5244,7 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 }
                 if (params.length)
                     params = params.substring(0, params.length - 2);
-                const classes = ['item-tree-item', 'java-class-method-item'];
+                const classes = ['item-tree-item', 'global-java-method-item'];
                 if (id === this.selectedID)
                     classes.push('selected');
                 methods.push({
@@ -8429,9 +8439,7 @@ define("src/asledgehammer/mallet/component/java/JavaGlobalMethodCard", ["require
             switch (language) {
                 case 'lua': {
                     const { entity } = this.options;
-                    const classEntity = this.app.catalog.selectedCard.options.entity;
-                    const className = classEntity.name;
-                    return (0, JavaLuaGenerator2_7.generateJavaMethod)(className, entity.isStatic() ? '.' : ':', entity);
+                    return (0, JavaLuaGenerator2_7.generateGlobalJavaMethod)(entity);
                 }
                 case 'typescript': {
                     return (0, JavaTypeScriptGenerator_7.javaMethodToTS)(this.options.entity, 0, 100);
@@ -8545,7 +8553,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             this.$screenContent.append(card.render());
             card.listen();
             card.update();
-            this.sidebar.itemTree.selectedID = `global-lua-field-${entity.name}`;
+            // this.sidebar.itemTree.selectedID = `global-lua-field-${entity.name}`;
             this.sidebar.populateTrees();
             this.renderCode();
             return card;
@@ -8559,7 +8567,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             this.$screenContent.append(card.render());
             card.listen();
             card.update();
-            this.sidebar.itemTree.selectedID = `global-lua-function-${entity.name}`;
+            // this.sidebar.itemTree.selectedID = `global-lua-function-${entity.name}`;
             this.sidebar.populateTrees();
             this.renderCode();
             return card;
@@ -8573,7 +8581,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             this.$screenContent.append(card.render());
             card.listen();
             card.update();
-            this.sidebar.itemTree.selectedID = `global-java-method-${entity.name}`;
+            // this.sidebar.itemTree.selectedID = `global-java-method-${entity.name}`;
             this.sidebar.populateTrees();
             this.renderCode();
             return card;
