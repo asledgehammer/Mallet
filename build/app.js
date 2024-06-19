@@ -666,7 +666,6 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaClass", ["require", "exports", "
             }
             /* (Legacy Constructors) */
             else if (raw.constructor) {
-                console.log(raw.constructor);
                 console.log('PZ-Rosetta: Upgrading constructor from singleton to array..');
                 const rawConstructor = raw.constructor;
                 this.constructors.push(new RosettaLuaConstructor_1.RosettaLuaConstructor(this, rawConstructor));
@@ -1521,7 +1520,7 @@ define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require"
             if (is.length)
                 is += '\n';
             is += `${i}/* ------------------------------------ */\n`;
-            is += `${i}/* ----------- CONSTRUCTOR ------------ */\n`;
+            is += `${i}/* ----------- CONSTRUCTORS ----------- */\n`;
             is += `${i}/* ------------------------------------ */\n`;
             is += '\n';
             for (const cons of clazz.constructors) {
@@ -1908,7 +1907,7 @@ define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports", "
             if (ds.length)
                 ds.push('');
             for (const param of con.parameters) {
-                const pps = `@param ${param.name}${param.optional ? '?' : ''}  ${luaType(param.type, param.nullable)}`;
+                const pps = `@param ${param.name}${param.optional ? '?' : ''} ${luaType(param.type, param.nullable)}`;
                 if (param.notes && param.notes.trim().length) {
                     const notes = paginateNotes(pps + ' ' + param.notes.trim(), 100);
                     for (const line of notes) {
@@ -1920,6 +1919,8 @@ define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports", "
                 }
             }
         }
+        ds.push('');
+        ds.push(`@return ${className}`);
         let fs = `function ${className}:new${(0, exports.generateLuaParameterBody)(con.parameters)} end`;
         if (fs.length > 100) {
             fs = `${className}:new(\n`;
@@ -4637,7 +4638,7 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
                 if (is.length)
                     is += '\n';
                 is += `${i}/* ------------------------------------ */\n`;
-                is += `${i}/* ----------- CONSTRUCTOR ------------ */\n`;
+                is += `${i}/* ----------- CONSTRUCTORS ----------- */\n`;
                 is += `${i}/* ------------------------------------ */\n`;
                 is += '\n';
                 is += temp;

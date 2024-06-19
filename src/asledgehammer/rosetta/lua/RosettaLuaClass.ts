@@ -158,7 +158,6 @@ export class RosettaLuaClass extends RosettaEntity {
     }
     /* (Legacy Constructors) */
     else if (raw.constructor) {
-      console.log(raw.constructor);
       console.log('PZ-Rosetta: Upgrading constructor from singleton to array..');
       const rawConstructor = raw.constructor;
       this.constructors.push(new RosettaLuaConstructor(this, rawConstructor));

@@ -312,7 +312,7 @@ export function luaClassToTS(
     if (clazz.constructors) {
         if (is.length) is += '\n';
         is += `${i}/* ------------------------------------ */\n`;
-        is += `${i}/* ----------- CONSTRUCTOR ------------ */\n`;
+        is += `${i}/* ----------- CONSTRUCTORS ----------- */\n`;
         is += `${i}/* ------------------------------------ */\n`;
         is += '\n';
         for(const cons of clazz.constructors) {

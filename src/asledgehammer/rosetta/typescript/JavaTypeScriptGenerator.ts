@@ -372,7 +372,7 @@ export function javaClassToTS(
         if (temp.length) {
             if (is.length) is += '\n';
             is += `${i}/* ------------------------------------ */\n`;
-            is += `${i}/* ----------- CONSTRUCTOR ------------ */\n`;
+            is += `${i}/* ----------- CONSTRUCTORS ----------- */\n`;
             is += `${i}/* ------------------------------------ */\n`;
             is += '\n';
             is += temp;

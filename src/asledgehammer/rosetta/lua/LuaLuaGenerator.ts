@@ -219,7 +219,7 @@ export const generateLuaConstructor = (className: string, con: RosettaLuaConstru
     if (con.parameters && con.parameters.length) {
         if (ds.length) ds.push('');
         for (const param of con.parameters) {
-            const pps = `@param ${param.name}${param.optional ? '?' : ''}  ${luaType(param.type, param.nullable)}`;
+            const pps = `@param ${param.name}${param.optional ? '?' : ''} ${luaType(param.type, param.nullable)}`;
             if (param.notes && param.notes.trim().length) {
                 const notes = paginateNotes(pps + ' ' + param.notes.trim(), 100);
                 for (const line of notes) {
@@ -230,6 +230,9 @@ export const generateLuaConstructor = (className: string, con: RosettaLuaConstru
             }
         }
     }
+
+    ds.push('');
+    ds.push(`@return ${className}`);
 
     let fs = `function ${className}:new${generateLuaParameterBody(con.parameters)} end`;
     if (fs.length > 100) {
