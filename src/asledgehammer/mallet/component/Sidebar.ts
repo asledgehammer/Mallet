@@ -185,6 +185,8 @@ export class Sidebar extends Component<SidebarOptions> {
         $doc.on('click', '#btn-new-lua-value', () => {
             try {
                 this.app.modalName.nameMode = 'new_value';
+                this.app.modalName.luaClass = this.app.catalog.selected as RosettaLuaClass;
+
                 $titleName.html('Create Lua Value');
                 $inputName.val('');
                 $btnName.html('Create');
@@ -204,6 +206,15 @@ export class Sidebar extends Component<SidebarOptions> {
                     $titleName.html('Create Global Lua Field');
                 } else {
                     $titleName.html('Create Lua Field');
+
+                    const { selected } = this.app.catalog;
+                    if(selected instanceof RosettaLuaClass) {
+                        this.app.modalName.luaClass = selected;
+                    } else if(selected instanceof RosettaLuaTable) {
+                        this.app.modalName.luaTable = selected;
+                    } else if(selected instanceof RosettaJavaClass) {
+                        this.app.modalName.javaClass = selected;
+                    }
                 }
                 $inputName.val('');
                 $btnName.html('Create');
@@ -223,6 +234,15 @@ export class Sidebar extends Component<SidebarOptions> {
                     $titleName.html('Create Global Lua Function');
                 } else {
                     $titleName.html('Create Lua Function');
+
+                    const { selected } = this.app.catalog;
+                    if(selected instanceof RosettaLuaClass) {
+                        this.app.modalName.luaClass = selected;
+                    } else if(selected instanceof RosettaLuaTable) {
+                        this.app.modalName.luaTable = selected;
+                    } else if(selected instanceof RosettaJavaClass) {
+                        this.app.modalName.javaClass = selected;
+                    }
                 }
                 $inputName.val('');
                 $btnName.html('Create');
@@ -242,6 +262,15 @@ export class Sidebar extends Component<SidebarOptions> {
                     $titleName.html('Create Global Lua Method');
                 } else {
                     $titleName.html('Create Lua Method');
+
+                    const { selected } = this.app.catalog;
+                    if(selected instanceof RosettaLuaClass) {
+                        this.app.modalName.luaClass = selected;
+                    } else if(selected instanceof RosettaLuaTable) {
+                        this.app.modalName.luaTable = selected;
+                    } else if(selected instanceof RosettaJavaClass) {
+                        this.app.modalName.javaClass = selected;
+                    }
                 }
                 $inputName.val('');
                 $btnName.html('Create');
