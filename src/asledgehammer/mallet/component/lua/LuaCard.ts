@@ -37,9 +37,23 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         this.idBtnLanguageJSON = `${this.id}-btn-language-json`;
     }
 
-    listenEdit(entity: { name: string }, idBtnEdit: string, mode: NameModeType, title: string, nameSelected: string | undefined = undefined, type: 'method' | 'function' | 'constructor' | 'field' | 'class' | 'table' | 'global_field' | 'global_function') {
+    listenEdit(
+        entity: { name: string },
+        idBtnEdit: string,
+        mode: NameModeType,
+        title: string,
+        nameSelected: string | undefined = undefined,
+        type: 'method'
+            | 'function'
+            | 'constructor'
+            | 'field'
+            | 'class'
+            | 'table'
+            | 'global_field'
+            | 'global_function'
+    ) {
         $get(idBtnEdit).on('click', () => {
-            const { modalName, $btnName, $titleName, $inputName } = this.app.modalName;
+            const { $btnName, $titleName, $inputName } = this.app.modalName;
 
             $titleName.html(title);
 
@@ -109,7 +123,12 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         return html`
             <!-- Edit Button -->
             <div style="position: absolute; padding: 0; right: 0; top: 0">
-                <button id="${idBtnEdit}" class="btn btn-sm responsive-btn float-end" style="position: relative; top: 5px; right: 5px;" title="Edit Name">
+                <button 
+                    id="${idBtnEdit}"
+                    class="btn btn-sm responsive-btn float-end"
+                    style="position: relative; top: 5px; right: 5px;"
+                    title="Edit Name"
+                >
                     <div class="btn-pane" style="width: 30px; height: 30px;">
                         <i class="fa-solid fa-pen"></i>
                     </div>
@@ -118,7 +137,12 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         `;
     }
 
-    listenNotes(entity: { notes: string | undefined }, idNotes: string): void {
+    listenNotes(
+        entity: {
+            notes: string | undefined
+        },
+        idNotes: string
+    ): void {
         createDeltaEditor(idNotes, entity.notes!, (markdown: string) => {
             while (markdown.endsWith('\n')) markdown = markdown.substring(0, markdown.length - 1);
             entity.notes = markdown;
@@ -136,7 +160,12 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         `;
     }
 
-    listenDefaultValue(entity: { defaultValue: string | undefined }, idDefaultValue: string) {
+    listenDefaultValue(
+        entity: {
+            defaultValue: string | undefined
+        },
+        idDefaultValue: string
+    ) {
         const $defaultValue = $get(idDefaultValue);
         $defaultValue.on('input', () => {
             entity.defaultValue = $defaultValue.val();
@@ -150,12 +179,23 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         return html`
             <div class="mb-3">
                 <label for="${idDefaultValue}" class="form-label mb-2">Default Value</label>
-                <textarea id="${idDefaultValue}" class="form-control responsive-input mt-1" spellcheck="false">${defaultValue}</textarea>
+                <textarea
+                    id="${idDefaultValue}"
+                    class="form-control responsive-input mt-1"
+                    spellcheck="false"
+                >${defaultValue}</textarea>
             </div>
         `;
     }
 
-    listenParameters(entity: { name: string, parameters: RosettaLuaParameter[] }, type: 'constructor' | 'function' | 'method'): void {
+    listenParameters(
+        entity: {
+            name: string,
+            parameters: RosettaLuaParameter[]
+        },
+        type: 'constructor' | 'function' | 'global_function' | 'method'
+    ): void {
+
         const _this = this;
         const { parameters } = entity;
 
@@ -248,8 +288,18 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                 _this.app.renderCode();
             });
 
-            this.listenEdit({ name: param.name }, idBtnEdit, 'edit_parameter', 'Edit Parameter Name', `${entity.name}-${param.name}`, type);
+            this.listenEdit(
+                {
+                    name: param.name
+                },
+                idBtnEdit,
+                'edit_parameter',
+                'Edit Parameter Name',
+                `${entity.name}-${param.name}`,
+                type
+            );
         }
+
         const idBtnAdd = `btn-${entity.name}-parameter-add`;
         $get(idBtnAdd).on('click', () => {
             const { $inputName, $titleName } = this.app.modalName;
@@ -261,6 +311,8 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                 this.app.modalName.luaFunction = (entity as any) as RosettaLuaFunction;
             } else if (type === 'method') {
                 this.app.modalName.luaMethod = (entity as any) as RosettaLuaFunction;
+            } else if (type === 'global_function') {
+                this.app.modalName.globalLuaFunction = (entity as any) as RosettaLuaFunction;
             }
 
             this.app.modalName.nameSelected = `${type}-${entity.name}`;
@@ -270,7 +322,13 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         });
     }
 
-    renderParameters(entity: { name: string, parameters: RosettaLuaParameter[] }, show: boolean = false): string {
+    renderParameters(
+        entity: {
+            name: string,
+            parameters: RosettaLuaParameter[]
+        },
+        show: boolean = false
+    ): string {
         const { parameters } = entity;
         const idAccordion = `${entity.name}-parameters-accordion`;
         let htmlParams = '';
@@ -286,45 +344,93 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                 <div class="accordion-item rounded-0">
                     <div class="accordion-header" style="position: relative" id="headingTwo">
                         <div class="p-2" style="position: relative;">
-                            <button class="border-0 accordion-button collapsed rounded-0 p-0 text-white" style="background-color: transparent !important" type="button" data-bs-toggle="collapse" data-bs-target="#${idCollapse}" aria-expanded="false" aria-controls="${idCollapse}">
-                                <div class="col-auto responsive-badge border border-1 border-light-half desaturate shadow px-2 me-2" style="display: inline;"><strong>${param.type}</strong></div>
+                            <button 
+                                class="border-0 accordion-button collapsed rounded-0 p-0 text-white"
+                                style="background-color: transparent !important"
+                                type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#${idCollapse}"
+                                aria-expanded="false"
+                                aria-controls="${idCollapse}"
+                            >
+                                <div 
+                                    class="col-auto responsive-badge border border-1 border-light-half desaturate shadow px-2 me-2"
+                                    style="display: inline;"
+                                >
+                                    <strong>${param.type}</strong>
+                                </div>
                                 <h6 class="font-monospace mb-1">${param.name}</h6>
                             </button>
                         </div>
-                        <div style="position: absolute; height: 32px; top: 5px; right: 2rem; z-index: 4;">
+                        <div 
+                            style="position: absolute; height: 32px; top: 5px; right: 2rem; z-index: 4;"
+                        >
                             <!-- Delete Button -->
-                            <button id="${idBtnDelete}" class="btn btn-sm responsive-btn float-end ms-1" style="z-index: 4">
+                            <button 
+                                id="${idBtnDelete}"
+                                class="btn btn-sm responsive-btn float-end ms-1"
+                                style="z-index: 4"
+                            >
                                 <div class="btn-pane">
                                     <i class="fa-solid fa-xmark"></i>
                                 </div>
                             </button>
+
                             <!-- Edit Button -->
-                            <button id="${idBtnEdit}" class="btn btn-sm responsive-btn float-end" style="z-index: 4">
+                            <button 
+                                id="${idBtnEdit}"
+                                class="btn btn-sm responsive-btn float-end"
+                                style="z-index: 4"
+                            >
                                 <div class="btn-pane"> 
                                     <i class="fa-solid fa-pen"></i>
                                 </div>
                             </button>
                         </div>
                     </div>
-                    <div id="${idCollapse}" class="accordion-collapse collapse rounded-0" aria-labelledby="headingTwo" data-bs-parent="#${idAccordion}">
+                    <div 
+                        id="${idCollapse}" 
+                        class="accordion-collapse collapse rounded-0"
+                        aria-labelledby="headingTwo"
+                        data-bs-parent="#${idAccordion}"
+                    >
                         <div class="accordion-body bg-dark" style="position: relative;">
+                            
                             <!-- Type -->
                             <div class="mb-3">
                                 <label for="${idParamType}" class="form-label">Type</label>
-                                ${LuaCard.renderTypeSelect(idParamType, 'The return type.', param.type, true)}
+                                ${LuaCard.renderTypeSelect(
+                idParamType, 'The return type.', param.type, true)}
                             </div>
+                            
                             <div class="mb-3 form-check">
                                 <!-- Optional Flag -->
                                 <div class="col-auto">
-                                    <input id="${idOptional}" type="checkbox" class="form-check-input" ${param.optional ? ' checked' : ''}>
-                                    <label class="form-check-label" for="${idOptional}">Optional</label>
+                                    <input 
+                                        id="${idOptional}"
+                                        type="checkbox"
+                                        class="form-check-input"
+                                        ${param.optional ? ' checked' : ''}
+                                    />
+                                    <label class="form-check-label" for="${idOptional}">
+                                        Optional
+                                    </label>
                                 </div>
+
                                 <!-- Nullable Flag -->
                                 <div class="col-auto">
-                                    <input id="${idNullable}" type="checkbox" class="form-check-input" ${param.nullable ? ' checked' : ''}>
-                                    <label class="form-check-label" for="${idNullable}">Nullable</label>
+                                    <input 
+                                        id="${idNullable}"
+                                        type="checkbox"
+                                        class="form-check-input"
+                                        ${param.nullable ? ' checked' : ''}
+                                    />
+                                    <label class="form-check-label" for="${idNullable}">
+                                        Nullable
+                                    </label>
                                 </div>
                             </div>
+
                             <!-- Notes -->
                             <div class="mb-3">
                                 <label for="${idParamNotes}" class="form-label">Description</label>
@@ -341,7 +447,14 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         return html`
             <div class="card responsive-subcard mt-3">
                 <div class="card-header">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idAccordion}" aria-expanded="true" aria-controls="${idAccordion}">
+                    <button 
+                        class="accordion-button"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#${idAccordion}"
+                        aria-expanded="true"
+                        aria-controls="${idAccordion}"
+                    >
                         <strong>Parameters</strong>
                     </button>
                     <div style="position: absolute; height: 32px; top: 5px; right: 5px; z-index: 4;">
@@ -357,7 +470,6 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                     <div class="accordion rounded-0">
                         ${htmlParams}
                     </div>
-                    <!-- <div class="mt-3" style="position: relative; width: 100%; height: 32px;"></div> -->
                 </div>
             </div>
         `;
@@ -379,7 +491,12 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
     }
 
     listenPreview() {
-        const { idBtnLanguageLua, idBtnLanguageTypeScript, idBtnLanguageJSON, idBtnPreviewCopy } = this;
+        const {
+            idBtnLanguageLua,
+            idBtnLanguageTypeScript,
+            idBtnLanguageJSON,
+            idBtnPreviewCopy
+        } = this;
 
         // Copy the code.
         $get(idBtnPreviewCopy).on('click', (event) => {
@@ -406,34 +523,88 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
     }
 
     renderPreview(show: boolean): string {
-        const { idPreview, idPreviewCode, idBtnPreviewCopy, idBtnLanguageLua, idBtnLanguageTypeScript, idBtnLanguageJSON } = this;
+        const {
+            idPreview,
+            idPreviewCode,
+            idBtnPreviewCopy,
+            idBtnLanguageLua,
+            idBtnLanguageTypeScript,
+            idBtnLanguageJSON
+        } = this;
+
         return html`
             <div class="card responsive-subcard mt-3">
                 <div class="card-header">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idPreview}" aria-expanded="true" aria-controls="${idPreview}">
+                    <button 
+                        class="accordion-button"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#${idPreview}"
+                        aria-expanded="true"
+                        aria-controls="${idPreview}"
+                    >
                         <strong>Preview</strong>
                     </button>
 
                     <!-- Copy Button -->
-                    <button id="${idBtnPreviewCopy}" class="btn btn-sm responsive-btn" style="z-index: 4; position: absolute; top: 5px; right: 5px;" title="Copy Code">
+                    <button 
+                        id="${idBtnPreviewCopy}"
+                        class="btn btn-sm responsive-btn"
+                        style="z-index: 4; position: absolute; top: 5px; right: 5px;"
+                        title="Copy Code"
+                    >
                         <div class="btn-pane"> 
                             <i class="fa-solid fa-copy"></i>
                         </div>
                     </button>
                 </div>
-                <div id="${idPreview}" class="card-body mb-0 p-0 collapse${show ? ' show' : ''}" style="position: relative;">
+                <div 
+                    id="${idPreview}"
+                    class="card-body mb-0 p-0 collapse${show ? ' show' : ''}"
+                    style="position: relative;"
+                >
                     <div class="p-2">
-                        <button id="${idBtnLanguageLua}" class="btn btn-sm btn-primary" title="View Lua Code">Lua</button>
-                        <button id="${idBtnLanguageTypeScript}" class="btn btn-sm btn-primary" title="View Lua Code">TypeScript</button>
-                        <button id="${idBtnLanguageJSON}" class="btn btn-sm btn-primary" title="View Lua Code">Rosetta JSON</button>
+                        <button 
+                            id="${idBtnLanguageLua}"
+                            class="btn btn-sm btn-primary"
+                            title="View Lua Code"
+                        >
+                            Lua
+                        </button>
+                        <button 
+                            id="${idBtnLanguageTypeScript}"
+                            class="btn btn-sm btn-primary"
+                            title="View Lua Code"
+                        >
+                            TypeScript
+                        </button>
+                        <button 
+                            id="${idBtnLanguageJSON}"
+                            class="btn btn-sm btn-primary"
+                            title="View Lua Code"
+                        >
+                            Rosetta JSON
+                        </button>
                     </div>
-                   <pre id="${idPreviewCode}" class="w-100 h-100 p-4 m-0" style="background-color: #111; overflow: scroll; max-height: 512px;"></pre>
+                    <pre 
+                        id="${idPreviewCode}"
+                        class="w-100 h-100 p-4 m-0"
+                        style="background-color: #111; overflow: scroll; max-height: 512px;"
+                    ></pre>
                 </div>
             </div>
         `;
     }
 
-    listenReturns(entity: { name: string, returns: RosettaLuaReturns }, idReturnType: string, idReturnNotes: string, idSelect: string): void {
+    listenReturns(
+        entity: {
+            name: string,
+            returns: RosettaLuaReturns
+        },
+        idReturnType: string,
+        idReturnNotes: string,
+        idSelect: string
+    ): void {
         const { returns } = entity;
 
         createDeltaEditor(idReturnNotes, entity.returns.notes!, (markdown: string) => {
@@ -499,7 +670,15 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         });
     }
 
-    renderReturns(entity: { name: string, returns: RosettaLuaReturns }, idReturnType: string, idReturnNotes: string, show: boolean = false): string {
+    renderReturns(
+        entity: {
+            name: string,
+            returns: RosettaLuaReturns
+        },
+        idReturnType: string,
+        idReturnNotes: string,
+        show: boolean = false
+    ): string {
 
         const { returns } = entity;
         let { notes } = returns;
@@ -511,7 +690,14 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         return html`
             <div class="card responsive-subcard mt-3">
                 <div class="card-header">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idCard}" aria-expanded="true" aria-controls="${idCard}">
+                    <button 
+                        class="accordion-button"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#${idCard}"
+                        aria-expanded="true"
+                        aria-controls="${idCard}"
+                    >
                         <strong>Returns</strong>
                     </button>
                 </div>
@@ -519,15 +705,23 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                     <!-- Return Type -->
                     <div class="mb-3">
                         <label for="${idReturnType}" class="form-label">Type</label>
-                        ${LuaCard.renderTypeSelect(idReturnType, 'The return type.', returns.type, true)}
+                        ${LuaCard.renderTypeSelect(
+            idReturnType, 'The return type.', returns.type, true)}
                     </div>
                     <div class="mb-3 form-check">
+                        
                         <!-- Nullable Flag -->
                         <div class="col-auto">
-                            <input id="${idNullable}" type="checkbox" class="form-check-input" ${returns.nullable ? ' checked' : ''}>
+                            <input 
+                                id="${idNullable}"
+                                type="checkbox"
+                                class="form-check-input"
+                                ${returns.nullable ? ' checked' : ''}
+                            />
                             <label class="form-check-label" for="${idNullable}">Nullable</label>
                         </div>
                     </div>
+                    
                     <!-- Return Notes -->
                     <div>
                         <label for="${idReturnNotes}" class="form-label">Description</label>
@@ -538,7 +732,15 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         `;
     }
 
-    listenType(entity: { name: string, type: string, nullable: boolean }, idType: string, idSelect: string): void {
+    listenType(
+        entity: {
+            name: string,
+            type: string,
+            nullable: boolean
+        },
+        idType: string,
+        idSelect: string
+    ): void {
 
         const _this = this;
         const $select = $get(idType);
@@ -609,7 +811,14 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         return html`
             <div class="card responsive-subcard">
                 <div class="card-header">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idTypeCard}" aria-expanded="true" aria-controls="${idTypeCard}">
+                    <button 
+                        class="accordion-button"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#${idTypeCard}"
+                        aria-expanded="true"
+                        aria-controls="${idTypeCard}"
+                    >
                         Type
                     </button>   
                 </div>
@@ -620,7 +829,12 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                     </div>
                     <!-- Nullable Flag -->
                     <div class="col-auto">
-                        <input id="${idNullable}" type="checkbox" class="form-check-input" ${nullable ? ' checked' : ''}>
+                        <input 
+                            id="${idNullable}"
+                            type="checkbox"
+                            class="form-check-input"
+                            ${nullable ? ' checked' : ''}
+                        />
                         <label class="form-check-label" for="${idNullable}">Nullable</label>
                     </div>
                 </div>
@@ -630,7 +844,12 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
 
     abstract onRenderPreview(language: CodeLanguage): string;
 
-    static renderTypeSelect(idSelect: string, label: string = '', value: string = 'any', margin: boolean): string {
+    static renderTypeSelect(
+        idSelect: string,
+        label: string = '',
+        value: string = 'any',
+        margin: boolean
+    ): string {
 
         // Determine if custom field should show.
         let style = '';
@@ -664,18 +883,42 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
             <div class="${margin ? 'mb-2' : ''}">
 
                 <!-- Type Selection List -->
-                <select id="${idSelect}" class="form-select responsive-select" aria-label="${label}">
-                    <option value="any"  ${value === 'any' ? 'selected' : ''}><strong>Any</strong></option>
-                    <option value="void"  ${value === 'void' ? 'selected' : ''}><strong>Void</strong></option>
-                    <option value="nil"  ${value === 'nil' ? 'selected' : ''}><strong>Nil</strong></option>
-                    <option value="boolean"  ${value === 'boolean' ? 'selected' : ''}><strong>Boolean</strong></option>
-                    <option value="number" ${value === 'number' ? 'selected' : ''}><strong>Number</strong></option>
-                    <option value="string"  ${value === 'string' ? 'selected' : ''}><strong>String</strong></option>
-                    <option value="custom" ${value === 'custom' ? 'selected' : ''}><strong>Custom</strong></option>
+                <select 
+                    id="${idSelect}"
+                    class="form-select responsive-select"
+                    aria-label="${label}"
+                >
+                    <option value="any" ${value === 'any' ? 'selected' : ''}>
+                        <strong>Any</strong>
+                    </option>
+                    <option value="void" ${value === 'void' ? 'selected' : ''}>
+                        <strong>Void</strong>
+                    </option>
+                    <option value="nil" ${value === 'nil' ? 'selected' : ''}>
+                        <strong>Nil</strong>
+                    </option>
+                    <option value="boolean" ${value === 'boolean' ? 'selected' : ''}>
+                        <strong>Boolean</strong>
+                    </option>
+                    <option value="number" ${value === 'number' ? 'selected' : ''}>
+                        <strong>Number</strong>
+                    </option>
+                    <option value="string" ${value === 'string' ? 'selected' : ''}>
+                        <strong>String</strong>
+                    </option>
+                    <option value="custom" ${value === 'custom' ? 'selected' : ''}>
+                        <strong>Custom</strong>
+                    </option>
                 </select>
                 
                 <!-- Manual Input for Custom Type -->
-                <input id="${idSelect}-custom-input" class="form-control responsive-input mt-2" type="text" style="${style}" value="${customInputValue}" />
+                <input 
+                    id="${idSelect}-custom-input"
+                    class="form-control responsive-input mt-2"
+                    type="text"
+                    style="${style}"
+                    value="${customInputValue}"
+                />
             
             </div>
         `;

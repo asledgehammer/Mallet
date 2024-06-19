@@ -287,7 +287,7 @@ export class ModalName {
             delete catalog.fields[nameOld];
             catalog.fields[name] = field;
 
-            app.showLuaClassField(field);
+            app.showGlobalLuaField(field);
             toast.alert('Edited Global Lua Field.');
 
         } catch (e) {
@@ -349,7 +349,7 @@ export class ModalName {
 
             let func: RosettaLuaFunction | RosettaJavaMethod | undefined = undefined;
 
-            if (type === 'function') {
+            if (type === 'global_function') {
                 func = catalog.functions[funcName];
             } else {
                 throw new Error('Creating parameters for Java Methods is not supported.');

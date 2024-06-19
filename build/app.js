@@ -3614,7 +3614,7 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
         }
         listenEdit(entity, idBtnEdit, mode, title, nameSelected = undefined, type) {
             (0, util_3.$get)(idBtnEdit).on('click', () => {
-                const { modalName, $btnName, $titleName, $inputName } = this.app.modalName;
+                const { $btnName, $titleName, $inputName } = this.app.modalName;
                 $titleName.html(title);
                 if (mode === 'edit_parameter'
                     || mode === 'edit_lua_class'
@@ -3678,7 +3678,12 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
             return (0, util_3.html) `
             <!-- Edit Button -->
             <div style="position: absolute; padding: 0; right: 0; top: 0">
-                <button id="${idBtnEdit}" class="btn btn-sm responsive-btn float-end" style="position: relative; top: 5px; right: 5px;" title="Edit Name">
+                <button 
+                    id="${idBtnEdit}"
+                    class="btn btn-sm responsive-btn float-end"
+                    style="position: relative; top: 5px; right: 5px;"
+                    title="Edit Name"
+                >
                     <div class="btn-pane" style="width: 30px; height: 30px;">
                         <i class="fa-solid fa-pen"></i>
                     </div>
@@ -3717,7 +3722,11 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
             return (0, util_3.html) `
             <div class="mb-3">
                 <label for="${idDefaultValue}" class="form-label mb-2">Default Value</label>
-                <textarea id="${idDefaultValue}" class="form-control responsive-input mt-1" spellcheck="false">${defaultValue}</textarea>
+                <textarea
+                    id="${idDefaultValue}"
+                    class="form-control responsive-input mt-1"
+                    spellcheck="false"
+                >${defaultValue}</textarea>
             </div>
         `;
         }
@@ -3807,7 +3816,9 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
                     _this.update();
                     _this.app.renderCode();
                 });
-                this.listenEdit({ name: param.name }, idBtnEdit, 'edit_parameter', 'Edit Parameter Name', `${entity.name}-${param.name}`, type);
+                this.listenEdit({
+                    name: param.name
+                }, idBtnEdit, 'edit_parameter', 'Edit Parameter Name', `${entity.name}-${param.name}`, type);
             }
             const idBtnAdd = `btn-${entity.name}-parameter-add`;
             (0, util_3.$get)(idBtnAdd).on('click', () => {
@@ -3821,6 +3832,9 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
                 }
                 else if (type === 'method') {
                     this.app.modalName.luaMethod = entity;
+                }
+                else if (type === 'global_function') {
+                    this.app.modalName.globalLuaFunction = entity;
                 }
                 this.app.modalName.nameSelected = `${type}-${entity.name}`;
                 $titleName.html('Add Parameter');
@@ -3844,45 +3858,92 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
                 <div class="accordion-item rounded-0">
                     <div class="accordion-header" style="position: relative" id="headingTwo">
                         <div class="p-2" style="position: relative;">
-                            <button class="border-0 accordion-button collapsed rounded-0 p-0 text-white" style="background-color: transparent !important" type="button" data-bs-toggle="collapse" data-bs-target="#${idCollapse}" aria-expanded="false" aria-controls="${idCollapse}">
-                                <div class="col-auto responsive-badge border border-1 border-light-half desaturate shadow px-2 me-2" style="display: inline;"><strong>${param.type}</strong></div>
+                            <button 
+                                class="border-0 accordion-button collapsed rounded-0 p-0 text-white"
+                                style="background-color: transparent !important"
+                                type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#${idCollapse}"
+                                aria-expanded="false"
+                                aria-controls="${idCollapse}"
+                            >
+                                <div 
+                                    class="col-auto responsive-badge border border-1 border-light-half desaturate shadow px-2 me-2"
+                                    style="display: inline;"
+                                >
+                                    <strong>${param.type}</strong>
+                                </div>
                                 <h6 class="font-monospace mb-1">${param.name}</h6>
                             </button>
                         </div>
-                        <div style="position: absolute; height: 32px; top: 5px; right: 2rem; z-index: 4;">
+                        <div 
+                            style="position: absolute; height: 32px; top: 5px; right: 2rem; z-index: 4;"
+                        >
                             <!-- Delete Button -->
-                            <button id="${idBtnDelete}" class="btn btn-sm responsive-btn float-end ms-1" style="z-index: 4">
+                            <button 
+                                id="${idBtnDelete}"
+                                class="btn btn-sm responsive-btn float-end ms-1"
+                                style="z-index: 4"
+                            >
                                 <div class="btn-pane">
                                     <i class="fa-solid fa-xmark"></i>
                                 </div>
                             </button>
+
                             <!-- Edit Button -->
-                            <button id="${idBtnEdit}" class="btn btn-sm responsive-btn float-end" style="z-index: 4">
+                            <button 
+                                id="${idBtnEdit}"
+                                class="btn btn-sm responsive-btn float-end"
+                                style="z-index: 4"
+                            >
                                 <div class="btn-pane"> 
                                     <i class="fa-solid fa-pen"></i>
                                 </div>
                             </button>
                         </div>
                     </div>
-                    <div id="${idCollapse}" class="accordion-collapse collapse rounded-0" aria-labelledby="headingTwo" data-bs-parent="#${idAccordion}">
+                    <div 
+                        id="${idCollapse}" 
+                        class="accordion-collapse collapse rounded-0"
+                        aria-labelledby="headingTwo"
+                        data-bs-parent="#${idAccordion}"
+                    >
                         <div class="accordion-body bg-dark" style="position: relative;">
+                            
                             <!-- Type -->
                             <div class="mb-3">
                                 <label for="${idParamType}" class="form-label">Type</label>
                                 ${LuaCard.renderTypeSelect(idParamType, 'The return type.', param.type, true)}
                             </div>
+                            
                             <div class="mb-3 form-check">
                                 <!-- Optional Flag -->
                                 <div class="col-auto">
-                                    <input id="${idOptional}" type="checkbox" class="form-check-input" ${param.optional ? ' checked' : ''}>
-                                    <label class="form-check-label" for="${idOptional}">Optional</label>
+                                    <input 
+                                        id="${idOptional}"
+                                        type="checkbox"
+                                        class="form-check-input"
+                                        ${param.optional ? ' checked' : ''}
+                                    />
+                                    <label class="form-check-label" for="${idOptional}">
+                                        Optional
+                                    </label>
                                 </div>
+
                                 <!-- Nullable Flag -->
                                 <div class="col-auto">
-                                    <input id="${idNullable}" type="checkbox" class="form-check-input" ${param.nullable ? ' checked' : ''}>
-                                    <label class="form-check-label" for="${idNullable}">Nullable</label>
+                                    <input 
+                                        id="${idNullable}"
+                                        type="checkbox"
+                                        class="form-check-input"
+                                        ${param.nullable ? ' checked' : ''}
+                                    />
+                                    <label class="form-check-label" for="${idNullable}">
+                                        Nullable
+                                    </label>
                                 </div>
                             </div>
+
                             <!-- Notes -->
                             <div class="mb-3">
                                 <label for="${idParamNotes}" class="form-label">Description</label>
@@ -3897,7 +3958,14 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
             return (0, util_3.html) `
             <div class="card responsive-subcard mt-3">
                 <div class="card-header">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idAccordion}" aria-expanded="true" aria-controls="${idAccordion}">
+                    <button 
+                        class="accordion-button"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#${idAccordion}"
+                        aria-expanded="true"
+                        aria-controls="${idAccordion}"
+                    >
                         <strong>Parameters</strong>
                     </button>
                     <div style="position: absolute; height: 32px; top: 5px; right: 5px; z-index: 4;">
@@ -3913,7 +3981,6 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
                     <div class="accordion rounded-0">
                         ${htmlParams}
                     </div>
-                    <!-- <div class="mt-3" style="position: relative; width: 100%; height: 32px;"></div> -->
                 </div>
             </div>
         `;
@@ -3954,24 +4021,62 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
             return (0, util_3.html) `
             <div class="card responsive-subcard mt-3">
                 <div class="card-header">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idPreview}" aria-expanded="true" aria-controls="${idPreview}">
+                    <button 
+                        class="accordion-button"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#${idPreview}"
+                        aria-expanded="true"
+                        aria-controls="${idPreview}"
+                    >
                         <strong>Preview</strong>
                     </button>
 
                     <!-- Copy Button -->
-                    <button id="${idBtnPreviewCopy}" class="btn btn-sm responsive-btn" style="z-index: 4; position: absolute; top: 5px; right: 5px;" title="Copy Code">
+                    <button 
+                        id="${idBtnPreviewCopy}"
+                        class="btn btn-sm responsive-btn"
+                        style="z-index: 4; position: absolute; top: 5px; right: 5px;"
+                        title="Copy Code"
+                    >
                         <div class="btn-pane"> 
                             <i class="fa-solid fa-copy"></i>
                         </div>
                     </button>
                 </div>
-                <div id="${idPreview}" class="card-body mb-0 p-0 collapse${show ? ' show' : ''}" style="position: relative;">
+                <div 
+                    id="${idPreview}"
+                    class="card-body mb-0 p-0 collapse${show ? ' show' : ''}"
+                    style="position: relative;"
+                >
                     <div class="p-2">
-                        <button id="${idBtnLanguageLua}" class="btn btn-sm btn-primary" title="View Lua Code">Lua</button>
-                        <button id="${idBtnLanguageTypeScript}" class="btn btn-sm btn-primary" title="View Lua Code">TypeScript</button>
-                        <button id="${idBtnLanguageJSON}" class="btn btn-sm btn-primary" title="View Lua Code">Rosetta JSON</button>
+                        <button 
+                            id="${idBtnLanguageLua}"
+                            class="btn btn-sm btn-primary"
+                            title="View Lua Code"
+                        >
+                            Lua
+                        </button>
+                        <button 
+                            id="${idBtnLanguageTypeScript}"
+                            class="btn btn-sm btn-primary"
+                            title="View Lua Code"
+                        >
+                            TypeScript
+                        </button>
+                        <button 
+                            id="${idBtnLanguageJSON}"
+                            class="btn btn-sm btn-primary"
+                            title="View Lua Code"
+                        >
+                            Rosetta JSON
+                        </button>
                     </div>
-                   <pre id="${idPreviewCode}" class="w-100 h-100 p-4 m-0" style="background-color: #111; overflow: scroll; max-height: 512px;"></pre>
+                    <pre 
+                        id="${idPreviewCode}"
+                        class="w-100 h-100 p-4 m-0"
+                        style="background-color: #111; overflow: scroll; max-height: 512px;"
+                    ></pre>
                 </div>
             </div>
         `;
@@ -4049,7 +4154,14 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
             return (0, util_3.html) `
             <div class="card responsive-subcard mt-3">
                 <div class="card-header">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idCard}" aria-expanded="true" aria-controls="${idCard}">
+                    <button 
+                        class="accordion-button"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#${idCard}"
+                        aria-expanded="true"
+                        aria-controls="${idCard}"
+                    >
                         <strong>Returns</strong>
                     </button>
                 </div>
@@ -4060,12 +4172,19 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
                         ${LuaCard.renderTypeSelect(idReturnType, 'The return type.', returns.type, true)}
                     </div>
                     <div class="mb-3 form-check">
+                        
                         <!-- Nullable Flag -->
                         <div class="col-auto">
-                            <input id="${idNullable}" type="checkbox" class="form-check-input" ${returns.nullable ? ' checked' : ''}>
+                            <input 
+                                id="${idNullable}"
+                                type="checkbox"
+                                class="form-check-input"
+                                ${returns.nullable ? ' checked' : ''}
+                            />
                             <label class="form-check-label" for="${idNullable}">Nullable</label>
                         </div>
                     </div>
+                    
                     <!-- Return Notes -->
                     <div>
                         <label for="${idReturnNotes}" class="form-label">Description</label>
@@ -4140,7 +4259,14 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
             return (0, util_3.html) `
             <div class="card responsive-subcard">
                 <div class="card-header">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${idTypeCard}" aria-expanded="true" aria-controls="${idTypeCard}">
+                    <button 
+                        class="accordion-button"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#${idTypeCard}"
+                        aria-expanded="true"
+                        aria-controls="${idTypeCard}"
+                    >
                         Type
                     </button>   
                 </div>
@@ -4151,7 +4277,12 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
                     </div>
                     <!-- Nullable Flag -->
                     <div class="col-auto">
-                        <input id="${idNullable}" type="checkbox" class="form-check-input" ${nullable ? ' checked' : ''}>
+                        <input 
+                            id="${idNullable}"
+                            type="checkbox"
+                            class="form-check-input"
+                            ${nullable ? ' checked' : ''}
+                        />
                         <label class="form-check-label" for="${idNullable}">Nullable</label>
                     </div>
                 </div>
@@ -4189,18 +4320,42 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
             <div class="${margin ? 'mb-2' : ''}">
 
                 <!-- Type Selection List -->
-                <select id="${idSelect}" class="form-select responsive-select" aria-label="${label}">
-                    <option value="any"  ${value === 'any' ? 'selected' : ''}><strong>Any</strong></option>
-                    <option value="void"  ${value === 'void' ? 'selected' : ''}><strong>Void</strong></option>
-                    <option value="nil"  ${value === 'nil' ? 'selected' : ''}><strong>Nil</strong></option>
-                    <option value="boolean"  ${value === 'boolean' ? 'selected' : ''}><strong>Boolean</strong></option>
-                    <option value="number" ${value === 'number' ? 'selected' : ''}><strong>Number</strong></option>
-                    <option value="string"  ${value === 'string' ? 'selected' : ''}><strong>String</strong></option>
-                    <option value="custom" ${value === 'custom' ? 'selected' : ''}><strong>Custom</strong></option>
+                <select 
+                    id="${idSelect}"
+                    class="form-select responsive-select"
+                    aria-label="${label}"
+                >
+                    <option value="any" ${value === 'any' ? 'selected' : ''}>
+                        <strong>Any</strong>
+                    </option>
+                    <option value="void" ${value === 'void' ? 'selected' : ''}>
+                        <strong>Void</strong>
+                    </option>
+                    <option value="nil" ${value === 'nil' ? 'selected' : ''}>
+                        <strong>Nil</strong>
+                    </option>
+                    <option value="boolean" ${value === 'boolean' ? 'selected' : ''}>
+                        <strong>Boolean</strong>
+                    </option>
+                    <option value="number" ${value === 'number' ? 'selected' : ''}>
+                        <strong>Number</strong>
+                    </option>
+                    <option value="string" ${value === 'string' ? 'selected' : ''}>
+                        <strong>String</strong>
+                    </option>
+                    <option value="custom" ${value === 'custom' ? 'selected' : ''}>
+                        <strong>Custom</strong>
+                    </option>
                 </select>
                 
                 <!-- Manual Input for Custom Type -->
-                <input id="${idSelect}-custom-input" class="form-control responsive-input mt-2" type="text" style="${style}" value="${customInputValue}" />
+                <input 
+                    id="${idSelect}-custom-input"
+                    class="form-control responsive-input mt-2"
+                    type="text"
+                    style="${style}"
+                    value="${customInputValue}"
+                />
             
             </div>
         `;
@@ -7757,7 +7912,7 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                 field.name = name;
                 delete catalog.fields[nameOld];
                 catalog.fields[name] = field;
-                app.showLuaClassField(field);
+                app.showGlobalLuaField(field);
                 toast.alert('Edited Global Lua Field.');
             }
             catch (e) {
@@ -7803,7 +7958,7 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                 const type = split[0];
                 const funcName = split[1];
                 let func = undefined;
-                if (type === 'function') {
+                if (type === 'global_function') {
                     func = catalog.functions[funcName];
                 }
                 else {
@@ -8828,7 +8983,7 @@ define("src/asledgehammer/mallet/component/lua/LuaGlobalFunctionCard", ["require
             const { entity } = this.options;
             this.listenEdit(entity, idBtnEdit, 'edit_function', `Edit Global Lua Function`, undefined, 'global_function');
             this.listenNotes(entity, idNotes);
-            this.listenParameters(entity, 'function');
+            this.listenParameters(entity, 'global_function');
             this.listenReturns(entity, idReturnType, idReturnNotes, idReturnType);
             this.listenPreview();
             (0, util_20.$get)(idBtnDelete).on('click', () => {

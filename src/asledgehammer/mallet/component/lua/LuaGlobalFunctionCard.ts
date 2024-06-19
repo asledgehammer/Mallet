@@ -104,7 +104,7 @@ export class LuaGlobalFunctionCard extends LuaCard<LuaGlobalFunctionCardOptions>
 
         this.listenEdit(entity, idBtnEdit, 'edit_function', `Edit Global Lua Function`, undefined, 'global_function');
         this.listenNotes(entity, idNotes);
-        this.listenParameters(entity, 'function');
+        this.listenParameters(entity, 'global_function');
         this.listenReturns(entity, idReturnType, idReturnNotes, idReturnType);
         this.listenPreview();
 
