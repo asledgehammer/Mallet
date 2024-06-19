@@ -87,4 +87,16 @@ export class RosettaLuaConstructor extends RosettaEntity {
 
     return json;
   }
+
+  getSignature(): string {
+    let signature = `constructor`;
+    if (this.parameters && this.parameters.length) {
+      signature += '_';
+      for (const param of this.parameters) {
+        signature += `${param.type}-`;
+      }
+      signature = signature.substring(0, signature.length - 1);
+    }
+    return signature;
+  }
 }

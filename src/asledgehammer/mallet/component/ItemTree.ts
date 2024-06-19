@@ -3,6 +3,8 @@ import { RosettaJavaClass } from "../../rosetta/java/RosettaJavaClass";
 import { RosettaJavaConstructor } from "../../rosetta/java/RosettaJavaConstructor";
 import { RosettaJavaMethod } from "../../rosetta/java/RosettaJavaMethod";
 import { RosettaLuaClass } from "../../rosetta/lua/RosettaLuaClass";
+import { RosettaLuaConstructor } from "../../rosetta/lua/RosettaLuaConstructor";
+import { RosettaLuaFunction } from "../../rosetta/lua/RosettaLuaFunction";
 import { RosettaLuaTable } from "../../rosetta/lua/RosettaLuaTable";
 import { $get, html } from "../../rosetta/util";
 import { Sidebar } from "./Sidebar";
@@ -60,6 +62,10 @@ export class ItemTree {
     constructorSignatureMap: { [signature: string]: RosettaJavaConstructor } = {};
     methodSignatureMap: { [signature: string]: RosettaJavaMethod } = {};
     staticMethodSignatureMap: { [signature: string]: RosettaJavaMethod } = {};
+
+    luaConstructorSignatureMap: { [signature: string]: RosettaLuaConstructor } = {};
+    luaMethodSignatureMap: { [signature: string]: RosettaLuaFunction } = {};
+    luaStaticMethodSignatureMap: { [signature: string]: RosettaLuaFunction } = {};
 
     constructor(app: App, sidebar: Sidebar) {
         this.app = app;
@@ -143,13 +149,18 @@ export class ItemTree {
         const $doc = $(document);
 
         $doc.on('click', '.lua-class-constructor-item', function () {
+            const signature = this.id.split('constructor-')[1].trim();
+
             // Prevent wasteful selection code executions here.
-            if (_this.selected === 'constructor') return;
-            const entity = _this.app.catalog.selected as RosettaLuaClass;
-            // Let the editor know we last selected the constructor.
-            _this.selected = 'constructor';
+            if (_this.selected === signature) return;
+
+            const conztructor = _this.luaConstructorSignatureMap[signature];
+            if (!conztructor) return;
+
+            // Let the editor know we last selected the field.
+            _this.selected = signature;
             _this.selectedID = this.id;
-            _this.app.showLuaClassConstructor(entity.conztructor);
+            _this.app.showLuaClassConstructor(conztructor);
         });
 
         $doc.on('click', '.lua-class-field-item', function () {
@@ -179,27 +190,32 @@ export class ItemTree {
         });
 
         $doc.on('click', '.lua-class-method-item', function () {
-            const methodName = this.id.split('method-')[1].trim();
+            const signature = this.id.split('method-')[1].trim();
+
             // Prevent wasteful selection code executions here.
-            if (_this.selected === methodName) return;
-            const entity = _this.app.catalog.selected as RosettaLuaClass;
-            const method = entity.methods[methodName];
+            if (_this.selected === signature) return;
+
+            // This is lazy but it works.
+            const method = _this.luaMethodSignatureMap[signature];
             if (!method) return;
-            // Let the editor know we last selected the method.
-            _this.selected = methodName;
+
+            // Let the editor know we last selected the field.
+            _this.selected = signature;
             _this.selectedID = this.id;
             _this.app.showLuaClassMethod(method);
         });
 
         $doc.on('click', '.lua-class-function-item', function () {
-            const functionName = this.id.split('function-')[1].trim();
+            const signature = this.id.split('function-')[1].trim();
+
             // Prevent wasteful selection code executions here.
-            if (_this.selected === functionName) return;
-            const entity = _this.app.catalog.selected as RosettaLuaClass;
-            const func = entity.functions[functionName];
+            if (_this.selected === signature) return;
+
+            const func = _this.luaStaticMethodSignatureMap[signature];
             if (!func) return;
-            // Let the editor know we last selected the function.
-            _this.selected = functionName;
+
+            // Let the editor know we last selected the field.
+            _this.selected = signature;
             _this.selectedID = this.id;
             _this.app.showLuaClassFunction(func);
         });
@@ -473,6 +489,63 @@ export class ItemTree {
 
         const _this = this;
 
+        const constructors: any[] = [];
+
+        this.luaConstructorSignatureMap = {};
+        this.luaMethodSignatureMap = {};
+        this.luaStaticMethodSignatureMap = {};
+
+        let clusterNames = Object.keys(entity.methods);
+        clusterNames.sort((a, b) => a.localeCompare(b));
+
+        for (const clusterName of clusterNames) {
+            const cluster = entity.methods[clusterName];
+            for (const method of cluster.functions) {
+                this.luaMethodSignatureMap[method.getSignature()] = method;
+            }
+        }
+
+        clusterNames = Object.keys(entity.functions);
+        clusterNames.sort((a, b) => a.localeCompare(b));
+
+        for (const clusterName of clusterNames) {
+            const cluster = entity.functions[clusterName];
+            for (const func of cluster.functions) {
+                this.luaStaticMethodSignatureMap[func.getSignature()] = func;
+            }
+        }
+
+        // Constructor(s)
+        for (const cons of entity.constructors) {
+            this.luaConstructorSignatureMap[cons.getSignature()] = cons;
+        }
+
+        const consSignatures = Object.keys(this.luaConstructorSignatureMap);
+        consSignatures.sort((a, b) => a.localeCompare(b));
+
+        for (const signature of consSignatures) {
+            const cons = this.luaConstructorSignatureMap[signature];
+            const id = `lua-class-${entity.name}-constructor-${signature}`;
+
+            let params = '';
+            if (cons.parameters && cons.parameters.length) {
+                for (const param of cons.parameters) {
+                    params += `${param.name}, `;
+                }
+                if (params.length) params = params.substring(0, params.length - 2);
+            }
+
+            const classes: string[] = ['item-tree-item', 'lua-class-constructor-item'];
+            if (id === this.selectedID) classes.push('selected');
+
+            constructors.push({
+                text: wrapItem(`${entity.name}(${params})`),
+                icon: LuaCard.getTypeIcon('object'),
+                id,
+                class: classes
+            });
+        }
+
         const fieldNames = Object.keys(entity.fields);
         fieldNames.sort((a, b) => a.localeCompare(b));
         const fields = [];
@@ -509,37 +582,55 @@ export class ItemTree {
             });
         }
 
-        const methodNames = Object.keys(entity.methods);
-        methodNames.sort((a, b) => a.localeCompare(b));
-        const methods = [];
-        for (const methodName of methodNames) {
-            const method = entity.methods[methodName];
-            const id = `lua-class-${entity.name}-method-${method.name}`;
+        // Static method(s)
 
-            const classes: string[] = ['item-tree-item', 'lua-class-method-item'];
-            if (id === this.selectedID) classes.push('selected');
-
-            methods.push({
-                text: html`<i class="fa-solid fa-xmark me-2" title="${method.returns.type}"></i>${method.name}`,
-                icon: 'fa-solid fa-terminal text-success mx-2',
-                id,
-                class: classes
-            });
-        }
-
-        const functionNames = Object.keys(entity.functions);
-        functionNames.sort((a, b) => a.localeCompare(b));
         const functions = [];
-        for (const functionName of functionNames) {
-            const func = entity.functions[functionName];
-            const id = `lua-class-${entity.name}-function-${func.name}`;
+        const staticMethodSignatures = Object.keys(this.luaStaticMethodSignatureMap);
+        staticMethodSignatures.sort((a, b) => a.localeCompare(b));
+
+        for (const signature of staticMethodSignatures) {
+            const method = this.luaStaticMethodSignatureMap[signature];
+            const id = `lua-class-${entity.name}-function-${signature}`;
+
+            let params = '';
+            for (const param of method.parameters) {
+                params += `${param.name}, `;
+            }
+            if (params.length) params = params.substring(0, params.length - 2);
 
             const classes: string[] = ['item-tree-item', 'lua-class-function-item'];
             if (id === this.selectedID) classes.push('selected');
 
             functions.push({
-                text: html`<i class="fa-solid fa-xmark me-2" title="${func.returns.type}"></i>${func.name}`,
-                icon: 'fa-solid fa-terminal text-success mx-2',
+                text: wrapItem(`${method.name}(${params})`),
+                icon: LuaCard.getTypeIcon(method.returns.type),
+                id,
+                class: classes
+            });
+        }
+
+        // Instance method(s)
+
+        const methods = [];
+        const methodSignatures = Object.keys(this.luaMethodSignatureMap);
+        methodSignatures.sort((a, b) => a.localeCompare(b));
+
+        for (const signature of methodSignatures) {
+            const method = this.luaMethodSignatureMap[signature];
+            const id = `lua-class-${entity.name}-method-${signature}`;
+
+            let params = '';
+            for (const param of method.parameters) {
+                params += `${param.name}, `;
+            }
+            if (params.length) params = params.substring(0, params.length - 2);
+
+            const classes: string[] = ['item-tree-item', 'lua-class-method-item'];
+            if (id === this.selectedID) classes.push('selected');
+
+            methods.push({
+                text: wrapItem(`${method.name}(${params})`),
+                icon: LuaCard.getTypeIcon(method.returns.type),
                 id,
                 class: classes
             });
@@ -555,6 +646,15 @@ export class ItemTree {
         const conzID = `lua-class-${entity.name}-constructor`;
         const conzClasses: string[] = ['item-tree-item', 'lua-class-constructor-item'];
         if (conzID === this.selectedID) conzClasses.push('selected');
+
+        const folderConstructors = {
+            text: `${wrapFolderCount(`(${constructors.length})`)} Constructor(s)`,
+            icon: "fa-solid fa-folder text-light mx-2",
+            class: ['item-tree-folder', 'bg-secondary'],
+            id: _this.idFolderJavaClassConstructor,
+            expanded: _this.folderJavaClassConstructorOpen,
+            nodes: constructors
+        };
 
         const folderFields = {
             text: `${wrapFolderCount(`(${fields.length})`)} Field(s)`,
@@ -572,6 +672,7 @@ export class ItemTree {
             expanded: _this.folderLuaClassValueOpen,
             nodes: values
         };
+        
         const folderMethods = {
             text: `${wrapFolderCount(`(${methods.length})`)} Method(s)`,
             icon: "fa-solid fa-folder text-light mx-2",
@@ -589,13 +690,9 @@ export class ItemTree {
             nodes: functions
         };
 
-        const data: any[] = [{
-            id: conzID,
-            text: "Constructor",
-            icon: LuaCard.getTypeIcon('constructor'),
-            class: conzClasses
-        }];
+        const data: any[] = [];
 
+        if (constructors.length) data.push(folderConstructors);
         if (fields.length) data.push(folderFields);
         if (values.length) data.push(folderValues);
         if (methods.length) data.push(folderMethods);

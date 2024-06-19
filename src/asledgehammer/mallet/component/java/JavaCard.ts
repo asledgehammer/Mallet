@@ -41,7 +41,14 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
 
             $titleName.html(title);
 
-            if (mode === 'edit_lua_class' || mode === 'edit_lua_table' || mode === 'edit_field' || mode === 'edit_function' || mode === 'edit_method' || mode === 'edit_value') {
+            if (mode === 'edit_parameter'
+                || mode === 'edit_lua_class'
+                || mode === 'edit_lua_table'
+                || mode === 'edit_field'
+                || mode === 'edit_function'
+                || mode === 'edit_method'
+                || mode === 'edit_value'
+            ) {
                 $btnName.html('Edit');
                 $btnName.removeClass('btn-success');
                 $btnName.addClass('btn-primary');

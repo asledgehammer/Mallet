@@ -7,6 +7,7 @@ import { RosettaLuaClass } from "../../rosetta/lua/RosettaLuaClass";
 import { RosettaLuaConstructor } from "../../rosetta/lua/RosettaLuaConstructor";
 import { RosettaLuaField } from "../../rosetta/lua/RosettaLuaField";
 import { RosettaLuaFunction } from "../../rosetta/lua/RosettaLuaFunction";
+import { RosettaLuaFunctionCluster } from "../../rosetta/lua/RosettaLuaFunctionCluster";
 import { RosettaLuaTable } from "../../rosetta/lua/RosettaLuaTable";
 import { $get, isNameValid, validateLuaVariableName } from "../../rosetta/util";
 import { NameModeType } from "../component/NameModeType";
@@ -27,6 +28,16 @@ export class ModalName {
     javaParameter: RosettaJavaParameter | undefined = undefined;
     javaCallback: ((name: string) => void) | undefined = undefined;
 
+    luaClass: RosettaLuaClass | undefined = undefined;
+    luaTable: RosettaLuaTable | undefined = undefined;
+    luaConstructor: RosettaLuaConstructor | undefined = undefined;
+    luaFunction: RosettaLuaFunction | undefined = undefined;
+    luaMethod: RosettaLuaFunction | undefined = undefined;
+    luaField: RosettaLuaField | undefined = undefined;
+
+    globalLuaFunction: RosettaLuaFunction | undefined = undefined;
+    globalLuaField: RosettaLuaField | undefined = undefined;
+
     nameSelected: string | undefined;
     nameMode: NameModeType;
 
@@ -43,7 +54,7 @@ export class ModalName {
 
     onGlobalCreate() {
         const { $inputName, app } = this;
-        const { catalog, sidebar, toast } = app;
+        const { catalog, toast } = app;
         const name = validateLuaVariableName($inputName.val()!).trim();
         const nameOld = this.nameSelected!;
         switch (this.nameMode) {
@@ -183,6 +194,8 @@ export class ModalName {
             }
         }
 
+        this.globalLuaField = undefined;
+        this.globalLuaFunction = undefined;
         this.nameSelected = undefined;
         this.modalName.hide();
     }
@@ -190,7 +203,7 @@ export class ModalName {
     listen() {
 
         const { app, $inputName, $btnName } = this;
-        const { catalog: active, sidebar, toast } = app;
+        const { catalog: active, toast } = app;
 
         this.$inputName.on('input', () => {
             const val = $inputName.val()!;
@@ -413,10 +426,34 @@ export class ModalName {
                 }
                 case 'edit_function': {
                     if (entity instanceof RosettaLuaClass) {
+
                         try {
-                            const func = entity.functions[nameOld];
+                            const func = this.luaFunction!;
+                            const nameOld = func.name;
                             func.name = name;
-                            entity.functions[name] = func;
+
+                            // Grab the old cluster and remove the function.
+                            let cluster = entity.functions[nameOld];
+                            cluster.functions.splice(
+                                cluster.functions.indexOf(func),
+                                1
+                            );
+
+                            // Remove cluster if empty.
+                            if (cluster.functions.length === 0) {
+                                delete entity.functions[nameOld];
+                            }
+
+                            // Grab the new-named cluster.
+                            cluster = entity.functions[name];
+                            // Create the cluster if not present.
+                            if (!cluster) {
+                                cluster = new RosettaLuaFunctionCluster(name);
+                                entity.functions[name] = cluster;
+                            }
+                            // Add the function to this cluster.
+                            cluster.add(func);
+
                             delete entity.functions[nameOld];
                             app.showLuaClassFunction(func);
                             toast.alert('Edited Lua Class Function.');
@@ -424,6 +461,7 @@ export class ModalName {
                             toast.alert(`Failed to edit Lua Class Function.`, 'error');
                             console.error(e);
                         }
+
                     } else if (entity instanceof RosettaLuaTable) {
                         try {
                             const func = entity.functions[nameOld];
@@ -461,14 +499,36 @@ export class ModalName {
                 case 'edit_method': {
                     if (entity instanceof RosettaLuaClass) {
                         try {
-                            const method = entity.methods[nameOld];
-                            method.name = name;
-                            entity.methods[name] = method;
-                            delete entity.methods[nameOld];
-                            app.showLuaClassMethod(method);
-                            toast.alert('Edited Lua Method.');
+                            const func = this.luaMethod!;
+                            const nameOld = func.name;
+                            func.name = name;
+
+                            // Grab the old cluster and remove the function.
+                            let cluster = entity.methods[nameOld];
+                            cluster.functions.splice(
+                                cluster.functions.indexOf(func),
+                                1
+                            );
+
+                            // Remove cluster if empty.
+                            if (cluster.functions.length === 0) {
+                                delete entity.methods[nameOld];
+                            }
+
+                            // Grab the new-named cluster.
+                            cluster = entity.methods[name];
+                            // Create the cluster if not present.
+                            if (!cluster) {
+                                cluster = new RosettaLuaFunctionCluster(name);
+                                entity.methods[name] = cluster;
+                            }
+                            // Add the function to this cluster.
+                            cluster.add(func);
+
+                            app.showLuaClassMethod(func);
+                            toast.alert('Edited Lua Class Method.');
                         } catch (e) {
-                            toast.alert(`Failed to edit Lua Method.`, 'error');
+                            toast.alert(`Failed to edit Lua Class Method.`, 'error');
                             console.error(e);
                         }
                     } else if (entity instanceof RosettaLuaTable) {
@@ -487,11 +547,11 @@ export class ModalName {
 
                             let func: RosettaLuaConstructor | RosettaLuaFunction | null = null;
                             if (type === 'constructor') {
-                                func = entity.conztructor;
+                                func = this.luaConstructor!;
                             } else if (type === 'function') {
-                                func = entity.functions[funcName];
+                                func = this.luaFunction!;
                             } else {
-                                func = entity.methods[funcName];
+                                func = this.luaMethod!;
                             }
 
                             func!.addParameter(name, 'any');
@@ -544,30 +604,19 @@ export class ModalName {
                             const funcName = split[0];
                             const paramName = split[1];
                             let type: 'constructor' | 'method' | 'function' | null = null;
-                            let func = null;
+                            let func: RosettaLuaConstructor | RosettaLuaFunction | null = null;
                             let param = null;
                             // Could be the constructor.
                             if (funcName === 'new') {
-                                func = entity.conztructor;
+                                func = this.luaConstructor!;
                                 type = 'constructor';
                             } else {
-                                // First, check methods.
-                                for (const methodName of Object.keys(entity.methods)) {
-                                    if (methodName === funcName) {
-                                        func = entity.methods[methodName];
-                                        type = 'method';
-                                        break;
-                                    }
-                                }
-                                // Second, check functions.
-                                if (!func) {
-                                    for (const methodName of Object.keys(entity.functions)) {
-                                        if (methodName === funcName) {
-                                            func = entity.functions[methodName];
-                                            type = 'function';
-                                            break;
-                                        }
-                                    }
+                                if (this.luaMethod) {
+                                    func = this.luaMethod!;
+                                    type = 'method';
+                                } else if (this.luaFunction) {
+                                    func = this.luaFunction!;
+                                    type = 'function';
                                 }
                             }
                             if (!func) {
@@ -677,6 +726,25 @@ export class ModalName {
                     break;
                 }
             }
+
+            /* (Global Types) */
+            this.globalLuaField = undefined;
+            this.globalLuaFunction = undefined;
+
+            /* (Lua Types) */
+            this.luaClass = undefined;
+            this.luaConstructor = undefined;
+            this.luaField = undefined;
+            this.luaFunction = undefined;
+            this.luaMethod = undefined;
+            this.luaTable = undefined;
+
+            /* (Java Types) */
+            this.javaConstructor = undefined;
+            this.javaMethod = undefined;
+            this.javaParameter = undefined;
+            this.javaCallback = undefined;
+
             this.nameSelected = undefined;
             this.modalName.hide();
         });

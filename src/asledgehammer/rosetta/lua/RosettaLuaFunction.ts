@@ -89,8 +89,11 @@ export class RosettaLuaFunction extends RosettaEntity {
   }
 
   toJSON(patch: boolean = false): any {
-    const { notes, parameters, returns } = this;
+    const { name, notes, parameters, returns } = this;
     const json: any = {};
+
+    /* (Name) */
+    json.name = name;
 
     /* (Properties) */
     json.deprecated = this.deprecated ? true : undefined;
@@ -106,5 +109,17 @@ export class RosettaLuaFunction extends RosettaEntity {
     json.returns = returns.toJSON(patch);
 
     return json;
+  }
+
+  getSignature(): string {
+    let signature = `${this.name}`;
+    if (this.parameters && this.parameters.length) {
+      signature += '_';
+      for (const param of this.parameters) {
+        signature += `${param.type}-`;
+      }
+      signature = signature.substring(0, signature.length - 1);
+    }
+    return signature;
   }
 }

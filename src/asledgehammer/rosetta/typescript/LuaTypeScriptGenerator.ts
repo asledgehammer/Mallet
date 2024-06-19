@@ -226,14 +226,18 @@ export function luaClassToTS(
 
     /* (METHODS) */
     for (const methodName of methodNames) {
-        const method = clazz.methods[methodName];
-        methods.push(method);
+        const cluster = clazz.methods[methodName];
+        for(const method of cluster.functions) {
+            methods.push(method);
+        }
     }
 
     /* (FUNCTIONS) */
     for (const funcName of funcNames) {
-        const func = clazz.functions[funcName];
-        funcs.push(func);
+        const cluster = clazz.functions[funcName];
+        for(const func of cluster.functions) {
+            funcs.push(func);
+        }
     }
 
     /** 100 
@@ -305,13 +309,15 @@ export function luaClassToTS(
         is = is.substring(0, is.length - 1);
     }
 
-    if (clazz.constructor) {
+    if (clazz.constructors) {
         if (is.length) is += '\n';
         is += `${i}/* ------------------------------------ */\n`;
         is += `${i}/* ----------- CONSTRUCTOR ------------ */\n`;
         is += `${i}/* ------------------------------------ */\n`;
         is += '\n';
-        is += `${luaConstructorToTS(clazz.conztructor, 1, notesLength)}\n`;
+        for(const cons of clazz.constructors) {
+            is += `${luaConstructorToTS(cons, 1, notesLength)}\n`;
+        }
         is = is.substring(0, is.length - 1);
     }
 

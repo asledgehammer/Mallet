@@ -9,6 +9,11 @@ import { RosettaLuaParameter } from '../../../rosetta/lua/RosettaLuaParameter';
 import { RosettaLuaReturns } from '../../../rosetta/lua/RosettaLuaReturns';
 import { RosettaEntity } from '../../../rosetta/RosettaEntity';
 import { CodeLanguage } from '../CodeLanguage';
+import { RosettaLuaFunction } from '../../../rosetta/lua/RosettaLuaFunction';
+import { RosettaLuaConstructor } from '../../../rosetta/lua/RosettaLuaConstructor';
+import { RosettaLuaField } from '../../../rosetta/lua/RosettaLuaField';
+import { RosettaLuaClass } from '../../../rosetta/lua/RosettaLuaClass';
+import { RosettaLuaTable } from '../../../rosetta/lua/RosettaLuaTable';
 
 export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O> {
 
@@ -32,7 +37,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
         this.idBtnLanguageJSON = `${this.id}-btn-language-json`;
     }
 
-    listenEdit(entity: { name: string }, idBtnEdit: string, mode: NameModeType, title: string, nameSelected: string | undefined = undefined) {
+    listenEdit(entity: { name: string }, idBtnEdit: string, mode: NameModeType, title: string, nameSelected: string | undefined = undefined, type: 'method' | 'function' | 'constructor' | 'field' | 'class' | 'table' | 'global_field' | 'global_function') {
         $get(idBtnEdit).on('click', () => {
             const { modalName, $btnName, $titleName, $inputName } = this.app.modalName;
 
@@ -60,6 +65,42 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
 
             if (!nameSelected) nameSelected = entity.name;
             this.app.modalName.nameSelected = nameSelected;
+
+            switch (type) {
+                case 'class': {
+                    this.app.modalName.luaClass = this.options!.entity as RosettaLuaClass;
+                    break;
+                }
+                case 'table': {
+                    this.app.modalName.luaTable = this.options!.entity as RosettaLuaTable;
+                    break;
+                }
+                case 'function': {
+                    this.app.modalName.luaFunction = this.options!.entity as RosettaLuaFunction;
+                    break;
+                }
+                case 'method': {
+                    this.app.modalName.luaMethod = this.options!.entity as RosettaLuaFunction;
+                    break;
+                }
+                case 'constructor': {
+                    this.app.modalName.luaConstructor = this.options!.entity as RosettaLuaConstructor;
+                    break;
+                }
+                case 'field': {
+                    this.app.modalName.luaField = this.options!.entity as RosettaLuaField;
+                    break;
+                }
+                case 'global_field': {
+                    this.app.modalName.globalLuaField = this.options!.entity as RosettaLuaField;
+                    break;
+                }
+                case 'global_function': {
+                    this.app.modalName.globalLuaFunction = this.options!.entity as RosettaLuaFunction;
+                    break;
+                }
+            }
+
             this.app.modalName.show(true);
         });
     }
@@ -207,7 +248,7 @@ export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O>
                 _this.app.renderCode();
             });
 
-            this.listenEdit({ name: param.name }, idBtnEdit, 'edit_parameter', 'Edit Parameter Name', `${entity.name}-${param.name}`);
+            this.listenEdit({ name: param.name }, idBtnEdit, 'edit_parameter', 'Edit Parameter Name', `${entity.name}-${param.name}`, type);
         }
         const idBtnAdd = `btn-${entity.name}-parameter-add`;
         $get(idBtnAdd).on('click', () => {

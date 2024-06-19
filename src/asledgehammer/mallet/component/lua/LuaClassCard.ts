@@ -86,7 +86,7 @@ export class LuaClassCard extends LuaCard<LuaClassCardOptions> {
         const { entity } = this.options!;
         const _this = this;
 
-        this.listenEdit(entity, idBtnEdit, 'edit_lua_class', 'Edit Lua Class');
+        this.listenEdit(entity, idBtnEdit, 'edit_lua_class', 'Edit Lua Class', undefined, 'class');
         this.listenNotes(entity, idNotes);
         this.listenPreview();
         const $checkMutable = $get(idCheckMutable);

@@ -120,7 +120,7 @@ export class LuaFieldCard extends LuaCard<LuaFieldCardOptions> {
         this.listenNotes(entity, idNotes);
         this.listenDefaultValue(entity, idDefaultValue);
         this.listenType(entity, idType, idType);
-        this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_value' : 'edit_field', `Edit ${isStatic ? 'Value' : 'Field'} Name`);
+        this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_value' : 'edit_field', `Edit ${isStatic ? 'Value' : 'Field'} Name`, undefined, 'field');
         this.listenPreview();
 
         $get(idBtnDelete).on('click', () => {

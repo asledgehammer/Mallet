@@ -5,6 +5,7 @@ import { RosettaEntity } from '../RosettaEntity';
 import { RosettaLuaFunction } from './RosettaLuaFunction';
 import { RosettaLuaField } from './RosettaLuaField';
 import { RosettaLuaConstructor } from './RosettaLuaConstructor';
+import { RosettaLuaFunctionCluster } from './RosettaLuaFunctionCluster';
 
 /**
  * **RosettaLuaClass**
@@ -15,11 +16,11 @@ export class RosettaLuaClass extends RosettaEntity {
   extendz: string | undefined;
   name: string;
 
-  readonly functions: { [name: string]: RosettaLuaFunction } = {};
-  readonly methods: { [name: string]: RosettaLuaFunction } = {};
+  readonly functions: { [name: string]: RosettaLuaFunctionCluster } = {};
+  readonly methods: { [name: string]: RosettaLuaFunctionCluster } = {};
   readonly fields: { [name: string]: RosettaLuaField } = {};
   readonly values: { [name: string]: RosettaLuaField } = {};
-  conztructor: RosettaLuaConstructor;
+  readonly constructors: RosettaLuaConstructor[] = [];
   deprecated: boolean = false;
   notes: string | undefined;
 
@@ -37,31 +38,85 @@ export class RosettaLuaClass extends RosettaEntity {
     this.notes = this.readNotes();
     this.deprecated = this.readBoolean('deprecated') === true;
 
-    /* (Constructor) */
-    if (raw.constructor !== undefined) {
+    /* (Current Constructor) */
+    if (raw.constructors !== undefined) {
+      for (const cons of raw.constructors) {
+        this.constructors.push(new RosettaLuaConstructor(this, cons));
+      }
+    }
+    /* (Legacy Constructors) */
+    else if (raw.constructor) {
+      console.log(raw.constructor);
+      console.log('PZ-Rosetta: Upgrading constructor from singleton to array..');
       const rawConstructor = raw.constructor;
-      this.conztructor = new RosettaLuaConstructor(this, rawConstructor);
-    } else {
-      this.conztructor = new RosettaLuaConstructor(this);
+      this.constructors.push(new RosettaLuaConstructor(this, rawConstructor));
     }
 
     /* (Methods) */
     if (raw.methods !== undefined) {
-      const rawMethods: { [key: string]: any } = raw.methods;
-      for (const name2 of Object.keys(rawMethods)) {
-        const rawMethod = rawMethods[name2];
-        const method = new RosettaLuaFunction(name2, rawMethod);
-        this.methods[name2] = this.methods[method.name] = method;
+
+      /* (Legacy Methods) */
+      if (!Array.isArray(raw.methods)) {
+        console.log('PZ-Rosetta: Upgrading legacy Lua methods from singleton-object per name to clustered array..');
+
+        const rawMethods: { [key: string]: any } = raw.methods;
+        for (const name2 of Object.keys(rawMethods)) {
+          const rawMethod = rawMethods[name2];
+          const method = new RosettaLuaFunction(name2, rawMethod);
+          this.methods[method.name] = new RosettaLuaFunctionCluster(method.name);
+          this.methods[method.name].add(method);
+        }
+
+      }
+      /* (Current Methods) */
+      else {
+        const rawMethods = raw.methods;
+        for (const rawMethod of rawMethods) {
+          const method = new RosettaLuaFunction(rawMethod.name, rawMethod);
+          const { name: methodName } = method;
+          let cluster: RosettaLuaFunctionCluster;
+          if (this.methods[methodName] === undefined) {
+            cluster = new RosettaLuaFunctionCluster(methodName);
+            this.methods[methodName] = cluster;
+          } else {
+            cluster = this.methods[methodName];
+          }
+          cluster.add(method);
+        }
       }
     }
 
-    /* (Functions) */
+    /* (Static Methods) */
     if (raw.functions !== undefined) {
-      const rawFunctions: { [key: string]: any } = raw.functions;
-      for (const name2 of Object.keys(rawFunctions)) {
-        const rawFunction = rawFunctions[name2];
-        const func = new RosettaLuaFunction(name2, rawFunction);
-        this.functions[name2] = this.functions[func.name] = func;
+
+      /* (Legacy Static Methods) */
+      if (!Array.isArray(raw.functions)) {
+        console.log('PZ-Rosetta: Upgrading legacy Lua static methods from singleton-object per name to clustered array..');
+
+        const rawMethods: { [key: string]: any } = raw.functions;
+        for (const name2 of Object.keys(rawMethods)) {
+          const rawMethod = rawMethods[name2];
+          const method = new RosettaLuaFunction(name2, rawMethod);
+          this.functions[method.name] = new RosettaLuaFunctionCluster(method.name);
+          this.functions[method.name].add(method);
+        }
+
+      }
+      /* (Current Static Methods) */
+      else {
+        const rawMethods = raw.functions;
+        for (const rawMethod of rawMethods) {
+          const method = new RosettaLuaFunction(rawMethod.name, rawMethod);
+          const { name: methodName } = method;
+          let cluster: RosettaLuaFunctionCluster;
+          if (this.functions[methodName] === undefined) {
+            cluster = new RosettaLuaFunctionCluster(methodName);
+            this.functions[methodName] = cluster;
+          } else {
+            cluster = this.functions[methodName];
+          }
+          cluster.add(method);
+        }
       }
     }
 
@@ -95,38 +150,84 @@ export class RosettaLuaClass extends RosettaEntity {
     this.notes = this.readNotes(raw);
     this.deprecated = this.readBoolean('deprecated', raw) === true;
 
-    /* (Constructor) */
-    if (raw.constructor !== undefined) {
+    /* (Current Constructor) */
+    if (raw.constructors !== undefined) {
+      for (const cons of raw.constructors) {
+        this.constructors.push(new RosettaLuaConstructor(this, cons));
+      }
+    }
+    /* (Legacy Constructors) */
+    else if (raw.constructor) {
+      console.log(raw.constructor);
+      console.log('PZ-Rosetta: Upgrading constructor from singleton to array..');
       const rawConstructor = raw.constructor;
-      this.conztructor = new RosettaLuaConstructor(this, rawConstructor);
+      this.constructors.push(new RosettaLuaConstructor(this, rawConstructor));
     }
 
     /* (Methods) */
     if (raw.methods !== undefined) {
-      const rawMethods: { [key: string]: any } = raw.methods;
-      for (const name of Object.keys(rawMethods)) {
-        const rawMethod = rawMethods[name];
-        let method = this.methods[name];
-        if (method == null) {
-          method = new RosettaLuaFunction(name, rawMethod);
-          this.methods[name] = this.methods[method.name] = method;
-        } else {
-          method.parse(rawMethod);
+
+      /* (Legacy Methods) */
+      if (!Array.isArray(raw.methods)) {
+        console.log('PZ-Rosetta: Upgrading legacy Lua methods from singleton-object per name to clustered array..');
+
+        const rawMethods: { [key: string]: any } = raw.methods;
+        for (const name2 of Object.keys(rawMethods)) {
+          const rawMethod = rawMethods[name2];
+          const method = new RosettaLuaFunction(name2, rawMethod);
+          this.methods[method.name] = new RosettaLuaFunctionCluster(method.name);
+          this.methods[method.name].add(method);
+        }
+
+      }
+      /* (Current Methods) */
+      else {
+        const rawMethods = raw.methods;
+        for (const rawMethod of rawMethods) {
+          const method = new RosettaLuaFunction(rawMethod.name, rawMethod);
+          const { name: methodName } = method;
+          let cluster: RosettaLuaFunctionCluster;
+          if (this.methods[methodName] === undefined) {
+            cluster = new RosettaLuaFunctionCluster(methodName);
+            this.methods[methodName] = cluster;
+          } else {
+            cluster = this.methods[methodName];
+          }
+          cluster.add(method);
         }
       }
     }
 
-    /* (Functions) */
+    /* (Static Methods) */
     if (raw.functions !== undefined) {
-      const rawFunctions: { [key: string]: any } = raw.functions;
-      for (const name of Object.keys(rawFunctions)) {
-        const rawFunction = rawFunctions[name];
-        let func = this.functions[name];
-        if (func == null) {
-          func = new RosettaLuaFunction(name, rawFunction);
-          this.functions[name] = this.functions[func.name] = func;
-        } else {
-          func.parse(rawFunction);
+
+      /* (Legacy Static Methods) */
+      if (!Array.isArray(raw.functions)) {
+        console.log('PZ-Rosetta: Upgrading legacy Lua static methods from singleton-object per name to clustered array..');
+
+        const rawMethods: { [key: string]: any } = raw.functions;
+        for (const name2 of Object.keys(rawMethods)) {
+          const rawMethod = rawMethods[name2];
+          const method = new RosettaLuaFunction(name2, rawMethod);
+          this.functions[method.name] = new RosettaLuaFunctionCluster(method.name);
+          this.functions[method.name].add(method);
+        }
+
+      }
+      /* (Current Static Methods) */
+      else {
+        const rawMethods = raw.functions;
+        for (const rawMethod of rawMethods) {
+          const method = new RosettaLuaFunction(rawMethod.name, rawMethod);
+          const { name: methodName } = method;
+          let cluster: RosettaLuaFunctionCluster;
+          if (this.functions[methodName] === undefined) {
+            cluster = new RosettaLuaFunctionCluster(methodName);
+            this.functions[methodName] = cluster;
+          } else {
+            cluster = this.functions[methodName];
+          }
+          cluster.add(method);
         }
       }
     }
@@ -164,7 +265,7 @@ export class RosettaLuaClass extends RosettaEntity {
     /* (Mutable Flag) */
     if (raw.mutable !== undefined) {
       this.mutable = !!raw.mutable;
-    }    
+    }
   }
 
   /**
@@ -221,20 +322,16 @@ export class RosettaLuaClass extends RosettaEntity {
    * - A method already exists with the same name in the Lua class.
    */
   createMethod(name: string): RosettaLuaFunction {
-    const method = new RosettaLuaFunction(name, { returns: { type: 'void', notes: '' } });
+    const func = new RosettaLuaFunction(name, { returns: { type: 'void', notes: '' } });
 
-    // (Only check for the file instance)
-    if (this.methods[method.name]) {
-      throw new Error(`A method already exists: ${method.name}`);
+    let cluster = this.methods[func.name];
+    if (!cluster) {
+      cluster = this.methods[func.name] = new RosettaLuaFunctionCluster(name);
     }
 
-    if (this.functions[method.name]) {
-      throw new Error(`A function already exists with name and cannot be a method: ${method.name}`);
-    }
+    cluster.add(func);
 
-    this.methods[method.name] = method;
-
-    return method;
+    return func;
   }
 
   /**
@@ -249,23 +346,76 @@ export class RosettaLuaClass extends RosettaEntity {
   createFunction(name: string): RosettaLuaFunction {
     const func = new RosettaLuaFunction(name, { returns: { type: 'void', notes: '' } });
 
-    // (Only check for the file instance)
-    if (this.functions[func.name]) {
-      throw new Error(`A function already exists: ${func.name}`);
+    let cluster = this.functions[func.name];
+    if (!cluster) {
+      cluster = this.functions[func.name] = new RosettaLuaFunctionCluster(name);
     }
 
-    if (this.methods[func.name]) {
-      throw new Error(`A method already exists with name and cannot be a function: ${func.name}`);
-    }
-
-
-    this.functions[func.name] = func;
+    cluster.add(func);
 
     return func;
   }
 
+  getConstructor(...parameterTypes: string[]): RosettaLuaConstructor | undefined {
+    if (!this.constructors.length) return undefined;
+    for (const conztructor of this.constructors) {
+      if (conztructor.parameters.length === parameterTypes.length) {
+        let invalid = false;
+        for (let index = 0; index < parameterTypes.length; index++) {
+          if (parameterTypes[index] !== conztructor.parameters[index].type) {
+            invalid = true;
+            break;
+          }
+        }
+        if (invalid) continue;
+        return conztructor;
+      }
+    }
+    return;
+  }
+
+  getMethod(...parameterTypes: string[]): RosettaLuaFunction | undefined {
+    if (!this.methods.length) return undefined;
+    for (const cluster of Object.values(this.methods)) {
+      for (const method of cluster.functions) {
+        if (method.parameters.length === parameterTypes.length) {
+          let invalid = false;
+          for (let index = 0; index < parameterTypes.length; index++) {
+            if (parameterTypes[index] !== method.parameters[index].type) {
+              invalid = true;
+              break;
+            }
+          }
+          if (invalid) continue;
+          return method;
+        }
+      }
+    }
+    return;
+  }
+
+  getStaticMethod(...parameterTypes: string[]): RosettaLuaFunction | undefined {
+    if (!this.functions.length) return undefined;
+    for (const cluster of Object.values(this.functions)) {
+      for (const method of cluster.functions) {
+        if (method.parameters.length === parameterTypes.length) {
+          let invalid = false;
+          for (let index = 0; index < parameterTypes.length; index++) {
+            if (parameterTypes[index] !== method.parameters[index].type) {
+              invalid = true;
+              break;
+            }
+          }
+          if (invalid) continue;
+          return method;
+        }
+      }
+    }
+    return;
+  }
+
   toJSON(patch: boolean = false): any {
-    const { fields, functions, methods, values } = this;
+    const { constructors, fields, functions, methods, values } = this;
 
     const json: any = {};
 
@@ -291,24 +441,33 @@ export class RosettaLuaClass extends RosettaEntity {
     }
 
     /* (Constructor) */
-    if (this.conztructor !== undefined) {
-      json.constructor = this.conztructor !== undefined ? this.conztructor?.toJSON(patch) : undefined;
+    if (this.constructors.length !== 0) {
+      json.constructors = [];
+      for (const cons of constructors) {
+        json.constructors.push(cons.toJSON(patch));
+      }
     }
 
     /* (Methods) */
     keys = Object.keys(methods);
+    keys.sort((a, b) => a.localeCompare(b));
     if (keys.length) {
-      json.methods = {};
-      keys.sort((a, b) => a.localeCompare(b));
-      for (const key of keys) json.methods[key] = methods[key].toJSON(patch);
+      json.methods = [];
+      /* (Flatten MethodClusters into JSON method bodies) */
+      for (const key of keys) {
+        for (const method of methods[key].functions) json.methods.push(method.toJSON(patch));
+      }
     }
 
-    /* (Functions) */
+    /* (Static Methods) */
     keys = Object.keys(functions);
+    keys.sort((a, b) => a.localeCompare(b));
     if (keys.length) {
-      json.functions = {};
-      keys.sort((a, b) => a.localeCompare(b));
-      for (const key of keys) json.functions[key] = functions[key].toJSON(patch);
+      json.methods = [];
+      /* (Flatten MethodClusters into JSON method bodies) */
+      for (const key of keys) {
+        for (const func of functions[key].functions) json.function.push(func.toJSON(patch));
+      }
     }
 
     /* (Mutable Flag) */

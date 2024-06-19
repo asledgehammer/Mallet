@@ -303,7 +303,10 @@ export const generateLuaClass = (clazz: RosettaLuaClass): string => {
         s += '\n';
     }
 
-    s += generateLuaConstructor(clazz.name, clazz.conztructor) + '\n';
+    // Generate any constructors in the class here.
+    for(const cons of clazz.constructors) {
+        s += generateLuaConstructor(clazz.name, cons) + '\n';
+    }
 
     // Generate any methods in the class here.
     const methodNames = Object.keys(clazz.methods);
@@ -311,8 +314,10 @@ export const generateLuaClass = (clazz: RosettaLuaClass): string => {
         s += '\n';
         methodNames.sort((a, b) => a.localeCompare(b));
         for (const methodName of methodNames) {
-            const method = clazz.methods[methodName];
-            s += generateLuaFunction(clazz.name, ':', method) + '\n\n';
+            const cluster = clazz.methods[methodName];
+            for(const method of cluster.functions) {
+                s += generateLuaFunction(clazz.name, ':', method) + '\n\n';
+            }
         }
     }
 
@@ -321,8 +326,10 @@ export const generateLuaClass = (clazz: RosettaLuaClass): string => {
     if (functionNames.length) {
         functionNames.sort((a, b) => a.localeCompare(b));
         for (const functionName of functionNames) {
-            const func = clazz.functions[functionName];
-            s += generateLuaFunction(clazz.name, '.', func) + '\n\n';
+            const cluster = clazz.functions[functionName];
+            for(const func of cluster.functions) {
+                s += generateLuaFunction(clazz.name, '.', func) + '\n\n';
+            }
         }
     }
 

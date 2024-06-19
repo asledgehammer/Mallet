@@ -103,7 +103,7 @@ export class LuaGlobalFieldCard extends LuaCard<LuaGlobalFieldCardOptions> {
         this.listenNotes(entity, idNotes);
         this.listenDefaultValue(entity, idDefaultValue);
         this.listenType(entity, idType, idType);
-        this.listenEdit(entity, idBtnEdit, 'edit_field', 'Edit Global Field Name');
+        this.listenEdit(entity, idBtnEdit, 'edit_field', 'Edit Global Field Name', undefined, 'global_field');
         this.listenPreview();
 
         $get(idBtnDelete).on('click', () => {

@@ -319,8 +319,10 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaFunction", ["require", "exports"
             return parameter;
         }
         toJSON(patch = false) {
-            const { notes, parameters, returns } = this;
+            const { name, notes, parameters, returns } = this;
             const json = {};
+            /* (Name) */
+            json.name = name;
             /* (Properties) */
             json.deprecated = this.deprecated ? true : undefined;
             json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
@@ -333,6 +335,17 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaFunction", ["require", "exports"
             /* (Returns) */
             json.returns = returns.toJSON(patch);
             return json;
+        }
+        getSignature() {
+            let signature = `${this.name}`;
+            if (this.parameters && this.parameters.length) {
+                signature += '_';
+                for (const param of this.parameters) {
+                    signature += `${param.type}-`;
+                }
+                signature = signature.substring(0, signature.length - 1);
+            }
+            return signature;
         }
     }
     exports.RosettaLuaFunction = RosettaLuaFunction;
@@ -459,10 +472,67 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaConstructor", ["require", "expor
             }
             return json;
         }
+        getSignature() {
+            let signature = `constructor`;
+            if (this.parameters && this.parameters.length) {
+                signature += '_';
+                for (const param of this.parameters) {
+                    signature += `${param.type}-`;
+                }
+                signature = signature.substring(0, signature.length - 1);
+            }
+            return signature;
+        }
     }
     exports.RosettaLuaConstructor = RosettaLuaConstructor;
 });
-define("src/asledgehammer/rosetta/lua/RosettaLuaClass", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaUtils", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaField", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor"], function (require, exports, Assert, RosettaUtils_3, RosettaEntity_6, RosettaLuaFunction_1, RosettaLuaField_1, RosettaLuaConstructor_1) {
+define("src/asledgehammer/rosetta/lua/RosettaLuaFunctionCluster", ["require", "exports", "src/asledgehammer/Assert"], function (require, exports, Assert) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaLuaFunctionCluster = void 0;
+    /**
+     * **RosettaLuaFunctionCluster**
+     *
+     * @author Jab
+     */
+    class RosettaLuaFunctionCluster {
+        constructor(name) {
+            this.functions = [];
+            Assert.assertNonEmptyString(name, 'name');
+            this.name = name;
+        }
+        add(method) {
+            const indexOf = this.functions.indexOf(method);
+            if (indexOf !== -1) {
+                this.functions[indexOf].parse(method.raw);
+                return;
+            }
+            this.functions.push(method);
+        }
+        getWithParameters(...parameterNames) {
+            for (const method of this.functions) {
+                const parameters = method.parameters;
+                if (parameterNames.length === parameters.length) {
+                    if (parameterNames.length === 0)
+                        return method;
+                    let invalid = false;
+                    for (let i = 0; i < parameters.length; i++) {
+                        if (parameters[i].type !== parameterNames[i]) {
+                            invalid = true;
+                            break;
+                        }
+                    }
+                    if (invalid)
+                        continue;
+                    return method;
+                }
+            }
+            return;
+        }
+    }
+    exports.RosettaLuaFunctionCluster = RosettaLuaFunctionCluster;
+});
+define("src/asledgehammer/rosetta/lua/RosettaLuaClass", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaUtils", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaField", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/lua/RosettaLuaFunctionCluster"], function (require, exports, Assert, RosettaUtils_3, RosettaEntity_6, RosettaLuaFunction_1, RosettaLuaField_1, RosettaLuaConstructor_1, RosettaLuaFunctionCluster_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RosettaLuaClass = void 0;
@@ -478,6 +548,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaClass", ["require", "exports", "
             this.methods = {};
             this.fields = {};
             this.values = {};
+            this.constructors = [];
             this.deprecated = false;
             /** (Default: off) */
             this.mutable = false;
@@ -486,30 +557,79 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaClass", ["require", "exports", "
             this.extendz = this.readString('extends');
             this.notes = this.readNotes();
             this.deprecated = this.readBoolean('deprecated') === true;
-            /* (Constructor) */
-            if (raw.constructor !== undefined) {
-                const rawConstructor = raw.constructor;
-                this.conztructor = new RosettaLuaConstructor_1.RosettaLuaConstructor(this, rawConstructor);
+            /* (Current Constructor) */
+            if (raw.constructors !== undefined) {
+                for (const cons of raw.constructors) {
+                    this.constructors.push(new RosettaLuaConstructor_1.RosettaLuaConstructor(this, cons));
+                }
             }
-            else {
-                this.conztructor = new RosettaLuaConstructor_1.RosettaLuaConstructor(this);
+            /* (Legacy Constructors) */
+            else if (raw.constructor) {
+                console.log(raw.constructor);
+                console.log('PZ-Rosetta: Upgrading constructor from singleton to array..');
+                const rawConstructor = raw.constructor;
+                this.constructors.push(new RosettaLuaConstructor_1.RosettaLuaConstructor(this, rawConstructor));
             }
             /* (Methods) */
             if (raw.methods !== undefined) {
-                const rawMethods = raw.methods;
-                for (const name2 of Object.keys(rawMethods)) {
-                    const rawMethod = rawMethods[name2];
-                    const method = new RosettaLuaFunction_1.RosettaLuaFunction(name2, rawMethod);
-                    this.methods[name2] = this.methods[method.name] = method;
+                /* (Legacy Methods) */
+                if (!Array.isArray(raw.methods)) {
+                    console.log('PZ-Rosetta: Upgrading legacy Lua methods from singleton-object per name to clustered array..');
+                    const rawMethods = raw.methods;
+                    for (const name2 of Object.keys(rawMethods)) {
+                        const rawMethod = rawMethods[name2];
+                        const method = new RosettaLuaFunction_1.RosettaLuaFunction(name2, rawMethod);
+                        this.methods[method.name] = new RosettaLuaFunctionCluster_1.RosettaLuaFunctionCluster(method.name);
+                        this.methods[method.name].add(method);
+                    }
+                }
+                /* (Current Methods) */
+                else {
+                    const rawMethods = raw.methods;
+                    for (const rawMethod of rawMethods) {
+                        const method = new RosettaLuaFunction_1.RosettaLuaFunction(rawMethod.name, rawMethod);
+                        const { name: methodName } = method;
+                        let cluster;
+                        if (this.methods[methodName] === undefined) {
+                            cluster = new RosettaLuaFunctionCluster_1.RosettaLuaFunctionCluster(methodName);
+                            this.methods[methodName] = cluster;
+                        }
+                        else {
+                            cluster = this.methods[methodName];
+                        }
+                        cluster.add(method);
+                    }
                 }
             }
-            /* (Functions) */
+            /* (Static Methods) */
             if (raw.functions !== undefined) {
-                const rawFunctions = raw.functions;
-                for (const name2 of Object.keys(rawFunctions)) {
-                    const rawFunction = rawFunctions[name2];
-                    const func = new RosettaLuaFunction_1.RosettaLuaFunction(name2, rawFunction);
-                    this.functions[name2] = this.functions[func.name] = func;
+                /* (Legacy Static Methods) */
+                if (!Array.isArray(raw.functions)) {
+                    console.log('PZ-Rosetta: Upgrading legacy Lua static methods from singleton-object per name to clustered array..');
+                    const rawMethods = raw.functions;
+                    for (const name2 of Object.keys(rawMethods)) {
+                        const rawMethod = rawMethods[name2];
+                        const method = new RosettaLuaFunction_1.RosettaLuaFunction(name2, rawMethod);
+                        this.functions[method.name] = new RosettaLuaFunctionCluster_1.RosettaLuaFunctionCluster(method.name);
+                        this.functions[method.name].add(method);
+                    }
+                }
+                /* (Current Static Methods) */
+                else {
+                    const rawMethods = raw.functions;
+                    for (const rawMethod of rawMethods) {
+                        const method = new RosettaLuaFunction_1.RosettaLuaFunction(rawMethod.name, rawMethod);
+                        const { name: methodName } = method;
+                        let cluster;
+                        if (this.functions[methodName] === undefined) {
+                            cluster = new RosettaLuaFunctionCluster_1.RosettaLuaFunctionCluster(methodName);
+                            this.functions[methodName] = cluster;
+                        }
+                        else {
+                            cluster = this.functions[methodName];
+                        }
+                        cluster.add(method);
+                    }
                 }
             }
             /* (Fields) */
@@ -538,38 +658,78 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaClass", ["require", "exports", "
         parse(raw) {
             this.notes = this.readNotes(raw);
             this.deprecated = this.readBoolean('deprecated', raw) === true;
-            /* (Constructor) */
-            if (raw.constructor !== undefined) {
+            /* (Current Constructor) */
+            if (raw.constructors !== undefined) {
+                for (const cons of raw.constructors) {
+                    this.constructors.push(new RosettaLuaConstructor_1.RosettaLuaConstructor(this, cons));
+                }
+            }
+            /* (Legacy Constructors) */
+            else if (raw.constructor) {
+                console.log(raw.constructor);
+                console.log('PZ-Rosetta: Upgrading constructor from singleton to array..');
                 const rawConstructor = raw.constructor;
-                this.conztructor = new RosettaLuaConstructor_1.RosettaLuaConstructor(this, rawConstructor);
+                this.constructors.push(new RosettaLuaConstructor_1.RosettaLuaConstructor(this, rawConstructor));
             }
             /* (Methods) */
             if (raw.methods !== undefined) {
-                const rawMethods = raw.methods;
-                for (const name of Object.keys(rawMethods)) {
-                    const rawMethod = rawMethods[name];
-                    let method = this.methods[name];
-                    if (method == null) {
-                        method = new RosettaLuaFunction_1.RosettaLuaFunction(name, rawMethod);
-                        this.methods[name] = this.methods[method.name] = method;
+                /* (Legacy Methods) */
+                if (!Array.isArray(raw.methods)) {
+                    console.log('PZ-Rosetta: Upgrading legacy Lua methods from singleton-object per name to clustered array..');
+                    const rawMethods = raw.methods;
+                    for (const name2 of Object.keys(rawMethods)) {
+                        const rawMethod = rawMethods[name2];
+                        const method = new RosettaLuaFunction_1.RosettaLuaFunction(name2, rawMethod);
+                        this.methods[method.name] = new RosettaLuaFunctionCluster_1.RosettaLuaFunctionCluster(method.name);
+                        this.methods[method.name].add(method);
                     }
-                    else {
-                        method.parse(rawMethod);
+                }
+                /* (Current Methods) */
+                else {
+                    const rawMethods = raw.methods;
+                    for (const rawMethod of rawMethods) {
+                        const method = new RosettaLuaFunction_1.RosettaLuaFunction(rawMethod.name, rawMethod);
+                        const { name: methodName } = method;
+                        let cluster;
+                        if (this.methods[methodName] === undefined) {
+                            cluster = new RosettaLuaFunctionCluster_1.RosettaLuaFunctionCluster(methodName);
+                            this.methods[methodName] = cluster;
+                        }
+                        else {
+                            cluster = this.methods[methodName];
+                        }
+                        cluster.add(method);
                     }
                 }
             }
-            /* (Functions) */
+            /* (Static Methods) */
             if (raw.functions !== undefined) {
-                const rawFunctions = raw.functions;
-                for (const name of Object.keys(rawFunctions)) {
-                    const rawFunction = rawFunctions[name];
-                    let func = this.functions[name];
-                    if (func == null) {
-                        func = new RosettaLuaFunction_1.RosettaLuaFunction(name, rawFunction);
-                        this.functions[name] = this.functions[func.name] = func;
+                /* (Legacy Static Methods) */
+                if (!Array.isArray(raw.functions)) {
+                    console.log('PZ-Rosetta: Upgrading legacy Lua static methods from singleton-object per name to clustered array..');
+                    const rawMethods = raw.functions;
+                    for (const name2 of Object.keys(rawMethods)) {
+                        const rawMethod = rawMethods[name2];
+                        const method = new RosettaLuaFunction_1.RosettaLuaFunction(name2, rawMethod);
+                        this.functions[method.name] = new RosettaLuaFunctionCluster_1.RosettaLuaFunctionCluster(method.name);
+                        this.functions[method.name].add(method);
                     }
-                    else {
-                        func.parse(rawFunction);
+                }
+                /* (Current Static Methods) */
+                else {
+                    const rawMethods = raw.functions;
+                    for (const rawMethod of rawMethods) {
+                        const method = new RosettaLuaFunction_1.RosettaLuaFunction(rawMethod.name, rawMethod);
+                        const { name: methodName } = method;
+                        let cluster;
+                        if (this.functions[methodName] === undefined) {
+                            cluster = new RosettaLuaFunctionCluster_1.RosettaLuaFunctionCluster(methodName);
+                            this.functions[methodName] = cluster;
+                        }
+                        else {
+                            cluster = this.functions[methodName];
+                        }
+                        cluster.add(method);
                     }
                 }
             }
@@ -654,16 +814,13 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaClass", ["require", "exports", "
          * - A method already exists with the same name in the Lua class.
          */
         createMethod(name) {
-            const method = new RosettaLuaFunction_1.RosettaLuaFunction(name, { returns: { type: 'void', notes: '' } });
-            // (Only check for the file instance)
-            if (this.methods[method.name]) {
-                throw new Error(`A method already exists: ${method.name}`);
+            const func = new RosettaLuaFunction_1.RosettaLuaFunction(name, { returns: { type: 'void', notes: '' } });
+            let cluster = this.methods[func.name];
+            if (!cluster) {
+                cluster = this.methods[func.name] = new RosettaLuaFunctionCluster_1.RosettaLuaFunctionCluster(name);
             }
-            if (this.functions[method.name]) {
-                throw new Error(`A function already exists with name and cannot be a method: ${method.name}`);
-            }
-            this.methods[method.name] = method;
-            return method;
+            cluster.add(func);
+            return func;
         }
         /**
          * Creates a function in the Lua class.
@@ -676,19 +833,76 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaClass", ["require", "exports", "
          */
         createFunction(name) {
             const func = new RosettaLuaFunction_1.RosettaLuaFunction(name, { returns: { type: 'void', notes: '' } });
-            // (Only check for the file instance)
-            if (this.functions[func.name]) {
-                throw new Error(`A function already exists: ${func.name}`);
+            let cluster = this.functions[func.name];
+            if (!cluster) {
+                cluster = this.functions[func.name] = new RosettaLuaFunctionCluster_1.RosettaLuaFunctionCluster(name);
             }
-            if (this.methods[func.name]) {
-                throw new Error(`A method already exists with name and cannot be a function: ${func.name}`);
-            }
-            this.functions[func.name] = func;
+            cluster.add(func);
             return func;
         }
+        getConstructor(...parameterTypes) {
+            if (!this.constructors.length)
+                return undefined;
+            for (const conztructor of this.constructors) {
+                if (conztructor.parameters.length === parameterTypes.length) {
+                    let invalid = false;
+                    for (let index = 0; index < parameterTypes.length; index++) {
+                        if (parameterTypes[index] !== conztructor.parameters[index].type) {
+                            invalid = true;
+                            break;
+                        }
+                    }
+                    if (invalid)
+                        continue;
+                    return conztructor;
+                }
+            }
+            return;
+        }
+        getMethod(...parameterTypes) {
+            if (!this.methods.length)
+                return undefined;
+            for (const cluster of Object.values(this.methods)) {
+                for (const method of cluster.functions) {
+                    if (method.parameters.length === parameterTypes.length) {
+                        let invalid = false;
+                        for (let index = 0; index < parameterTypes.length; index++) {
+                            if (parameterTypes[index] !== method.parameters[index].type) {
+                                invalid = true;
+                                break;
+                            }
+                        }
+                        if (invalid)
+                            continue;
+                        return method;
+                    }
+                }
+            }
+            return;
+        }
+        getStaticMethod(...parameterTypes) {
+            if (!this.functions.length)
+                return undefined;
+            for (const cluster of Object.values(this.functions)) {
+                for (const method of cluster.functions) {
+                    if (method.parameters.length === parameterTypes.length) {
+                        let invalid = false;
+                        for (let index = 0; index < parameterTypes.length; index++) {
+                            if (parameterTypes[index] !== method.parameters[index].type) {
+                                invalid = true;
+                                break;
+                            }
+                        }
+                        if (invalid)
+                            continue;
+                        return method;
+                    }
+                }
+            }
+            return;
+        }
         toJSON(patch = false) {
-            var _a;
-            const { fields, functions, methods, values } = this;
+            const { constructors, fields, functions, methods, values } = this;
             const json = {};
             /* (Properties) */
             json.extends = this.extendz !== undefined && this.extendz !== '' ? this.extendz : undefined;
@@ -711,24 +925,33 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaClass", ["require", "exports", "
                     json.fields[key] = fields[key].toJSON(patch);
             }
             /* (Constructor) */
-            if (this.conztructor !== undefined) {
-                json.constructor = this.conztructor !== undefined ? (_a = this.conztructor) === null || _a === void 0 ? void 0 : _a.toJSON(patch) : undefined;
+            if (this.constructors.length !== 0) {
+                json.constructors = [];
+                for (const cons of constructors) {
+                    json.constructors.push(cons.toJSON(patch));
+                }
             }
             /* (Methods) */
             keys = Object.keys(methods);
+            keys.sort((a, b) => a.localeCompare(b));
             if (keys.length) {
-                json.methods = {};
-                keys.sort((a, b) => a.localeCompare(b));
-                for (const key of keys)
-                    json.methods[key] = methods[key].toJSON(patch);
+                json.methods = [];
+                /* (Flatten MethodClusters into JSON method bodies) */
+                for (const key of keys) {
+                    for (const method of methods[key].functions)
+                        json.methods.push(method.toJSON(patch));
+                }
             }
-            /* (Functions) */
+            /* (Static Methods) */
             keys = Object.keys(functions);
+            keys.sort((a, b) => a.localeCompare(b));
             if (keys.length) {
-                json.functions = {};
-                keys.sort((a, b) => a.localeCompare(b));
-                for (const key of keys)
-                    json.functions[key] = functions[key].toJSON(patch);
+                json.methods = [];
+                /* (Flatten MethodClusters into JSON method bodies) */
+                for (const key of keys) {
+                    for (const func of functions[key].functions)
+                        json.function.push(func.toJSON(patch));
+                }
             }
             /* (Mutable Flag) */
             json.mutable = this.mutable;
@@ -1214,13 +1437,17 @@ define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require"
         }
         /* (METHODS) */
         for (const methodName of methodNames) {
-            const method = clazz.methods[methodName];
-            methods.push(method);
+            const cluster = clazz.methods[methodName];
+            for (const method of cluster.functions) {
+                methods.push(method);
+            }
         }
         /* (FUNCTIONS) */
         for (const funcName of funcNames) {
-            const func = clazz.functions[funcName];
-            funcs.push(func);
+            const cluster = clazz.functions[funcName];
+            for (const func of cluster.functions) {
+                funcs.push(func);
+            }
         }
         /** 100
          * * -4 (module indent)
@@ -1290,14 +1517,16 @@ define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require"
             }
             is = is.substring(0, is.length - 1);
         }
-        if (clazz.constructor) {
+        if (clazz.constructors) {
             if (is.length)
                 is += '\n';
             is += `${i}/* ------------------------------------ */\n`;
             is += `${i}/* ----------- CONSTRUCTOR ------------ */\n`;
             is += `${i}/* ------------------------------------ */\n`;
             is += '\n';
-            is += `${luaConstructorToTS(clazz.conztructor, 1, notesLength)}\n`;
+            for (const cons of clazz.constructors) {
+                is += `${luaConstructorToTS(cons, 1, notesLength)}\n`;
+            }
             is = is.substring(0, is.length - 1);
         }
         if (is.length) {
@@ -1753,15 +1982,20 @@ define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports", "
             }
             s += '\n';
         }
-        s += (0, exports.generateLuaConstructor)(clazz.name, clazz.conztructor) + '\n';
+        // Generate any constructors in the class here.
+        for (const cons of clazz.constructors) {
+            s += (0, exports.generateLuaConstructor)(clazz.name, cons) + '\n';
+        }
         // Generate any methods in the class here.
         const methodNames = Object.keys(clazz.methods);
         if (methodNames.length) {
             s += '\n';
             methodNames.sort((a, b) => a.localeCompare(b));
             for (const methodName of methodNames) {
-                const method = clazz.methods[methodName];
-                s += (0, exports.generateLuaFunction)(clazz.name, ':', method) + '\n\n';
+                const cluster = clazz.methods[methodName];
+                for (const method of cluster.functions) {
+                    s += (0, exports.generateLuaFunction)(clazz.name, ':', method) + '\n\n';
+                }
             }
         }
         // Generate any functions in the class here.
@@ -1769,8 +2003,10 @@ define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports", "
         if (functionNames.length) {
             functionNames.sort((a, b) => a.localeCompare(b));
             for (const functionName of functionNames) {
-                const func = clazz.functions[functionName];
-                s += (0, exports.generateLuaFunction)(clazz.name, '.', func) + '\n\n';
+                const cluster = clazz.functions[functionName];
+                for (const func of cluster.functions) {
+                    s += (0, exports.generateLuaFunction)(clazz.name, '.', func) + '\n\n';
+                }
             }
         }
         return s;
@@ -3375,7 +3611,7 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
             this.idBtnLanguageTypeScript = `${this.id}-btn-language-typescript`;
             this.idBtnLanguageJSON = `${this.id}-btn-language-json`;
         }
-        listenEdit(entity, idBtnEdit, mode, title, nameSelected = undefined) {
+        listenEdit(entity, idBtnEdit, mode, title, nameSelected = undefined, type) {
             (0, util_3.$get)(idBtnEdit).on('click', () => {
                 const { modalName, $btnName, $titleName, $inputName } = this.app.modalName;
                 $titleName.html(title);
@@ -3400,6 +3636,40 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
                 if (!nameSelected)
                     nameSelected = entity.name;
                 this.app.modalName.nameSelected = nameSelected;
+                switch (type) {
+                    case 'class': {
+                        this.app.modalName.luaClass = this.options.entity;
+                        break;
+                    }
+                    case 'table': {
+                        this.app.modalName.luaTable = this.options.entity;
+                        break;
+                    }
+                    case 'function': {
+                        this.app.modalName.luaFunction = this.options.entity;
+                        break;
+                    }
+                    case 'method': {
+                        this.app.modalName.luaMethod = this.options.entity;
+                        break;
+                    }
+                    case 'constructor': {
+                        this.app.modalName.luaConstructor = this.options.entity;
+                        break;
+                    }
+                    case 'field': {
+                        this.app.modalName.luaField = this.options.entity;
+                        break;
+                    }
+                    case 'global_field': {
+                        this.app.modalName.globalLuaField = this.options.entity;
+                        break;
+                    }
+                    case 'global_function': {
+                        this.app.modalName.globalLuaFunction = this.options.entity;
+                        break;
+                    }
+                }
                 this.app.modalName.show(true);
             });
         }
@@ -3536,7 +3806,7 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
                     _this.update();
                     _this.app.renderCode();
                 });
-                this.listenEdit({ name: param.name }, idBtnEdit, 'edit_parameter', 'Edit Parameter Name', `${entity.name}-${param.name}`);
+                this.listenEdit({ name: param.name }, idBtnEdit, 'edit_parameter', 'Edit Parameter Name', `${entity.name}-${param.name}`, type);
             }
             const idBtnAdd = `btn-${entity.name}-parameter-add`;
             (0, util_3.$get)(idBtnAdd).on('click', () => {
@@ -4019,7 +4289,7 @@ define("src/asledgehammer/mallet/component/lua/LuaClassCard", ["require", "expor
             const { idInputExtends, idCheckMutable, idBtnEdit, idNotes } = this;
             const { entity } = this.options;
             const _this = this;
-            this.listenEdit(entity, idBtnEdit, 'edit_lua_class', 'Edit Lua Class');
+            this.listenEdit(entity, idBtnEdit, 'edit_lua_class', 'Edit Lua Class', undefined, 'class');
             this.listenNotes(entity, idNotes);
             this.listenPreview();
             const $checkMutable = (0, util_4.$get)(idCheckMutable);
@@ -4458,7 +4728,13 @@ define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports"
             (0, util_5.$get)(idBtnEdit).on('click', () => {
                 const { modalName, $btnName, $titleName, $inputName } = this.app.modalName;
                 $titleName.html(title);
-                if (mode === 'edit_lua_class' || mode === 'edit_lua_table' || mode === 'edit_field' || mode === 'edit_function' || mode === 'edit_method' || mode === 'edit_value') {
+                if (mode === 'edit_parameter'
+                    || mode === 'edit_lua_class'
+                    || mode === 'edit_lua_table'
+                    || mode === 'edit_field'
+                    || mode === 'edit_function'
+                    || mode === 'edit_method'
+                    || mode === 'edit_value') {
                     $btnName.html('Edit');
                     $btnName.removeClass('btn-success');
                     $btnName.addClass('btn-primary');
@@ -4917,6 +5193,9 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
             this.constructorSignatureMap = {};
             this.methodSignatureMap = {};
             this.staticMethodSignatureMap = {};
+            this.luaConstructorSignatureMap = {};
+            this.luaMethodSignatureMap = {};
+            this.luaStaticMethodSignatureMap = {};
             this.app = app;
             this.sidebar = sidebar;
         }
@@ -4988,14 +5267,17 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
             const _this = this;
             const $doc = $(document);
             $doc.on('click', '.lua-class-constructor-item', function () {
+                const signature = this.id.split('constructor-')[1].trim();
                 // Prevent wasteful selection code executions here.
-                if (_this.selected === 'constructor')
+                if (_this.selected === signature)
                     return;
-                const entity = _this.app.catalog.selected;
-                // Let the editor know we last selected the constructor.
-                _this.selected = 'constructor';
+                const conztructor = _this.luaConstructorSignatureMap[signature];
+                if (!conztructor)
+                    return;
+                // Let the editor know we last selected the field.
+                _this.selected = signature;
                 _this.selectedID = this.id;
-                _this.app.showLuaClassConstructor(entity.conztructor);
+                _this.app.showLuaClassConstructor(conztructor);
             });
             $doc.on('click', '.lua-class-field-item', function () {
                 const fieldName = this.id.split('field-')[1].trim();
@@ -5026,30 +5308,29 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 _this.app.showLuaClassValue(value);
             });
             $doc.on('click', '.lua-class-method-item', function () {
-                const methodName = this.id.split('method-')[1].trim();
+                const signature = this.id.split('method-')[1].trim();
                 // Prevent wasteful selection code executions here.
-                if (_this.selected === methodName)
+                if (_this.selected === signature)
                     return;
-                const entity = _this.app.catalog.selected;
-                const method = entity.methods[methodName];
+                // This is lazy but it works.
+                const method = _this.luaMethodSignatureMap[signature];
                 if (!method)
                     return;
-                // Let the editor know we last selected the method.
-                _this.selected = methodName;
+                // Let the editor know we last selected the field.
+                _this.selected = signature;
                 _this.selectedID = this.id;
                 _this.app.showLuaClassMethod(method);
             });
             $doc.on('click', '.lua-class-function-item', function () {
-                const functionName = this.id.split('function-')[1].trim();
+                const signature = this.id.split('function-')[1].trim();
                 // Prevent wasteful selection code executions here.
-                if (_this.selected === functionName)
+                if (_this.selected === signature)
                     return;
-                const entity = _this.app.catalog.selected;
-                const func = entity.functions[functionName];
+                const func = _this.luaStaticMethodSignatureMap[signature];
                 if (!func)
                     return;
-                // Let the editor know we last selected the function.
-                _this.selected = functionName;
+                // Let the editor know we last selected the field.
+                _this.selected = signature;
                 _this.selectedID = this.id;
                 _this.app.showLuaClassFunction(func);
             });
@@ -5297,6 +5578,53 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
             if (!entity)
                 return;
             const _this = this;
+            const constructors = [];
+            this.luaConstructorSignatureMap = {};
+            this.luaMethodSignatureMap = {};
+            this.luaStaticMethodSignatureMap = {};
+            let clusterNames = Object.keys(entity.methods);
+            clusterNames.sort((a, b) => a.localeCompare(b));
+            for (const clusterName of clusterNames) {
+                const cluster = entity.methods[clusterName];
+                for (const method of cluster.functions) {
+                    this.luaMethodSignatureMap[method.getSignature()] = method;
+                }
+            }
+            clusterNames = Object.keys(entity.functions);
+            clusterNames.sort((a, b) => a.localeCompare(b));
+            for (const clusterName of clusterNames) {
+                const cluster = entity.functions[clusterName];
+                for (const func of cluster.functions) {
+                    this.luaStaticMethodSignatureMap[func.getSignature()] = func;
+                }
+            }
+            // Constructor(s)
+            for (const cons of entity.constructors) {
+                this.luaConstructorSignatureMap[cons.getSignature()] = cons;
+            }
+            const consSignatures = Object.keys(this.luaConstructorSignatureMap);
+            consSignatures.sort((a, b) => a.localeCompare(b));
+            for (const signature of consSignatures) {
+                const cons = this.luaConstructorSignatureMap[signature];
+                const id = `lua-class-${entity.name}-constructor-${signature}`;
+                let params = '';
+                if (cons.parameters && cons.parameters.length) {
+                    for (const param of cons.parameters) {
+                        params += `${param.name}, `;
+                    }
+                    if (params.length)
+                        params = params.substring(0, params.length - 2);
+                }
+                const classes = ['item-tree-item', 'lua-class-constructor-item'];
+                if (id === this.selectedID)
+                    classes.push('selected');
+                constructors.push({
+                    text: wrapItem(`${entity.name}(${params})`),
+                    icon: LuaCard_2.LuaCard.getTypeIcon('object'),
+                    id,
+                    class: classes
+                });
+            }
             const fieldNames = Object.keys(entity.fields);
             fieldNames.sort((a, b) => a.localeCompare(b));
             const fields = [];
@@ -5329,34 +5657,48 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                     class: classes
                 });
             }
-            const methodNames = Object.keys(entity.methods);
-            methodNames.sort((a, b) => a.localeCompare(b));
-            const methods = [];
-            for (const methodName of methodNames) {
-                const method = entity.methods[methodName];
-                const id = `lua-class-${entity.name}-method-${method.name}`;
-                const classes = ['item-tree-item', 'lua-class-method-item'];
-                if (id === this.selectedID)
-                    classes.push('selected');
-                methods.push({
-                    text: (0, util_7.html) `<i class="fa-solid fa-xmark me-2" title="${method.returns.type}"></i>${method.name}`,
-                    icon: 'fa-solid fa-terminal text-success mx-2',
-                    id,
-                    class: classes
-                });
-            }
-            const functionNames = Object.keys(entity.functions);
-            functionNames.sort((a, b) => a.localeCompare(b));
+            // Static method(s)
             const functions = [];
-            for (const functionName of functionNames) {
-                const func = entity.functions[functionName];
-                const id = `lua-class-${entity.name}-function-${func.name}`;
+            const staticMethodSignatures = Object.keys(this.luaStaticMethodSignatureMap);
+            staticMethodSignatures.sort((a, b) => a.localeCompare(b));
+            for (const signature of staticMethodSignatures) {
+                const method = this.luaStaticMethodSignatureMap[signature];
+                const id = `lua-class-${entity.name}-function-${signature}`;
+                let params = '';
+                for (const param of method.parameters) {
+                    params += `${param.name}, `;
+                }
+                if (params.length)
+                    params = params.substring(0, params.length - 2);
                 const classes = ['item-tree-item', 'lua-class-function-item'];
                 if (id === this.selectedID)
                     classes.push('selected');
                 functions.push({
-                    text: (0, util_7.html) `<i class="fa-solid fa-xmark me-2" title="${func.returns.type}"></i>${func.name}`,
-                    icon: 'fa-solid fa-terminal text-success mx-2',
+                    text: wrapItem(`${method.name}(${params})`),
+                    icon: LuaCard_2.LuaCard.getTypeIcon(method.returns.type),
+                    id,
+                    class: classes
+                });
+            }
+            // Instance method(s)
+            const methods = [];
+            const methodSignatures = Object.keys(this.luaMethodSignatureMap);
+            methodSignatures.sort((a, b) => a.localeCompare(b));
+            for (const signature of methodSignatures) {
+                const method = this.luaMethodSignatureMap[signature];
+                const id = `lua-class-${entity.name}-method-${signature}`;
+                let params = '';
+                for (const param of method.parameters) {
+                    params += `${param.name}, `;
+                }
+                if (params.length)
+                    params = params.substring(0, params.length - 2);
+                const classes = ['item-tree-item', 'lua-class-method-item'];
+                if (id === this.selectedID)
+                    classes.push('selected');
+                methods.push({
+                    text: wrapItem(`${method.name}(${params})`),
+                    icon: LuaCard_2.LuaCard.getTypeIcon(method.returns.type),
                     id,
                     class: classes
                 });
@@ -5370,6 +5712,14 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
             const conzClasses = ['item-tree-item', 'lua-class-constructor-item'];
             if (conzID === this.selectedID)
                 conzClasses.push('selected');
+            const folderConstructors = {
+                text: `${wrapFolderCount(`(${constructors.length})`)} Constructor(s)`,
+                icon: "fa-solid fa-folder text-light mx-2",
+                class: ['item-tree-folder', 'bg-secondary'],
+                id: _this.idFolderJavaClassConstructor,
+                expanded: _this.folderJavaClassConstructorOpen,
+                nodes: constructors
+            };
             const folderFields = {
                 text: `${wrapFolderCount(`(${fields.length})`)} Field(s)`,
                 icon: "fa-solid fa-folder text-light mx-2",
@@ -5402,12 +5752,9 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 expanded: _this.folderLuaClassFunctionOpen,
                 nodes: functions
             };
-            const data = [{
-                    id: conzID,
-                    text: "Constructor",
-                    icon: LuaCard_2.LuaCard.getTypeIcon('constructor'),
-                    class: conzClasses
-                }];
+            const data = [];
+            if (constructors.length)
+                data.push(folderConstructors);
             if (fields.length)
                 data.push(folderFields);
             if (values.length)
@@ -5731,7 +6078,7 @@ define("src/asledgehammer/mallet/component/lua/LuaTableCard", ["require", "expor
             const { idCheckMutable, idBtnEdit, idNotes } = this;
             const { entity } = this.options;
             const _this = this;
-            this.listenEdit(entity, idBtnEdit, 'edit_lua_table', 'Edit Lua Table');
+            this.listenEdit(entity, idBtnEdit, 'edit_lua_table', 'Edit Lua Table', undefined, 'table');
             this.listenNotes(entity, idNotes);
             this.listenPreview();
             const $checkMutable = (0, util_8.$get)(idCheckMutable);
@@ -6661,7 +7008,7 @@ define("src/asledgehammer/mallet/component/lua/LuaFieldCard", ["require", "expor
             this.listenNotes(entity, idNotes);
             this.listenDefaultValue(entity, idDefaultValue);
             this.listenType(entity, idType, idType);
-            this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_value' : 'edit_field', `Edit ${isStatic ? 'Value' : 'Field'} Name`);
+            this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_value' : 'edit_field', `Edit ${isStatic ? 'Value' : 'Field'} Name`, undefined, 'field');
             this.listenPreview();
             (0, util_12.$get)(idBtnDelete).on('click', () => {
                 app.modalConfirm.show(() => {
@@ -6784,7 +7131,7 @@ define("src/asledgehammer/mallet/component/lua/LuaFunctionCard", ["require", "ex
             super.listen();
             const { app, idBtnDelete, idBtnEdit, idNotes, idReturnType, idReturnNotes } = this;
             const { entity, isStatic } = this.options;
-            this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_function' : 'edit_method', `Edit Lua ${isStatic ? 'Function' : 'Method'}`);
+            this.listenEdit(entity, idBtnEdit, isStatic ? 'edit_function' : 'edit_method', `Edit Lua ${isStatic ? 'Function' : 'Method'}`, undefined, 'function');
             this.listenNotes(entity, idNotes);
             this.listenParameters(entity, isStatic ? 'function' : 'method');
             this.listenReturns(entity, idReturnType, idReturnNotes, idReturnType);
@@ -7124,7 +7471,7 @@ define("src/asledgehammer/mallet/component/java/JavaMethodCard", ["require", "ex
     }
     exports.JavaMethodCard = JavaMethodCard;
 });
-define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaField", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/util"], function (require, exports, RosettaJavaClass_4, RosettaLuaClass_5, RosettaLuaField_3, RosettaLuaFunction_3, RosettaLuaTable_5, util_17) {
+define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaField", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaFunctionCluster", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/util"], function (require, exports, RosettaJavaClass_4, RosettaLuaClass_5, RosettaLuaField_3, RosettaLuaFunction_3, RosettaLuaFunctionCluster_2, RosettaLuaTable_5, util_17) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ModalName = void 0;
@@ -7135,6 +7482,14 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
             this.javaConstructor = undefined;
             this.javaParameter = undefined;
             this.javaCallback = undefined;
+            this.luaClass = undefined;
+            this.luaTable = undefined;
+            this.luaConstructor = undefined;
+            this.luaFunction = undefined;
+            this.luaMethod = undefined;
+            this.luaField = undefined;
+            this.globalLuaFunction = undefined;
+            this.globalLuaField = undefined;
             this.app = app;
             // @ts-ignore This modal is for new items and editing their names.
             this.modalName = new bootstrap.Modal('#modal-name', {});
@@ -7145,7 +7500,7 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
         }
         onGlobalCreate() {
             const { $inputName, app } = this;
-            const { catalog, sidebar, toast } = app;
+            const { catalog, toast } = app;
             const name = (0, util_17.validateLuaVariableName)($inputName.val()).trim();
             const nameOld = this.nameSelected;
             switch (this.nameMode) {
@@ -7287,12 +7642,14 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                     throw new Error('Unsupported Global name-mode: ' + this.nameMode);
                 }
             }
+            this.globalLuaField = undefined;
+            this.globalLuaFunction = undefined;
             this.nameSelected = undefined;
             this.modalName.hide();
         }
         listen() {
             const { app, $inputName, $btnName } = this;
-            const { catalog: active, sidebar, toast } = app;
+            const { catalog: active, toast } = app;
             this.$inputName.on('input', () => {
                 const val = $inputName.val();
                 const isValid = (0, util_17.isNameValid)(val);
@@ -7534,9 +7891,25 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                     case 'edit_function': {
                         if (entity instanceof RosettaLuaClass_5.RosettaLuaClass) {
                             try {
-                                const func = entity.functions[nameOld];
+                                const func = this.luaFunction;
+                                const nameOld = func.name;
                                 func.name = name;
-                                entity.functions[name] = func;
+                                // Grab the old cluster and remove the function.
+                                let cluster = entity.functions[nameOld];
+                                cluster.functions.splice(cluster.functions.indexOf(func), 1);
+                                // Remove cluster if empty.
+                                if (cluster.functions.length === 0) {
+                                    delete entity.functions[nameOld];
+                                }
+                                // Grab the new-named cluster.
+                                cluster = entity.functions[name];
+                                // Create the cluster if not present.
+                                if (!cluster) {
+                                    cluster = new RosettaLuaFunctionCluster_2.RosettaLuaFunctionCluster(name);
+                                    entity.functions[name] = cluster;
+                                }
+                                // Add the function to this cluster.
+                                cluster.add(func);
                                 delete entity.functions[nameOld];
                                 app.showLuaClassFunction(func);
                                 toast.alert('Edited Lua Class Function.');
@@ -7588,15 +7961,30 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                     case 'edit_method': {
                         if (entity instanceof RosettaLuaClass_5.RosettaLuaClass) {
                             try {
-                                const method = entity.methods[nameOld];
-                                method.name = name;
-                                entity.methods[name] = method;
-                                delete entity.methods[nameOld];
-                                app.showLuaClassMethod(method);
-                                toast.alert('Edited Lua Method.');
+                                const func = this.luaMethod;
+                                const nameOld = func.name;
+                                func.name = name;
+                                // Grab the old cluster and remove the function.
+                                let cluster = entity.methods[nameOld];
+                                cluster.functions.splice(cluster.functions.indexOf(func), 1);
+                                // Remove cluster if empty.
+                                if (cluster.functions.length === 0) {
+                                    delete entity.methods[nameOld];
+                                }
+                                // Grab the new-named cluster.
+                                cluster = entity.methods[name];
+                                // Create the cluster if not present.
+                                if (!cluster) {
+                                    cluster = new RosettaLuaFunctionCluster_2.RosettaLuaFunctionCluster(name);
+                                    entity.methods[name] = cluster;
+                                }
+                                // Add the function to this cluster.
+                                cluster.add(func);
+                                app.showLuaClassMethod(func);
+                                toast.alert('Edited Lua Class Method.');
                             }
                             catch (e) {
-                                toast.alert(`Failed to edit Lua Method.`, 'error');
+                                toast.alert(`Failed to edit Lua Class Method.`, 'error');
                                 console.error(e);
                             }
                         }
@@ -7616,13 +8004,13 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 const funcName = split[1];
                                 let func = null;
                                 if (type === 'constructor') {
-                                    func = entity.conztructor;
+                                    func = this.luaConstructor;
                                 }
                                 else if (type === 'function') {
-                                    func = entity.functions[funcName];
+                                    func = this.luaFunction;
                                 }
                                 else {
-                                    func = entity.methods[funcName];
+                                    func = this.luaMethod;
                                 }
                                 func.addParameter(name, 'any');
                                 if (type === 'constructor') {
@@ -7681,27 +8069,17 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                                 let param = null;
                                 // Could be the constructor.
                                 if (funcName === 'new') {
-                                    func = entity.conztructor;
+                                    func = this.luaConstructor;
                                     type = 'constructor';
                                 }
                                 else {
-                                    // First, check methods.
-                                    for (const methodName of Object.keys(entity.methods)) {
-                                        if (methodName === funcName) {
-                                            func = entity.methods[methodName];
-                                            type = 'method';
-                                            break;
-                                        }
+                                    if (this.luaMethod) {
+                                        func = this.luaMethod;
+                                        type = 'method';
                                     }
-                                    // Second, check functions.
-                                    if (!func) {
-                                        for (const methodName of Object.keys(entity.functions)) {
-                                            if (methodName === funcName) {
-                                                func = entity.functions[methodName];
-                                                type = 'function';
-                                                break;
-                                            }
-                                        }
+                                    else if (this.luaFunction) {
+                                        func = this.luaFunction;
+                                        type = 'function';
                                     }
                                 }
                                 if (!func) {
@@ -7818,6 +8196,21 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                         break;
                     }
                 }
+                /* (Global Types) */
+                this.globalLuaField = undefined;
+                this.globalLuaFunction = undefined;
+                /* (Lua Types) */
+                this.luaClass = undefined;
+                this.luaConstructor = undefined;
+                this.luaField = undefined;
+                this.luaFunction = undefined;
+                this.luaMethod = undefined;
+                this.luaTable = undefined;
+                /* (Java Types) */
+                this.javaConstructor = undefined;
+                this.javaMethod = undefined;
+                this.javaParameter = undefined;
+                this.javaCallback = undefined;
                 this.nameSelected = undefined;
                 this.modalName.hide();
             });
@@ -8299,7 +8692,7 @@ define("src/asledgehammer/mallet/component/lua/LuaGlobalFunctionCard", ["require
             super.listen();
             const { app, idBtnDelete, idBtnEdit, idNotes, idReturnType, idReturnNotes } = this;
             const { entity } = this.options;
-            this.listenEdit(entity, idBtnEdit, 'edit_function', `Edit Global Lua Function`);
+            this.listenEdit(entity, idBtnEdit, 'edit_function', `Edit Global Lua Function`, undefined, 'global_function');
             this.listenNotes(entity, idNotes);
             this.listenParameters(entity, 'function');
             this.listenReturns(entity, idReturnType, idReturnNotes, idReturnType);
@@ -8406,7 +8799,7 @@ define("src/asledgehammer/mallet/component/lua/LuaGlobalFieldCard", ["require", 
             this.listenNotes(entity, idNotes);
             this.listenDefaultValue(entity, idDefaultValue);
             this.listenType(entity, idType, idType);
-            this.listenEdit(entity, idBtnEdit, 'edit_field', 'Edit Global Field Name');
+            this.listenEdit(entity, idBtnEdit, 'edit_field', 'Edit Global Field Name', undefined, 'global_field');
             this.listenPreview();
             (0, util_21.$get)(idBtnDelete).on('click', () => {
                 app.modalConfirm.show(() => {
@@ -8658,7 +9051,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             this.$screenContent.append(card.render());
             card.listen();
             card.update();
-            this.sidebar.itemTree.selectedID = `lua-class-${selected.name}-method-${entity.name}`;
+            // this.sidebar.itemTree.selectedID = `lua-class-${selected.name}-method-${entity.name}`;
             this.sidebar.populateTrees();
             this.renderCode();
             return card;
@@ -8673,7 +9066,7 @@ define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rose
             this.$screenContent.append(card.render());
             card.listen();
             card.update();
-            this.sidebar.itemTree.selectedID = `lua-class-${selected.name}-function-${entity.name}`;
+            // this.sidebar.itemTree.selectedID = `lua-class-${selected.name}-function-${entity.name}`;
             this.sidebar.populateTrees();
             this.renderCode();
             return card;
@@ -9287,51 +9680,5 @@ define("src/asledgehammer/rosetta/SerializableComponent", ["require", "exports"]
         }
     }
     exports.SerializableComponent = SerializableComponent;
-});
-define("src/asledgehammer/rosetta/lua/RosettaLuaFunctionCluster", ["require", "exports", "src/asledgehammer/Assert"], function (require, exports, Assert) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.RosettaLuaFunctionCluster = void 0;
-    /**
-     * **RosettaLuaFunctionCluster**
-     *
-     * @author Jab
-     */
-    class RosettaLuaFunctionCluster {
-        constructor(name) {
-            this.funcs = [];
-            Assert.assertNonEmptyString(name, 'name');
-            this.name = name;
-        }
-        add(method) {
-            const indexOf = this.funcs.indexOf(method);
-            if (indexOf !== -1) {
-                this.funcs[indexOf].parse(method.raw);
-                return;
-            }
-            this.funcs.push(method);
-        }
-        getWithParameters(...parameterNames) {
-            for (const method of this.funcs) {
-                const parameters = method.parameters;
-                if (parameterNames.length === parameters.length) {
-                    if (parameterNames.length === 0)
-                        return method;
-                    let invalid = false;
-                    for (let i = 0; i < parameters.length; i++) {
-                        if (parameters[i].type !== parameterNames[i]) {
-                            invalid = true;
-                            break;
-                        }
-                    }
-                    if (invalid)
-                        continue;
-                    return method;
-                }
-            }
-            return;
-        }
-    }
-    exports.RosettaLuaFunctionCluster = RosettaLuaFunctionCluster;
 });
 //# sourceMappingURL=app.js.map

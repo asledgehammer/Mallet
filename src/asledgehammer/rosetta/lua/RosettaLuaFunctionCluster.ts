@@ -8,7 +8,7 @@ import { RosettaLuaFunction } from './RosettaLuaFunction';
  * @author Jab
  */
 export class RosettaLuaFunctionCluster {
-  readonly funcs: RosettaLuaFunction[] = [];
+  readonly functions: RosettaLuaFunction[] = [];
   readonly name: string;
 
   constructor(name: string) {
@@ -17,16 +17,16 @@ export class RosettaLuaFunctionCluster {
   }
 
   add(method: RosettaLuaFunction) {
-    const indexOf = this.funcs.indexOf(method);
+    const indexOf = this.functions.indexOf(method);
     if (indexOf !== -1) {
-      this.funcs[indexOf].parse(method.raw);
+      this.functions[indexOf].parse(method.raw);
       return;
     }
-    this.funcs.push(method);
+    this.functions.push(method);
   }
 
   getWithParameters(...parameterNames: string[]): RosettaLuaFunction | undefined {
-    for (const method of this.funcs) {
+    for (const method of this.functions) {
       const parameters = method.parameters;
       if (parameterNames.length === parameters.length) {
         if (parameterNames.length === 0) return method;
