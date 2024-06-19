@@ -383,13 +383,15 @@ export const generateLuaTable = (table: RosettaLuaTable): string => {
         s += '\n';
     }
 
-    // Generate any functions in the class here.
+    // Generate any functions in the table here.
     const functionNames = Object.keys(table.functions);
     if (functionNames.length) {
         functionNames.sort((a, b) => a.localeCompare(b));
         for (const functionName of functionNames) {
-            const func = table.functions[functionName];
-            s += generateLuaFunction(table.name, '.', func) + '\n\n';
+            const cluster = table.functions[functionName];
+            for(const func of cluster.functions) {
+                s += generateLuaFunction(table.name, '.', func) + '\n\n';
+            }
         }
     }
 

@@ -354,8 +354,10 @@ export function luaTableToTS(
 
     /* (FUNCTIONS) */
     for (const funcName of funcNames) {
-        const func = table.functions[funcName];
-        funcs.push(func);
+        const cluster = table.functions[funcName];
+        for(const func of cluster.functions) {
+            funcs.push(func);
+        }
     }
 
     /** 100 

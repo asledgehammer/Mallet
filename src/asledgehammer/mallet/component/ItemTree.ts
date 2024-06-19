@@ -257,14 +257,16 @@ export class ItemTree {
         });
 
         $doc.on('click', '.lua-table-function-item', function () {
-            const functionName = this.id.split('function-')[1].trim();
+            const signature = this.id.split('function-')[1].trim();
+
             // Prevent wasteful selection code executions here.
-            if (_this.selected === functionName) return;
-            const entity = _this.app.catalog.selected as RosettaLuaTable;
-            const func = entity.functions[functionName];
+            if (_this.selected === signature) return;
+
+            const func = _this.luaStaticMethodSignatureMap[signature];
             if (!func) return;
-            // Let the editor know we last selected the function.
-            _this.selected = functionName;
+
+            // Let the editor know we last selected the field.
+            _this.selected = signature;
             _this.selectedID = this.id;
             _this.app.showLuaTableFunction(func);
         });
@@ -702,17 +704,31 @@ export class ItemTree {
         $treeLower.bstreeview({ data });
     }
 
-    populateLuaTable(entity: RosettaLuaTable) {
-        if (!entity) return;
+    populateLuaTable(table: RosettaLuaTable) {
+        if (!table) return;
 
         const _this = this;
 
-        const fieldNames = Object.keys(entity.fields);
+        this.luaConstructorSignatureMap = {};
+        this.luaMethodSignatureMap = {};
+        this.luaStaticMethodSignatureMap = {};
+
+        const clusterNames = Object.keys(table.functions);
+        clusterNames.sort((a, b) => a.localeCompare(b));
+
+        for (const clusterName of clusterNames) {
+            const cluster = table.functions[clusterName];
+            for (const func of cluster.functions) {
+                this.luaStaticMethodSignatureMap[func.getSignature()] = func;
+            }
+        }
+
+        const fieldNames = Object.keys(table.fields);
         fieldNames.sort((a, b) => a.localeCompare(b));
         const fields = [];
         for (const fieldName of fieldNames) {
-            const field = entity.fields[fieldName];
-            const id = `lua-table-${entity.name}-field-${field.name}`;
+            const field = table.fields[fieldName];
+            const id = `lua-table-${table.name}-field-${field.name}`;
 
             const classes: string[] = ['item-tree-item', 'lua-table-field-item'];
             if (id === this.selectedID) classes.push('selected');
@@ -725,23 +741,53 @@ export class ItemTree {
             });
         }
 
-        const functionNames = Object.keys(entity.functions);
-        functionNames.sort((a, b) => a.localeCompare(b));
         const functions = [];
-        for (const functionName of functionNames) {
-            const func = entity.functions[functionName];
-            const id = `lua-table-${entity.name}-function-${func.name}`;
+        const staticMethodSignatures = Object.keys(this.luaStaticMethodSignatureMap);
+        staticMethodSignatures.sort((a, b) => a.localeCompare(b));
+
+        for (const signature of staticMethodSignatures) {
+            const method = this.luaStaticMethodSignatureMap[signature];
+            const id = `lua-table-${table.name}-function-${signature}`;
+
+            let params = '';
+            for (const param of method.parameters) {
+                params += `${param.name}, `;
+            }
+            if (params.length) params = params.substring(0, params.length - 2);
 
             const classes: string[] = ['item-tree-item', 'lua-table-function-item'];
             if (id === this.selectedID) classes.push('selected');
 
             functions.push({
-                text: html`<i class="fa-solid fa-xmark me-2" title="${func.returns.type}"></i>${func.name}`,
-                icon: 'fa-solid fa-terminal text-success mx-2',
+                text: wrapItem(`${method.name}(${params})`),
+                icon: LuaCard.getTypeIcon(method.returns.type),
                 id,
                 class: classes
             });
         }
+
+        const folderFields = {
+            text: `${wrapFolderCount(`(${fields.length})`)} Field(s)`,
+            icon: "fa-solid fa-folder text-light mx-2",
+            class: ['item-tree-folder', 'bg-secondary'],
+            id: _this.idFolderLuaClassField,
+            expanded: _this.folderLuaClassFieldOpen,
+            nodes: fields
+        };
+
+        const folderFuncs = {
+            text: `${wrapFolderCount(`(${functions.length})`)} Function(s)`,
+            icon: "fa-solid fa-folder text-light mx-2",
+            class: ['item-tree-folder', 'bg-secondary'],
+            id: _this.idFolderLuaClassFunction,
+            expanded: _this.folderLuaClassFunctionOpen,
+            nodes: functions
+        };
+
+        const data: any[] = [];
+        
+        if (fields.length) data.push(folderFields);
+        if (functions.length) data.push(folderFuncs);
 
         let $treeLower = $get('tree-lower');
         $treeLower.remove();
@@ -751,26 +797,7 @@ export class ItemTree {
         $treeLower = $get('tree-lower');
 
         // @ts-ignore
-        $treeLower.bstreeview({
-            data: [
-                {
-                    text: "Fields",
-                    icon: "fa-solid fa-folder text-light mx-2",
-                    class: ['item-tree-folder', 'bg-secondary'],
-                    id: _this.idFolderLuaTableField,
-                    expanded: _this.folderLuaTableFieldOpen,
-                    nodes: fields
-                },
-                {
-                    text: "Functions",
-                    icon: "fa-solid fa-folder text-light mx-2",
-                    class: ['item-tree-folder', 'bg-secondary'],
-                    id: _this.idFolderLuaTableFunction,
-                    expanded: _this.folderLuaTableFunctionOpen,
-                    nodes: functions
-                }
-            ]
-        });
+        $treeLower.bstreeview({data});
     }
 
     populateJavaClass(entity: RosettaJavaClass) {

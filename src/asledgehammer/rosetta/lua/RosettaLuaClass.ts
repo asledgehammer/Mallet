@@ -340,7 +340,7 @@ export class RosettaLuaClass extends RosettaEntity {
    * @returns The new function.
    *
    * @throws Error Thrown if:
-   * - A method already exists with the same name in the Lua class.
+   * - A function already exists with the same name in the Lua class.
    */
   createFunction(name: string): RosettaLuaFunction {
     const func = new RosettaLuaFunction(name, { returns: { type: 'void', notes: '' } });

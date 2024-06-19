@@ -177,7 +177,7 @@ export class ModalName {
                     if (entity instanceof RosettaLuaClass) {
                         this.onLuaClassNewParameter(nameOld, name);
                     } else if (entity instanceof RosettaLuaTable) {
-                        this.onLuaTableNewParameter(entity, nameOld, name);
+                        this.onLuaTableNewParameter(nameOld, name);
                     }
                     break;
                 }
@@ -723,10 +723,32 @@ export class ModalName {
             const nameOld = func.name;
             func.name = name;
 
-            table.functions[name] = func;
-            delete table.functions[nameOld];
+            // Grab the old cluster and remove the function.
+            let cluster = table.functions[nameOld];
+            cluster.functions.splice(
+                cluster.functions.indexOf(func),
+                1
+            );
+
+            // Remove cluster if empty.
+            if (cluster.functions.length === 0) {
+                delete table.functions[nameOld];
+            }
+
+            // Grab the new-named cluster.
+            cluster = table.functions[name];
+
+            // Create the cluster if not present.
+            if (!cluster) {
+                cluster = new RosettaLuaFunctionCluster(name);
+                table.functions[name] = cluster;
+            }
+
+            // Add the function to this cluster.
+            cluster.add(func);
 
             app.showLuaTableFunction(func);
+
             toast.alert('Edited Lua Table Function.');
 
         } catch (e) {
@@ -831,7 +853,7 @@ export class ModalName {
         }
     }
 
-    onLuaTableNewParameter(table: RosettaLuaTable, nameOld: string, name: string) {
+    onLuaTableNewParameter(nameOld: string, name: string) {
         
         const { app } = this;
         const { toast } = app;
@@ -840,15 +862,14 @@ export class ModalName {
         
             const split = nameOld.split('-');
             const type = split[0];
-            const funcName = split[1];
 
             let func: RosettaLuaConstructor | RosettaLuaFunction | null = null;
             if (type === 'constructor') {
-                throw new Error('Constructors are not supported in Lua Tables.');
+                func = this.luaConstructor!;
             } else if (type === 'function') {
-                func = table.functions[funcName];
+                func = this.luaFunction!;
             } else {
-                throw new Error('Methods are not supported in Lua Tables.');
+                func = this.luaMethod!;
             }
 
             func!.addParameter(name, 'any');
@@ -937,18 +958,26 @@ export class ModalName {
             const funcName = split[0];
             const paramName = split[1];
 
-            let func = null;
+            let type: 'constructor' | 'method' | 'function' | null = null;
+            let func: RosettaLuaConstructor | RosettaLuaFunction | null = null;
             let param = null;
 
-            for (const methodName of Object.keys(table.functions)) {
-                if (methodName === funcName) {
-                    func = table.functions[methodName];
-                    break;
+            // Could be the constructor.
+            if (funcName === 'new') {
+                func = this.luaConstructor!;
+                type = 'constructor';
+            } else {
+                if (this.luaMethod) {
+                    func = this.luaMethod!;
+                    type = 'method';
+                } else if (this.luaFunction) {
+                    func = this.luaFunction!;
+                    type = 'function';
                 }
             }
 
             if (!func) {
-                console.warn(`Unknown function: ${table.name}.${funcName}!`);
+                console.warn(`Unknown function / method / constructor: ${table.name}.${funcName}!`);
                 return;
             }
 
@@ -967,6 +996,7 @@ export class ModalName {
             param.name = name;
 
             app.showLuaTableFunction(func as RosettaLuaFunction);
+
             toast.alert('Edited Lua Parameter.');
 
         } catch (e) {
