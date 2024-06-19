@@ -3811,8 +3811,17 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
             }
             const idBtnAdd = `btn-${entity.name}-parameter-add`;
             (0, util_3.$get)(idBtnAdd).on('click', () => {
-                const { modalName, $inputName, $titleName } = this.app.modalName;
+                const { $inputName, $titleName } = this.app.modalName;
                 this.app.modalName.nameMode = 'new_parameter';
+                if (type === 'constructor') {
+                    this.app.modalName.luaConstructor = entity;
+                }
+                else if (type === 'function') {
+                    this.app.modalName.luaFunction = entity;
+                }
+                else if (type === 'method') {
+                    this.app.modalName.luaMethod = entity;
+                }
                 this.app.modalName.nameSelected = `${type}-${entity.name}`;
                 $titleName.html('Add Parameter');
                 $inputName.val('');

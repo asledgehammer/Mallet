@@ -142,6 +142,7 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
                 if (entity instanceof RosettaJavaConstructor) this.app.modalName.javaConstructor = entity as any;
                 else this.app.modalName.javaMethod = entity;
                 $inputName.val(param.name);
+
                 this.app.modalName.javaParameter = param;
                 this.app.modalName.nameMode = 'edit_parameter';
                 this.app.modalName.nameSelected = param.name;
