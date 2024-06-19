@@ -9288,4 +9288,50 @@ define("src/asledgehammer/rosetta/SerializableComponent", ["require", "exports"]
     }
     exports.SerializableComponent = SerializableComponent;
 });
+define("src/asledgehammer/rosetta/lua/RosettaLuaFunctionCluster", ["require", "exports", "src/asledgehammer/Assert"], function (require, exports, Assert) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaLuaFunctionCluster = void 0;
+    /**
+     * **RosettaLuaFunctionCluster**
+     *
+     * @author Jab
+     */
+    class RosettaLuaFunctionCluster {
+        constructor(name) {
+            this.funcs = [];
+            Assert.assertNonEmptyString(name, 'name');
+            this.name = name;
+        }
+        add(method) {
+            const indexOf = this.funcs.indexOf(method);
+            if (indexOf !== -1) {
+                this.funcs[indexOf].parse(method.raw);
+                return;
+            }
+            this.funcs.push(method);
+        }
+        getWithParameters(...parameterNames) {
+            for (const method of this.funcs) {
+                const parameters = method.parameters;
+                if (parameterNames.length === parameters.length) {
+                    if (parameterNames.length === 0)
+                        return method;
+                    let invalid = false;
+                    for (let i = 0; i < parameters.length; i++) {
+                        if (parameters[i].type !== parameterNames[i]) {
+                            invalid = true;
+                            break;
+                        }
+                    }
+                    if (invalid)
+                        continue;
+                    return method;
+                }
+            }
+            return;
+        }
+    }
+    exports.RosettaLuaFunctionCluster = RosettaLuaFunctionCluster;
+});
 //# sourceMappingURL=app.js.map
