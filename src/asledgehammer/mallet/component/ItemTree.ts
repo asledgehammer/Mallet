@@ -115,15 +115,18 @@ export class ItemTree {
         });
 
         $doc.on('click', '.global-lua-function-item', function () {
-            const funcName = this.id.split('function-')[1].trim();
+            const signature = this.id.split('function-')[1].trim();
+
             // Prevent wasteful selection code executions here.
-            if (_this.selected === funcName) return;
-            const func = catalog.functions[funcName];
+            if (_this.selected === signature) return;
+
+            const func = _this.luaStaticMethodSignatureMap[signature];
             if (!func) return;
+
             // Let the editor know we last selected the field.
-            _this.selected = funcName;
+            _this.selected = signature;
             _this.selectedID = this.id;
-            app.showGlobalLuaFunction(func);
+            _this.app.showGlobalLuaFunction(func);
         });
 
         $doc.on('click', '.global-java-method-item', function () {
@@ -385,33 +388,44 @@ export class ItemTree {
             });
         }
 
-        const functionNames = Object.keys(catalog.functions);
-        functionNames.sort((a, b) => a.localeCompare(b));
-        const functions = [];
-        for (const functionName of functionNames) {
-            const func = catalog.functions[functionName];
-            const id = `lua-global-function-${func.name}`;
+        // const functionNames = Object.keys(catalog.functions);
+        // functionNames.sort((a, b) => a.localeCompare(b));
+        // const functions = [];
+        // for (const functionName of functionNames) {
+        //     const func = catalog.functions[functionName];
+        //     const id = `lua-global-function-${func.name}`;
 
-            const classes: string[] = ['item-tree-item', 'global-lua-function-item'];
-            if (id === this.selectedID) classes.push('selected');
+        //     const classes: string[] = ['item-tree-item', 'global-lua-function-item'];
+        //     if (id === this.selectedID) classes.push('selected');
 
-            functions.push({
-                text: html`<i class="fa-solid fa-xmark me-2" title="${func.returns.type}"></i>${func.name}`,
-                icon: 'fa-solid fa-terminal text-success mx-2',
-                id,
-                class: classes
-            });
-        }
+        //     functions.push({
+        //         text: html`<i class="fa-solid fa-xmark me-2" title="${func.returns.type}"></i>${func.name}`,
+        //         icon: 'fa-solid fa-terminal text-success mx-2',
+        //         id,
+        //         class: classes
+        //     });
+        // }
 
         this.methodSignatureMap = {};
+        this.luaStaticMethodSignatureMap = {};
 
-        const clusterNames = Object.keys(catalog.methods);
+        let clusterNames = Object.keys(catalog.methods);
         clusterNames.sort((a, b) => a.localeCompare(b));
 
         for (const clusterName of clusterNames) {
             const cluster = catalog.methods[clusterName];
             for (const method of cluster.methods) {
                 this.methodSignatureMap[method.getSignature()] = method;
+            }
+        }
+
+        clusterNames = Object.keys(catalog.functions);
+        clusterNames.sort((a, b) => a.localeCompare(b));
+
+        for (const clusterName of clusterNames) {
+            const cluster = catalog.functions[clusterName];
+            for (const func of cluster.functions) {
+                this.luaStaticMethodSignatureMap[func.getSignature()] = func;
             }
         }
 
@@ -436,6 +450,32 @@ export class ItemTree {
             methods.push({
                 text: wrapItem(`${method.name}(${params})`),
                 icon: LuaCard.getTypeIcon(method.returns.type.basic),
+                id,
+                class: classes
+            });
+        }
+
+        // Global Functions(s)
+        const functions: any[] = [];
+        const funcSignatures = Object.keys(this.luaStaticMethodSignatureMap);
+        funcSignatures.sort((a, b) => a.localeCompare(b));
+
+        for (const signature of funcSignatures) {
+            const func = this.luaStaticMethodSignatureMap[signature];
+            const id = `global-lua-function-${signature}`;
+
+            let params = '';
+            for (const param of func.parameters) {
+                params += `${param.name}, `;
+            }
+            if (params.length) params = params.substring(0, params.length - 2);
+
+            const classes: string[] = ['item-tree-item', 'global-lua-function-item'];
+            if (id === this.selectedID) classes.push('selected');
+
+            functions.push({
+                text: wrapItem(`${func.name}(${params})`),
+                icon: LuaCard.getTypeIcon(func.returns.type),
                 id,
                 class: classes
             });
@@ -785,7 +825,7 @@ export class ItemTree {
         };
 
         const data: any[] = [];
-        
+
         if (fields.length) data.push(folderFields);
         if (functions.length) data.push(folderFuncs);
 

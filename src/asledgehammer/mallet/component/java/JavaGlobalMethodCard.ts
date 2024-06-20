@@ -93,7 +93,7 @@ export class JavaGlobalMethodCard extends JavaCard<JavaGlobalMethodCardOptions> 
         const { entity } = this.options!;
 
         this.listenNotes(entity, idNotes);
-        this.listenParameters(entity);
+        this.listenParameters(entity, 'global_method');
         this.listenReturns(entity, idReturnNotes);
         this.listenPreview();
 
@@ -111,7 +111,7 @@ export class JavaGlobalMethodCard extends JavaCard<JavaGlobalMethodCardOptions> 
         const $paramContainer = $get(idParamContainer);
         $paramContainer.empty();
         $paramContainer.html(this.renderParameters(entity, true));
-        this.listenParameters(entity);
+        this.listenParameters(entity, 'global_method');
     }
 }
 

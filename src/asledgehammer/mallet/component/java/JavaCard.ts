@@ -117,7 +117,7 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
         `;
     }
 
-    listenParameters(entity: RosettaJavaMethod | RosettaJavaConstructor): void {
+    listenParameters(entity: RosettaJavaMethod | RosettaJavaConstructor, type: 'constructor' | 'method' | 'global_method'): void {
         const { parameters } = entity;
         const name = entity instanceof RosettaJavaConstructor ? 'new' : entity.name;
 
@@ -139,8 +139,13 @@ export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<
                 $btnName.html('Edit');
                 $btnName.removeClass('btn-success');
                 $btnName.addClass('btn-primary');
-                if (entity instanceof RosettaJavaConstructor) this.app.modalName.javaConstructor = entity as any;
-                else this.app.modalName.javaMethod = entity;
+                if (type === 'constructor') {
+                    this.app.modalName.javaConstructor = entity as any;
+                } else if (type === 'method') {
+                    this.app.modalName.javaMethod = entity as any;
+                } else if (type === 'global_method') {
+                    this.app.modalName.globalJavaMethod = entity as any;
+                }
                 $inputName.val(param.name);
 
                 this.app.modalName.javaParameter = param;

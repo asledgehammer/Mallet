@@ -83,7 +83,7 @@ export class JavaConstructorCard extends JavaCard<JavaConstructorCardOptions> {
         const { idNotes } = this;
         const { entity } = this.options!;
         this.listenNotes(entity, idNotes);
-        this.listenParameters(entity);
+        this.listenParameters(entity, 'constructor');
         this.listenPreview();
     }
 
@@ -93,7 +93,7 @@ export class JavaConstructorCard extends JavaCard<JavaConstructorCardOptions> {
         const $paramContainer = $get(idParamContainer);
         $paramContainer.empty();
         $paramContainer.html(this.renderParameters({ name: 'new', parameters: entity.parameters }, true));
-        this.listenParameters(entity);
+        this.listenParameters(entity, 'constructor');
     }
 }
 

@@ -5030,7 +5030,7 @@ define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports"
             </div>
         `;
         }
-        listenParameters(entity) {
+        listenParameters(entity, type) {
             const { parameters } = entity;
             const name = entity instanceof RosettaJavaConstructor_2.RosettaJavaConstructor ? 'new' : entity.name;
             for (let index = 0; index < parameters.length; index++) {
@@ -5050,10 +5050,15 @@ define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports"
                     $btnName.html('Edit');
                     $btnName.removeClass('btn-success');
                     $btnName.addClass('btn-primary');
-                    if (entity instanceof RosettaJavaConstructor_2.RosettaJavaConstructor)
+                    if (type === 'constructor') {
                         this.app.modalName.javaConstructor = entity;
-                    else
+                    }
+                    else if (type === 'method') {
                         this.app.modalName.javaMethod = entity;
+                    }
+                    else if (type === 'global_method') {
+                        this.app.modalName.globalJavaMethod = entity;
+                    }
                     $inputName.val(param.name);
                     this.app.modalName.javaParameter = param;
                     this.app.modalName.nameMode = 'edit_parameter';
@@ -5467,17 +5472,17 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 app.showGlobalLuaField(field);
             });
             $doc.on('click', '.global-lua-function-item', function () {
-                const funcName = this.id.split('function-')[1].trim();
+                const signature = this.id.split('function-')[1].trim();
                 // Prevent wasteful selection code executions here.
-                if (_this.selected === funcName)
+                if (_this.selected === signature)
                     return;
-                const func = catalog.functions[funcName];
+                const func = _this.luaStaticMethodSignatureMap[signature];
                 if (!func)
                     return;
                 // Let the editor know we last selected the field.
-                _this.selected = funcName;
+                _this.selected = signature;
                 _this.selectedID = this.id;
-                app.showGlobalLuaFunction(func);
+                _this.app.showGlobalLuaFunction(func);
             });
             $doc.on('click', '.global-java-method-item', function () {
                 const signature = this.id.split('method-')[1].trim();
@@ -5717,29 +5722,37 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                     class: classes
                 });
             }
-            const functionNames = Object.keys(catalog.functions);
-            functionNames.sort((a, b) => a.localeCompare(b));
-            const functions = [];
-            for (const functionName of functionNames) {
-                const func = catalog.functions[functionName];
-                const id = `lua-global-function-${func.name}`;
-                const classes = ['item-tree-item', 'global-lua-function-item'];
-                if (id === this.selectedID)
-                    classes.push('selected');
-                functions.push({
-                    text: (0, util_7.html) `<i class="fa-solid fa-xmark me-2" title="${func.returns.type}"></i>${func.name}`,
-                    icon: 'fa-solid fa-terminal text-success mx-2',
-                    id,
-                    class: classes
-                });
-            }
+            // const functionNames = Object.keys(catalog.functions);
+            // functionNames.sort((a, b) => a.localeCompare(b));
+            // const functions = [];
+            // for (const functionName of functionNames) {
+            //     const func = catalog.functions[functionName];
+            //     const id = `lua-global-function-${func.name}`;
+            //     const classes: string[] = ['item-tree-item', 'global-lua-function-item'];
+            //     if (id === this.selectedID) classes.push('selected');
+            //     functions.push({
+            //         text: html`<i class="fa-solid fa-xmark me-2" title="${func.returns.type}"></i>${func.name}`,
+            //         icon: 'fa-solid fa-terminal text-success mx-2',
+            //         id,
+            //         class: classes
+            //     });
+            // }
             this.methodSignatureMap = {};
-            const clusterNames = Object.keys(catalog.methods);
+            this.luaStaticMethodSignatureMap = {};
+            let clusterNames = Object.keys(catalog.methods);
             clusterNames.sort((a, b) => a.localeCompare(b));
             for (const clusterName of clusterNames) {
                 const cluster = catalog.methods[clusterName];
                 for (const method of cluster.methods) {
                     this.methodSignatureMap[method.getSignature()] = method;
+                }
+            }
+            clusterNames = Object.keys(catalog.functions);
+            clusterNames.sort((a, b) => a.localeCompare(b));
+            for (const clusterName of clusterNames) {
+                const cluster = catalog.functions[clusterName];
+                for (const func of cluster.functions) {
+                    this.luaStaticMethodSignatureMap[func.getSignature()] = func;
                 }
             }
             // Global Method(s)
@@ -5761,6 +5774,29 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
                 methods.push({
                     text: wrapItem(`${method.name}(${params})`),
                     icon: LuaCard_2.LuaCard.getTypeIcon(method.returns.type.basic),
+                    id,
+                    class: classes
+                });
+            }
+            // Global Functions(s)
+            const functions = [];
+            const funcSignatures = Object.keys(this.luaStaticMethodSignatureMap);
+            funcSignatures.sort((a, b) => a.localeCompare(b));
+            for (const signature of funcSignatures) {
+                const func = this.luaStaticMethodSignatureMap[signature];
+                const id = `global-lua-function-${signature}`;
+                let params = '';
+                for (const param of func.parameters) {
+                    params += `${param.name}, `;
+                }
+                if (params.length)
+                    params = params.substring(0, params.length - 2);
+                const classes = ['item-tree-item', 'global-lua-function-item'];
+                if (id === this.selectedID)
+                    classes.push('selected');
+                functions.push({
+                    text: wrapItem(`${func.name}(${params})`),
+                    icon: LuaCard_2.LuaCard.getTypeIcon(func.returns.type),
                     id,
                     class: classes
                 });
@@ -7526,7 +7562,7 @@ define("src/asledgehammer/mallet/component/java/JavaConstructorCard", ["require"
             const { idNotes } = this;
             const { entity } = this.options;
             this.listenNotes(entity, idNotes);
-            this.listenParameters(entity);
+            this.listenParameters(entity, 'constructor');
             this.listenPreview();
         }
         refreshParameters() {
@@ -7535,7 +7571,7 @@ define("src/asledgehammer/mallet/component/java/JavaConstructorCard", ["require"
             const $paramContainer = (0, util_14.$get)(idParamContainer);
             $paramContainer.empty();
             $paramContainer.html(this.renderParameters({ name: 'new', parameters: entity.parameters }, true));
-            this.listenParameters(entity);
+            this.listenParameters(entity, 'constructor');
         }
     }
     exports.JavaConstructorCard = JavaConstructorCard;
@@ -7726,7 +7762,7 @@ define("src/asledgehammer/mallet/component/java/JavaMethodCard", ["require", "ex
             const { app, idBtnDelete, idNotes, idReturnNotes } = this;
             const { entity, isStatic } = this.options;
             this.listenNotes(entity, idNotes);
-            this.listenParameters(entity);
+            this.listenParameters(entity, 'method');
             this.listenReturns(entity, idReturnNotes);
             this.listenPreview();
             (0, util_16.$get)(idBtnDelete).on('click', () => {
@@ -7746,7 +7782,7 @@ define("src/asledgehammer/mallet/component/java/JavaMethodCard", ["require", "ex
             const $paramContainer = (0, util_16.$get)(idParamContainer);
             $paramContainer.empty();
             $paramContainer.html(this.renderParameters(entity, true));
-            this.listenParameters(entity);
+            this.listenParameters(entity, 'method');
         }
     }
     exports.JavaMethodCard = JavaMethodCard;
@@ -7769,6 +7805,7 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
             this.luaFunction = undefined;
             this.luaMethod = undefined;
             this.luaField = undefined;
+            this.globalJavaMethod = undefined;
             this.globalLuaFunction = undefined;
             this.globalLuaField = undefined;
             this.app = app;
@@ -8009,7 +8046,12 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
             const { catalog, toast } = app;
             try {
                 const func = new RosettaLuaFunction_3.RosettaLuaFunction(name, { returns: { type: 'void' } });
-                catalog.functions[func.name] = func;
+                let cluster = catalog.functions[func.name];
+                if (!cluster) {
+                    cluster = new RosettaLuaFunctionCluster_3.RosettaLuaFunctionCluster(func.name);
+                    catalog.functions[func.name] = cluster;
+                }
+                cluster.add(func);
                 app.showGlobalLuaFunction(func);
                 toast.alert('Created Global Lua Function.', 'success');
             }
@@ -8022,10 +8064,19 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
             const { app } = this;
             const { catalog, toast } = app;
             try {
-                const func = catalog.functions[nameOld];
+                const func = this.globalLuaFunction;
                 func.name = name;
-                delete catalog.functions[nameOld];
-                catalog.functions[name] = func;
+                let cluster = catalog.functions[nameOld];
+                cluster.functions.splice(cluster.functions.indexOf(func), 1);
+                if (cluster.functions.length === 0) {
+                    delete catalog.functions[nameOld];
+                }
+                cluster = catalog.functions[name];
+                if (!cluster) {
+                    cluster = new RosettaLuaFunctionCluster_3.RosettaLuaFunctionCluster(name);
+                    catalog.functions[name] = cluster;
+                }
+                cluster.add(func);
                 app.showGlobalLuaFunction(func);
                 toast.alert('Created Global Lua Function.', 'success');
             }
@@ -8036,14 +8087,14 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
         }
         onGlobalNewParameter(nameOld, name) {
             const { app } = this;
-            const { catalog, toast } = app;
+            const { toast } = app;
             try {
                 const split = nameOld.split('-');
                 const type = split[0];
                 const funcName = split[1];
                 let func = undefined;
                 if (type === 'global_function') {
-                    func = catalog.functions[funcName];
+                    func = this.globalLuaFunction;
                 }
                 else {
                     throw new Error('Creating parameters for Java Methods is not supported.');
@@ -8072,16 +8123,10 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
                 let func = undefined;
                 let param = null;
                 // First, check methods.
-                func = this.javaMethod;
+                func = this.globalJavaMethod;
                 // Second, check functions.
                 if (!func) {
-                    for (const methodName of Object.keys(catalog.functions)) {
-                        if (methodName === funcName) {
-                            func = catalog.functions[methodName];
-                            type = 'function';
-                            break;
-                        }
-                    }
+                    func = this.globalLuaFunction;
                 }
                 if (!func) {
                     console.warn(`Unknown function / method: _G.${funcName}!`);
@@ -8603,6 +8648,7 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
             /* (Global Types) */
             this.globalLuaField = undefined;
             this.globalLuaFunction = undefined;
+            this.globalJavaMethod = undefined;
             /* (Lua Types) */
             this.luaClass = undefined;
             this.luaConstructor = undefined;
@@ -8689,7 +8735,7 @@ define("src/asledgehammer/mallet/component/Toast", ["require", "exports", "src/a
     }
     exports.Toast = Toast;
 });
-define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/java/RosettaJavaMethod", "src/asledgehammer/rosetta/java/RosettaJavaMethodCluster", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaField", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/TSUtils"], function (require, exports, JavaLuaGenerator2_6, RosettaJavaClass_5, RosettaJavaMethod_2, RosettaJavaMethodCluster_2, LuaLuaGenerator_8, RosettaLuaClass_6, RosettaLuaField_4, RosettaLuaFunction_4, RosettaLuaTable_6, JavaTypeScriptGenerator_6, LuaTypeScriptGenerator_8, TSUtils_3) {
+define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/java/RosettaJavaMethod", "src/asledgehammer/rosetta/java/RosettaJavaMethodCluster", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaField", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaFunctionCluster", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/TSUtils"], function (require, exports, JavaLuaGenerator2_6, RosettaJavaClass_5, RosettaJavaMethod_2, RosettaJavaMethodCluster_2, LuaLuaGenerator_8, RosettaLuaClass_6, RosettaLuaField_4, RosettaLuaFunction_4, RosettaLuaFunctionCluster_4, RosettaLuaTable_6, JavaTypeScriptGenerator_6, LuaTypeScriptGenerator_8, TSUtils_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Catalog = void 0;
@@ -8779,9 +8825,11 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
             if (keys.length) {
                 keys.sort((a, b) => a.localeCompare(b));
                 for (const name of keys) {
-                    const func = this.functions[name];
-                    // s += `// Global Lua Function: ${func.name} \n\n`;
-                    s += (0, LuaTypeScriptGenerator_8.luaFunctionToTS)(func, 0, 100) + '\n';
+                    const cluster = this.functions[name];
+                    for (const func of cluster.functions) {
+                        // s += `// Global Lua Function: ${func.name} \n\n`;
+                        s += (0, LuaTypeScriptGenerator_8.luaFunctionToTS)(func, 0, 100) + '\n';
+                    }
                 }
             }
             /* Global Java Methods */
@@ -8844,9 +8892,11 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
             if (keys.length) {
                 keys.sort((a, b) => a.localeCompare(b));
                 for (const name of keys) {
-                    const func = this.functions[name];
-                    // s += `-- Global Lua Function: ${name} --\n\n`;
-                    s += (0, LuaLuaGenerator_8.generateGlobalLuaFunction)(func) + '\n\n';
+                    const cluster = this.functions[name];
+                    for (const func of cluster.functions) {
+                        // s += `-- Global Lua Function: ${name} --\n\n`;
+                        s += (0, LuaLuaGenerator_8.generateGlobalLuaFunction)(func) + '\n\n';
+                    }
                 }
             }
             /* Global Java Methods */
@@ -8901,13 +8951,35 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
                     this.fields[name] = this.fields[field.name] = field;
                 }
             }
-            /* (Functions) */
-            if (json.functions) {
-                const rawFunctions = json.functions;
-                for (const name of Object.keys(rawFunctions)) {
-                    const rawFunction = rawFunctions[name];
-                    const func = new RosettaLuaFunction_4.RosettaLuaFunction(name, rawFunction);
-                    this.functions[name] = this.functions[func.name] = func;
+            /* (Global Functions) */
+            if (json.functions !== undefined) {
+                /* (Legacy) */
+                if (!Array.isArray(json.functions)) {
+                    console.log('PZ-Rosetta: Upgrading legacy Global Lua functions from singleton-object per name to clustered array..');
+                    const rawMethods = json.functions;
+                    for (const name2 of Object.keys(rawMethods)) {
+                        const rawMethod = rawMethods[name2];
+                        const method = new RosettaLuaFunction_4.RosettaLuaFunction(name2, rawMethod);
+                        this.functions[method.name] = new RosettaLuaFunctionCluster_4.RosettaLuaFunctionCluster(method.name);
+                        this.functions[method.name].add(method);
+                    }
+                }
+                /* (Current) */
+                else {
+                    const rawMethods = json.functions;
+                    for (const rawMethod of rawMethods) {
+                        const method = new RosettaLuaFunction_4.RosettaLuaFunction(rawMethod.name, rawMethod);
+                        const { name: methodName } = method;
+                        let cluster;
+                        if (this.functions[methodName] === undefined) {
+                            cluster = new RosettaLuaFunctionCluster_4.RosettaLuaFunctionCluster(methodName);
+                            this.functions[methodName] = cluster;
+                        }
+                        else {
+                            cluster = this.functions[methodName];
+                        }
+                        cluster.add(method);
+                    }
                 }
             }
             /* METHODS */
@@ -8935,6 +9007,7 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
             let luaClasses = undefined;
             keys = Object.keys(this.luaClasses);
             if (keys.length) {
+                keys.sort((a, b) => a.localeCompare(b));
                 luaClasses = {};
                 for (const name of keys) {
                     luaClasses[name] = this.luaClasses[name].toJSON();
@@ -8944,6 +9017,7 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
             let tables = undefined;
             keys = Object.keys(this.luaTables);
             if (keys.length) {
+                keys.sort((a, b) => a.localeCompare(b));
                 tables = {};
                 for (const name of keys) {
                     tables[name] = this.luaTables[name].toJSON();
@@ -8953,6 +9027,7 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
             let namespaces = undefined;
             keys = Object.keys(this.javaClasses);
             if (keys.length) {
+                keys.sort((a, b) => a.localeCompare(b));
                 namespaces = {};
                 for (const name of keys) {
                     const javaClass = this.javaClasses[name];
@@ -8967,6 +9042,7 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
             let fields = undefined;
             keys = Object.keys(this.fields);
             if (keys.length) {
+                keys.sort((a, b) => a.localeCompare(b));
                 fields = {};
                 for (const name of keys) {
                     fields[name] = this.fields[name].toJSON();
@@ -8976,16 +9052,20 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
             let functions = undefined;
             keys = Object.keys(this.functions);
             if (keys.length) {
-                functions = {};
+                keys.sort((a, b) => a.localeCompare(b));
+                functions = [];
                 for (const name of keys) {
-                    functions[name] = this.functions[name].toJSON();
+                    const cluster = this.functions[name];
+                    for (const func of cluster.functions) {
+                        functions.push(func.toJSON());
+                    }
                 }
             }
             /* (Methods) */
             let methods = undefined;
             keys = Object.keys(this.methods);
-            keys.sort((a, b) => a.localeCompare(b));
             if (keys.length) {
+                keys.sort((a, b) => a.localeCompare(b));
                 methods = [];
                 /* (Flatten MethodClusters into JSON method bodies) */
                 for (const key of keys) {
@@ -9280,7 +9360,7 @@ define("src/asledgehammer/mallet/component/java/JavaGlobalMethodCard", ["require
             const { app, idBtnDelete, idNotes, idReturnNotes } = this;
             const { entity } = this.options;
             this.listenNotes(entity, idNotes);
-            this.listenParameters(entity);
+            this.listenParameters(entity, 'global_method');
             this.listenReturns(entity, idReturnNotes);
             this.listenPreview();
             (0, util_22.$get)(idBtnDelete).on('click', () => {
@@ -9296,7 +9376,7 @@ define("src/asledgehammer/mallet/component/java/JavaGlobalMethodCard", ["require
             const $paramContainer = (0, util_22.$get)(idParamContainer);
             $paramContainer.empty();
             $paramContainer.html(this.renderParameters(entity, true));
-            this.listenParameters(entity);
+            this.listenParameters(entity, 'global_method');
         }
     }
     exports.JavaGlobalMethodCard = JavaGlobalMethodCard;

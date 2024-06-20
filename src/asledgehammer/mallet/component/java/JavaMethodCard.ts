@@ -112,7 +112,7 @@ export class JavaMethodCard extends JavaCard<JavaMethodCardOptions> {
         const { entity, isStatic } = this.options!;
 
         this.listenNotes(entity, idNotes);
-        this.listenParameters(entity);
+        this.listenParameters(entity, 'method');
         this.listenReturns(entity, idReturnNotes);
         this.listenPreview();
 
@@ -133,7 +133,7 @@ export class JavaMethodCard extends JavaCard<JavaMethodCardOptions> {
         const $paramContainer = $get(idParamContainer);
         $paramContainer.empty();
         $paramContainer.html(this.renderParameters(entity, true));
-        this.listenParameters(entity);
+        this.listenParameters(entity, 'method');
     }
 }
 

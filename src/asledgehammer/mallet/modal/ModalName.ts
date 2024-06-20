@@ -36,6 +36,7 @@ export class ModalName {
     luaMethod: RosettaLuaFunction | undefined = undefined;
     luaField: RosettaLuaField | undefined = undefined;
 
+    globalJavaMethod: RosettaJavaMethod | undefined = undefined;
     globalLuaFunction: RosettaLuaFunction | undefined = undefined;
     globalLuaField: RosettaLuaField | undefined = undefined;
 
@@ -256,10 +257,10 @@ export class ModalName {
     }
 
     onGlobalNewField(name: string) {
-        
+
         const { app } = this;
         const { catalog, toast } = app;
-        
+
         try {
 
             const field = new RosettaLuaField(name);
@@ -275,10 +276,10 @@ export class ModalName {
     }
 
     onGlobalEditField(nameOld: string, name: string) {
-        
+
         const { app } = this;
         const { catalog, toast } = app;
-        
+
         try {
 
             const field = catalog.fields[nameOld];
@@ -297,14 +298,20 @@ export class ModalName {
     }
 
     onGlobalNewFunction(name: string) {
-        
+
         const { app } = this;
         const { catalog, toast } = app;
-        
+
         try {
 
             const func = new RosettaLuaFunction(name, { returns: { type: 'void' } });
-            catalog.functions[func.name] = func;
+
+            let cluster = catalog.functions[func.name];
+            if (!cluster) {
+                cluster = new RosettaLuaFunctionCluster(func.name);
+                catalog.functions[func.name] = cluster;
+            }
+            cluster.add(func);
 
             app.showGlobalLuaFunction(func);
             toast.alert('Created Global Lua Function.', 'success');
@@ -316,17 +323,28 @@ export class ModalName {
     }
 
     onGlobalEditFunction(nameOld: string, name: string) {
-        
+
         const { app } = this;
         const { catalog, toast } = app;
-        
+
         try {
 
-            const func = catalog.functions[nameOld];
+            const func = this.globalLuaFunction!;
             func.name = name;
 
-            delete catalog.functions[nameOld];
-            catalog.functions[name] = func;
+            let cluster = catalog.functions[nameOld];
+            cluster.functions.splice(cluster.functions.indexOf(func), 1);
+            if (cluster.functions.length === 0) {
+                delete catalog.functions[nameOld];
+            }
+
+            cluster = catalog.functions[name];
+            if (!cluster) {
+                cluster = new RosettaLuaFunctionCluster(name);
+                catalog.functions[name] = cluster;
+            }
+
+            cluster.add(func);
 
             app.showGlobalLuaFunction(func);
             toast.alert('Created Global Lua Function.', 'success');
@@ -340,7 +358,7 @@ export class ModalName {
     onGlobalNewParameter(nameOld: string, name: string) {
 
         const { app } = this;
-        const { catalog, toast } = app;
+        const { toast } = app;
 
         try {
             const split = nameOld.split('-');
@@ -350,7 +368,7 @@ export class ModalName {
             let func: RosettaLuaFunction | RosettaJavaMethod | undefined = undefined;
 
             if (type === 'global_function') {
-                func = catalog.functions[funcName];
+                func = this.globalLuaFunction!;
             } else {
                 throw new Error('Creating parameters for Java Methods is not supported.');
             }
@@ -386,17 +404,11 @@ export class ModalName {
             let param = null;
 
             // First, check methods.
-            func = this.javaMethod;
+            func = this.globalJavaMethod;
 
             // Second, check functions.
             if (!func) {
-                for (const methodName of Object.keys(catalog.functions)) {
-                    if (methodName === funcName) {
-                        func = catalog.functions[methodName];
-                        type = 'function';
-                        break;
-                    }
-                }
+                func = this.globalLuaFunction;
             }
 
             if (!func) {
@@ -433,18 +445,18 @@ export class ModalName {
     }
 
     onNewLuaClass(name: string) {
-        
+
         const { app } = this;
         const { catalog, toast } = app;
-        
+
         try {
-        
+
             const entity = new RosettaLuaClass(name);
             catalog.luaClasses[entity.name] = entity;
-        
+
             app.showLuaClass(entity);
             toast.alert('Created Lua Class.', 'success');
-        
+
         } catch (e) {
             toast.alert(`Failed to create Lua Class.`, 'error');
             console.error(e);
@@ -452,18 +464,18 @@ export class ModalName {
     }
 
     onNewLuaTable(name: string) {
-        
+
         const { app } = this;
         const { catalog, toast } = app;
-        
+
         try {
-        
+
             const entity = new RosettaLuaTable(name);
             catalog.luaTables[entity.name] = entity;
-        
+
             app.showLuaTable(entity);
             toast.alert('Created Lua Table.', 'success');
-        
+
         } catch (e) {
             toast.alert(`Failed to create Lua Table.`, 'error');
             console.error(e);
@@ -471,10 +483,10 @@ export class ModalName {
     }
 
     onEditLuaClass(clazz: RosettaLuaClass, name: string) {
-        
+
         const { app } = this;
         const { catalog, toast } = app;
-        
+
         try {
 
             // Modify the dictionary.
@@ -492,12 +504,12 @@ export class ModalName {
     }
 
     onEditLuaTable(table: RosettaLuaTable, name: string) {
-        
+
         const { app } = this;
         const { catalog, toast } = app;
-        
+
         try {
-        
+
             // Modify the dictionary.
             delete catalog.luaTables[table.name];
             table.name = name;
@@ -513,17 +525,17 @@ export class ModalName {
     }
 
     onLuaClassNewField(clazz: RosettaLuaClass, name: string) {
-        
+
         const { app } = this;
         const { toast } = app;
-        
+
         try {
-        
+
             const field = clazz.createField(name);
-        
+
             app.showLuaClassField(field);
             toast.alert('Created Lua Class Field.', 'success');
-        
+
         } catch (e) {
             toast.alert(`Failed to create Lua Class Field.`, 'error');
             console.error(e);
@@ -531,17 +543,17 @@ export class ModalName {
     }
 
     onLuaTableNewField(table: RosettaLuaTable, name: string) {
-        
+
         const { app } = this;
         const { toast } = app;
-        
+
         try {
-        
+
             const field = table.createField(name);
-        
+
             app.showLuaTableField(field);
             toast.alert('Created Lua Table Field.', 'success');
-        
+
         } catch (e) {
             toast.alert(`Failed to create Lua Table Field.`, 'error');
             console.error(e);
@@ -549,10 +561,10 @@ export class ModalName {
     }
 
     onLuaClassEditField(clazz: RosettaLuaClass, nameOld: string, name: string) {
-        
+
         const { app } = this;
         const { toast } = app;
-        
+
         try {
 
             const field = clazz.fields[nameOld];
@@ -571,10 +583,10 @@ export class ModalName {
     }
 
     onLuaTableEditField(table: RosettaLuaTable, nameOld: string, name: string) {
-        
+
         const { app } = this;
         const { toast } = app;
-        
+
         try {
 
             const field = table.fields[nameOld];
@@ -593,19 +605,19 @@ export class ModalName {
     }
 
     onLuaClassNewValue(clazz: RosettaLuaClass, name: string) {
-        
+
         console.log(`onLuaClassNewValue(${clazz.name}, ${name})`);
 
         const { app } = this;
         const { toast } = app;
-        
+
         try {
-        
+
             const value = clazz.createValue(name);
-        
+
             app.showLuaClassValue(value);
             toast.alert('Created Lua Value.', 'success');
-        
+
         } catch (e) {
             toast.alert(`Failed to create Lua Value.`, 'error');
             console.error(e);
@@ -613,10 +625,10 @@ export class ModalName {
     }
 
     onLuaClassEditValue(clazz: RosettaLuaClass, nameOld: string, name: string) {
-        
+
         const { app } = this;
         const { toast } = app;
-        
+
         try {
 
             const value = clazz.values[nameOld];
@@ -635,10 +647,10 @@ export class ModalName {
     }
 
     onLuaClassNewFunction(clazz: RosettaLuaClass, name: string) {
-        
+
         const { app } = this;
         const { toast } = app;
-        
+
         try {
 
             const func = clazz.createFunction(name);
@@ -653,10 +665,10 @@ export class ModalName {
     }
 
     onLuaTableNewFunction(table: RosettaLuaTable, name: string) {
-        
+
         const { app } = this;
         const { toast } = app;
-        
+
         try {
 
             const func = table.createFunction(name);
@@ -671,12 +683,12 @@ export class ModalName {
     }
 
     onLuaClassEditFunction(clazz: RosettaLuaClass, func: RosettaLuaFunction, name: string) {
-        
+
         const { app } = this;
         const { toast } = app;
-        
+
         try {
-        
+
             const nameOld = func.name;
             func.name = name;
 
@@ -714,10 +726,10 @@ export class ModalName {
     }
 
     onLuaTableEditFunction(table: RosettaLuaTable, func: RosettaLuaFunction, name: string) {
-        
+
         const { app } = this;
         const { toast } = app;
-        
+
         try {
 
             const nameOld = func.name;
@@ -758,10 +770,10 @@ export class ModalName {
     }
 
     onLuaClassNewMethod(clazz: RosettaLuaClass, name: string) {
-        
+
         const { app } = this;
         const { toast } = app;
-        
+
         try {
 
             const method = clazz.createMethod(name);
@@ -776,10 +788,10 @@ export class ModalName {
     }
 
     onLuaClassEditMethod(clazz: RosettaLuaClass, func: RosettaLuaFunction, name: string) {
-        
+
         const { app } = this;
         const { toast } = app;
-        
+
         try {
 
             const nameOld = func.name;
@@ -819,12 +831,12 @@ export class ModalName {
     }
 
     onLuaClassNewParameter(nameOld: string, name: string) {
-        
+
         const { app } = this;
         const { toast } = app;
-        
+
         try {
-        
+
             const split = nameOld.split('-');
             const type = split[0];
 
@@ -854,12 +866,12 @@ export class ModalName {
     }
 
     onLuaTableNewParameter(nameOld: string, name: string) {
-        
+
         const { app } = this;
         const { toast } = app;
-        
+
         try {
-        
+
             const split = nameOld.split('-');
             const type = split[0];
 
@@ -884,10 +896,10 @@ export class ModalName {
     }
 
     onLuaClassEditParameter(clazz: RosettaLuaClass, nameOld: string, name: string) {
-        
+
         const { app } = this;
         const { toast } = app;
-        
+
         try {
 
             const split = nameOld.split('-');
@@ -948,10 +960,10 @@ export class ModalName {
     }
 
     onLuaTableEditParameter(table: RosettaLuaTable, nameOld: string, name: string) {
-        
+
         const { app } = this;
         const { toast } = app;
-        
+
         try {
 
             const split = nameOld.split('-');
@@ -1006,10 +1018,10 @@ export class ModalName {
     }
 
     onJavaClassEditParameter(clazz: RosettaJavaClass, nameOld: string, name: string) {
-        
+
         const { app } = this;
         const { toast } = app;
-        
+
         try {
 
             const split = nameOld.split('-');
@@ -1067,6 +1079,7 @@ export class ModalName {
         /* (Global Types) */
         this.globalLuaField = undefined;
         this.globalLuaFunction = undefined;
+        this.globalJavaMethod = undefined;
 
         /* (Lua Types) */
         this.luaClass = undefined;

@@ -7,6 +7,7 @@ import { generateGlobalLuaField, generateGlobalLuaFunction, generateLuaClass, ge
 import { RosettaLuaClass } from "../rosetta/lua/RosettaLuaClass";
 import { RosettaLuaField } from "../rosetta/lua/RosettaLuaField";
 import { RosettaLuaFunction } from "../rosetta/lua/RosettaLuaFunction";
+import { RosettaLuaFunctionCluster } from "../rosetta/lua/RosettaLuaFunctionCluster";
 import { RosettaLuaTable } from "../rosetta/lua/RosettaLuaTable";
 import { RosettaLuaTableField } from "../rosetta/lua/RosettaLuaTableField";
 import { javaClassToTS, javaMethodClusterToTS } from "../rosetta/typescript/JavaTypeScriptGenerator";
@@ -26,7 +27,7 @@ export class Catalog {
 
     readonly methods: { [key: string]: RosettaJavaMethodCluster } = {};
     readonly fields: { [id: string]: RosettaLuaTableField } = {};
-    readonly functions: { [id: string]: RosettaLuaFunction } = {};
+    readonly functions: { [id: string]: RosettaLuaFunctionCluster } = {};
 
     selected:
         RosettaLuaClass
@@ -127,9 +128,11 @@ export class Catalog {
         if (keys.length) {
             keys.sort((a, b) => a.localeCompare(b));
             for (const name of keys) {
-                const func = this.functions[name];
-                // s += `// Global Lua Function: ${func.name} \n\n`;
-                s += luaFunctionToTS(func, 0, 100) + '\n';
+                const cluster = this.functions[name];
+                for (const func of cluster.functions) {
+                    // s += `// Global Lua Function: ${func.name} \n\n`;
+                    s += luaFunctionToTS(func, 0, 100) + '\n';
+                }
             }
         }
 
@@ -200,9 +203,11 @@ export class Catalog {
         if (keys.length) {
             keys.sort((a, b) => a.localeCompare(b));
             for (const name of keys) {
-                const func = this.functions[name];
-                // s += `-- Global Lua Function: ${name} --\n\n`;
-                s += generateGlobalLuaFunction(func) + '\n\n';
+                const cluster = this.functions[name];
+                for (const func of cluster.functions) {
+                    // s += `-- Global Lua Function: ${name} --\n\n`;
+                    s += generateGlobalLuaFunction(func) + '\n\n';
+                }
             }
         }
 
@@ -266,13 +271,36 @@ export class Catalog {
             }
         }
 
-        /* (Functions) */
-        if (json.functions) {
-            const rawFunctions: { [key: string]: any } = json.functions;
-            for (const name of Object.keys(rawFunctions)) {
-                const rawFunction = rawFunctions[name];
-                const func = new RosettaLuaFunction(name, rawFunction);
-                this.functions[name] = this.functions[func.name] = func;
+        /* (Global Functions) */
+        if (json.functions !== undefined) {
+            /* (Legacy) */
+            if (!Array.isArray(json.functions)) {
+                console.log('PZ-Rosetta: Upgrading legacy Global Lua functions from singleton-object per name to clustered array..');
+
+                const rawMethods: { [key: string]: any } = json.functions;
+                for (const name2 of Object.keys(rawMethods)) {
+                    const rawMethod = rawMethods[name2];
+                    const method = new RosettaLuaFunction(name2, rawMethod);
+                    this.functions[method.name] = new RosettaLuaFunctionCluster(method.name);
+                    this.functions[method.name].add(method);
+                }
+
+            }
+            /* (Current) */
+            else {
+                const rawMethods = json.functions;
+                for (const rawMethod of rawMethods) {
+                    const method = new RosettaLuaFunction(rawMethod.name, rawMethod);
+                    const { name: methodName } = method;
+                    let cluster: RosettaLuaFunctionCluster;
+                    if (this.functions[methodName] === undefined) {
+                        cluster = new RosettaLuaFunctionCluster(methodName);
+                        this.functions[methodName] = cluster;
+                    } else {
+                        cluster = this.functions[methodName];
+                    }
+                    cluster.add(method);
+                }
             }
         }
 
@@ -297,12 +325,14 @@ export class Catalog {
     }
 
     toJSON(): any {
+
         let keys: string[];
 
         // Lua Classes
         let luaClasses: any = undefined;
         keys = Object.keys(this.luaClasses);
         if (keys.length) {
+            keys.sort((a, b) => a.localeCompare(b));
             luaClasses = {};
             for (const name of keys) {
                 luaClasses[name] = this.luaClasses[name].toJSON();
@@ -313,6 +343,7 @@ export class Catalog {
         let tables: any = undefined;
         keys = Object.keys(this.luaTables);
         if (keys.length) {
+            keys.sort((a, b) => a.localeCompare(b));
             tables = {};
             for (const name of keys) {
                 tables[name] = this.luaTables[name].toJSON();
@@ -323,6 +354,7 @@ export class Catalog {
         let namespaces: any = undefined;
         keys = Object.keys(this.javaClasses);
         if (keys.length) {
+            keys.sort((a, b) => a.localeCompare(b));
             namespaces = {};
             for (const name of keys) {
                 const javaClass = this.javaClasses[name];
@@ -338,6 +370,7 @@ export class Catalog {
         let fields: any = undefined;
         keys = Object.keys(this.fields);
         if (keys.length) {
+            keys.sort((a, b) => a.localeCompare(b));
             fields = {};
             for (const name of keys) {
                 fields[name] = this.fields[name].toJSON();
@@ -348,17 +381,21 @@ export class Catalog {
         let functions: any = undefined;
         keys = Object.keys(this.functions);
         if (keys.length) {
-            functions = {};
+            keys.sort((a, b) => a.localeCompare(b));
+            functions = [];
             for (const name of keys) {
-                functions[name] = this.functions[name].toJSON();
+                const cluster = this.functions[name];
+                for (const func of cluster.functions) {
+                    functions.push(func.toJSON());
+                }
             }
         }
 
         /* (Methods) */
         let methods: any = undefined;
         keys = Object.keys(this.methods);
-        keys.sort((a, b) => a.localeCompare(b));
         if (keys.length) {
+            keys.sort((a, b) => a.localeCompare(b));
             methods = [];
             /* (Flatten MethodClusters into JSON method bodies) */
             for (const key of keys) {
