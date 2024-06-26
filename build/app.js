@@ -9908,6 +9908,18 @@ define("src/asledgehammer/mallet/component/SidebarPanel", ["require", "exports",
     exports.SidebarPanel = SidebarPanel;
     ;
 });
+define("src/asledgehammer/rosetta/1.1/RosettaSerializable", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+});
+define("src/asledgehammer/rosetta/RosettaGame", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+});
+define("src/asledgehammer/rosetta/RosettaLanguage", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+});
 define("src/asledgehammer/rosetta/1.0/Rosetta", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -10156,5 +10168,525 @@ define("src/asledgehammer/rosetta/1.0/SerializableComponent", ["require", "expor
         }
     }
     exports.SerializableComponent = SerializableComponent;
+});
+define("src/asledgehammer/rosetta/1.1/Rosetta", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.LANGUAGE_ADAPTERS = void 0;
+    exports.LANGUAGE_ADAPTERS = {};
+});
+define("src/asledgehammer/rosetta/1.1/RosettaFile", ["require", "exports", "src/asledgehammer/rosetta/1.1/Rosetta"], function (require, exports, Rosetta_2) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaFile = void 0;
+    class RosettaFile {
+        constructor() {
+            this.languages = {};
+        }
+        fromJSON(json) {
+            const { languages } = this;
+            // (Version Check)
+            if (!json.version || json.version !== '1.1') {
+                throw new Error(`Invalid Rosetta version: ${json.version} (Should be "1.1")`);
+            }
+            // (Rosetta Languages)
+            const keys = Object.keys(json);
+            for (const key of keys) {
+                if (Rosetta_2.LANGUAGE_ADAPTERS[key]) {
+                    languages[key] = Rosetta_2.LANGUAGE_ADAPTERS[key](json[key]);
+                }
+            }
+        }
+        toJSON() {
+            const { languages } = this;
+            const json = {};
+            let keys;
+            // (Rosetta Version)
+            json.version = '1.1';
+            // (Rosetta Languages)
+            keys = Object.keys(languages);
+            if (keys.length) {
+                keys.sort((a, b) => a.localeCompare(b));
+                // (Write Language)
+                for (const key of keys) {
+                    json[key] = languages[key].toJSON();
+                }
+            }
+            return json;
+        }
+    }
+    exports.RosettaFile = RosettaFile;
+});
+define("src/asledgehammer/rosetta/1.1/RosettaNamedCollection", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaNamedCollection = void 0;
+    class RosettaNamedCollection {
+        constructor(name) {
+            this.elements = [];
+            this.name = name;
+        }
+    }
+    exports.RosettaNamedCollection = RosettaNamedCollection;
+});
+define("src/asledgehammer/rosetta/1.1/java/RosettaJavaClass", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaJavaClass = void 0;
+    class RosettaJavaClass {
+        constructor(json) {
+            this.fromJSON(json);
+        }
+        fromJSON(json) {
+            throw new Error("Method not implemented.");
+        }
+        toJSON() {
+            throw new Error("Method not implemented.");
+        }
+    }
+    exports.RosettaJavaClass = RosettaJavaClass;
+});
+define("src/asledgehammer/rosetta/1.1/java/RosettaJavaMethod", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaJavaMethod = void 0;
+    class RosettaJavaMethod {
+        constructor(json) {
+            this.fromJSON(json);
+        }
+        fromJSON(json) {
+            throw new Error("Method not implemented.");
+        }
+        toJSON() {
+            throw new Error("Method not implemented.");
+        }
+    }
+    exports.RosettaJavaMethod = RosettaJavaMethod;
+});
+define("src/asledgehammer/rosetta/1.1/java/RosettaJava", ["require", "exports", "src/asledgehammer/rosetta/1.1/Rosetta", "src/asledgehammer/rosetta/1.1/RosettaNamedCollection", "src/asledgehammer/rosetta/1.1/java/RosettaJavaClass", "src/asledgehammer/rosetta/1.1/java/RosettaJavaMethod"], function (require, exports, Rosetta_3, RosettaNamedCollection_1, RosettaJavaClass_7, RosettaJavaMethod_3) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaJava = exports.GAME_ADAPTERS = void 0;
+    exports.GAME_ADAPTERS = {};
+    class RosettaJava {
+        constructor(json) {
+            this.games = {};
+            this.classes = {};
+            this.methods = {};
+            this.language = 'java';
+            this.fromJSON(json);
+        }
+        fromJSON(json) {
+            let keys;
+            // (Java Classes)
+            if (json.classes) {
+                keys = Object.keys(json.classes);
+                keys.sort((a, b) => a.localeCompare(b));
+                for (const key of keys) {
+                    this.classes[key] = new RosettaJavaClass_7.RosettaJavaClass(json.classes[key]);
+                }
+            }
+            // (Java Methods)
+            if (json.methods) {
+                for (const jsonMethod of json.methods) {
+                    const name = jsonMethod.name;
+                    let cluster = this.methods[name];
+                    if (!cluster) {
+                        cluster = new RosettaNamedCollection_1.RosettaNamedCollection(name);
+                        this.methods[name] = cluster;
+                    }
+                    cluster.elements.push(new RosettaJavaMethod_3.RosettaJavaMethod(json.methods[name]));
+                }
+            }
+            // (Java Games)
+            if (json.games) {
+                keys = Object.keys(json.games);
+                keys.sort((a, b) => a.localeCompare(b));
+                for (const key of keys) {
+                    // (Grab registered adapter for game)
+                    const adapter = exports.GAME_ADAPTERS[key];
+                    if (!adapter) {
+                        console.warn(`Unknown adapter: ${key}`);
+                        continue;
+                    }
+                    // (Load game JSON)
+                    this.games[key] = adapter(json.games[key]);
+                }
+            }
+        }
+        toJSON() {
+            const { classes, methods, games } = this;
+            const json = {};
+            let keys;
+            // (Java Classes)
+            keys = Object.keys(classes);
+            if (keys.length) {
+                keys.sort((a, b) => a.localeCompare(b));
+                // (Write classes)
+                json.classses = {};
+                for (const key of keys) {
+                    json.classes[key] = classes[key].toJSON();
+                }
+            }
+            // (Java Methods)
+            keys = Object.keys(methods);
+            if (keys.length) {
+                keys.sort((a, b) => a.localeCompare(b));
+                // (Write methods)
+                json.methods = [];
+                for (const key of keys) {
+                    for (const method of methods[key].elements) {
+                        json.methods.push(method.toJSON());
+                    }
+                }
+            }
+            // (Java Games)
+            keys = Object.keys(games);
+            if (keys.length) {
+                keys.sort((a, b) => a.localeCompare(b));
+                // (Write games)
+                json.games = {};
+                for (const key of keys) {
+                    json.games[key] = games[key].toJSON();
+                }
+            }
+            return json;
+        }
+    }
+    exports.RosettaJava = RosettaJava;
+    // Register the language to the global adapters.
+    Rosetta_3.LANGUAGE_ADAPTERS['java'] = (json) => new RosettaJava(json);
+});
+define("src/asledgehammer/rosetta/1.1/java/RosettaJavaConstructor", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaJavaConstructor = void 0;
+    class RosettaJavaConstructor {
+        constructor(json) {
+            this.fromJSON(json);
+        }
+        fromJSON(json) {
+            throw new Error("Method not implemented.");
+        }
+        toJSON() {
+            throw new Error("Method not implemented.");
+        }
+    }
+    exports.RosettaJavaConstructor = RosettaJavaConstructor;
+});
+define("src/asledgehammer/rosetta/1.1/java/RosettaJavaField", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaJavaField = void 0;
+    class RosettaJavaField {
+        constructor(json) {
+            this.fromJSON(json);
+        }
+        fromJSON(json) {
+            throw new Error("Method not implemented.");
+        }
+        toJSON() {
+            throw new Error("Method not implemented.");
+        }
+    }
+    exports.RosettaJavaField = RosettaJavaField;
+});
+define("src/asledgehammer/rosetta/1.1/java/RosettaJavaPackage", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaJavaPackage = void 0;
+    class RosettaJavaPackage {
+        constructor(json) {
+            this.fromJSON(json);
+        }
+        fromJSON(json) {
+            throw new Error("Method not implemented.");
+        }
+        toJSON() {
+            throw new Error("Method not implemented.");
+        }
+    }
+    exports.RosettaJavaPackage = RosettaJavaPackage;
+});
+define("src/asledgehammer/rosetta/1.1/java/RosettaJavaParameter", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaJavaParameter = void 0;
+    class RosettaJavaParameter {
+        constructor(json) {
+            this.fromJSON(json);
+        }
+        fromJSON(json) {
+            throw new Error("Method not implemented.");
+        }
+        toJSON() {
+            throw new Error("Method not implemented.");
+        }
+    }
+    exports.RosettaJavaParameter = RosettaJavaParameter;
+});
+define("src/asledgehammer/rosetta/1.1/java/RosettaJavaReturn", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaJavaReturn = void 0;
+    class RosettaJavaReturn {
+        constructor(json) {
+            this.fromJSON(json);
+        }
+        fromJSON(json) {
+            throw new Error("Method not implemented.");
+        }
+        toJSON() {
+            throw new Error("Method not implemented.");
+        }
+    }
+    exports.RosettaJavaReturn = RosettaJavaReturn;
+});
+define("src/asledgehammer/rosetta/1.1/java/RosettaJavaType", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaJavaType = void 0;
+    class RosettaJavaType {
+        constructor(json) {
+            this.fromJSON(json);
+        }
+        fromJSON(json) {
+            throw new Error("Method not implemented.");
+        }
+        toJSON() {
+            throw new Error("Method not implemented.");
+        }
+    }
+    exports.RosettaJavaType = RosettaJavaType;
+});
+define("src/asledgehammer/rosetta/1.1/lua/RosettaLua", ["require", "exports", "src/asledgehammer/rosetta/1.1/Rosetta"], function (require, exports, Rosetta_4) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaLua = exports.GAME_ADAPTERS = void 0;
+    exports.GAME_ADAPTERS = {};
+    class RosettaLua {
+        constructor(json) {
+            this.games = {};
+            this.language = 'lua';
+            this.fromJSON(json);
+        }
+        fromJSON(json) {
+            throw new Error("Method not implemented.");
+        }
+        toJSON() {
+            throw new Error("Method not implemented.");
+        }
+    }
+    exports.RosettaLua = RosettaLua;
+    // Register the language to the global adapters.
+    Rosetta_4.LANGUAGE_ADAPTERS['lua'] = (json) => new RosettaLua(json);
+});
+define("src/asledgehammer/rosetta/1.1/lua/RosettaLuaCallback", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaLuaCallback = void 0;
+    class RosettaLuaCallback {
+        constructor(json) {
+            this.fromJSON(json);
+        }
+        fromJSON(json) {
+            throw new Error("Method not implemented.");
+        }
+        toJSON() {
+            throw new Error("Method not implemented.");
+        }
+    }
+    exports.RosettaLuaCallback = RosettaLuaCallback;
+});
+define("src/asledgehammer/rosetta/1.1/lua/RosettaLuaClass", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaLuaClass = void 0;
+    class RosettaLuaClass {
+        constructor(json) {
+            this.fromJSON(json);
+        }
+        fromJSON(json) {
+            throw new Error("Method not implemented.");
+        }
+        toJSON() {
+            throw new Error("Method not implemented.");
+        }
+    }
+    exports.RosettaLuaClass = RosettaLuaClass;
+});
+define("src/asledgehammer/rosetta/1.1/lua/RosettaLuaConstructor", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaLuaConstructor = void 0;
+    class RosettaLuaConstructor {
+        constructor(json) {
+            this.fromJSON(json);
+        }
+        fromJSON(json) {
+            throw new Error("Method not implemented.");
+        }
+        toJSON() {
+            throw new Error("Method not implemented.");
+        }
+    }
+    exports.RosettaLuaConstructor = RosettaLuaConstructor;
+});
+define("src/asledgehammer/rosetta/1.1/lua/RosettaLuaField", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaLuaField = void 0;
+    class RosettaLuaField {
+        constructor(json) {
+            this.fromJSON(json);
+        }
+        fromJSON(json) {
+            throw new Error("Method not implemented.");
+        }
+        toJSON() {
+            throw new Error("Method not implemented.");
+        }
+    }
+    exports.RosettaLuaField = RosettaLuaField;
+});
+define("src/asledgehammer/rosetta/1.1/lua/RosettaLuaFunction", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaLuaFunction = void 0;
+    class RosettaLuaFunction {
+        constructor(json) {
+            this.fromJSON(json);
+        }
+        fromJSON(json) {
+            throw new Error("Method not implemented.");
+        }
+        toJSON() {
+            throw new Error("Method not implemented.");
+        }
+    }
+    exports.RosettaLuaFunction = RosettaLuaFunction;
+});
+define("src/asledgehammer/rosetta/1.1/lua/RosettaLuaMethod", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaLuaMethod = void 0;
+    class RosettaLuaMethod {
+        constructor(json) {
+            this.fromJSON(json);
+        }
+        fromJSON(json) {
+            throw new Error("Method not implemented.");
+        }
+        toJSON() {
+            throw new Error("Method not implemented.");
+        }
+    }
+    exports.RosettaLuaMethod = RosettaLuaMethod;
+});
+define("src/asledgehammer/rosetta/1.1/lua/RosettaLuaParameter", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaLuaParameter = void 0;
+    class RosettaLuaParameter {
+        constructor(json) {
+            this.fromJSON(json);
+        }
+        fromJSON(json) {
+            throw new Error("Method not implemented.");
+        }
+        toJSON() {
+            throw new Error("Method not implemented.");
+        }
+    }
+    exports.RosettaLuaParameter = RosettaLuaParameter;
+});
+define("src/asledgehammer/rosetta/1.1/lua/RosettaLuaReturn", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaLuaReturn = void 0;
+    class RosettaLuaReturn {
+        constructor(json) {
+            this.fromJSON(json);
+        }
+        fromJSON(json) {
+            throw new Error("Method not implemented.");
+        }
+        toJSON() {
+            throw new Error("Method not implemented.");
+        }
+    }
+    exports.RosettaLuaReturn = RosettaLuaReturn;
+});
+define("src/asledgehammer/rosetta/1.1/lua/RosettaLuaTable", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaLuaTable = void 0;
+    class RosettaLuaTable {
+        constructor(json) {
+            this.fromJSON(json);
+        }
+        fromJSON(json) {
+            throw new Error("Method not implemented.");
+        }
+        toJSON() {
+            throw new Error("Method not implemented.");
+        }
+    }
+    exports.RosettaLuaTable = RosettaLuaTable;
+});
+define("src/asledgehammer/rosetta/1.1/lua/game/projectzomboid/RosettaProjectZomboid", ["require", "exports", "src/asledgehammer/rosetta/1.1/lua/RosettaLua"], function (require, exports, RosettaLua_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaProjectZomboid = void 0;
+    class RosettaProjectZomboid {
+        constructor(json) {
+            this.language = 'lua';
+            this.game = 'projectzomboid';
+            this.fromJSON(json);
+        }
+        fromJSON(json) {
+            throw new Error("Method not implemented.");
+        }
+        toJSON() {
+            throw new Error("Method not implemented.");
+        }
+    }
+    exports.RosettaProjectZomboid = RosettaProjectZomboid;
+    // Register the game to the lua game-adapters.
+    RosettaLua_1.GAME_ADAPTERS['projectzomboid'] = (json) => new RosettaProjectZomboid(json);
+});
+define("src/asledgehammer/rosetta/1.1/lua/game/projectzomboid/RosettaProjectZomboidContext", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaProjectZomboidContext = void 0;
+    class RosettaProjectZomboidContext {
+        constructor(json) {
+            this.fromJSON(json);
+        }
+        fromJSON(json) {
+            throw new Error("Method not implemented.");
+        }
+        toJSON() {
+            throw new Error("Method not implemented.");
+        }
+    }
+    exports.RosettaProjectZomboidContext = RosettaProjectZomboidContext;
+});
+define("src/asledgehammer/rosetta/1.1/lua/game/projectzomboid/RosettaProjectZomboidEvent", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.RosettaProjectZomboidEvent = void 0;
+    class RosettaProjectZomboidEvent {
+        constructor(json) {
+            this.fromJSON(json);
+        }
+        fromJSON(json) {
+            throw new Error("Method not implemented.");
+        }
+        toJSON() {
+            throw new Error("Method not implemented.");
+        }
+    }
+    exports.RosettaProjectZomboidEvent = RosettaProjectZomboidEvent;
 });
 //# sourceMappingURL=app.js.map
