@@ -1,15 +1,15 @@
 import { App } from "../../../app";
-import { RosettaJavaClass } from "../../rosetta/java/RosettaJavaClass";
-import { RosettaJavaConstructor } from "../../rosetta/java/RosettaJavaConstructor";
-import { RosettaJavaMethod } from "../../rosetta/java/RosettaJavaMethod";
-import { RosettaJavaParameter } from "../../rosetta/java/RosettaJavaParameter";
-import { RosettaLuaClass } from "../../rosetta/lua/RosettaLuaClass";
-import { RosettaLuaConstructor } from "../../rosetta/lua/RosettaLuaConstructor";
-import { RosettaLuaField } from "../../rosetta/lua/RosettaLuaField";
-import { RosettaLuaFunction } from "../../rosetta/lua/RosettaLuaFunction";
-import { RosettaLuaFunctionCluster } from "../../rosetta/lua/RosettaLuaFunctionCluster";
-import { RosettaLuaTable } from "../../rosetta/lua/RosettaLuaTable";
-import { $get, isNameValid, validateLuaVariableName } from "../../rosetta/util";
+import { RosettaJavaClass } from "../../rosetta/1.0/java/RosettaJavaClass";
+import { RosettaJavaConstructor } from "../../rosetta/1.0/java/RosettaJavaConstructor";
+import { RosettaJavaMethod } from "../../rosetta/1.0/java/RosettaJavaMethod";
+import { RosettaJavaParameter } from "../../rosetta/1.0/java/RosettaJavaParameter";
+import { RosettaLuaClass } from "../../rosetta/1.0/lua/RosettaLuaClass";
+import { RosettaLuaConstructor } from "../../rosetta/1.0/lua/RosettaLuaConstructor";
+import { RosettaLuaField } from "../../rosetta/1.0/lua/RosettaLuaField";
+import { RosettaLuaFunction } from "../../rosetta/1.0/lua/RosettaLuaFunction";
+import { RosettaLuaFunctionCluster } from "../../rosetta/1.0/lua/RosettaLuaFunctionCluster";
+import { RosettaLuaTable } from "../../rosetta/1.0/lua/RosettaLuaTable";
+import { $get, isNameValid, validateLuaVariableName } from "../../rosetta/1.0/util";
 import { NameModeType } from "../component/NameModeType";
 
 export class ModalName {

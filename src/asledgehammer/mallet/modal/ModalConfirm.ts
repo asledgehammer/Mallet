@@ -1,5 +1,5 @@
 import { App } from "../../../app";
-import { $get } from "../../rosetta/util";
+import { $get } from "../../rosetta/1.0/util";
 
 export class ModalConfirm {
 

@@ -1,4 +1,4 @@
-import * as Assert from '../Assert';
+import * as Assert from '../../Assert';
 
 import { JSON_PATCH_SCHEMA_URL, JSON_SCHEMA_URL } from './Rosetta';
 import { RosettaEntity } from './RosettaEntity';

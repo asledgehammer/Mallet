@@ -4,14 +4,14 @@ import { CardComponent } from "../CardComponent";
 import { ComponentOptions } from "../Component";
 import { NameModeType } from "../NameModeType";
 import { createDeltaEditor } from "../../../Delta";
-import { $get, html } from '../../../rosetta/util';
-import { RosettaJavaParameter } from '../../../rosetta/java/RosettaJavaParameter';
-import { RosettaJavaReturns } from '../../../rosetta/java/RosettaJavaReturns';
-import { RosettaEntity } from '../../../rosetta/RosettaEntity';
-import { RosettaJavaMethod } from '../../../rosetta/java/RosettaJavaMethod';
-import { RosettaJavaConstructor } from '../../../rosetta/java/RosettaJavaConstructor';
+import { $get, html } from '../../../rosetta/1.0/util';
+import { RosettaJavaParameter } from '../../../rosetta/1.0/java/RosettaJavaParameter';
+import { RosettaJavaReturns } from '../../../rosetta/1.0/java/RosettaJavaReturns';
+import { RosettaEntity } from '../../../rosetta/1.0/RosettaEntity';
+import { RosettaJavaMethod } from '../../../rosetta/1.0/java/RosettaJavaMethod';
+import { RosettaJavaConstructor } from '../../../rosetta/1.0/java/RosettaJavaConstructor';
 import { CodeLanguage } from '../CodeLanguage';
-import { RosettaJavaType } from '../../../rosetta/java/RosettaJavaType';
+import { RosettaJavaType } from '../../../rosetta/1.0/java/RosettaJavaType';
 
 export abstract class JavaCard<O extends JavaCardOptions> extends CardComponent<O> {
 

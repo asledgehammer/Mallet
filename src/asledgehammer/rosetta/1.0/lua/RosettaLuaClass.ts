@@ -1,4 +1,4 @@
-import * as Assert from '../../Assert';
+import * as Assert from '../../../Assert';
 
 import { formatName } from '../RosettaUtils';
 import { RosettaEntity } from '../RosettaEntity';

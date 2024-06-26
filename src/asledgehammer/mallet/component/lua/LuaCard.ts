@@ -4,16 +4,16 @@ import { CardComponent } from "../CardComponent";
 import { ComponentOptions } from "../Component";
 import { NameModeType } from "../NameModeType";
 import { createDeltaEditor } from "../../../Delta";
-import { $get, html } from '../../../rosetta/util';
-import { RosettaLuaParameter } from '../../../rosetta/lua/RosettaLuaParameter';
-import { RosettaLuaReturns } from '../../../rosetta/lua/RosettaLuaReturns';
-import { RosettaEntity } from '../../../rosetta/RosettaEntity';
+import { $get, html } from '../../../rosetta/1.0/util';
+import { RosettaLuaParameter } from '../../../rosetta/1.0/lua/RosettaLuaParameter';
+import { RosettaLuaReturns } from '../../../rosetta/1.0/lua/RosettaLuaReturns';
+import { RosettaEntity } from '../../../rosetta/1.0/RosettaEntity';
 import { CodeLanguage } from '../CodeLanguage';
-import { RosettaLuaFunction } from '../../../rosetta/lua/RosettaLuaFunction';
-import { RosettaLuaConstructor } from '../../../rosetta/lua/RosettaLuaConstructor';
-import { RosettaLuaField } from '../../../rosetta/lua/RosettaLuaField';
-import { RosettaLuaClass } from '../../../rosetta/lua/RosettaLuaClass';
-import { RosettaLuaTable } from '../../../rosetta/lua/RosettaLuaTable';
+import { RosettaLuaFunction } from '../../../rosetta/1.0/lua/RosettaLuaFunction';
+import { RosettaLuaConstructor } from '../../../rosetta/1.0/lua/RosettaLuaConstructor';
+import { RosettaLuaField } from '../../../rosetta/1.0/lua/RosettaLuaField';
+import { RosettaLuaClass } from '../../../rosetta/1.0/lua/RosettaLuaClass';
+import { RosettaLuaTable } from '../../../rosetta/1.0/lua/RosettaLuaTable';
 
 export abstract class LuaCard<O extends LuaCardOptions> extends CardComponent<O> {
 

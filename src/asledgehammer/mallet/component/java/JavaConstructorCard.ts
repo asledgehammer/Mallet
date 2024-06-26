@@ -1,8 +1,8 @@
 import { App } from '../../../../app';
-import { generateJavaConstructor } from '../../../rosetta/java/JavaLuaGenerator2';
-import { RosettaJavaConstructor } from '../../../rosetta/java/RosettaJavaConstructor';
-import { javaConstructorToTS } from '../../../rosetta/typescript/JavaTypeScriptGenerator';
-import { $get, html } from '../../../rosetta/util';
+import { generateJavaConstructor } from '../../../rosetta/1.0/java/JavaLuaGenerator2';
+import { RosettaJavaConstructor } from '../../../rosetta/1.0/java/RosettaJavaConstructor';
+import { javaConstructorToTS } from '../../../rosetta/1.0/typescript/JavaTypeScriptGenerator';
+import { $get, html } from '../../../rosetta/1.0/util';
 import { CardOptions } from '../CardComponent';
 import { CodeLanguage } from '../CodeLanguage';
 import { JavaCard } from './JavaCard';

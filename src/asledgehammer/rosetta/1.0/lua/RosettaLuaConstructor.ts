@@ -1,32 +1,28 @@
-import * as Assert from '../../Assert';
+import * as Assert from '../../../Assert';
 
-import { formatName } from '../RosettaUtils';
 import { RosettaEntity } from '../RosettaEntity';
 import { RosettaLuaParameter } from './RosettaLuaParameter';
-import { RosettaLuaReturns } from './RosettaLuaReturns';
+
+import { RosettaLuaClass } from './RosettaLuaClass';
 
 /**
- * **RosettaLuaFunction**
+ * **RosettaLuaConstructor**
  *
  * @author Jab
  */
-export class RosettaLuaFunction extends RosettaEntity {
-  name: string;
-  parameters: RosettaLuaParameter[] = [];
-  returns: RosettaLuaReturns;
+export class RosettaLuaConstructor extends RosettaEntity {
+  readonly parameters: RosettaLuaParameter[] = [];
+  readonly clazz: RosettaLuaClass;
   notes: string | undefined;
-  deprecated: boolean | undefined;
 
-  constructor(name: string, raw: { [key: string]: any } = {}) {
+  constructor(clazz: RosettaLuaClass, raw: { [key: string]: any } = {}) {
     super(raw);
 
-    Assert.assertNonEmptyString(name, 'name');
-
-    this.name = formatName(name);
-    this.deprecated = this.readBoolean('deprecated') != null;
+    Assert.assertNonNull(clazz, 'clazz');
 
     /* (Properties) */
-    this.notes = this.readNotes();
+    this.clazz = clazz;
+    this.notes = this.readNotes(raw);
 
     /* (Parameters) */
     if (raw.parameters !== undefined) {
@@ -36,16 +32,9 @@ export class RosettaLuaFunction extends RosettaEntity {
         this.parameters.push(parameter);
       }
     }
-
-    /* (Returns) */
-    if (raw.returns === undefined) {
-      throw new Error(`Method does not have returns definition: ${this.name}`);
-    }
-    this.returns = new RosettaLuaReturns(raw.returns);
   }
 
   parse(raw: { [key: string]: any }) {
-    /* (Properties) */
     this.notes = this.readNotes(raw);
 
     /* (Parameters) */
@@ -58,24 +47,18 @@ export class RosettaLuaFunction extends RosettaEntity {
        */
       if (this.parameters.length !== rawParameters.length) {
         throw new Error(
-          `The lua function ${this.name}'s parameters does not match the parameters to override. (method: ${this.parameters.length}, given: ${rawParameters.length})`,
+          `The class ${this.clazz.name}'s constructor's parameters does not match the parameters to override. (method: ${this.parameters.length}, given: ${rawParameters.length})`,
         );
       }
 
-      for (let index = 0; index < this.parameters.length; index++) {
+      for (let index = 0; index < rawParameters.length; index++) {
         this.parameters[index].parse(rawParameters[index]);
       }
     }
-
-    /* (Returns) */
-    if (raw.returns === undefined) {
-      throw new Error(`Lua function does not have returns definition: ${this.name}`);
-    }
-    this.returns.parse(raw.returns);
   }
 
   /**
-   * Adds a parameter to the function.
+   * Adds a parameter to the constructor.
    *
    * @param name The name of the parameter to display.
    * @param type (Optional) The type of parameter to provide. (Default: `any`)
@@ -89,14 +72,11 @@ export class RosettaLuaFunction extends RosettaEntity {
   }
 
   toJSON(patch: boolean = false): any {
-    const { name, notes, parameters, returns } = this;
+    const { notes, parameters } = this;
+
     const json: any = {};
 
-    /* (Name) */
-    json.name = name;
-
     /* (Properties) */
-    json.deprecated = this.deprecated ? true : undefined;
     json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
 
     /* (Parameters) */
@@ -105,14 +85,11 @@ export class RosettaLuaFunction extends RosettaEntity {
       for (const parameter of parameters) json.parameters.push(parameter.toJSON(patch));
     }
 
-    /* (Returns) */
-    json.returns = returns.toJSON(patch);
-
     return json;
   }
 
   getSignature(): string {
-    let signature = `${this.name}`;
+    let signature = `constructor`;
     if (this.parameters && this.parameters.length) {
       signature += '_';
       for (const param of this.parameters) {

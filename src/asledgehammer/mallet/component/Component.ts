@@ -1,4 +1,4 @@
-import { html, randomString } from "../../rosetta/util";
+import { html, randomString } from "../../rosetta/1.0/util";
 
 export abstract class Component<O extends ComponentOptions> {
     readonly options?: O;

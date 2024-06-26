@@ -1,12 +1,12 @@
 import { App } from "../../../app";
-import { RosettaJavaClass } from "../../rosetta/java/RosettaJavaClass";
-import { RosettaJavaConstructor } from "../../rosetta/java/RosettaJavaConstructor";
-import { RosettaJavaMethod } from "../../rosetta/java/RosettaJavaMethod";
-import { RosettaLuaClass } from "../../rosetta/lua/RosettaLuaClass";
-import { RosettaLuaConstructor } from "../../rosetta/lua/RosettaLuaConstructor";
-import { RosettaLuaFunction } from "../../rosetta/lua/RosettaLuaFunction";
-import { RosettaLuaTable } from "../../rosetta/lua/RosettaLuaTable";
-import { $get, html } from "../../rosetta/util";
+import { RosettaJavaClass } from "../../rosetta/1.0/java/RosettaJavaClass";
+import { RosettaJavaConstructor } from "../../rosetta/1.0/java/RosettaJavaConstructor";
+import { RosettaJavaMethod } from "../../rosetta/1.0/java/RosettaJavaMethod";
+import { RosettaLuaClass } from "../../rosetta/1.0/lua/RosettaLuaClass";
+import { RosettaLuaConstructor } from "../../rosetta/1.0/lua/RosettaLuaConstructor";
+import { RosettaLuaFunction } from "../../rosetta/1.0/lua/RosettaLuaFunction";
+import { RosettaLuaTable } from "../../rosetta/1.0/lua/RosettaLuaTable";
+import { $get, html } from "../../rosetta/1.0/util";
 import { Sidebar } from "./Sidebar";
 import { LuaCard } from "./lua/LuaCard";
 

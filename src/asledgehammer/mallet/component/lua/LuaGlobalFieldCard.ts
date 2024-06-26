@@ -1,9 +1,9 @@
 import { App } from '../../../../app';
-import { generateGlobalLuaField } from '../../../rosetta/lua/LuaLuaGenerator';
-import { RosettaLuaField } from '../../../rosetta/lua/RosettaLuaField';
-import { RosettaLuaTableField } from '../../../rosetta/lua/RosettaLuaTableField';
-import { luaFieldToTS } from '../../../rosetta/typescript/LuaTypeScriptGenerator';
-import { $get, html } from '../../../rosetta/util';
+import { generateGlobalLuaField } from '../../../rosetta/1.0/lua/LuaLuaGenerator';
+import { RosettaLuaField } from '../../../rosetta/1.0/lua/RosettaLuaField';
+import { RosettaLuaTableField } from '../../../rosetta/1.0/lua/RosettaLuaTableField';
+import { luaFieldToTS } from '../../../rosetta/1.0/typescript/LuaTypeScriptGenerator';
+import { $get, html } from '../../../rosetta/1.0/util';
 import { CardOptions } from '../CardComponent';
 import { CodeLanguage } from '../CodeLanguage';
 import { LuaCard } from './LuaCard';

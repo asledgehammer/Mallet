@@ -1,11 +1,11 @@
 import { App } from '../../../../app';
-import { generateLuaField, generateLuaValue } from '../../../rosetta/lua/LuaLuaGenerator';
-import { RosettaLuaClass } from '../../../rosetta/lua/RosettaLuaClass';
-import { RosettaLuaField } from '../../../rosetta/lua/RosettaLuaField';
-import { RosettaLuaTable } from '../../../rosetta/lua/RosettaLuaTable';
-import { RosettaLuaTableField } from '../../../rosetta/lua/RosettaLuaTableField';
-import { luaFieldToTS } from '../../../rosetta/typescript/LuaTypeScriptGenerator';
-import { $get, html } from '../../../rosetta/util';
+import { generateLuaField, generateLuaValue } from '../../../rosetta/1.0/lua/LuaLuaGenerator';
+import { RosettaLuaClass } from '../../../rosetta/1.0/lua/RosettaLuaClass';
+import { RosettaLuaField } from '../../../rosetta/1.0/lua/RosettaLuaField';
+import { RosettaLuaTable } from '../../../rosetta/1.0/lua/RosettaLuaTable';
+import { RosettaLuaTableField } from '../../../rosetta/1.0/lua/RosettaLuaTableField';
+import { luaFieldToTS } from '../../../rosetta/1.0/typescript/LuaTypeScriptGenerator';
+import { $get, html } from '../../../rosetta/1.0/util';
 import { CardOptions } from '../CardComponent';
 import { CodeLanguage } from '../CodeLanguage';
 import { LuaCard } from './LuaCard';

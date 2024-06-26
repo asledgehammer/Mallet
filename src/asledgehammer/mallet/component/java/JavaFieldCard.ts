@@ -1,9 +1,9 @@
 import { App } from '../../../../app';
-import { generateJavaField } from '../../../rosetta/java/JavaLuaGenerator2';
-import { RosettaJavaClass } from '../../../rosetta/java/RosettaJavaClass';
-import { RosettaJavaField } from '../../../rosetta/java/RosettaJavaField';
-import { javaFieldToTS } from '../../../rosetta/typescript/JavaTypeScriptGenerator';
-import { $get, html } from '../../../rosetta/util';
+import { generateJavaField } from '../../../rosetta/1.0/java/JavaLuaGenerator2';
+import { RosettaJavaClass } from '../../../rosetta/1.0/java/RosettaJavaClass';
+import { RosettaJavaField } from '../../../rosetta/1.0/java/RosettaJavaField';
+import { javaFieldToTS } from '../../../rosetta/1.0/typescript/JavaTypeScriptGenerator';
+import { $get, html } from '../../../rosetta/1.0/util';
 import { CardOptions } from '../CardComponent';
 import { CodeLanguage } from '../CodeLanguage';
 import { JavaCard } from './JavaCard';

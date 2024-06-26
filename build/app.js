@@ -42,7 +42,7 @@ define("src/asledgehammer/Assert", ["require", "exports"], function (require, ex
     };
     exports.assertNonEmptyString = assertNonEmptyString;
 });
-define("src/asledgehammer/rosetta/RosettaUtils", ["require", "exports"], function (require, exports) {
+define("src/asledgehammer/rosetta/1.0/RosettaUtils", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isEmptyObject = exports.formatName = exports.RESERVED_WORDS = exports.RESERVED_FUNCTION_NAMES = void 0;
@@ -93,7 +93,7 @@ define("src/asledgehammer/rosetta/RosettaUtils", ["require", "exports"], functio
     };
     exports.isEmptyObject = isEmptyObject;
 });
-define("src/asledgehammer/rosetta/RosettaEntity", ["require", "exports", "src/asledgehammer/Assert"], function (require, exports, Assert) {
+define("src/asledgehammer/rosetta/1.0/RosettaEntity", ["require", "exports", "src/asledgehammer/Assert"], function (require, exports, Assert) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RosettaEntity = void 0;
@@ -155,7 +155,7 @@ define("src/asledgehammer/rosetta/RosettaEntity", ["require", "exports", "src/as
     }
     exports.RosettaEntity = RosettaEntity;
 });
-define("src/asledgehammer/rosetta/lua/RosettaLuaParameter", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/RosettaUtils"], function (require, exports, Assert, RosettaEntity_1, RosettaUtils_1) {
+define("src/asledgehammer/rosetta/1.0/lua/RosettaLuaParameter", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/1.0/RosettaEntity", "src/asledgehammer/rosetta/1.0/RosettaUtils"], function (require, exports, Assert, RosettaEntity_1, RosettaUtils_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RosettaLuaParameter = void 0;
@@ -206,7 +206,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaParameter", ["require", "exports
     }
     exports.RosettaLuaParameter = RosettaLuaParameter;
 });
-define("src/asledgehammer/rosetta/lua/RosettaLuaReturns", ["require", "exports", "src/asledgehammer/rosetta/RosettaEntity"], function (require, exports, RosettaEntity_2) {
+define("src/asledgehammer/rosetta/1.0/lua/RosettaLuaReturns", ["require", "exports", "src/asledgehammer/rosetta/1.0/RosettaEntity"], function (require, exports, RosettaEntity_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RosettaLuaReturns = void 0;
@@ -250,7 +250,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaReturns", ["require", "exports",
     }
     exports.RosettaLuaReturns = RosettaLuaReturns;
 });
-define("src/asledgehammer/rosetta/lua/RosettaLuaFunction", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaUtils", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/lua/RosettaLuaParameter", "src/asledgehammer/rosetta/lua/RosettaLuaReturns"], function (require, exports, Assert, RosettaUtils_2, RosettaEntity_3, RosettaLuaParameter_1, RosettaLuaReturns_1) {
+define("src/asledgehammer/rosetta/1.0/lua/RosettaLuaFunction", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/1.0/RosettaUtils", "src/asledgehammer/rosetta/1.0/RosettaEntity", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaParameter", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaReturns"], function (require, exports, Assert, RosettaUtils_2, RosettaEntity_3, RosettaLuaParameter_1, RosettaLuaReturns_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RosettaLuaFunction = void 0;
@@ -350,7 +350,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaFunction", ["require", "exports"
     }
     exports.RosettaLuaFunction = RosettaLuaFunction;
 });
-define("src/asledgehammer/rosetta/lua/RosettaLuaField", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity"], function (require, exports, Assert, RosettaEntity_4) {
+define("src/asledgehammer/rosetta/1.0/lua/RosettaLuaField", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/1.0/RosettaEntity"], function (require, exports, Assert, RosettaEntity_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RosettaLuaField = void 0;
@@ -403,7 +403,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaField", ["require", "exports", "
     }
     exports.RosettaLuaField = RosettaLuaField;
 });
-define("src/asledgehammer/rosetta/lua/RosettaLuaConstructor", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/lua/RosettaLuaParameter"], function (require, exports, Assert, RosettaEntity_5, RosettaLuaParameter_2) {
+define("src/asledgehammer/rosetta/1.0/lua/RosettaLuaConstructor", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/1.0/RosettaEntity", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaParameter"], function (require, exports, Assert, RosettaEntity_5, RosettaLuaParameter_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RosettaLuaConstructor = void 0;
@@ -486,7 +486,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaConstructor", ["require", "expor
     }
     exports.RosettaLuaConstructor = RosettaLuaConstructor;
 });
-define("src/asledgehammer/rosetta/lua/RosettaLuaFunctionCluster", ["require", "exports", "src/asledgehammer/Assert"], function (require, exports, Assert) {
+define("src/asledgehammer/rosetta/1.0/lua/RosettaLuaFunctionCluster", ["require", "exports", "src/asledgehammer/Assert"], function (require, exports, Assert) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RosettaLuaFunctionCluster = void 0;
@@ -532,7 +532,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaFunctionCluster", ["require", "e
     }
     exports.RosettaLuaFunctionCluster = RosettaLuaFunctionCluster;
 });
-define("src/asledgehammer/rosetta/lua/RosettaLuaClass", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaUtils", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaField", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/lua/RosettaLuaFunctionCluster"], function (require, exports, Assert, RosettaUtils_3, RosettaEntity_6, RosettaLuaFunction_1, RosettaLuaField_1, RosettaLuaConstructor_1, RosettaLuaFunctionCluster_1) {
+define("src/asledgehammer/rosetta/1.0/lua/RosettaLuaClass", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/1.0/RosettaUtils", "src/asledgehammer/rosetta/1.0/RosettaEntity", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaField", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaFunctionCluster"], function (require, exports, Assert, RosettaUtils_3, RosettaEntity_6, RosettaLuaFunction_1, RosettaLuaField_1, RosettaLuaConstructor_1, RosettaLuaFunctionCluster_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RosettaLuaClass = void 0;
@@ -959,7 +959,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaClass", ["require", "exports", "
     }
     exports.RosettaLuaClass = RosettaLuaClass;
 });
-define("src/asledgehammer/rosetta/lua/RosettaLuaTableField", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/RosettaUtils"], function (require, exports, Assert, RosettaEntity_7, RosettaUtils_4) {
+define("src/asledgehammer/rosetta/1.0/lua/RosettaLuaTableField", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/1.0/RosettaEntity", "src/asledgehammer/rosetta/1.0/RosettaUtils"], function (require, exports, Assert, RosettaEntity_7, RosettaUtils_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RosettaLuaTableField = void 0;
@@ -1014,7 +1014,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaTableField", ["require", "export
     }
     exports.RosettaLuaTableField = RosettaLuaTableField;
 });
-define("src/asledgehammer/rosetta/lua/RosettaLuaTable", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaFunctionCluster", "src/asledgehammer/rosetta/lua/RosettaLuaTableField"], function (require, exports, Assert, RosettaEntity_8, RosettaLuaFunction_2, RosettaLuaFunctionCluster_2, RosettaLuaTableField_1) {
+define("src/asledgehammer/rosetta/1.0/lua/RosettaLuaTable", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/1.0/RosettaEntity", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaFunctionCluster", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaTableField"], function (require, exports, Assert, RosettaEntity_8, RosettaLuaFunction_2, RosettaLuaFunctionCluster_2, RosettaLuaTableField_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RosettaLuaTable = void 0;
@@ -1241,7 +1241,7 @@ define("src/asledgehammer/rosetta/lua/RosettaLuaTable", ["require", "exports", "
     }
     exports.RosettaLuaTable = RosettaLuaTable;
 });
-define("src/asledgehammer/rosetta/typescript/TSUtils", ["require", "exports"], function (require, exports) {
+define("src/asledgehammer/rosetta/1.0/typescript/TSUtils", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.wrapAsTSNamespace = exports.wrapAsTSFile = exports.applyTSDocumentation = exports.paginateNotes = void 0;
@@ -1313,7 +1313,7 @@ define("src/asledgehammer/rosetta/typescript/TSUtils", ["require", "exports"], f
     }
     exports.wrapAsTSNamespace = wrapAsTSNamespace;
 });
-define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require", "exports", "src/asledgehammer/rosetta/typescript/TSUtils"], function (require, exports, TSUtils_1) {
+define("src/asledgehammer/rosetta/1.0/typescript/LuaTypeScriptGenerator", ["require", "exports", "src/asledgehammer/rosetta/1.0/typescript/TSUtils"], function (require, exports, TSUtils_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.luaFuncToTSFunc = exports.luaTableToTSDict = exports.tsType = exports.luaTableToTS = exports.luaClassToTS = exports.luaFunctionToTS = exports.luaMethodDocumentation = exports.luaConstructorDocumentation = exports.luaConstructorToTS = exports.luaFieldToTS = void 0;
@@ -1769,7 +1769,7 @@ define("src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", ["require"
     }
     exports.luaFuncToTSFunc = luaFuncToTSFunc;
 });
-define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator"], function (require, exports, LuaTypeScriptGenerator_1) {
+define("src/asledgehammer/rosetta/1.0/lua/LuaLuaGenerator", ["require", "exports", "src/asledgehammer/rosetta/1.0/typescript/LuaTypeScriptGenerator"], function (require, exports, LuaTypeScriptGenerator_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.applyLuaDocumentation = exports.paginateNotes = exports.generateLuaTable = exports.generateLuaClass = exports.generateLuaConstructor = exports.generateGlobalLuaFunction = exports.generateLuaFunction = exports.generateLuaParameterBody = exports.generateLuaValue = exports.generateGlobalLuaField = exports.generateLuaField = exports.luaType = void 0;
@@ -2172,7 +2172,7 @@ define("src/asledgehammer/rosetta/lua/LuaLuaGenerator", ["require", "exports", "
     }
     exports.applyLuaDocumentation = applyLuaDocumentation;
 });
-define("src/asledgehammer/rosetta/util", ["require", "exports"], function (require, exports) {
+define("src/asledgehammer/rosetta/1.0/util", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isNameValid = exports.get = exports.$get = exports.validateLuaVariableName = exports.combine = exports.combineArrays = exports.randomString = exports.css = exports.html = void 0;
@@ -2278,7 +2278,7 @@ define("src/asledgehammer/rosetta/util", ["require", "exports"], function (requi
     }
     exports.isNameValid = isNameValid;
 });
-define("src/asledgehammer/rosetta/java/RosettaJavaType", ["require", "exports", "src/asledgehammer/rosetta/RosettaEntity"], function (require, exports, RosettaEntity_9) {
+define("src/asledgehammer/rosetta/1.0/java/RosettaJavaType", ["require", "exports", "src/asledgehammer/rosetta/1.0/RosettaEntity"], function (require, exports, RosettaEntity_9) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RosettaJavaType = void 0;
@@ -2338,7 +2338,7 @@ define("src/asledgehammer/rosetta/java/RosettaJavaType", ["require", "exports", 
     }
     exports.RosettaJavaType = RosettaJavaType;
 });
-define("src/asledgehammer/rosetta/java/RosettaJavaParameter", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaType", "src/asledgehammer/rosetta/RosettaUtils"], function (require, exports, Assert, RosettaEntity_10, RosettaJavaType_1, RosettaUtils_5) {
+define("src/asledgehammer/rosetta/1.0/java/RosettaJavaParameter", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/1.0/RosettaEntity", "src/asledgehammer/rosetta/1.0/java/RosettaJavaType", "src/asledgehammer/rosetta/1.0/RosettaUtils"], function (require, exports, Assert, RosettaEntity_10, RosettaJavaType_1, RosettaUtils_5) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RosettaJavaParameter = void 0;
@@ -2371,11 +2371,11 @@ define("src/asledgehammer/rosetta/java/RosettaJavaParameter", ["require", "expor
     }
     exports.RosettaJavaParameter = RosettaJavaParameter;
 });
-define("src/asledgehammer/rosetta/java/Types", ["require", "exports"], function (require, exports) {
+define("src/asledgehammer/rosetta/1.0/java/Types", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
 });
-define("src/asledgehammer/rosetta/java/RosettaJavaConstructor", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaParameter"], function (require, exports, Assert, RosettaEntity_11, RosettaJavaParameter_1) {
+define("src/asledgehammer/rosetta/1.0/java/RosettaJavaConstructor", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/1.0/RosettaEntity", "src/asledgehammer/rosetta/1.0/java/RosettaJavaParameter"], function (require, exports, Assert, RosettaEntity_11, RosettaJavaParameter_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RosettaJavaConstructor = void 0;
@@ -2477,7 +2477,7 @@ define("src/asledgehammer/rosetta/java/RosettaJavaConstructor", ["require", "exp
     }
     exports.RosettaJavaConstructor = RosettaJavaConstructor;
 });
-define("src/asledgehammer/rosetta/java/RosettaJavaReturns", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaType"], function (require, exports, Assert, RosettaEntity_12, RosettaJavaType_2) {
+define("src/asledgehammer/rosetta/1.0/java/RosettaJavaReturns", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/1.0/RosettaEntity", "src/asledgehammer/rosetta/1.0/java/RosettaJavaType"], function (require, exports, Assert, RosettaEntity_12, RosettaJavaType_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RosettaJavaReturns = void 0;
@@ -2506,7 +2506,7 @@ define("src/asledgehammer/rosetta/java/RosettaJavaReturns", ["require", "exports
     }
     exports.RosettaJavaReturns = RosettaJavaReturns;
 });
-define("src/asledgehammer/rosetta/java/RosettaJavaMethod", ["require", "exports", "src/asledgehammer/rosetta/RosettaUtils", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaParameter", "src/asledgehammer/rosetta/java/RosettaJavaReturns"], function (require, exports, RosettaUtils_6, RosettaEntity_13, RosettaJavaParameter_2, RosettaJavaReturns_1) {
+define("src/asledgehammer/rosetta/1.0/java/RosettaJavaMethod", ["require", "exports", "src/asledgehammer/rosetta/1.0/RosettaUtils", "src/asledgehammer/rosetta/1.0/RosettaEntity", "src/asledgehammer/rosetta/1.0/java/RosettaJavaParameter", "src/asledgehammer/rosetta/1.0/java/RosettaJavaReturns"], function (require, exports, RosettaUtils_6, RosettaEntity_13, RosettaJavaParameter_2, RosettaJavaReturns_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RosettaJavaMethod = void 0;
@@ -2617,7 +2617,7 @@ define("src/asledgehammer/rosetta/java/RosettaJavaMethod", ["require", "exports"
     }
     exports.RosettaJavaMethod = RosettaJavaMethod;
 });
-define("src/asledgehammer/rosetta/java/RosettaJavaMethodCluster", ["require", "exports", "src/asledgehammer/Assert"], function (require, exports, Assert) {
+define("src/asledgehammer/rosetta/1.0/java/RosettaJavaMethodCluster", ["require", "exports", "src/asledgehammer/Assert"], function (require, exports, Assert) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RosettaJavaMethodCluster = void 0;
@@ -2663,7 +2663,7 @@ define("src/asledgehammer/rosetta/java/RosettaJavaMethodCluster", ["require", "e
     }
     exports.RosettaJavaMethodCluster = RosettaJavaMethodCluster;
 });
-define("src/asledgehammer/rosetta/java/RosettaJavaField", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaType"], function (require, exports, Assert, RosettaEntity_14, RosettaJavaType_3) {
+define("src/asledgehammer/rosetta/1.0/java/RosettaJavaField", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/1.0/RosettaEntity", "src/asledgehammer/rosetta/1.0/java/RosettaJavaType"], function (require, exports, Assert, RosettaEntity_14, RosettaJavaType_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RosettaJavaField = void 0;
@@ -2727,7 +2727,7 @@ define("src/asledgehammer/rosetta/java/RosettaJavaField", ["require", "exports",
     }
     exports.RosettaJavaField = RosettaJavaField;
 });
-define("src/asledgehammer/rosetta/java/RosettaJavaClass", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/RosettaUtils", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/java/RosettaJavaConstructor", "src/asledgehammer/rosetta/java/RosettaJavaMethodCluster", "src/asledgehammer/rosetta/java/RosettaJavaMethod", "src/asledgehammer/rosetta/java/RosettaJavaField"], function (require, exports, Assert, RosettaUtils_7, RosettaEntity_15, RosettaJavaConstructor_1, RosettaJavaMethodCluster_1, RosettaJavaMethod_1, RosettaJavaField_1) {
+define("src/asledgehammer/rosetta/1.0/java/RosettaJavaClass", ["require", "exports", "src/asledgehammer/Assert", "src/asledgehammer/rosetta/1.0/RosettaUtils", "src/asledgehammer/rosetta/1.0/RosettaEntity", "src/asledgehammer/rosetta/1.0/java/RosettaJavaConstructor", "src/asledgehammer/rosetta/1.0/java/RosettaJavaMethodCluster", "src/asledgehammer/rosetta/1.0/java/RosettaJavaMethod", "src/asledgehammer/rosetta/1.0/java/RosettaJavaField"], function (require, exports, Assert, RosettaUtils_7, RosettaEntity_15, RosettaJavaConstructor_1, RosettaJavaMethodCluster_1, RosettaJavaMethod_1, RosettaJavaField_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RosettaJavaClass = exports.RosettaJavaNamespace = void 0;
@@ -2940,7 +2940,7 @@ define("src/asledgehammer/rosetta/java/RosettaJavaClass", ["require", "exports",
             return;
         }
         toJSON(patch = false) {
-            const { extendz, modifiers, deprecated, javaType, notes, fields, constructors, methods } = this;
+            const { extendz, modifiers, javaType, deprecated, notes, fields, constructors, methods } = this;
             const json = {};
             /* (Properties) */
             json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
@@ -2983,7 +2983,7 @@ define("src/asledgehammer/rosetta/java/RosettaJavaClass", ["require", "exports",
     }
     exports.RosettaJavaClass = RosettaJavaClass;
 });
-define("src/asledgehammer/rosetta/java/JavaLuaGenerator2", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator"], function (require, exports, LuaLuaGenerator_1) {
+define("src/asledgehammer/rosetta/1.0/java/JavaLuaGenerator2", ["require", "exports", "src/asledgehammer/rosetta/1.0/lua/LuaLuaGenerator"], function (require, exports, LuaLuaGenerator_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.luaType = exports.generateJavaClass = exports.generateGlobalJavaMethod = exports.generateJavaMethod = exports.generateJavaConstructor = exports.generateJavaField = void 0;
@@ -3304,7 +3304,7 @@ define("src/asledgehammer/rosetta/java/JavaLuaGenerator2", ["require", "exports"
     }
     exports.luaType = luaType;
 });
-define("src/asledgehammer/mallet/component/Component", ["require", "exports", "src/asledgehammer/rosetta/util"], function (require, exports, util_1) {
+define("src/asledgehammer/mallet/component/Component", ["require", "exports", "src/asledgehammer/rosetta/1.0/util"], function (require, exports, util_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Component = void 0;
@@ -3365,7 +3365,7 @@ define("src/asledgehammer/mallet/component/Component", ["require", "exports", "s
     }
     exports.Component = Component;
 });
-define("src/asledgehammer/mallet/component/CardComponent", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/Component"], function (require, exports, util_2, Component_1) {
+define("src/asledgehammer/mallet/component/CardComponent", ["require", "exports", "src/asledgehammer/rosetta/1.0/util", "src/asledgehammer/mallet/component/Component"], function (require, exports, util_2, Component_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.CardComponent = void 0;
@@ -3662,7 +3662,7 @@ define("src/asledgehammer/Delta", ["require", "exports"], function (require, exp
     };
     exports.createDeltaEditor = createDeltaEditor;
 });
-define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", "highlight.js", "src/asledgehammer/mallet/component/CardComponent", "src/asledgehammer/Delta", "src/asledgehammer/rosetta/util"], function (require, exports, hljs, CardComponent_1, Delta_1, util_3) {
+define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", "highlight.js", "src/asledgehammer/mallet/component/CardComponent", "src/asledgehammer/Delta", "src/asledgehammer/rosetta/1.0/util"], function (require, exports, hljs, CardComponent_1, Delta_1, util_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaCard = void 0;
@@ -4451,7 +4451,7 @@ define("src/asledgehammer/mallet/component/lua/LuaCard", ["require", "exports", 
     }
     exports.LuaCard = LuaCard;
 });
-define("src/asledgehammer/mallet/component/lua/LuaClassCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_2, LuaTypeScriptGenerator_2, util_4, LuaCard_1) {
+define("src/asledgehammer/mallet/component/lua/LuaClassCard", ["require", "exports", "src/asledgehammer/rosetta/1.0/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/1.0/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/1.0/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_2, LuaTypeScriptGenerator_2, util_4, LuaCard_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaClassCard = void 0;
@@ -4539,7 +4539,7 @@ define("src/asledgehammer/mallet/component/lua/LuaClassCard", ["require", "expor
     }
     exports.LuaClassCard = LuaClassCard;
 });
-define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require", "exports", "src/asledgehammer/rosetta/typescript/TSUtils"], function (require, exports, TSUtils_2) {
+define("src/asledgehammer/rosetta/1.0/typescript/JavaTypeScriptGenerator", ["require", "exports", "src/asledgehammer/rosetta/1.0/typescript/TSUtils"], function (require, exports, TSUtils_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.tsType = exports.javaClassToTS = exports.javaMethodToTS = exports.javaMethodDocumentation = exports.javaConstructorDocumentation = exports.javaMethodClusterToTS = exports.javaConstructorsToTS = exports.javaConstructorToTS = exports.javaFieldToTS = void 0;
@@ -4939,7 +4939,7 @@ define("src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", ["require
     }
     exports.tsType = tsType;
 });
-define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports", "highlight.js", "src/asledgehammer/mallet/component/CardComponent", "src/asledgehammer/Delta", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/java/RosettaJavaConstructor"], function (require, exports, hljs, CardComponent_2, Delta_2, util_5, RosettaJavaConstructor_2) {
+define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports", "highlight.js", "src/asledgehammer/mallet/component/CardComponent", "src/asledgehammer/Delta", "src/asledgehammer/rosetta/1.0/util", "src/asledgehammer/rosetta/1.0/java/RosettaJavaConstructor"], function (require, exports, hljs, CardComponent_2, Delta_2, util_5, RosettaJavaConstructor_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.JavaCard = void 0;
@@ -5322,7 +5322,7 @@ define("src/asledgehammer/mallet/component/java/JavaCard", ["require", "exports"
     }
     exports.JavaCard = JavaCard;
 });
-define("src/asledgehammer/mallet/component/java/JavaClassCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaLuaGenerator2_1, JavaTypeScriptGenerator_1, util_6, JavaCard_1) {
+define("src/asledgehammer/mallet/component/java/JavaClassCard", ["require", "exports", "src/asledgehammer/rosetta/1.0/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/1.0/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/1.0/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaLuaGenerator2_1, JavaTypeScriptGenerator_1, util_6, JavaCard_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.JavaClassCard = void 0;
@@ -5386,7 +5386,7 @@ define("src/asledgehammer/mallet/component/java/JavaClassCard", ["require", "exp
     }
     exports.JavaClassCard = JavaClassCard;
 });
-define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, RosettaJavaClass_1, RosettaLuaClass_1, RosettaLuaTable_1, util_7, LuaCard_2) {
+define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "src/asledgehammer/rosetta/1.0/java/RosettaJavaClass", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaClass", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaTable", "src/asledgehammer/rosetta/1.0/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, RosettaJavaClass_1, RosettaLuaClass_1, RosettaLuaTable_1, util_7, LuaCard_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ItemTree = void 0;
@@ -6301,7 +6301,7 @@ define("src/asledgehammer/mallet/component/ItemTree", ["require", "exports", "sr
     }
     exports.ItemTree = ItemTree;
 });
-define("src/asledgehammer/mallet/component/lua/LuaTableCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_3, LuaTypeScriptGenerator_3, util_8, LuaCard_3) {
+define("src/asledgehammer/mallet/component/lua/LuaTableCard", ["require", "exports", "src/asledgehammer/rosetta/1.0/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/1.0/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/1.0/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_3, LuaTypeScriptGenerator_3, util_8, LuaCard_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaTableCard = void 0;
@@ -6376,7 +6376,7 @@ define("src/asledgehammer/mallet/component/lua/LuaTableCard", ["require", "expor
     }
     exports.LuaTableCard = LuaTableCard;
 });
-define("src/asledgehammer/mallet/component/ObjectTree", ["require", "exports", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, RosettaJavaClass_2, RosettaLuaClass_2, RosettaLuaTable_2, util_9, LuaCard_4) {
+define("src/asledgehammer/mallet/component/ObjectTree", ["require", "exports", "src/asledgehammer/rosetta/1.0/java/RosettaJavaClass", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaClass", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaTable", "src/asledgehammer/rosetta/1.0/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, RosettaJavaClass_2, RosettaLuaClass_2, RosettaLuaTable_2, util_9, LuaCard_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ObjectTree = void 0;
@@ -6579,7 +6579,7 @@ define("src/asledgehammer/mallet/component/ObjectTree", ["require", "exports", "
     }
     exports.ObjectTree = ObjectTree;
 });
-define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/Component", "src/asledgehammer/mallet/component/ItemTree", "src/asledgehammer/mallet/component/ObjectTree"], function (require, exports, JavaLuaGenerator2_2, RosettaJavaClass_3, LuaLuaGenerator_4, RosettaLuaClass_3, RosettaLuaTable_3, JavaTypeScriptGenerator_2, LuaTypeScriptGenerator_4, util_10, Component_2, ItemTree_1, ObjectTree_1) {
+define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src/asledgehammer/rosetta/1.0/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/1.0/java/RosettaJavaClass", "src/asledgehammer/rosetta/1.0/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaClass", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaTable", "src/asledgehammer/rosetta/1.0/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/1.0/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/1.0/util", "src/asledgehammer/mallet/component/Component", "src/asledgehammer/mallet/component/ItemTree", "src/asledgehammer/mallet/component/ObjectTree"], function (require, exports, JavaLuaGenerator2_2, RosettaJavaClass_3, LuaLuaGenerator_4, RosettaLuaClass_3, RosettaLuaTable_3, JavaTypeScriptGenerator_2, LuaTypeScriptGenerator_4, util_10, Component_2, ItemTree_1, ObjectTree_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Sidebar = void 0;
@@ -7149,7 +7149,7 @@ define("src/asledgehammer/mallet/component/Sidebar", ["require", "exports", "src
     exports.Sidebar = Sidebar;
     ;
 });
-define("src/asledgehammer/mallet/component/lua/LuaConstructorCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_5, LuaTypeScriptGenerator_5, util_11, LuaCard_5) {
+define("src/asledgehammer/mallet/component/lua/LuaConstructorCard", ["require", "exports", "src/asledgehammer/rosetta/1.0/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/1.0/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/1.0/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_5, LuaTypeScriptGenerator_5, util_11, LuaCard_5) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaConstructorCard = void 0;
@@ -7226,7 +7226,7 @@ define("src/asledgehammer/mallet/component/lua/LuaConstructorCard", ["require", 
     }
     exports.LuaConstructorCard = LuaConstructorCard;
 });
-define("src/asledgehammer/mallet/component/lua/LuaFieldCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaField", "src/asledgehammer/rosetta/lua/RosettaLuaTableField", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_6, RosettaLuaField_2, RosettaLuaTableField_2, LuaTypeScriptGenerator_6, util_12, LuaCard_6) {
+define("src/asledgehammer/mallet/component/lua/LuaFieldCard", ["require", "exports", "src/asledgehammer/rosetta/1.0/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaField", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaTableField", "src/asledgehammer/rosetta/1.0/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/1.0/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_6, RosettaLuaField_2, RosettaLuaTableField_2, LuaTypeScriptGenerator_6, util_12, LuaCard_6) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaFieldCard = void 0;
@@ -7358,7 +7358,7 @@ define("src/asledgehammer/mallet/component/lua/LuaFieldCard", ["require", "expor
     }
     exports.LuaFieldCard = LuaFieldCard;
 });
-define("src/asledgehammer/mallet/component/lua/LuaFunctionCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_7, RosettaLuaClass_4, RosettaLuaTable_4, LuaTypeScriptGenerator_7, util_13, LuaCard_7) {
+define("src/asledgehammer/mallet/component/lua/LuaFunctionCard", ["require", "exports", "src/asledgehammer/rosetta/1.0/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaClass", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaTable", "src/asledgehammer/rosetta/1.0/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/1.0/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_7, RosettaLuaClass_4, RosettaLuaTable_4, LuaTypeScriptGenerator_7, util_13, LuaCard_7) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaFunctionCard = void 0;
@@ -7491,7 +7491,7 @@ define("src/asledgehammer/mallet/component/lua/LuaFunctionCard", ["require", "ex
     }
     exports.LuaFunctionCard = LuaFunctionCard;
 });
-define("src/asledgehammer/mallet/component/java/JavaConstructorCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaLuaGenerator2_3, JavaTypeScriptGenerator_3, util_14, JavaCard_2) {
+define("src/asledgehammer/mallet/component/java/JavaConstructorCard", ["require", "exports", "src/asledgehammer/rosetta/1.0/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/1.0/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/1.0/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaLuaGenerator2_3, JavaTypeScriptGenerator_3, util_14, JavaCard_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.JavaConstructorCard = void 0;
@@ -7576,7 +7576,7 @@ define("src/asledgehammer/mallet/component/java/JavaConstructorCard", ["require"
     }
     exports.JavaConstructorCard = JavaConstructorCard;
 });
-define("src/asledgehammer/mallet/component/java/JavaFieldCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaLuaGenerator2_4, JavaTypeScriptGenerator_4, util_15, JavaCard_3) {
+define("src/asledgehammer/mallet/component/java/JavaFieldCard", ["require", "exports", "src/asledgehammer/rosetta/1.0/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/1.0/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/1.0/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaLuaGenerator2_4, JavaTypeScriptGenerator_4, util_15, JavaCard_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.JavaFieldCard = void 0;
@@ -7673,7 +7673,7 @@ define("src/asledgehammer/mallet/component/java/JavaFieldCard", ["require", "exp
     }
     exports.JavaFieldCard = JavaFieldCard;
 });
-define("src/asledgehammer/mallet/component/java/JavaMethodCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaLuaGenerator2_5, JavaTypeScriptGenerator_5, util_16, JavaCard_4) {
+define("src/asledgehammer/mallet/component/java/JavaMethodCard", ["require", "exports", "src/asledgehammer/rosetta/1.0/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/1.0/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/1.0/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaLuaGenerator2_5, JavaTypeScriptGenerator_5, util_16, JavaCard_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.JavaMethodCard = void 0;
@@ -7787,7 +7787,7 @@ define("src/asledgehammer/mallet/component/java/JavaMethodCard", ["require", "ex
     }
     exports.JavaMethodCard = JavaMethodCard;
 });
-define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaField", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaFunctionCluster", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/util"], function (require, exports, RosettaJavaClass_4, RosettaLuaClass_5, RosettaLuaField_3, RosettaLuaFunction_3, RosettaLuaFunctionCluster_3, RosettaLuaTable_5, util_17) {
+define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/asledgehammer/rosetta/1.0/java/RosettaJavaClass", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaClass", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaField", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaFunctionCluster", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaTable", "src/asledgehammer/rosetta/1.0/util"], function (require, exports, RosettaJavaClass_4, RosettaLuaClass_5, RosettaLuaField_3, RosettaLuaFunction_3, RosettaLuaFunctionCluster_3, RosettaLuaTable_5, util_17) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ModalName = void 0;
@@ -8667,7 +8667,7 @@ define("src/asledgehammer/mallet/modal/ModalName", ["require", "exports", "src/a
     }
     exports.ModalName = ModalName;
 });
-define("src/asledgehammer/mallet/modal/ModalConfirm", ["require", "exports", "src/asledgehammer/rosetta/util"], function (require, exports, util_18) {
+define("src/asledgehammer/mallet/modal/ModalConfirm", ["require", "exports", "src/asledgehammer/rosetta/1.0/util"], function (require, exports, util_18) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ModalConfirm = void 0;
@@ -8702,7 +8702,7 @@ define("src/asledgehammer/mallet/modal/ModalConfirm", ["require", "exports", "sr
     }
     exports.ModalConfirm = ModalConfirm;
 });
-define("src/asledgehammer/mallet/component/Toast", ["require", "exports", "src/asledgehammer/rosetta/util"], function (require, exports, util_19) {
+define("src/asledgehammer/mallet/component/Toast", ["require", "exports", "src/asledgehammer/rosetta/1.0/util"], function (require, exports, util_19) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Toast = void 0;
@@ -8735,7 +8735,7 @@ define("src/asledgehammer/mallet/component/Toast", ["require", "exports", "src/a
     }
     exports.Toast = Toast;
 });
-define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/java/RosettaJavaMethod", "src/asledgehammer/rosetta/java/RosettaJavaMethodCluster", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaField", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaFunctionCluster", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/TSUtils"], function (require, exports, JavaLuaGenerator2_6, RosettaJavaClass_5, RosettaJavaMethod_2, RosettaJavaMethodCluster_2, LuaLuaGenerator_8, RosettaLuaClass_6, RosettaLuaField_4, RosettaLuaFunction_4, RosettaLuaFunctionCluster_4, RosettaLuaTable_6, JavaTypeScriptGenerator_6, LuaTypeScriptGenerator_8, TSUtils_3) {
+define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgehammer/rosetta/1.0/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/1.0/java/RosettaJavaClass", "src/asledgehammer/rosetta/1.0/java/RosettaJavaMethod", "src/asledgehammer/rosetta/1.0/java/RosettaJavaMethodCluster", "src/asledgehammer/rosetta/1.0/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaClass", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaField", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaFunctionCluster", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaTable", "src/asledgehammer/rosetta/1.0/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/1.0/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/1.0/typescript/TSUtils"], function (require, exports, JavaLuaGenerator2_6, RosettaJavaClass_5, RosettaJavaMethod_2, RosettaJavaMethodCluster_2, LuaLuaGenerator_8, RosettaLuaClass_6, RosettaLuaField_4, RosettaLuaFunction_4, RosettaLuaFunctionCluster_4, RosettaLuaTable_6, JavaTypeScriptGenerator_6, LuaTypeScriptGenerator_8, TSUtils_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Catalog = void 0;
@@ -9086,7 +9086,7 @@ define("src/asledgehammer/mallet/Catalog", ["require", "exports", "src/asledgeha
     }
     exports.Catalog = Catalog;
 });
-define("src/asledgehammer/mallet/component/lua/LuaGlobalFunctionCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_9, LuaTypeScriptGenerator_9, util_20, LuaCard_8) {
+define("src/asledgehammer/mallet/component/lua/LuaGlobalFunctionCard", ["require", "exports", "src/asledgehammer/rosetta/1.0/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/1.0/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/1.0/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_9, LuaTypeScriptGenerator_9, util_20, LuaCard_8) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaGlobalFunctionCard = void 0;
@@ -9193,7 +9193,7 @@ define("src/asledgehammer/mallet/component/lua/LuaGlobalFunctionCard", ["require
     }
     exports.LuaGlobalFunctionCard = LuaGlobalFunctionCard;
 });
-define("src/asledgehammer/mallet/component/lua/LuaGlobalFieldCard", ["require", "exports", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_10, LuaTypeScriptGenerator_10, util_21, LuaCard_9) {
+define("src/asledgehammer/mallet/component/lua/LuaGlobalFieldCard", ["require", "exports", "src/asledgehammer/rosetta/1.0/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/1.0/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/1.0/util", "src/asledgehammer/mallet/component/lua/LuaCard"], function (require, exports, LuaLuaGenerator_10, LuaTypeScriptGenerator_10, util_21, LuaCard_9) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LuaGlobalFieldCard = void 0;
@@ -9288,7 +9288,7 @@ define("src/asledgehammer/mallet/component/lua/LuaGlobalFieldCard", ["require", 
     }
     exports.LuaGlobalFieldCard = LuaGlobalFieldCard;
 });
-define("src/asledgehammer/mallet/component/java/JavaGlobalMethodCard", ["require", "exports", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaLuaGenerator2_7, JavaTypeScriptGenerator_7, util_22, JavaCard_5) {
+define("src/asledgehammer/mallet/component/java/JavaGlobalMethodCard", ["require", "exports", "src/asledgehammer/rosetta/1.0/java/JavaLuaGenerator2", "src/asledgehammer/rosetta/1.0/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/1.0/util", "src/asledgehammer/mallet/component/java/JavaCard"], function (require, exports, JavaLuaGenerator2_7, JavaTypeScriptGenerator_7, util_22, JavaCard_5) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.JavaGlobalMethodCard = void 0;
@@ -9381,7 +9381,7 @@ define("src/asledgehammer/mallet/component/java/JavaGlobalMethodCard", ["require
     }
     exports.JavaGlobalMethodCard = JavaGlobalMethodCard;
 });
-define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaClass", "src/asledgehammer/rosetta/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/util", "src/asledgehammer/rosetta/java/RosettaJavaClass", "src/asledgehammer/rosetta/java/JavaLuaGenerator2", "src/asledgehammer/mallet/component/lua/LuaClassCard", "src/asledgehammer/mallet/component/java/JavaClassCard", "src/asledgehammer/mallet/component/Sidebar", "src/asledgehammer/mallet/component/lua/LuaConstructorCard", "src/asledgehammer/mallet/component/lua/LuaFieldCard", "src/asledgehammer/mallet/component/lua/LuaFunctionCard", "src/asledgehammer/mallet/component/java/JavaConstructorCard", "src/asledgehammer/mallet/component/java/JavaFieldCard", "src/asledgehammer/mallet/component/java/JavaMethodCard", "src/asledgehammer/mallet/modal/ModalName", "src/asledgehammer/mallet/modal/ModalConfirm", "src/asledgehammer/mallet/component/Toast", "src/asledgehammer/mallet/Catalog", "src/asledgehammer/rosetta/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/mallet/component/lua/LuaTableCard", "src/asledgehammer/mallet/component/lua/LuaGlobalFunctionCard", "src/asledgehammer/mallet/component/lua/LuaGlobalFieldCard", "src/asledgehammer/mallet/component/java/JavaGlobalMethodCard"], function (require, exports, hljs, LuaLuaGenerator_11, RosettaLuaClass_7, RosettaLuaConstructor_2, util_23, RosettaJavaClass_6, JavaLuaGenerator2_8, LuaClassCard_1, JavaClassCard_1, Sidebar_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, JavaConstructorCard_1, JavaFieldCard_1, JavaMethodCard_1, ModalName_1, ModalConfirm_1, Toast_1, Catalog_1, JavaTypeScriptGenerator_8, LuaTypeScriptGenerator_11, RosettaLuaTable_7, LuaTableCard_1, LuaGlobalFunctionCard_1, LuaGlobalFieldCard_1, JavaGlobalMethodCard_1) {
+define("src/app", ["require", "exports", "highlight.js", "src/asledgehammer/rosetta/1.0/lua/LuaLuaGenerator", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaClass", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaConstructor", "src/asledgehammer/rosetta/1.0/util", "src/asledgehammer/rosetta/1.0/java/RosettaJavaClass", "src/asledgehammer/rosetta/1.0/java/JavaLuaGenerator2", "src/asledgehammer/mallet/component/lua/LuaClassCard", "src/asledgehammer/mallet/component/java/JavaClassCard", "src/asledgehammer/mallet/component/Sidebar", "src/asledgehammer/mallet/component/lua/LuaConstructorCard", "src/asledgehammer/mallet/component/lua/LuaFieldCard", "src/asledgehammer/mallet/component/lua/LuaFunctionCard", "src/asledgehammer/mallet/component/java/JavaConstructorCard", "src/asledgehammer/mallet/component/java/JavaFieldCard", "src/asledgehammer/mallet/component/java/JavaMethodCard", "src/asledgehammer/mallet/modal/ModalName", "src/asledgehammer/mallet/modal/ModalConfirm", "src/asledgehammer/mallet/component/Toast", "src/asledgehammer/mallet/Catalog", "src/asledgehammer/rosetta/1.0/typescript/JavaTypeScriptGenerator", "src/asledgehammer/rosetta/1.0/typescript/LuaTypeScriptGenerator", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaTable", "src/asledgehammer/mallet/component/lua/LuaTableCard", "src/asledgehammer/mallet/component/lua/LuaGlobalFunctionCard", "src/asledgehammer/mallet/component/lua/LuaGlobalFieldCard", "src/asledgehammer/mallet/component/java/JavaGlobalMethodCard"], function (require, exports, hljs, LuaLuaGenerator_11, RosettaLuaClass_7, RosettaLuaConstructor_2, util_23, RosettaJavaClass_6, JavaLuaGenerator2_8, LuaClassCard_1, JavaClassCard_1, Sidebar_1, LuaConstructorCard_1, LuaFieldCard_1, LuaFunctionCard_1, JavaConstructorCard_1, JavaFieldCard_1, JavaMethodCard_1, ModalName_1, ModalConfirm_1, Toast_1, Catalog_1, JavaTypeScriptGenerator_8, LuaTypeScriptGenerator_11, RosettaLuaTable_7, LuaTableCard_1, LuaGlobalFunctionCard_1, LuaGlobalFieldCard_1, JavaGlobalMethodCard_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.App = void 0;
@@ -9847,7 +9847,7 @@ define("src/asledgehammer/JSONSerializable", ["require", "exports"], function (r
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
 });
-define("src/asledgehammer/mallet/component/LabelComponent", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/Component"], function (require, exports, util_24, Component_3) {
+define("src/asledgehammer/mallet/component/LabelComponent", ["require", "exports", "src/asledgehammer/rosetta/1.0/util", "src/asledgehammer/mallet/component/Component"], function (require, exports, util_24, Component_3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LabelComponent = void 0;
@@ -9861,7 +9861,7 @@ define("src/asledgehammer/mallet/component/LabelComponent", ["require", "exports
     }
     exports.LabelComponent = LabelComponent;
 });
-define("src/asledgehammer/mallet/component/SidebarPanelButton", ["require", "exports", "src/asledgehammer/rosetta/util", "src/asledgehammer/mallet/component/Component"], function (require, exports, util_25, Component_4) {
+define("src/asledgehammer/mallet/component/SidebarPanelButton", ["require", "exports", "src/asledgehammer/rosetta/1.0/util", "src/asledgehammer/mallet/component/Component"], function (require, exports, util_25, Component_4) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.SidebarPanelButton = void 0;
@@ -9908,18 +9908,18 @@ define("src/asledgehammer/mallet/component/SidebarPanel", ["require", "exports",
     exports.SidebarPanel = SidebarPanel;
     ;
 });
-define("src/asledgehammer/rosetta/Rosetta", ["require", "exports"], function (require, exports) {
+define("src/asledgehammer/rosetta/1.0/Rosetta", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.JSON_PATCH_SCHEMA_URL = exports.JSON_SCHEMA_URL = void 0;
     exports.JSON_SCHEMA_URL = 'https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-schema.json';
     exports.JSON_PATCH_SCHEMA_URL = 'https://raw.githubusercontent.com/asledgehammer/PZ-Rosetta-Schema/main/rosetta-patch-schema.json';
 });
-define("src/asledgehammer/rosetta/RosettaFileInfo", ["require", "exports"], function (require, exports) {
+define("src/asledgehammer/rosetta/1.0/RosettaFileInfo", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
 });
-define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asledgehammer/rosetta/Rosetta", "src/asledgehammer/rosetta/RosettaEntity", "src/asledgehammer/rosetta/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/lua/RosettaLuaTable", "src/asledgehammer/rosetta/lua/RosettaLuaTableField", "src/asledgehammer/rosetta/lua/RosettaLuaClass"], function (require, exports, Rosetta_1, RosettaEntity_16, RosettaLuaFunction_5, RosettaLuaTable_8, RosettaLuaTableField_3, RosettaLuaClass_8) {
+define("src/asledgehammer/rosetta/1.0/RosettaFile", ["require", "exports", "src/asledgehammer/rosetta/1.0/Rosetta", "src/asledgehammer/rosetta/1.0/RosettaEntity", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaFunction", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaTable", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaTableField", "src/asledgehammer/rosetta/1.0/lua/RosettaLuaClass"], function (require, exports, Rosetta_1, RosettaEntity_16, RosettaLuaFunction_5, RosettaLuaTable_8, RosettaLuaTableField_3, RosettaLuaClass_8) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RosettaFile = void 0;
@@ -10143,7 +10143,7 @@ define("src/asledgehammer/rosetta/RosettaFile", ["require", "exports", "src/asle
     }
     exports.RosettaFile = RosettaFile;
 });
-define("src/asledgehammer/rosetta/SerializableComponent", ["require", "exports"], function (require, exports) {
+define("src/asledgehammer/rosetta/1.0/SerializableComponent", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.SerializableComponent = void 0;

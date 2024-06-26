@@ -1,8 +1,8 @@
 import { App } from "../../../app";
-import { RosettaJavaClass } from "../../rosetta/java/RosettaJavaClass";
-import { RosettaLuaClass } from "../../rosetta/lua/RosettaLuaClass";
-import { RosettaLuaTable } from "../../rosetta/lua/RosettaLuaTable";
-import { $get } from "../../rosetta/util";
+import { RosettaJavaClass } from "../../rosetta/1.0/java/RosettaJavaClass";
+import { RosettaLuaClass } from "../../rosetta/1.0/lua/RosettaLuaClass";
+import { RosettaLuaTable } from "../../rosetta/1.0/lua/RosettaLuaTable";
+import { $get } from "../../rosetta/1.0/util";
 import { LuaCard } from "./lua/LuaCard";
 import { LuaClassCard } from "./lua/LuaClassCard";
 import { LuaTableCard } from "./lua/LuaTableCard";

@@ -1,14 +1,14 @@
-import * as Assert from '../../Assert';
+import * as Assert from '../../../Assert';
 
-import { RosettaLuaFunction } from './RosettaLuaFunction';
+import { RosettaJavaMethod } from './RosettaJavaMethod';
 
 /**
- * **RosettaLuaFunctionCluster**
+ * **RosettaJavaMethodCluster**
  *
  * @author Jab
  */
-export class RosettaLuaFunctionCluster {
-  readonly functions: RosettaLuaFunction[] = [];
+export class RosettaJavaMethodCluster {
+  readonly methods: RosettaJavaMethod[] = [];
   readonly name: string;
 
   constructor(name: string) {
@@ -16,23 +16,23 @@ export class RosettaLuaFunctionCluster {
     this.name = name;
   }
 
-  add(method: RosettaLuaFunction) {
-    const indexOf = this.functions.indexOf(method);
+  add(method: RosettaJavaMethod) {
+    const indexOf = this.methods.indexOf(method);
     if (indexOf !== -1) {
-      this.functions[indexOf].parse(method.raw);
+      this.methods[indexOf].parse(method.raw);
       return;
     }
-    this.functions.push(method);
+    this.methods.push(method);
   }
 
-  getWithParameters(...parameterNames: string[]): RosettaLuaFunction | undefined {
-    for (const method of this.functions) {
+  getWithParameters(...parameterNames: string[]): RosettaJavaMethod | undefined {
+    for (const method of this.methods) {
       const parameters = method.parameters;
       if (parameterNames.length === parameters.length) {
         if (parameterNames.length === 0) return method;
         let invalid = false;
         for (let i = 0; i < parameters.length; i++) {
-          if (parameters[i].type !== parameterNames[i]) {
+          if (parameters[i].type.basic !== parameterNames[i]) {
             invalid = true;
             break;
           }

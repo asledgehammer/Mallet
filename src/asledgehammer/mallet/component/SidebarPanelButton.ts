@@ -1,4 +1,4 @@
-import { $get, html } from "../../rosetta/util";
+import { $get, html } from "../../rosetta/1.0/util";
 import { Component, ComponentOptions } from "./Component";
 
 export class SidebarPanelButton extends Component<SidebarPanelButtonOptions> {

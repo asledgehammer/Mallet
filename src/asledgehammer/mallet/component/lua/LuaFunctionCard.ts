@@ -1,10 +1,10 @@
 import { App } from '../../../../app';
-import { generateLuaFunction } from '../../../rosetta/lua/LuaLuaGenerator';
-import { RosettaLuaClass } from '../../../rosetta/lua/RosettaLuaClass';
-import { RosettaLuaFunction } from '../../../rosetta/lua/RosettaLuaFunction';
-import { RosettaLuaTable } from '../../../rosetta/lua/RosettaLuaTable';
-import { luaFunctionToTS } from '../../../rosetta/typescript/LuaTypeScriptGenerator';
-import { $get, html } from '../../../rosetta/util';
+import { generateLuaFunction } from '../../../rosetta/1.0/lua/LuaLuaGenerator';
+import { RosettaLuaClass } from '../../../rosetta/1.0/lua/RosettaLuaClass';
+import { RosettaLuaFunction } from '../../../rosetta/1.0/lua/RosettaLuaFunction';
+import { RosettaLuaTable } from '../../../rosetta/1.0/lua/RosettaLuaTable';
+import { luaFunctionToTS } from '../../../rosetta/1.0/typescript/LuaTypeScriptGenerator';
+import { $get, html } from '../../../rosetta/1.0/util';
 import { CardOptions } from '../CardComponent';
 import { CodeLanguage } from '../CodeLanguage';
 import { LuaCard } from './LuaCard';

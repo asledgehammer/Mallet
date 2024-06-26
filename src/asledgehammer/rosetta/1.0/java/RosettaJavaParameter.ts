@@ -1,15 +1,18 @@
-import * as Assert from '../../Assert';
+import * as Assert from '../../../Assert';
 
 import { RosettaEntity } from '../RosettaEntity';
 import { RosettaJavaType } from './RosettaJavaType';
+import { formatName } from '../RosettaUtils';
 
 /**
- * **RosettaJavaReturns**
+ * **RosettaJavaParameter**
  *
  * @author Jab
  */
-export class RosettaJavaReturns extends RosettaEntity {
+export class RosettaJavaParameter extends RosettaEntity {
   readonly type: RosettaJavaType;
+
+  name: string;
   notes: string | undefined;
 
   constructor(raw: { [key: string]: any }) {
@@ -17,6 +20,7 @@ export class RosettaJavaReturns extends RosettaEntity {
 
     Assert.assertNonNull(raw.type, 'raw.type');
 
+    this.name = formatName(this.readRequiredString('name'));
     this.type = new RosettaJavaType(raw.type);
     this.parse(raw);
   }
@@ -26,10 +30,15 @@ export class RosettaJavaReturns extends RosettaEntity {
   }
 
   toJSON(patch: boolean = false): any {
-    const { type, notes } = this;
+    const { name, notes, type } = this;
+
     const json: any = {};
-    json.type = type.toJSON(patch);
+
+    /* (Properties) */
+    if (!patch) json.type = type.toJSON(patch);
+    json.name = name;
     json.notes = notes !== undefined && notes !== '' ? this.writeNotes(notes) : undefined;
+
     return json;
   }
 }

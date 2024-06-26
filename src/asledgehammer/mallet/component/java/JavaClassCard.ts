@@ -1,8 +1,8 @@
 import { App } from '../../../../app';
-import { generateJavaClass } from '../../../rosetta/java/JavaLuaGenerator2';
-import { RosettaJavaClass } from '../../../rosetta/java/RosettaJavaClass';
-import { javaClassToTS } from '../../../rosetta/typescript/JavaTypeScriptGenerator';
-import { html } from '../../../rosetta/util';
+import { generateJavaClass } from '../../../rosetta/1.0/java/JavaLuaGenerator2';
+import { RosettaJavaClass } from '../../../rosetta/1.0/java/RosettaJavaClass';
+import { javaClassToTS } from '../../../rosetta/1.0/typescript/JavaTypeScriptGenerator';
+import { html } from '../../../rosetta/1.0/util';
 import { CardOptions } from '../CardComponent';
 import { CodeLanguage } from '../CodeLanguage';
 import { JavaCard } from './JavaCard';

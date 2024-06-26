@@ -1,4 +1,4 @@
-import * as Assert from '../../Assert';
+import * as Assert from '../../../Assert';
 
 import { formatName } from '../RosettaUtils';
 import { RosettaEntity } from '../RosettaEntity';
@@ -248,7 +248,17 @@ export class RosettaJavaClass extends RosettaEntity {
   }
 
   toJSON(patch: boolean = false): any {
-    const { extendz, modifiers, deprecated, javaType, notes, fields, constructors, methods } = this;
+
+    const {
+      extendz,
+      modifiers,
+      javaType,
+      deprecated,
+      notes,
+      fields,
+      constructors,
+      methods
+    } = this;
 
     const json: any = {};
 

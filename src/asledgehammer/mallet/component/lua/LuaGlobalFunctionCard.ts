@@ -1,8 +1,8 @@
 import { App } from '../../../../app';
-import { generateGlobalLuaFunction } from '../../../rosetta/lua/LuaLuaGenerator';
-import { RosettaLuaFunction } from '../../../rosetta/lua/RosettaLuaFunction';
-import { luaFunctionToTS } from '../../../rosetta/typescript/LuaTypeScriptGenerator';
-import { $get, html } from '../../../rosetta/util';
+import { generateGlobalLuaFunction } from '../../../rosetta/1.0/lua/LuaLuaGenerator';
+import { RosettaLuaFunction } from '../../../rosetta/1.0/lua/RosettaLuaFunction';
+import { luaFunctionToTS } from '../../../rosetta/1.0/typescript/LuaTypeScriptGenerator';
+import { $get, html } from '../../../rosetta/1.0/util';
 import { CodeLanguage } from '../CodeLanguage';
 import { LuaCard } from './LuaCard';
 
