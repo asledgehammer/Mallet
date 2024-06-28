@@ -1,12 +1,12 @@
+import { JsonObject, JsonSerializable } from "../../JsonSerializable";
 import { RosettaLanguage } from "../RosettaLanguage";
 import { LANGUAGE_ADAPTERS } from "./Rosetta";
-import { RosettaSerializable } from "./RosettaSerializable";
 
-export class RosettaFile implements RosettaSerializable {
+export class RosettaFile implements JsonSerializable {
 
     readonly languages: { [id: string]: RosettaLanguage<string> } = {};
 
-    fromJSON(json: any): void {
+    fromJSON(json: JsonObject) {
 
         const { languages } = this;
 
@@ -25,11 +25,11 @@ export class RosettaFile implements RosettaSerializable {
 
     }
 
-    toJSON(): any {
+    toJSON(): JsonObject {
 
         const { languages } = this;
 
-        const json: any = {};
+        const json: JsonObject = {};
         let keys: string[];
 
         // (Rosetta Version)

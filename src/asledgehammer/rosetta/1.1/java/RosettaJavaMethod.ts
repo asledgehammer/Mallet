@@ -1,16 +1,16 @@
-import { RosettaSerializable } from "../RosettaSerializable";
+import { JsonObject, JsonSerializable } from "../../../JsonSerializable";
 
-export class RosettaJavaMethod implements RosettaSerializable {
+export class RosettaJavaMethod implements JsonSerializable {
 
-    constructor(json: any) {
+    constructor(json: JsonObject) {
         this.fromJSON(json);
     }
 
-    fromJSON(json: any): void {
+    fromJSON(json: JsonObject): void {
         throw new Error("Method not implemented.");
     }
 
-    toJSON() {
+    toJSON(): JsonObject {
         throw new Error("Method not implemented.");
     }
 

@@ -1,3 +1,4 @@
+import { JsonObject } from "../../../JsonSerializable";
 import { RosettaGame } from "../../RosettaGame";
 import { RosettaLanguage } from "../../RosettaLanguage";
 import { LANGUAGE_ADAPTERS } from "../Rosetta";
@@ -18,7 +19,7 @@ export class RosettaJava implements RosettaLanguage<'java'> {
         this.fromJSON(json);
     }
 
-    fromJSON(json: any): void {
+    fromJSON(json: JsonObject) {
 
         let keys: string[];
 
@@ -76,11 +77,11 @@ export class RosettaJava implements RosettaLanguage<'java'> {
         }
     }
 
-    toJSON(): any {
+    toJSON(): JsonObject {
 
         const { classes, methods, games } = this;
 
-        const json: any = {};
+        const json: JsonObject = {};
 
         let keys: string[];
 

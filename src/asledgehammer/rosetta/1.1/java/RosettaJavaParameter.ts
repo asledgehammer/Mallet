@@ -1,17 +1,57 @@
-import { RosettaSerializable } from "../RosettaSerializable";
+import { JsonObject, JsonSerializable } from "../../../JsonSerializable";
+import { RosettaJavaType } from "./RosettaJavaType";
 
-export class RosettaJavaParameter implements RosettaSerializable {
+export class RosettaJavaParameter implements JsonSerializable {
 
-    constructor(json: any) {
+    name: string = '';
+    notes?: string;
+    type: RosettaJavaType = new RosettaJavaType({ basic: 'Object', nullable: true });
+
+    constructor(json: JsonObject) {
         this.fromJSON(json);
     }
 
-    fromJSON(json: any): void {
-        throw new Error("Method not implemented.");
+    fromJSON(json: JsonObject): void {
+
+        // (String: Name)
+        this.name = json.name;
+
+        // (String: Notes)
+        if (json.notes && json.notes.length) {
+            this.notes = json.notes;
+        }
+
+        // (Type)
+        if (!json.type) {
+            throw new Error('Type must be defined for RosettaJavaParameters!');
+        }
+
+        this.type = new RosettaJavaType(json.type);
+
     }
 
-    toJSON() {
-        throw new Error("Method not implemented.");
-    }
+    toJSON(): JsonObject {
 
+        const { name, notes, type } = this;
+
+        const json: JsonObject = {};
+
+        // (String: Name)
+        json.name = name;
+
+        // (String: Notes)
+        if (notes && notes.length) {
+            json.notes = notes;
+        }
+
+        // (Type)
+        if (type === undefined) {
+            throw new Error('Type must be defined for RosettaJavaParameters!');
+        }
+
+        json.type = type?.toJSON();
+
+        return json;
+        
+    }
 }
