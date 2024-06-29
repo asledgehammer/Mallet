@@ -11,40 +11,59 @@ export class RosettaJavaClass implements JsonSerializable {
     staticMethods: { [id: string]: RosettaNamedCollection<RosettaJavaMethod> } = {};
     methods: { [id: string]: RosettaNamedCollection<RosettaJavaMethod> } = {};
     constructors: RosettaJavaConstructor[] = [];
-    generics: RosettaJavaGenerics | undefined = undefined;
-    deprecated: boolean = false;
-    extends: string | undefined = undefined;
-    notes: string | undefined = undefined;
-    tags: string[] = [];
+
+    generics?: RosettaJavaGenerics;
+    deprecated?: boolean;
+    extends?: string;
+    notes?: string;
+    tags?: string[];
 
     constructor(json: JsonObject) {
-        this.fromJSON(json);
-    }
-
-    fromJSON(json: JsonObject) {
 
         let keys: string[];
 
         // (Flag: Deprecated)
         if (json.deprecated !== undefined) {
+
+            if (typeof (json.deprecated) !== 'boolean') {
+                throw new Error();
+            }
+
             this.deprecated = json.deprecated;
         }
 
         // (String: Extends)
         if (json.extends !== undefined) {
-            this.extends = '' + json.extends;
+
+            if (typeof (json.extends) !== 'string') {
+                throw new Error();
+            }
+
+            this.extends = json.extends;
         }
 
         // (String: Notes)
         if (json.notes !== undefined) {
+
+            if (typeof (json.notes) !== 'boolean') {
+                throw new Error();
+            }
+
             this.notes = '' + json.notes;
         }
 
         // (String[]: Tags)
         if (json.tags !== undefined) {
-            for (const tag of json.tags) {
-                this.tags.push('' + tag);
+
+            if (!Array.isArray(json.tags)) {
+                throw new Error();
             }
+
+            if (json.tags.length) {
+                // (Force strings)
+                this.tags = [...json.tags.map((a) => `${a}`)];
+            }
+
         }
 
         // (Generics)
@@ -106,6 +125,7 @@ export class RosettaJavaClass implements JsonSerializable {
             }
 
         }
+
     }
 
     toJSON(): JsonObject {

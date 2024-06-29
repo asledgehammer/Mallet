@@ -10,16 +10,12 @@ export const GAME_ADAPTERS: { [id: string]: (json: any) => RosettaGame<'java', s
 
 export class RosettaJava implements RosettaLanguage<'java'> {
 
-    readonly games: { [id: string]: RosettaGame<'java', string> } = {};    
+    readonly games: { [id: string]: RosettaGame<'java', string> } = {};
     readonly classes: { [id: string]: RosettaJavaClass } = {};
     readonly methods: { [id: string]: RosettaNamedCollection<RosettaJavaMethod> } = {};
     readonly language: 'java' = 'java';
 
     constructor(json: any) {
-        this.fromJSON(json);
-    }
-
-    fromJSON(json: JsonObject) {
 
         let keys: string[];
 
@@ -75,6 +71,7 @@ export class RosettaJava implements RosettaLanguage<'java'> {
             }
 
         }
+
     }
 
     toJSON(): JsonObject {

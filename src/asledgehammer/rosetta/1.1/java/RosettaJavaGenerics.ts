@@ -3,23 +3,18 @@ import { RosettaJavaType } from "./RosettaJavaType";
 
 export class RosettaJavaGenerics implements JsonSerializable {
 
-    items: RosettaJavaType[] = [];
+    items: RosettaJavaType[];
 
     constructor(json: JsonObject) {
-        this.fromJSON(json);
-    }
-
-    fromJSON(json: JsonObject) {
-
-        const { items } = this;
 
         // (Items)
-        if (json.items) {
-            for (const item of json.items) {
-                items.push(new RosettaJavaType(item));
-            }
+        if (!json.items) {
+            throw new Error();
+        } else if (!Array.isArray(json.items)) {
+            throw new Error();
         }
 
+        this.items = [...json.items.map((item) => new RosettaJavaType(item))];
     }
 
     toJSON(): JsonObject {
@@ -29,16 +24,7 @@ export class RosettaJavaGenerics implements JsonSerializable {
         const json: JsonObject = {};
 
         // (Items)
-        if (items && items.length) {
-
-            json.items = [];
-
-            // (Write items)
-            for (const item of items) {
-                json.items.push(item);
-            }
-
-        }
+        json.items = [...items.map((item) => item.toJSON())];
 
         return json;
 

@@ -4,26 +4,35 @@ import { RosettaJavaType } from "./RosettaJavaType";
 export class RosettaJavaParameter implements JsonSerializable {
 
     name: string = '';
-    notes?: string;
     type: RosettaJavaType = new RosettaJavaType({ basic: 'Object', nullable: true });
+    
+    notes?: string;
 
     constructor(json: JsonObject) {
-        this.fromJSON(json);
-    }
-
-    fromJSON(json: JsonObject): void {
 
         // (String: Name)
+        if (!json.name || !json.name.length) {
+            throw new Error(`JavaParameter doesn't have a defined name!`);
+        } else if (typeof (json.name) !== 'string') {
+            throw new Error(`JavaParameter's property "name" isn't a string!`);
+        }
+
         this.name = json.name;
 
         // (String: Notes)
-        if (json.notes && json.notes.length) {
+        if (json.notes) {
+
+            if (typeof (json.notes) !== 'string') {
+                throw new Error(`JavaParameter "${this.name}"'s property "notes" is not a string!`);
+            }
+
             this.notes = json.notes;
+
         }
 
         // (Type)
         if (!json.type) {
-            throw new Error('Type must be defined for RosettaJavaParameters!');
+            throw new Error(`JavaParameter "${this.name}" doesn't have a defined type!`);
         }
 
         this.type = new RosettaJavaType(json.type);
@@ -52,6 +61,6 @@ export class RosettaJavaParameter implements JsonSerializable {
         json.type = type?.toJSON();
 
         return json;
-        
+
     }
 }

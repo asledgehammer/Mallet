@@ -11,45 +11,70 @@ export class RosettaLuaClass implements JsonSerializable {
     fields: { [id: string]: RosettaLuaField } = {};
     methods: { [id: string]: RosettaNamedCollection<RosettaLuaMethod> } = {};
     constructors: RosettaLuaConstructor[] = [];
-    deprecated: boolean = false;
-    extends: string | undefined = undefined;
-    mutable: boolean = false;
-    notes: string | undefined = undefined;
-    tags: string[] = [];
+
+    deprecated?: boolean;
+    extends?: string;
+    mutable?: boolean = false;
+    notes?: string;
+    tags?: string[];
 
     constructor(json: JsonObject) {
-        this.fromJSON(json);
-    }
-
-    fromJSON(json: JsonObject): void {
 
         let keys: string[];
 
         // (Flag: Deprecated)
         if (json.deprecated !== undefined) {
+
+            if (typeof (json.deprecated) !== 'boolean') {
+                throw new Error();
+            }
+
             this.deprecated = json.deprecated;
         }
 
         // (Flag: Mutable)
         if (json.mutable !== undefined) {
+
+            if (typeof (json.mutable) !== 'boolean') {
+                throw new Error();
+            }
+
             this.mutable = json.mutable;
         }
 
         // (String: Extends)
         if (json.extends !== undefined) {
+
+            if (typeof (json.extends) !== 'string') {
+                throw new Error();
+            }
+
             this.extends = '' + json.extends;
         }
 
         // (String: Notes)
         if (json.notes !== undefined) {
-            this.notes = '' + json.notes;
+
+            if (typeof (json.notes) !== 'string') {
+                throw new Error();
+            }
+
+            if (json.notes.length) {
+                this.notes = json.notes;
+            }
+
         }
 
         // (String[]: Tags)
         if (json.tags !== undefined) {
-            for (const tag of json.tags) {
-                this.tags.push('' + tag);
+
+            if (!Array.isArray(json.tags)) {
+                throw new Error();
             }
+
+            // (Force strings)
+            this.tags = [...json.tags.map((a) => `${a}`)];
+
         }
 
         // (Static Fields)

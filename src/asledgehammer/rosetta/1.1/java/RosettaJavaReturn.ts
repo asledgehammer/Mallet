@@ -3,19 +3,18 @@ import { RosettaJavaType } from "./RosettaJavaType";
 
 export class RosettaJavaReturn implements JsonSerializable {
 
-    type?: RosettaJavaType;
+    type: RosettaJavaType;
+    
     notes?: string;
 
     constructor(json: JsonObject) {
-        this.fromJSON(json);
-    }
-
-    fromJSON(json: JsonObject) {
 
         // (Type)
-        if (json.type) {
-            this.type = new RosettaJavaType(json.type);
+        if (!json.type) {
+            throw new Error();
         }
+
+        this.type = new RosettaJavaType(json.type);
 
         // (String: Notes)
         if (json.notes && json.notes.length) {
@@ -26,14 +25,15 @@ export class RosettaJavaReturn implements JsonSerializable {
 
     toJSON(): JsonObject {
 
-        const { notes, type } = this;
+        const {
+            notes,
+            type
+        } = this;
 
         const json: JsonObject = {};
 
         // (Type)
-        if (type) {
-            json.type = type.toJSON();
-        }
+        json.type = type.toJSON();
 
         // (String: Notes)
         if (notes && notes.length) {
@@ -41,6 +41,7 @@ export class RosettaJavaReturn implements JsonSerializable {
         }
 
         return json;
+
     }
 
 }

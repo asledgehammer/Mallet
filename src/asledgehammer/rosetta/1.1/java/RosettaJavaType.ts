@@ -3,45 +3,57 @@ import { RosettaJavaGenerics } from "./RosettaJavaGenerics";
 
 export class RosettaJavaType implements JsonSerializable {
 
-    basic?: string;
+    basic: string;
+
     full?: string;
     generics?: RosettaJavaGenerics;
-
     /** Nullable defaults to true for all non-primitive cases. */
-    nullable: boolean = true;
+    nullable?: boolean;
 
     constructor(json: JsonObject) {
-        this.fromJSON(json);
-    }
 
-    fromJSON(json: JsonObject) {
-
-        // (Flag: Nullable)
-        if (!this.isNullPossible()) {
-            this.nullable = false;
-        } else if (json.nullable !== undefined) {
-            this.nullable = json.nullable;
+        // (String: Basic)
+        if (!json.basic) {
+            throw new Error();
+        } else if (!json.basic.length) {
+            throw new Error();
         }
+
+        this.basic = json.basic;
 
         // (String: Full)
         if (json.full && json.full.length) {
             this.full = json.full;
         }
 
-        // (String: Basic)
-        if (json.basic && json.basic.length) {
-            this.basic = json.basic;
+        // (Flag: Nullable)
+        if (!this.isNullPossible()) {
+            this.nullable = false;
+        } else if (json.nullable !== undefined) {
+
+            if (typeof (json.nullable) !== 'boolean') {
+                throw new Error();
+            }
+
+            this.nullable = json.nullable;
+
         }
 
         // (Generics)
         if (json.generics && json.generics.length) {
             this.generics = new RosettaJavaGenerics(json.generics);
         }
+
     }
 
     toJSON(): JsonObject {
 
-        const { basic, full, generics, nullable } = this;
+        const {
+            basic,
+            full,
+            generics,
+            nullable
+        } = this;
 
         const json: JsonObject = {};
 
